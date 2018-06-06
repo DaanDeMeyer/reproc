@@ -1,0 +1,6 @@
+---
+Checks:          '*,-fuchsia-*,-llvm-header-guard,-misc-definitions-in-headers,-readability-avoid-const-params-in-decls,'
+HeaderFilterRegex: '.*'
+AnalyzeTemporaryDtors: false
+...
+

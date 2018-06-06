@@ -1,0 +1,7 @@
+---
+BasedOnStyle: LLVM
+---
+Language: Cpp
+BreakBeforeBraces: Linux
+AllowShortBlocksOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: true
