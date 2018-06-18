@@ -14,8 +14,6 @@ else()
   target_compile_options(cpp-process PRIVATE -Wall)
 endif()
 
-target_sources(cpp-process PRIVATE src/process.cpp)
-
 if(WIN32)
   target_sources(cpp-process PRIVATE src/process_windows.cpp)
 elseif(UNIX)

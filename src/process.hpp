@@ -1,13 +1,14 @@
 #pragma once
 
-#include <memory>
 #include <string>
+#include <vector>
 
 class process
 {
 
 public:
-  process(const std::string &path, char *const argv);
+  process(const std::vector<std::wstring> &argv);
+  process(const std::vector<std::string> &argv);
 
   // Dissallow copying so we only close fd's once
   process(const process &other) = delete;
@@ -18,17 +19,13 @@ public:
 
   ~process();
 
-  uint32_t pid() const;
-
   bool finished() const;
 
-  void write(const std::string &string);
+  void write(const char *string);
 
 private:
-  uint32_t _pid = 0; // 0 stands for process not spawned
-
   struct impl;
-  std::unique_ptr<impl> pimpl;
+  impl *pimpl;
 };
 
-process &operator<<(process &process, const std::string &string);
+process &operator<<(process &process, const char *string);

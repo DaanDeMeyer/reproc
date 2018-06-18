@@ -1,5 +1,8 @@
+#if defined(__unix__) || defined(__APPLE__)
+
 #include "process.hpp"
 
+#include <array>
 #include <climits>
 #include <cstring>
 #include <unistd.h>
@@ -104,3 +107,5 @@ process::~process()
     if (pimpl->close_stderr) { close(pimpl->stderr); }
   }
 }
+
+#endif
