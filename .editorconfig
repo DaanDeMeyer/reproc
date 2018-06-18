@@ -3,7 +3,7 @@ root = true
 [*]
 charset = utf-8
 
-[*.{cpp,hpp}]
+[*.{c,cpp,h,hpp}]
 indent_style = space
 indent_size = 2
 

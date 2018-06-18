@@ -17,5 +17,7 @@ endif()
 if(WIN32)
   target_sources(cpp-process PRIVATE src/process_windows.cpp)
 elseif(UNIX)
-  target_sources(cpp-process PRIVATE src/process_posix.cpp)
+  target_sources(cpp-process PRIVATE src/process_posix.c)
 endif()
+
+add_executable(test src/main.cpp)
