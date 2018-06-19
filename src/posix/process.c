@@ -1,5 +1,3 @@
-#if defined(__unix__) || defined(__APPLE__)
-
 #include "process.h"
 
 #include <limits.h>
@@ -20,8 +18,14 @@ typedef struct process {
 
 int process_init(process *process, int argc, char *argv[])
 {
+  assert(process != NULL);
   assert(argc > 0);
   assert(argv != NULL);
+  assert(argv[argc] == NULL);
+
+  for (int i = 0; i < argc; i++) {
+    assert(argv[i] != NULL);
+  }
   
   static const int PIPE_READ = 0;
   static const int PIPE_WRITE = 1;
@@ -95,5 +99,3 @@ end:
 
   return errno;
 }
-
-#endif
