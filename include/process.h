@@ -10,7 +10,8 @@ typedef enum {
   PROCESS_SUCCESS = 0,
   PROCESS_UNKNOWN_ERROR = -1,
   PROCESS_WAIT_TIMEOUT = -2,
-  PROCESS_STREAM_CLOSED = -3
+  PROCESS_STREAM_CLOSED = -3,
+  PROCESS_CLOSE_ERROR = -4
 } PROCESS_ERROR;
 
 /* argc and argv follow the conventions of the main function in c/c++ programs.
@@ -22,11 +23,14 @@ PROCESS_ERROR process_init(process *process);
 
 PROCESS_ERROR process_start(process *process, int argc, char *argv[]);
 
-/* Releases all resources associated with the process. Call this function if no
- * further interaction with the process is necessary. Call process_terminate or
- * process_kill first if you want to stop the process
- */
-PROCESS_ERROR process_free(process *process);
+PROCESS_ERROR process_write_stdin(process *process, const void *buffer,
+                                  uint32_t to_write, uint32_t *actual);
+
+PROCESS_ERROR process_read_stdout(process *process, void *buffer,
+                                  uint32_t to_read, uint32_t *actual);
+
+PROCESS_ERROR process_read_stderr(process *process, void *buffer,
+                                  uint32_t to_read, uint32_t *actual);
 
 /* Waits the specified amount of time for the process to exit. if the timeout is
  * exceeded PROCESS_WAIT_TIMEOUT is returned. If milliseconds is INFINITE the
@@ -50,14 +54,11 @@ PROCESS_ERROR process_terminate(process *process, uint32_t milliseconds);
  */
 PROCESS_ERROR process_kill(process *process, uint32_t milliseconds);
 
-PROCESS_ERROR process_write_stdin(process *process, const void *buffer,
-                                  uint32_t to_write, uint32_t *actual);
-
-PROCESS_ERROR process_read_stdout(process *process, void *buffer,
-                                  uint32_t to_read, uint32_t *actual);
-
-PROCESS_ERROR process_read_stderr(process *process, void *buffer,
-                                  uint32_t to_read, uint32_t *actual);
+/* Releases all resources associated with the process. Call this function if no
+ * further interaction with the process is necessary. Call process_terminate or
+ * process_kill first if you want to stop the process
+ */
+PROCESS_ERROR process_free(process *process);
 
 /* Returns the last system error code. On Windows the result of GetLastError
  * is returned and on POSIX the value of errno is returned. The value is not

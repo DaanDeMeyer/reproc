@@ -10,7 +10,12 @@ set_property(TARGET process PROPERTY C_EXTENSIONS OFF)
 
 if(MSVC)
   target_compile_options(process PRIVATE /W3)
-  target_compile_definitions(process PRIVATE _CRT_SECURE_NO_WARNINGS)
+  target_compile_definitions(process PRIVATE 
+    _CRT_SECURE_NO_WARNINGS
+    WIN32_LEAN_AND_MEAN
+    VC_EXTRALEAN
+    NOMINMAX
+  )
 else()
   target_compile_options(process PRIVATE -Wall -Wextra -pedantic -ansi)
 endif()
@@ -22,7 +27,7 @@ if(WIN32)
   target_sources(process PRIVATE src/windows/process.c src/windows/util.c)
 elseif(UNIX)
   target_include_directories(process PRIVATE src/posix)
-  target_sources(process PRIVATE src/posix/process.c)
+  target_sources(process PRIVATE src/posix/process.c src/posix/util.c)
 endif()
 
 add_executable(test test/main.c)

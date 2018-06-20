@@ -43,9 +43,6 @@ PROCESS_ERROR process_init(process *process)
   // Check if error occurred during pipe initialization
   PROCESS_ERROR error = system_error_to_process_error(errno);
 
-  // If error occurred we release all allocated resources
-  if (error != PROCESS_SUCCESS) { process_free(process); }
-
   return error;
 }
 

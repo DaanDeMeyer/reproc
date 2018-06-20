@@ -2,112 +2,149 @@
 #include "util.h"
 
 #include <assert.h>
+#include <malloc.h>
 #include <windows.h>
 
 typedef struct process {
   HANDLE stdin;
   HANDLE stdout;
   HANDLE stderr;
+  HANDLE child_stdin;
+  HANDLE child_stdout;
+  HANDLE child_stderr;
   PROCESS_INFORMATION info;
 } process;
 
 // Create each process in a new process group so we can send separate CTRL-BREAK
-// signals to each of them 
+// signals to each of them
 static const DWORD CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP;
 
-PROCESS_ERROR process_init(process *process, int argc, char *argv[])
+PROCESS_ERROR process_init(process *process)
 {
-  assert(process != NULL);
-  assert(argc > 0);
-  assert(argv != NULL);
-  assert(argv[argc] == NULL);
-
-  for (int i = 0; i < argc; i++) {
-    assert(argv[i] != NULL);
-  }
+  assert(process);
 
   process->stdin = NULL;
   process->stdout = NULL;
   process->stderr = NULL;
-  HANDLE child_stdin = NULL;
-  HANDLE child_stdout = NULL;
-  HANDLE child_stderr = NULL;
+  process->child_stdin = NULL;
+  process->child_stdout = NULL;
+  process->child_stderr = NULL;
 
   ZeroMemory(&process->info, sizeof(PROCESS_INFORMATION));
   process->info.hThread = NULL;
   process->info.hProcess = NULL;
+  process->info.dwProcessId = 0;
+
+  SetLastError(0);
+
+  pipe_init(&process->child_stdin, &process->stdin, &process->stdin) &&
+      pipe_init(&process->stdout, &process->child_stdout, &process->stdout) &&
+      pipe_init(&process->stderr, &process->child_stderr, &process->stderr);
+
+  PROCESS_ERROR error = system_error_to_process_error(GetLastError());
+
+  return error;
+}
+
+PROCESS_ERROR process_start(process *process, int argc, char *argv[])
+{
+  assert(process);
+
+  assert(argc > 0);
+  assert(argv);
+  assert(argv[argc]);
+
+  // Make sure process was initialized completely
+  assert(process->stdin);
+  assert(process->stdout);
+  assert(process->stderr);
+  assert(process->child_stdin);
+  assert(process->child_stdout);
+  assert(process->child_stderr);
+
+  // Make sure process_start is only called once for each process_init call
+  assert(!process->info.hThread);
+  assert(!process->info.hProcess);
+
+  for (int i = 0; i < argc; i++) {
+    assert(argv[i]);
+  }
 
   STARTUPINFOW startup_info;
   ZeroMemory(&startup_info, sizeof(STARTUPINFOW));
   startup_info.cb = sizeof(STARTUPINFOW);
   startup_info.dwFlags |= STARTF_USESTDHANDLES;
 
-  char *command_line_string = NULL;
-  wchar_t *command_line_wstring = NULL;
-
-  // Reset last error so we know for that if an error occurred it occurred in
-  // this function 
-  SetLastError(0);
-
-  if (!pipe_init(&child_stdin, &process->stdin, &process->stdin) ||
-      !pipe_init(&process->stdout, &child_stdout, &process->stdout) ||
-      !pipe_init(&process->stderr, &child_stderr, &process->stderr)) {
-    goto end;
-  }
-
   // Assign child pipe endpoints to child process stdin/stdout/stderr
-  startup_info.hStdInput = child_stdin;
-  startup_info.hStdOutput = child_stdout;
-  startup_info.hStdError = child_stderr;
+  startup_info.hStdInput = process->child_stdin;
+  startup_info.hStdOutput = process->child_stdout;
+  startup_info.hStdError = process->child_stderr;
 
   // Join argv to whitespace delimited string as required by CreateProcess
-  command_line_string = string_join(argv, argc);
+  char *command_line_string = string_join(argv, argc);
   // Convert utf-8 to utf-16 as required by CreateProcessW
-  command_line_wstring = string_to_wstring(command_line_string);
+  wchar_t *command_line_wstring = string_to_wstring(command_line_string);
 
-  if (!CreateProcessW(NULL, command_line_wstring, NULL, NULL, TRUE,
-                      CREATION_FLAGS, NULL, NULL, &startup_info,
-                      &process->info)) {
-    goto end;
-  }
+  SetLastError(0);
 
-end:
-  if (command_line_string) { free(command_line_string); }
-  if (command_line_wstring) { free(command_line_wstring); }
+  CreateProcessW(NULL, command_line_wstring, NULL, NULL, TRUE, CREATION_FLAGS,
+                 NULL, NULL, &startup_info, &process->info);
 
-  // We don't need the handle to the child process main thread
-  if (process->info.hThread) { CloseHandle(process->info.hThread); }
+  free(command_line_string);
+  free(command_line_wstring);
 
   PROCESS_ERROR error = system_error_to_process_error(GetLastError());
 
-  // Free all allocated resources if an error occurred while setting up the
-  // child process
-  if (error != PROCESS_SUCCESS) {
-    if (child_stdin) { CloseHandle(child_stdin); }
-    if (child_stdout) { CloseHandle(child_stdout); }
-    if (child_stderr) { CloseHandle(child_stderr); }
+  CloseHandle(process->child_stdin);
+  CloseHandle(process->child_stdout);
+  CloseHandle(process->child_stderr);
+  CloseHandle(process->info.hThread);
 
-    process_free(process);
-  }
+  // CreateProcessW error has priority over CloseHandle errors
+  error = error != PROCESS_SUCCESS
+              ? error
+              : system_error_to_process_error(GetLastError());
 
   return error;
 }
 
-PROCESS_ERROR process_free(process *process)
+PROCESS_ERROR process_write_stdin(process *process, const void *buffer,
+                                  uint32_t to_write, uint32_t *actual)
 {
-  // If process was succesfully created child pipe endpoints will be closed when
-  // the child process exits
-  if (process->stdin) { CloseHandle(process->stdin); }
-  if (process->stdout) { CloseHandle(process->stdout); }
-  if (process->stderr) { CloseHandle(process->stderr); }
+  assert(process);
+  assert(process->stdin);
+  assert(buffer);
 
-  if (process->info.hProcess) { CloseHandle(process->info.hProcess); }
+  return pipe_write(process->stdin, buffer, to_write, actual);
+}
 
-  return PROCESS_SUCCESS;
+PROCESS_ERROR process_read_stdout(process *process, void *buffer,
+                                  uint32_t to_read, uint32_t *actual)
+{
+  assert(process);
+  assert(process->stdout);
+  assert(buffer);
+
+  return pipe_read(process->stdout, buffer, to_read, actual);
+}
+
+PROCESS_ERROR process_read_stderr(process *process, void *buffer,
+                                  uint32_t to_read, uint32_t *actual)
+{
+  assert(process);
+  assert(process->stderr);
+  assert(buffer);
+
+  return pipe_read(process->stderr, buffer, to_read, actual);
 }
 
 PROCESS_ERROR process_wait(process *process, uint32_t milliseconds)
 {
+  assert(process);
+  assert(process->info.hProcess);
+
+  SetLastError(0);
+
   DWORD wait_result = WaitForSingleObject(process->info.hProcess, milliseconds);
 
   switch (wait_result) {
@@ -122,6 +159,11 @@ PROCESS_ERROR process_wait(process *process, uint32_t milliseconds)
 
 PROCESS_ERROR process_terminate(process *process, uint32_t milliseconds)
 {
+  assert(process);
+  assert(process->info.dwProcessId);
+
+  SetLastError(0);
+
   // Process group of process started with CREATE_NEW_PROCESS_GROUP is equal to
   // the process id
   if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, process->info.dwProcessId)) {
@@ -133,6 +175,11 @@ PROCESS_ERROR process_terminate(process *process, uint32_t milliseconds)
 
 PROCESS_ERROR process_kill(process *process, uint32_t milliseconds)
 {
+  assert(process);
+  assert(process->info.hProcess);
+
+  SetLastError(0);
+
   if (!TerminateProcess(process->info.hProcess, 0)) {
     return system_error_to_process_error(GetLastError());
   }
@@ -140,22 +187,23 @@ PROCESS_ERROR process_kill(process *process, uint32_t milliseconds)
   return process_wait(process, milliseconds);
 }
 
-PROCESS_ERROR process_write_stdin(process *process, const void *buffer,
-                                  uint32_t to_write, uint32_t *actual)
+PROCESS_ERROR process_free(process *process)
 {
-  return pipe_write(process->stdin, buffer, to_write, actual);
-}
+  assert(process);
 
-PROCESS_ERROR process_read_stdout(process *process, void *buffer,
-                                  uint32_t to_read, uint32_t *actual)
-{
-  return pipe_read(process->stdout, buffer, to_read, actual);
-}
+  SetLastError(0);
 
-PROCESS_ERROR process_read_stderr(process *process, void *buffer,
-                                  uint32_t to_read, uint32_t *actual)
-{
-  return pipe_read(process->stderr, buffer, to_read, actual);
+  // NULL checks so free works even if process was only partially initialized
+  // (can happen if error occurs during initialization or if start is not
+  // called)
+  if (process->stdin) { CloseHandle(process->stdin); };
+  if (process->stdout) { CloseHandle(process->stdout); };
+  if (process->stderr) { CloseHandle(process->stderr); };
+  if (process->info.hProcess) { CloseHandle(process->info.hProcess); };
+
+  PROCESS_ERROR error = system_error_to_process_error(GetLastError());
+
+  return error;
 }
 
 int64_t process_system_error(void) { return GetLastError(); }
