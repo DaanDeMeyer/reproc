@@ -1,22 +1,55 @@
 #include "process.h"
+#include "util.h"
 
-#include <limits.h>
-#include <errno.h>
-#include <signal.h>
-#include <unistd.h>
 #include <assert.h>
+#include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-typedef struct process {
-  // Parent pipe endpoint fd's (write, read, read)
-  int stdin_;
-  int stdout_;
-  int stderr_;
-  char stdin_buffer[PIPE_BUF];
-  char stdout_buffer[PIPE_BUF];
-  char stderr_buffer[PIPE_BUF];
-} process;
+struct process {
+  pid_t pid;
+  int stdin;
+  int stdout;
+  int stderr;
+  int child_stdin;
+  int child_stdout;
+  int child_stderr;
+};
 
-int process_init(process *process, int argc, char *argv[])
+PROCESS_ERROR process_init(process *process)
+{
+  assert(process != NULL);
+
+  process->pid = 0;
+
+  // File descriptor 0 won't be assigned by pipe() call so we use it as a null
+  // value
+  process->stdin = 0;
+  process->stdout = 0;
+  process->stderr = 0;
+  process->child_stdin = 0;
+  process->child_stdout = 0;
+  process->child_stderr = 0;
+
+  // Reset system error so we don't accidentely use a previous system error
+  errno = 0;
+
+  pipe_init(&process->child_stdin, &process->stdin);
+  pipe_init(&process->stdout, &process->child_stdout);
+  pipe_init(&process->stderr, &process->child_stderr);
+
+  // Check if error occurred during pipe initialization
+  PROCESS_ERROR error = system_error_to_process_error(errno);
+
+  // If error occurred we release all allocated resources
+  if (error != PROCESS_SUCCESS) { process_free(process); }
+
+  return error;
+}
+
+PROCESS_ERROR process_start(process *process, int argc, char *argv[])
 {
   assert(process != NULL);
   assert(argc > 0);
@@ -26,76 +59,61 @@ int process_init(process *process, int argc, char *argv[])
   for (int i = 0; i < argc; i++) {
     assert(argv[i] != NULL);
   }
-  
-  static const int PIPE_READ = 0;
-  static const int PIPE_WRITE = 1;
-
-  int stdin_pipe[2] = {-1, -1};
-  int stdout_pipe[2] = {-1, -1};
-  int stderr_pipe[2] = {-1, -1};
-
-  pid_t pid;
 
   errno = 0;
 
-  if (pipe(stdin_pipe) == -1) { goto end; }
-  process->stdin_ = stdin_pipe[PIPE_WRITE];
-
-  if (pipe(stdout_pipe) == -1) { goto end; }
-  process->stdout_ = stdout_pipe[PIPE_READ];
-
-  if (pipe(stderr_pipe) == -1) { goto end; }
-  process->stderr_ = stderr_pipe[PIPE_READ];
-
-  pid = fork();
-  if (pid == 0) {
+  process->pid = fork();
+  if (process->pid == 0) {
     // In child process
     // Since we're in a child process we can exit on error
     // why _exit? See:
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
 
     // redirect stdin, stdout and stderr
+    // _exit ensures open file descriptors (pipes) are closed
+    if (dup2(process->child_stdin, STDIN_FILENO) == -1) { _exit(errno); }
+    if (dup2(process->child_stdout, STDOUT_FILENO) == -1) { _exit(errno); }
+    if (dup2(process->child_stderr, STDERR_FILENO) == -1) { _exit(errno); }
 
-    if (dup2(stdin_pipe[PIPE_READ], STDIN_FILENO) == -1) {
-      // _exit ensures open file descriptors (pipes) are closed
-      _exit(errno);
-    }
+    // We copied the pipes to the actual streams (stdin/stdout/stderr) so we
+    // don't need the originals anymore
+    close(process->child_stdin);
+    close(process->child_stdout);
+    close(process->child_stderr);
 
-    if (dup2(stdout_pipe[PIPE_WRITE], STDOUT_FILENO) == -1) { _exit(errno); }
-
-    if (dup2(stderr_pipe[PIPE_WRITE], STDERR_FILENO) == -1) { _exit(errno); }
-
-    // We have no use anymore for the pipe endpoints (parent endpoints are not
-    // used by child and child endpoints have been copied to stdin, stdout and
-    // stderr)
-    close(stdin_pipe[PIPE_READ]);
-    close(stdin_pipe[PIPE_WRITE]);
-    close(stdout_pipe[PIPE_READ]);
-    close(stdout_pipe[PIPE_WRITE]);
-    close(stderr_pipe[PIPE_READ]);
-    close(stderr_pipe[PIPE_WRITE]);
+    // We also have no use for the parent endpoints of the pipes in the child
+    // process
+    close(process->stdin);
+    close(process->stdout);
+    close(process->stderr);
 
     // Replace forked child with process we want to run
     execvp(argv[0], argv);
 
+    // Exit if execvp fails
     _exit(errno);
   }
 
-end:
-  // Close child pipe endpoints (not needed by parent)
-  if (stdin_pipe[PIPE_READ] != -1) { close(stdin_pipe[PIPE_READ]); }
-  if (stdout_pipe[PIPE_WRITE] != -1) { close(stdout_pipe[PIPE_WRITE]); }
-  if (stderr_pipe[PIPE_WRITE] != -1) { close(stderr_pipe[PIPE_WRITE]); }
+  PROCESS_ERROR error = system_error_to_process_error(errno);
 
-  if (errno != 0) {
-    // error occurred so we release all remaining allocated resources
-    // parent pipe endpoints
-    if (stdin_pipe[PIPE_WRITE] != -1) { close(stdin_pipe[PIPE_WRITE]); }
-    if (stdout_pipe[PIPE_READ] != -1) { close(stdout_pipe[PIPE_READ]); }
-    if (stderr_pipe[PIPE_READ] != -1) { close(stderr_pipe[PIPE_READ]); }
-    // child proccess
-    if (pid != 0) { kill(pid, SIGTERM); }
-  }
-
-  return errno;
+  return error;
 }
+
+PROCESS_ERROR process_free(process *process)
+{
+  assert(process != NULL);
+
+  if (process->stdin) { close(process->stdin); }
+  if (process->stdout) { close(process->stdout); }
+  if (process->stderr) { close(process->stderr); }
+  if (process->child_stdin) { close(process->child_stdin); }
+  if (process->child_stdout) { close(process->child_stdout); }
+  if (process->child_stderr) { close(process->child_stdout); }
+
+  return PROCESS_SUCCESS;
+}
+
+// PROCESS_ERROR process_wait(process *process, uint32_t milliseconds)
+// {
+
+// }

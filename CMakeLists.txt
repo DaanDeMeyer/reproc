@@ -12,7 +12,7 @@ if(MSVC)
   target_compile_options(process PRIVATE /W3)
   target_compile_definitions(process PRIVATE _CRT_SECURE_NO_WARNINGS)
 else()
-  target_compile_options(process PRIVATE -Wall)
+  target_compile_options(process PRIVATE -Wall -Wextra -pedantic -ansi)
 endif()
 
 target_include_directories(process PUBLIC include)

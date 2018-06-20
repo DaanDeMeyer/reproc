@@ -18,7 +18,9 @@ typedef enum {
  * value (example: ["ls", "-l", NULL]). argc represents the number of arguments
  * excluding the NULL value (for the previous example, argc would be 2).
  */
-PROCESS_ERROR process_init(process *process, int argc, char *argv[]);
+PROCESS_ERROR process_init(process *process);
+
+PROCESS_ERROR process_start(process *process, int argc, char *argv[]);
 
 /* Releases all resources associated with the process. Call this function if no
  * further interaction with the process is necessary. Call process_terminate or
