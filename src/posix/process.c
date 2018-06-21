@@ -12,9 +12,9 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-Process process_alloc(void) { return malloc(sizeof(struct process)); }
+struct process *process_alloc(void) { return malloc(sizeof(struct process)); }
 
-PROCESS_LIB_ERROR process_init(Process process)
+PROCESS_LIB_ERROR process_init(struct process *process)
 {
   assert(process);
 
@@ -40,7 +40,7 @@ PROCESS_LIB_ERROR process_init(Process process)
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR process_start(Process process, int argc, char *argv[])
+PROCESS_LIB_ERROR process_start(struct process *process, int argc, char *argv[])
 {
   assert(process);
 
@@ -113,7 +113,7 @@ PROCESS_LIB_ERROR process_start(Process process, int argc, char *argv[])
   return error;
 }
 
-PROCESS_LIB_ERROR process_write(Process process, const void *buffer,
+PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,
                                 uint32_t to_write, uint32_t *actual)
 {
   assert(process);
@@ -124,8 +124,8 @@ PROCESS_LIB_ERROR process_write(Process process, const void *buffer,
   return pipe_write(process->stdin, buffer, to_write, actual);
 }
 
-PROCESS_LIB_ERROR process_read(Process process, void *buffer, uint32_t to_read,
-                               uint32_t *actual)
+PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
+                               uint32_t to_read, uint32_t *actual)
 {
   assert(process);
   assert(process->stdout);
@@ -135,7 +135,7 @@ PROCESS_LIB_ERROR process_read(Process process, void *buffer, uint32_t to_read,
   return pipe_read(process->stdout, buffer, to_read, actual);
 }
 
-PROCESS_LIB_ERROR process_read_stderr(Process process, void *buffer,
+PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
                                       uint32_t to_read, uint32_t *actual)
 {
   assert(process);
@@ -146,22 +146,19 @@ PROCESS_LIB_ERROR process_read_stderr(Process process, void *buffer,
   return pipe_read(process->stderr, buffer, to_read, actual);
 }
 
-PROCESS_LIB_ERROR process_wait(Process process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_wait(struct process *process, uint32_t milliseconds)
 {
   assert(process);
 
-  if (milliseconds == 0) {
-    return wait_no_hang(process);
-  }
+  if (milliseconds == 0) { return wait_no_hang(process); }
 
-  if (milliseconds == INFINITE) {
-    return wait_infinite(process);
-  }
+  if (milliseconds == INFINITE) { return wait_infinite(process); }
 
   return wait_timeout(process, milliseconds);
 }
 
-PROCESS_LIB_ERROR process_terminate(Process process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_terminate(struct process *process,
+                                    uint32_t milliseconds)
 {
   assert(process);
   assert(process->pid);
@@ -175,7 +172,7 @@ PROCESS_LIB_ERROR process_terminate(Process process, uint32_t milliseconds)
   return process_wait(process, milliseconds);
 }
 
-PROCESS_LIB_ERROR process_kill(Process process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
 {
   assert(process);
   assert(process->pid);
@@ -189,7 +186,7 @@ PROCESS_LIB_ERROR process_kill(Process process, uint32_t milliseconds)
   return process_wait(process, milliseconds);
 }
 
-PROCESS_LIB_ERROR process_free(Process process)
+PROCESS_LIB_ERROR process_free(struct process *process)
 {
   assert(process);
 

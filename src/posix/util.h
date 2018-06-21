@@ -21,8 +21,8 @@ PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer, uint32_t to_write,
 PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, uint32_t to_read,
                             uint32_t *actual);
 
-PROCESS_LIB_ERROR wait_no_hang(Process process);
+PROCESS_LIB_ERROR wait_no_hang(struct process *process);
 
-PROCESS_LIB_ERROR wait_infinite(Process process);
+PROCESS_LIB_ERROR wait_infinite(struct process *process);
 
-PROCESS_LIB_ERROR wait_timeout(Process process, uint32_t milliseconds);
+PROCESS_LIB_ERROR wait_timeout(struct process *process, uint32_t milliseconds);

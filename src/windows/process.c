@@ -6,9 +6,9 @@
 #include <malloc.h>
 #include <windows.h>
 
-Process process_alloc(void) { return malloc(sizeof(struct process)); }
+struct process *process_alloc(void) { return malloc(sizeof(struct process)); }
 
-PROCESS_LIB_ERROR process_init(Process process)
+PROCESS_LIB_ERROR process_init(struct process *process)
 {
   assert(process);
 
@@ -49,7 +49,7 @@ PROCESS_LIB_ERROR process_init(Process process)
 // signals to each of them
 static const DWORD CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP;
 
-PROCESS_LIB_ERROR process_start(Process process, int argc, char *argv[])
+PROCESS_LIB_ERROR process_start(struct process *process, int argc, char *argv[])
 {
   assert(process);
 
@@ -113,8 +113,8 @@ PROCESS_LIB_ERROR process_start(Process process, int argc, char *argv[])
   return error;
 }
 
-PROCESS_LIB_ERROR process_write(Process process, const void *buffer,
-                            uint32_t to_write, uint32_t *actual)
+PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,
+                                uint32_t to_write, uint32_t *actual)
 {
   assert(process);
   assert(process->stdin);
@@ -124,8 +124,8 @@ PROCESS_LIB_ERROR process_write(Process process, const void *buffer,
   return pipe_write(process->stdin, buffer, to_write, actual);
 }
 
-PROCESS_LIB_ERROR process_read(Process process, void *buffer, uint32_t to_read,
-                           uint32_t *actual)
+PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
+                               uint32_t to_read, uint32_t *actual)
 {
   assert(process);
   assert(process->stdout);
@@ -135,8 +135,8 @@ PROCESS_LIB_ERROR process_read(Process process, void *buffer, uint32_t to_read,
   return pipe_read(process->stdout, buffer, to_read, actual);
 }
 
-PROCESS_LIB_ERROR process_read_stderr(Process process, void *buffer,
-                                  uint32_t to_read, uint32_t *actual)
+PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
+                                      uint32_t to_read, uint32_t *actual)
 {
   assert(process);
   assert(process->stderr);
@@ -146,7 +146,7 @@ PROCESS_LIB_ERROR process_read_stderr(Process process, void *buffer,
   return pipe_read(process->stderr, buffer, to_read, actual);
 }
 
-PROCESS_LIB_ERROR process_wait(Process process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_wait(struct process *process, uint32_t milliseconds)
 {
   assert(process);
   assert(process->info.hProcess);
@@ -165,14 +165,15 @@ PROCESS_LIB_ERROR process_wait(Process process, uint32_t milliseconds)
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR process_terminate(Process process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_terminate(struct process *process,
+                                    uint32_t milliseconds)
 {
   assert(process);
   assert(process->info.dwProcessId);
 
   SetLastError(0);
 
-  // Process group of process started with CREATE_NEW_PROCESS_GROUP is equal to
+  // process group of process started with CREATE_NEW_PROCESS_GROUP is equal to
   // the process id
   if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, process->info.dwProcessId)) {
     return system_error_to_process_error(GetLastError());
@@ -181,7 +182,7 @@ PROCESS_LIB_ERROR process_terminate(Process process, uint32_t milliseconds)
   return process_wait(process, milliseconds);
 }
 
-PROCESS_LIB_ERROR process_kill(Process process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
 {
   assert(process);
   assert(process->info.hProcess);
@@ -195,7 +196,8 @@ PROCESS_LIB_ERROR process_kill(Process process, uint32_t milliseconds)
   return process_wait(process, milliseconds);
 }
 
-PROCESS_LIB_ERROR process_exit_status(Process process, int32_t *exit_status)
+PROCESS_LIB_ERROR process_exit_status(struct process *process,
+                                      int32_t *exit_status)
 {
   assert(process);
   assert(process->info.hProcess);
@@ -211,12 +213,12 @@ PROCESS_LIB_ERROR process_exit_status(Process process, int32_t *exit_status)
     return PROCESS_LIB_STILL_RUNNING;
   }
 
-  *exit_status = (int32_t) unsigned_exit_status;
+  *exit_status = (int32_t)unsigned_exit_status;
 
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR process_free(Process process)
+PROCESS_LIB_ERROR process_free(struct process *process)
 {
   assert(process);
 
