@@ -1,4 +1,5 @@
 #include "process.h"
+#include "process_impl.h"
 #include "util.h"
 
 #include <assert.h>
@@ -10,16 +11,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
-struct process {
-  pid_t pid;
-  int stdin;
-  int stdout;
-  int stderr;
-  int child_stdin;
-  int child_stdout;
-  int child_stderr;
-};
 
 Process process_alloc(void) { return malloc(sizeof(struct process)); }
 
@@ -158,56 +149,16 @@ PROCESS_LIB_ERROR process_read_stderr(Process process, void *buffer,
 PROCESS_LIB_ERROR process_wait(Process process, uint32_t milliseconds)
 {
   assert(process);
-  assert(process->pid);
-
-  errno = 0;
 
   if (milliseconds == 0) {
-    pid_t wait_result = waitpid(process->pid, NULL, WNOHANG);
-
-    switch (wait_result) {
-    case 0:
-      return PROCESS_LIB_WAIT_TIMEOUT;
-    case -1:
-      return system_error_to_process_error(errno);
-    default:
-      return PROCESS_LIB_SUCCESS;
-    }
+    return wait_no_hang(process);
   }
 
   if (milliseconds == INFINITE) {
-    return waitpid(process->pid, NULL, 0) > 0
-               ? PROCESS_LIB_SUCCESS
-               : system_error_to_process_error(errno);
+    return wait_infinite(process);
   }
 
-  // 0 < milliseconds < INFINITE
-
-  pid_t timeout_pid = fork();
-  if (timeout_pid == 0) {
-    // Set process group to the same process group of the process we're waiting
-    // for
-    setpgid(0, process->pid);
-
-    struct timeval tv;
-    tv.tv_sec = milliseconds / 1000;
-    tv.tv_usec = (milliseconds % 1000) * 1000;
-
-    select(0, NULL, NULL, NULL, &tv);
-
-    _exit(0);
-  }
-
-  // -process->pid waits for all processes in the process->pid process group
-  // which in this case will be the process we want to wait for and the timeout
-  // process. waitpid will return the process id of whichever process exits
-  // first.
-  pid_t exit_pid = waitpid(-process->pid, NULL, 0);
-
-  // If the timeout process exits first the timeout will have been exceeded
-  if (exit_pid == timeout_pid) { return PROCESS_LIB_WAIT_TIMEOUT; }
-
-  return PROCESS_LIB_SUCCESS;
+  return wait_timeout(process, milliseconds);
 }
 
 PROCESS_LIB_ERROR process_terminate(Process process, uint32_t milliseconds)
