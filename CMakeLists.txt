@@ -9,7 +9,9 @@ set_property(TARGET process PROPERTY C_STANDARD_REQUIRED ON)
 set_property(TARGET process PROPERTY C_EXTENSIONS OFF)
 
 if(MSVC)
-  target_compile_options(process PRIVATE /W3)
+  target_compile_options(process PRIVATE 
+    /W3
+  )
   target_compile_definitions(process PRIVATE 
     _CRT_SECURE_NO_WARNINGS
     WIN32_LEAN_AND_MEAN
@@ -17,7 +19,19 @@ if(MSVC)
     NOMINMAX
   )
 else()
-  target_compile_options(process PRIVATE -Wall -Wextra -pedantic -ansi)
+  target_compile_options(process PRIVATE 
+    -Werror
+    -Wall 
+    -Wextra 
+    -pedantic-errors
+    -Wshadow
+    -Wcast-qual
+    -Wstrict-prototypes
+    -Wmissing-prototypes
+  )
+  target_compile_definitions(process PRIVATE
+    _POSIX_C_SOURCE
+  )
 endif()
 
 target_include_directories(process PUBLIC include)
@@ -30,4 +44,8 @@ elseif(UNIX)
   target_sources(process PRIVATE src/posix/process.c src/posix/util.c)
 endif()
 
-add_executable(test test/main.c)
+enable_testing()
+
+add_executable(simple-process test/simple-process.c)
+target_link_libraries(simple-process process)
+add_test(NAME simple-process COMMAND simple-process)

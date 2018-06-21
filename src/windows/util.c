@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <malloc.h>
+#include <string.h>
 
 // Ensures pipe is inherited by child process
 static SECURITY_ATTRIBUTES security_attributes = {
@@ -33,6 +34,7 @@ PROCESS_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
 {
   assert(pipe);
   assert(buffer);
+  assert(actual);
 
   SetLastError(0);
 
@@ -49,6 +51,7 @@ PROCESS_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
 {
   assert(pipe);
   assert(buffer);
+  assert(actual);
 
   SetLastError(0);
 

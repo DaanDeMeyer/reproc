@@ -2,6 +2,7 @@
 
 #include "process.h"
 
+#include <stdint.h>
 #include <windows.h>
 
 /* Create pipe and make sure the handle indicated by do_not_inherit is not
