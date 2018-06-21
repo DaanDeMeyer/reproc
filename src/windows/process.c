@@ -204,6 +204,27 @@ PROCESS_LIB_ERROR process_kill(Process process, uint32_t milliseconds)
   return process_wait(process, milliseconds);
 }
 
+PROCESS_LIB_ERROR process_exit_status(Process process, int32_t *exit_status)
+{
+  assert(process);
+  assert(process->info.hProcess);
+
+  errno = 0;
+
+  DWORD unsigned_exit_status = 0;
+  if (!GetExitCodeProcess(process->info.hProcess, &unsigned_exit_status)) {
+    return system_error_to_process_error(GetLastError());
+  }
+
+  if (unsigned_exit_status == STILL_ACTIVE) {
+    return PROCESS_LIB_STILL_RUNNING;
+  }
+
+  *exit_status = (int32_t) unsigned_exit_status;
+
+  return PROCESS_LIB_SUCCESS;
+}
+
 PROCESS_LIB_ERROR process_free(Process process)
 {
   assert(process);

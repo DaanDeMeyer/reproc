@@ -14,7 +14,8 @@ typedef enum {
   PROCESS_LIB_UNKNOWN_ERROR = -1,
   PROCESS_LIB_WAIT_TIMEOUT = -2,
   PROCESS_LIB_STREAM_CLOSED = -3,
-  PROCESS_LIB_CLOSE_ERROR = -4
+  PROCESS_LIB_CLOSE_ERROR = -4,
+  PROCESS_LIB_STILL_RUNNING = -5
 } PROCESS_LIB_ERROR;
 
 /* Accolates memory for Process and returns the resulting pointer. NULL is
@@ -64,6 +65,8 @@ PROCESS_LIB_ERROR process_terminate(Process process, uint32_t milliseconds);
  * function waits indefinitely for the process to exit.
  */
 PROCESS_LIB_ERROR process_kill(Process process, uint32_t milliseconds);
+
+PROCESS_LIB_ERROR process_exit_status(Process process, int32_t *exit_status);
 
 /* Releases all resources associated with the process. Call this function if no
  * further interaction with the process is necessary. Call process_terminate or
