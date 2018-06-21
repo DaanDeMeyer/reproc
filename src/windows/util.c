@@ -10,11 +10,10 @@ static SECURITY_ATTRIBUTES security_attributes = {
     .bInheritHandle = TRUE,
     .lpSecurityDescriptor = NULL};
 
-PROCESS_ERROR pipe_init(HANDLE *read, HANDLE *write, HANDLE *do_not_inherit)
+PROCESS_LIB_ERROR pipe_init(HANDLE *read, HANDLE *write)
 {
   assert(read);
   assert(write);
-  assert(do_not_inherit);
 
   SetLastError(0);
 
@@ -22,14 +21,23 @@ PROCESS_ERROR pipe_init(HANDLE *read, HANDLE *write, HANDLE *do_not_inherit)
     return system_error_to_process_error(GetLastError());
   }
 
-  if (!SetHandleInformation(*do_not_inherit, HANDLE_FLAG_INHERIT, 0)) {
+  return PROCESS_LIB_SUCCESS;
+}
+
+PROCESS_LIB_ERROR pipe_disable_inherit(HANDLE pipe)
+{
+  assert(pipe);
+
+  SetLastError(0);
+
+  if (!SetHandleInformation(pipe, HANDLE_FLAG_INHERIT, 0)) {
     return system_error_to_process_error(GetLastError());
   }
 
-  return PROCESS_SUCCESS;
+  return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
+PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
                          uint32_t *actual)
 {
   assert(pipe);
@@ -43,10 +51,10 @@ PROCESS_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
     return system_error_to_process_error(GetLastError());
   }
 
-  return PROCESS_SUCCESS;
+  return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
+PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
                         uint32_t *actual)
 {
   assert(pipe);
@@ -59,7 +67,7 @@ PROCESS_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
     return system_error_to_process_error(GetLastError());
   }
 
-  return PROCESS_SUCCESS;
+  return PROCESS_LIB_SUCCESS;
 }
 
 char *string_join(char **string_array, int array_length)
@@ -108,16 +116,16 @@ wchar_t *string_to_wstring(const char *string)
   return wstring;
 }
 
-PROCESS_ERROR system_error_to_process_error(DWORD system_error)
+PROCESS_LIB_ERROR system_error_to_process_error(DWORD system_error)
 {
   switch (system_error) {
   case ERROR_SUCCESS:
-    return PROCESS_SUCCESS;
+    return PROCESS_LIB_SUCCESS;
   case ERROR_BROKEN_PIPE:
-    return PROCESS_STREAM_CLOSED;
+    return PROCESS_LIB_STREAM_CLOSED;
   case ERROR_INVALID_HANDLE:
-    return PROCESS_CLOSE_ERROR;
+    return PROCESS_LIB_CLOSE_ERROR;
   default:
-    return PROCESS_UNKNOWN_ERROR;
+    return PROCESS_LIB_UNKNOWN_ERROR;
   }
 }

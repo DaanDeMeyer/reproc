@@ -21,12 +21,9 @@ struct process {
   int child_stderr;
 };
 
-Process process_alloc(void)
-{
-  return malloc(sizeof(struct process));;
-}
+Process process_alloc(void) { return malloc(sizeof(struct process)); }
 
-PROCESS_ERROR process_init(Process process)
+PROCESS_LIB_ERROR process_init(Process process)
 {
   assert(process);
 
@@ -41,15 +38,18 @@ PROCESS_ERROR process_init(Process process)
   process->child_stdout = 0;
   process->child_stderr = 0;
 
-  PROCESS_ERROR error = PROCESS_SUCCESS;
-  error = error ? error : pipe_init(&process->child_stdin, &process->stdin);
-  error = error ? error : pipe_init(&process->stdout, &process->child_stdout);
-  error = error ? error : pipe_init(&process->stderr, &process->child_stderr);
+  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
+  error = pipe_init(&process->child_stdin, &process->stdin);
+  if (error) { return error; }
+  error = pipe_init(&process->stdout, &process->child_stdout);
+  if (error) { return error; }
+  error = pipe_init(&process->stderr, &process->child_stderr);
+  if (error) { return error; }
 
-  return error;
+  return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_ERROR process_start(Process process, int argc, char *argv[])
+PROCESS_LIB_ERROR process_start(Process process, int argc, char *argv[])
 {
   assert(process);
 
@@ -107,7 +107,7 @@ PROCESS_ERROR process_start(Process process, int argc, char *argv[])
     _exit(errno);
   }
 
-  PROCESS_ERROR error = system_error_to_process_error(errno);
+  PROCESS_LIB_ERROR error = system_error_to_process_error(errno);
 
   close(process->child_stdin);
   close(process->child_stdout);
@@ -122,8 +122,8 @@ PROCESS_ERROR process_start(Process process, int argc, char *argv[])
   return error;
 }
 
-PROCESS_ERROR process_write(Process process, const void *buffer,
-                            uint32_t to_write, uint32_t *actual)
+PROCESS_LIB_ERROR process_write(Process process, const void *buffer,
+                                uint32_t to_write, uint32_t *actual)
 {
   assert(process);
   assert(process->stdin);
@@ -133,8 +133,8 @@ PROCESS_ERROR process_write(Process process, const void *buffer,
   return pipe_write(process->stdin, buffer, to_write, actual);
 }
 
-PROCESS_ERROR process_read(Process process, void *buffer, uint32_t to_read,
-                           uint32_t *actual)
+PROCESS_LIB_ERROR process_read(Process process, void *buffer, uint32_t to_read,
+                               uint32_t *actual)
 {
   assert(process);
   assert(process->stdout);
@@ -144,8 +144,8 @@ PROCESS_ERROR process_read(Process process, void *buffer, uint32_t to_read,
   return pipe_read(process->stdout, buffer, to_read, actual);
 }
 
-PROCESS_ERROR process_read_stderr(Process process, void *buffer,
-                                  uint32_t to_read, uint32_t *actual)
+PROCESS_LIB_ERROR process_read_stderr(Process process, void *buffer,
+                                      uint32_t to_read, uint32_t *actual)
 {
   assert(process);
   assert(process->stderr);
@@ -155,7 +155,7 @@ PROCESS_ERROR process_read_stderr(Process process, void *buffer,
   return pipe_read(process->stderr, buffer, to_read, actual);
 }
 
-PROCESS_ERROR process_wait(Process process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_wait(Process process, uint32_t milliseconds)
 {
   assert(process);
   assert(process->pid);
@@ -167,17 +167,17 @@ PROCESS_ERROR process_wait(Process process, uint32_t milliseconds)
 
     switch (wait_result) {
     case 0:
-      return PROCESS_WAIT_TIMEOUT;
+      return PROCESS_LIB_WAIT_TIMEOUT;
     case -1:
       return system_error_to_process_error(errno);
     default:
-      return PROCESS_SUCCESS;
+      return PROCESS_LIB_SUCCESS;
     }
   }
 
   if (milliseconds == INFINITE) {
     return waitpid(process->pid, NULL, 0) > 0
-               ? PROCESS_SUCCESS
+               ? PROCESS_LIB_SUCCESS
                : system_error_to_process_error(errno);
   }
 
@@ -205,12 +205,12 @@ PROCESS_ERROR process_wait(Process process, uint32_t milliseconds)
   pid_t exit_pid = waitpid(-process->pid, NULL, 0);
 
   // If the timeout process exits first the timeout will have been exceeded
-  if (exit_pid == timeout_pid) { return PROCESS_WAIT_TIMEOUT; }
+  if (exit_pid == timeout_pid) { return PROCESS_LIB_WAIT_TIMEOUT; }
 
-  return PROCESS_SUCCESS;
+  return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_ERROR process_terminate(Process process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_terminate(Process process, uint32_t milliseconds)
 {
   assert(process);
   assert(process->pid);
@@ -224,7 +224,7 @@ PROCESS_ERROR process_terminate(Process process, uint32_t milliseconds)
   return process_wait(process, milliseconds);
 }
 
-PROCESS_ERROR process_kill(Process process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_kill(Process process, uint32_t milliseconds)
 {
   assert(process);
   assert(process->pid);
@@ -238,7 +238,7 @@ PROCESS_ERROR process_kill(Process process, uint32_t milliseconds)
   return process_wait(process, milliseconds);
 }
 
-PROCESS_ERROR process_free(Process process)
+PROCESS_LIB_ERROR process_free(Process process)
 {
   assert(process);
 
@@ -254,7 +254,9 @@ PROCESS_ERROR process_free(Process process)
 
   free(process);
 
-  PROCESS_ERROR error = system_error_to_process_error(errno);
+  PROCESS_LIB_ERROR error = system_error_to_process_error(errno);
 
   return error;
 }
+
+int64_t process_system_error(void) { return errno; }

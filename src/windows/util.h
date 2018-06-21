@@ -8,12 +8,14 @@
 /* Create pipe and make sure the handle indicated by do_not_inherit is not
  * inherited.
  */
-PROCESS_ERROR pipe_init(HANDLE *read, HANDLE *write, HANDLE *do_not_inherit);
+PROCESS_LIB_ERROR pipe_init(HANDLE *read, HANDLE *write);
 
-PROCESS_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
+PROCESS_LIB_ERROR pipe_disable_inherit(HANDLE pipe);
+
+PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
                         uint32_t *actual);
 
-PROCESS_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
+PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
                          uint32_t *actual);
 
 /* Joins all the strings in string_array together using a single whitespace as
@@ -28,4 +30,4 @@ wchar_t *string_to_wstring(const char *string);
  * PROCESS_UNKNOWN_ERROR if no matching process error is defined for the given
  * system error.
  */
-PROCESS_ERROR system_error_to_process_error(DWORD system_error);
+PROCESS_LIB_ERROR system_error_to_process_error(DWORD system_error);

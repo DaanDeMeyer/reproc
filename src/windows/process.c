@@ -15,7 +15,9 @@ struct process {
   HANDLE child_stderr;
 };
 
-PROCESS_ERROR process_init(process *process)
+Process process_alloc(void) { return malloc(sizeof(struct process)); }
+
+PROCESS_LIB_ERROR process_init(Process process)
 {
   assert(process);
 
@@ -32,25 +34,31 @@ PROCESS_ERROR process_init(process *process)
   process->child_stderr = NULL;
 
   // Continue allocating pipes until error occurs (PROCESS_SUCCESS = 0)
-  PROCESS_ERROR error = PROCESS_SUCCESS;
-  error = error ? error
-                : pipe_init(&process->child_stdin, &process->stdin,
-                            &process->stdin);
-  error = error ? error
-                : pipe_init(&process->stdout, &process->child_stdout,
-                            &process->stdout);
-  error = error ? error
-                : pipe_init(&process->stderr, &process->child_stderr,
-                            &process->stderr);
+  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
 
-  return error;
+  error = pipe_init(&process->child_stdin, &process->stdin);
+  if (error) { return error; }
+  error = pipe_disable_inherit(process->stdin);
+  if (error) { return error; }
+
+  error = pipe_init(&process->stdout, &process->child_stdout);
+  if (error) { return error; }
+  error = pipe_disable_inherit(process->stdout);
+  if (error) { return error; }
+
+  error = pipe_init(&process->stderr, &process->child_stderr);
+  if (error) { return error; }
+  error = pipe_disable_inherit(process->stderr);
+  if (error) { return error; }
+
+  return PROCESS_LIB_SUCCESS;
 }
 
 // Create each process in a new process group so we can send separate CTRL-BREAK
 // signals to each of them
 static const DWORD CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP;
 
-PROCESS_ERROR process_start(process *process, int argc, char *argv[])
+PROCESS_LIB_ERROR process_start(Process process, int argc, char *argv[])
 {
   assert(process);
 
@@ -96,7 +104,7 @@ PROCESS_ERROR process_start(process *process, int argc, char *argv[])
   free(command_line_string);
   free(command_line_wstring);
 
-  PROCESS_ERROR error = system_error_to_process_error(GetLastError());
+  PROCESS_LIB_ERROR error = system_error_to_process_error(GetLastError());
 
   CloseHandle(process->info.hThread);
 
@@ -114,7 +122,7 @@ PROCESS_ERROR process_start(process *process, int argc, char *argv[])
   return error;
 }
 
-PROCESS_ERROR process_write(process *process, const void *buffer,
+PROCESS_LIB_ERROR process_write(Process process, const void *buffer,
                             uint32_t to_write, uint32_t *actual)
 {
   assert(process);
@@ -125,7 +133,7 @@ PROCESS_ERROR process_write(process *process, const void *buffer,
   return pipe_write(process->stdin, buffer, to_write, actual);
 }
 
-PROCESS_ERROR process_read(process *process, void *buffer, uint32_t to_read,
+PROCESS_LIB_ERROR process_read(Process process, void *buffer, uint32_t to_read,
                            uint32_t *actual)
 {
   assert(process);
@@ -136,7 +144,7 @@ PROCESS_ERROR process_read(process *process, void *buffer, uint32_t to_read,
   return pipe_read(process->stdout, buffer, to_read, actual);
 }
 
-PROCESS_ERROR process_read_stderr(process *process, void *buffer,
+PROCESS_LIB_ERROR process_read_stderr(Process process, void *buffer,
                                   uint32_t to_read, uint32_t *actual)
 {
   assert(process);
@@ -147,7 +155,7 @@ PROCESS_ERROR process_read_stderr(process *process, void *buffer,
   return pipe_read(process->stderr, buffer, to_read, actual);
 }
 
-PROCESS_ERROR process_wait(process *process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_wait(Process process, uint32_t milliseconds)
 {
   assert(process);
   assert(process->info.hProcess);
@@ -158,15 +166,15 @@ PROCESS_ERROR process_wait(process *process, uint32_t milliseconds)
 
   switch (wait_result) {
   case WAIT_TIMEOUT:
-    return PROCESS_WAIT_TIMEOUT;
+    return PROCESS_LIB_WAIT_TIMEOUT;
   case WAIT_FAILED:
     return system_error_to_process_error(GetLastError());
   }
 
-  return PROCESS_SUCCESS;
+  return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_ERROR process_terminate(process *process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_terminate(Process process, uint32_t milliseconds)
 {
   assert(process);
   assert(process->info.dwProcessId);
@@ -182,7 +190,7 @@ PROCESS_ERROR process_terminate(process *process, uint32_t milliseconds)
   return process_wait(process, milliseconds);
 }
 
-PROCESS_ERROR process_kill(process *process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_kill(Process process, uint32_t milliseconds)
 {
   assert(process);
   assert(process->info.hProcess);
@@ -196,7 +204,7 @@ PROCESS_ERROR process_kill(process *process, uint32_t milliseconds)
   return process_wait(process, milliseconds);
 }
 
-PROCESS_ERROR process_free(process *process)
+PROCESS_LIB_ERROR process_free(Process process)
 {
   assert(process);
 
@@ -215,7 +223,7 @@ PROCESS_ERROR process_free(process *process)
   if (process->child_stdout) { CloseHandle(process->child_stdout); }
   if (process->child_stderr) { CloseHandle(process->child_stderr); }
 
-  PROCESS_ERROR error = system_error_to_process_error(GetLastError());
+  PROCESS_LIB_ERROR error = system_error_to_process_error(GetLastError());
 
   return error;
 }
