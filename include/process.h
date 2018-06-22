@@ -18,6 +18,10 @@ typedef enum {
   PROCESS_LIB_STILL_RUNNING = -5
 } PROCESS_LIB_ERROR;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Accolates memory for Process and returns the resulting pointer. NULL is
  * returned on failure.
  */
@@ -33,7 +37,8 @@ PROCESS_LIB_ERROR process_init(Process *process);
  * value (example: ["ls", "-l", NULL]). argc represents the number of arguments
  * excluding the NULL value (for the previous example, argc would be 2).
  */
-PROCESS_LIB_ERROR process_start(Process *process, int argc, char *argv[]);
+PROCESS_LIB_ERROR process_start(Process *process, int argc, const char *argv[],
+                                const char *working_directory);
 
 PROCESS_LIB_ERROR process_write(Process *process, const void *buffer,
                                 uint32_t to_write, uint32_t *actual);
@@ -83,3 +88,7 @@ const char *process_error_to_string(PROCESS_LIB_ERROR error);
  * that occurred in one of process-lib's functions.
  */
 int64_t process_system_error(void);
+
+#ifdef __cplusplus
+}
+#endif

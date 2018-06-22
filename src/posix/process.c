@@ -41,7 +41,9 @@ PROCESS_LIB_ERROR process_init(struct process *process)
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR process_start(struct process *process, int argc, char *argv[])
+PROCESS_LIB_ERROR process_start(struct process *process, int argc,
+                                const char *argv[],
+                                const char *working_directory)
 {
   assert(process);
 
@@ -74,6 +76,8 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc, char *argv[])
     // Put process in its own process group which is needed by process_wait
     setpgid(0, 0);
 
+    if (working_directory) { chdir(working_directory); }
+
     // redirect stdin, stdout and stderr
     // _exit ensures open file descriptors (pipes) are closed
     if (dup2(process->child_stdin, STDIN_FILENO) == -1) { _exit(errno); }
@@ -93,7 +97,8 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc, char *argv[])
     close(process->stderr);
 
     // Replace forked child with process we want to run
-    execvp(argv[0], argv);
+    // Safe cast (execvp doesn't actually change the contents of argv)
+    execvp(argv[0], (char **) argv);
 
     // Exit if execvp fails
     _exit(errno);
