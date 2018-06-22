@@ -100,13 +100,13 @@ expires. POSIX has a similar function called
 support specifying a timeout value.
 
 To support waiting with a timeout value on POSIX, each process is put in its own
-process group with the same id as the process id with a call to `setpgid(0, 0)`
-after forking the process. When calling the `process_wait` function, a timeout
-process is forked which puts itself in the same process group as the process we
-want to wait for with the same `setpgid` function and puts itself to sleep for
-the requested amount of time (timeout value) before exiting. We then call the
-`waitpid` function in the main process but instead of passing the process id of
-the process we want to wait for we pass the negative value of the process id
+process group with the same id as the process id with a call to `setpgid` after
+forking the process. When calling the `process_wait` function, a timeout process
+is forked which we put in the same process group as the process we want to wait
+for with the same `setpgid` function and puts itself to sleep for the requested
+amount of time (timeout value) before exiting. We then call the `waitpid`
+function in the main process but instead of passing the process id of the
+process we want to wait for we pass the negative value of the process id
 `-process->pid`. Passing a negative value for the process id to `waitpid`
 instructs it to wait for all processes in the process group of the absolute
 value of the passed negative value. In our case it will wait for both the
