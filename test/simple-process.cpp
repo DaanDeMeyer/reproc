@@ -23,24 +23,22 @@ TEST_CASE("simple-process")
   error = process_start(process, argc, argv, NULL);
   REQUIRE(!error);
 
-  error = process_write(process, stdout_msg, strlen(stdout_msg), &actual);
+  error = process_write(process, stdout_msg, (uint32_t) strlen(stdout_msg),
+                        &actual);
   REQUIRE(!error);
 
   error = process_read(process, buffer, 1000, &actual);
   REQUIRE(!error);
 
-  INFO(actual);
-
   buffer[actual] = '\0';
   CHECK_EQ(buffer, stdout_msg);
 
-  error = process_write(process, stderr_msg, strlen(stderr_msg), &actual);
+  error = process_write(process, stderr_msg, (uint32_t) strlen(stderr_msg),
+                        &actual);
   REQUIRE(!error);
 
   error = process_read_stderr(process, buffer, 1000, &actual);
   REQUIRE(!error);
-
-  INFO(actual);
 
   buffer[actual] = '\0';
   CHECK_EQ(buffer, stderr_msg);
@@ -51,7 +49,7 @@ TEST_CASE("simple-process")
   int32_t exit_status;
   error = process_exit_status(process, &exit_status);
   REQUIRE(!error);
-  REQUIRE(exit_status == 0);
+  REQUIRE((exit_status == 0));
 
   error = process_free(process);
   REQUIRE(!error);

@@ -5,6 +5,7 @@ if(MSVC)
   target_compile_options(common-warnings INTERFACE 
     $<BUILD_INTERFACE:
       /W3
+      /WX
     >
   )
 else()
