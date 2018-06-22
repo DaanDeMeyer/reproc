@@ -18,23 +18,43 @@ TEST_CASE("simple-process")
   error = process_start(process, argc, argv, NULL);
   REQUIRE(!error);
 
-  error = process_write(process, "stdout\n", 7, &actual);
+  error = process_write(process, "one\n", 10, &actual);
   REQUIRE(!error);
 
   error = process_read(process, buffer, 1000, &actual);
   REQUIRE(!error);
   
   buffer[actual] = '\0';
-  REQUIRE_EQ(buffer, "stdout\n");
+  CHECK_EQ(buffer, "one\n");
 
-  error = process_write(process, "stderr\n", 7, &actual);
+  error = process_write(process, "two\n", 10, &actual);
   REQUIRE(!error);
 
-  error = process_read_stderr(process, buffer, 1000, &actual);
+  error = process_read(process, buffer, 1000, &actual);
   REQUIRE(!error);
-
+  
   buffer[actual] = '\0';
-  REQUIRE_EQ(buffer, "stderr\n");
+  CHECK_EQ(buffer, "two\n");
+
+  error = process_write(process, "three\n", 10, &actual);
+  REQUIRE(!error);
+
+  error = process_read(process, buffer, 1000, &actual);
+  REQUIRE(!error);
+  
+  buffer[actual] = '\0';
+  CHECK_EQ(buffer, "three\n");
+  
+  // error = process_write(process, "stderr\n", 10, &actual);
+  // REQUIRE(!error);
+
+  // error = process_read_stderr(process, buffer, 1000, &actual);
+  // REQUIRE(!error);
+
+  // INFO(actual);
+
+  // buffer[actual] = '\0';
+  // CHECK_EQ(buffer, "stderr");
 
   error = process_wait(process, timeout);
   REQUIRE(!error);
