@@ -6,3 +6,4 @@ BreakBeforeBraces: Linux
 AllowShortBlocksOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 SpaceAfterCStyleCast: true
+AllowShortCaseLabelsOnASingleLine: true

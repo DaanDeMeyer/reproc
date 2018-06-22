@@ -44,8 +44,12 @@ elseif(UNIX)
   target_sources(process PRIVATE src/posix/process.c src/posix/util.c)
 endif()
 
-enable_testing()
 
-add_executable(simple-process test/simple-process.c)
-target_link_libraries(simple-process process)
-add_test(NAME simple-process COMMAND simple-process)
+add_executable(echo test/helpers/echo.c)
+
+add_executable(test "")
+target_link_libraries(test process)
+target_sources(test PRIVATE
+  test/simple-process.c  
+)
+

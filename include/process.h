@@ -74,6 +74,8 @@ PROCESS_LIB_ERROR process_exit_status(Process *process, int32_t *exit_status);
  */
 PROCESS_LIB_ERROR process_free(Process *process);
 
+const char *process_error_to_string(PROCESS_LIB_ERROR error);
+
 /* Returns the last system error code. On Windows the result of GetLastError
  * is returned and on POSIX the value of errno is returned. The value is not
  * stored so other functions that modify the results of GetLastError or
