@@ -8,56 +8,63 @@ terminating it.
 
 ### Opaque pointer
 
-process-lib uses a single struct (struct process) to store information between
-calls to the library functions. This struct is exposed to the user as an opaque
-pointer (Process).
+process-lib uses a process struct to store information between calls to library
+functions. This struct is forward-declared in process.h with each
+platform-specific implementation hidden in the source files for that platform.
+
+This struct is typedefed to Process and exposed to the user as an opaque pointer
+(Process \*).
 
 ```c
-typedef struct process *Process;
+typedef struct process Process;
 ```
 
-This struct is forward-declared in the process.h header with an implementation
-provided in the source file of each supported platform.
+The process.h header only contains a forward-declaration of the process struct.
+We provide an implementation in the source files of each supported platform
+where we store platform-specific members such as pipe handles, process id's,
+....
 
 Advantages:
 
-- Fewer includes required in the process.h header
+- Fewer includes required in process.h
 
-  Because Process is an opaque pointer with no implementation in the header file
+  Because we only have a forward declaration of the process struct in process.h
   we don't need any platform-specific includes (such as windows.h) in the header
-  file to define the data types of all the members of Process.
+  file to define the data types of all the members that the struct contains.
 
 - No leaking of implementation details
 
-  Including the process.h header only gives the user access to the opaque
-  pointer and not its implementation which means its impossible to access the
-  internals of Process. This allows us to change its implementation between
-  versions without having to worry about breaking user code.
+  Including the process.h header only gives the user access to the forward
+  declaration of the process struct and not its implementation which means its
+  impossible to access the internals of the struct outside of the library. This
+  allows us to change its implementation between versions without having to
+  worry about breaking user code.
 
 Disadvantages:
 
-- No simple allocation of Process on the stack
+- No simple allocation on the stack
 
   Because including process.h does not give the compiler access to the full
-  definition of Process it is unable to allocate its implementation on the stack
-  since it doesn't know its size. Allocating on the stack is still possible but
-  requires functions such as [alloca](https://linux.die.net/man/3/alloca) which
-  is harder compared to just writing
+  definition of the process struct it is unable to allocate its implementation
+  on the stack since it doesn't know its size. Allocating on the stack is still
+  possible but requires functions such as
+  [alloca](https://linux.die.net/man/3/alloca) which is harder compared to just
+  writing
 
   ```c
   Process process;
   ```
 
-- Not possible to allocate Process on the heap without help from the library
+- Not possible to allocate on the heap without help from the library
 
-  Because process.h does not include the implementation of Process the `sizeof`
-  operator won't work to figure out the size of Process's underlying struct
-  since the type is incomplete.
+  Because the compiler doesn't know the size of the process struct the user
+  can't easily allocate the process struct on the heap because it can't figure
+  out its size with sizeof.
 
   Because the library has to allocate memory regardless (see
   [Memory Allocation](#memory-allocation)), this problem is solved by providing
   the `process_alloc` function which allocates the required memory returns the
-  resulting Process to the user. If no memory allocations were required in the
+  resulting pointer to the user. If no memory allocations were required in the
   rest of the library, `process_alloc` would likely be replaced with a
   `process_size` function which would allow the user to allocate the required
   memory himself and allow the library code to be completely free of dynamic
@@ -66,17 +73,17 @@ Disadvantages:
 ### Memory allocation
 
 process-lib aims to do as few dynamic memory allocations as possible. As of this
-moment, memory allocation is only done when allocating memory for the Process
-opaque pointer and when converting the array of program arguments to a single
-string as required by the Windows
+moment, memory allocation is only done when allocating memory for the process
+struct in `process_alloc` and when converting the array of program arguments to
+a single string as required by the Windows
 [CreateProcess](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms682425(v=vs.85).aspx>)
 function.
 
 I have not found a way to avoid allocating memory while keeping a cross-platform
 api for POSIX and Windows. (Windows `CreateProcessW` requires a single string of
 arguments delimited by spaces while POSIX `execvp` requires an array of
-arguments). Since process-lib's api takes arguments as an array we have to
-allocate memory to convert the array into a single string as required by
+arguments). Since process-lib's api takes process arguments as an array we have
+to allocate memory to convert the array into a single string as required by
 Windows.
 
 process-lib uses the standard `malloc` and `free` functions to allocate and free
