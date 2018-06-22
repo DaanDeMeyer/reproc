@@ -189,7 +189,7 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
 
   SetLastError(0);
 
-  if (!TerminateProcess(process->info.hProcess, 0)) {
+  if (!TerminateProcess(process->info.hProcess, 1)) {
     return system_error_to_process_error(GetLastError());
   }
 
@@ -213,7 +213,7 @@ PROCESS_LIB_ERROR process_exit_status(struct process *process,
     return PROCESS_LIB_STILL_RUNNING;
   }
 
-  *exit_status = (int32_t)unsigned_exit_status;
+  *exit_status = (int32_t) unsigned_exit_status;
 
   return PROCESS_LIB_SUCCESS;
 }

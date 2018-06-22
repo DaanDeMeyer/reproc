@@ -36,13 +36,13 @@ PROCESS_LIB_ERROR process_init(Process *process);
 PROCESS_LIB_ERROR process_start(Process *process, int argc, char *argv[]);
 
 PROCESS_LIB_ERROR process_write(Process *process, const void *buffer,
-                            uint32_t to_write, uint32_t *actual);
+                                uint32_t to_write, uint32_t *actual);
 
 PROCESS_LIB_ERROR process_read(Process *process, void *buffer, uint32_t to_read,
-                           uint32_t *actual);
+                               uint32_t *actual);
 
 PROCESS_LIB_ERROR process_read_stderr(Process *process, void *buffer,
-                                  uint32_t to_read, uint32_t *actual);
+                                      uint32_t to_read, uint32_t *actual);
 
 /* Waits the specified amount of time for the process to exit. if the timeout is
  * exceeded PROCESS_WAIT_TIMEOUT is returned. If milliseconds is INFINITE the

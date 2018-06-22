@@ -76,10 +76,13 @@ PROCESS_LIB_ERROR wait_no_hang(struct process *process)
 
   errno = 0;
 
-  pid_t wait_result = waitpid(process->pid, NULL, WNOHANG);
+  int status = 0;
+  pid_t wait_result = waitpid(process->pid, &status, WNOHANG);
 
   if (wait_result == 0) { return PROCESS_LIB_WAIT_TIMEOUT; }
   if (wait_result == -1) { return system_error_to_process_error(errno); }
+
+  process->exit_status = parse_exit_status(status);
 
   return PROCESS_LIB_SUCCESS;
 }
@@ -91,9 +94,12 @@ PROCESS_LIB_ERROR wait_infinite(struct process *process)
 
   errno = 0;
 
-  pid_t wait_result = waitpid(process->pid, NULL, 0);
+  int status = 0;
+  pid_t wait_result = waitpid(process->pid, &status, 0);
 
   if (wait_result == -1) { return system_error_to_process_error(errno); }
+
+  process->exit_status = parse_exit_status(status);
 
   return PROCESS_LIB_SUCCESS;
 }
@@ -108,9 +114,7 @@ PROCESS_LIB_ERROR wait_timeout(struct process *process, uint32_t milliseconds)
 
   pid_t timeout_pid = fork();
 
-  if (timeout_pid == -1) {
-    return system_error_to_process_error(errno);
-  }
+  if (timeout_pid == -1) { return system_error_to_process_error(errno); }
 
   if (timeout_pid == 0) {
     // Set process group to the same process group of the process we're waiting
@@ -118,7 +122,7 @@ PROCESS_LIB_ERROR wait_timeout(struct process *process, uint32_t milliseconds)
     setpgid(0, process->pid);
 
     struct timeval tv;
-    tv.tv_sec = milliseconds / 1000; // ms -> s
+    tv.tv_sec = milliseconds / 1000;           // ms -> s
     tv.tv_usec = (milliseconds % 1000) * 1000; // leftover ms -> us
 
     // Select with no fd's can be used as a makeshift sleep function
@@ -131,11 +135,22 @@ PROCESS_LIB_ERROR wait_timeout(struct process *process, uint32_t milliseconds)
   // which in this case will be the process we want to wait for and the timeout
   // process. waitpid will return the process id of whichever process exits
   // first.
-  pid_t exit_pid = waitpid(-process->pid, NULL, 0);
+  int status = 0;
+  pid_t exit_pid = waitpid(-process->pid, &status, 0);
 
   if (exit_pid == -1) { return system_error_to_process_error(errno); }
   // If the timeout process exits first the timeout will have been exceeded
   if (exit_pid == timeout_pid) { return PROCESS_LIB_WAIT_TIMEOUT; }
 
+  process->exit_status = parse_exit_status(status);
+
   return PROCESS_LIB_SUCCESS;
+}
+
+int32_t parse_exit_status(int status)
+{
+  if (WIFEXITED(status)) { return WEXITSTATUS(status); }
+
+  assert(WIFSIGNALED(status));
+  return WTERMSIG(status);
 }

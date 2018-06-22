@@ -151,6 +151,8 @@ PROCESS_LIB_ERROR process_wait(struct process *process, uint32_t milliseconds)
 {
   assert(process);
 
+  if (process->exit_status != -1) { return PROCESS_LIB_SUCCESS; }
+
   if (milliseconds == 0) { return wait_no_hang(process); }
 
   if (milliseconds == INFINITE) { return wait_infinite(process); }
@@ -163,6 +165,8 @@ PROCESS_LIB_ERROR process_terminate(struct process *process,
 {
   assert(process);
   assert(process->pid);
+
+  if (process->exit_status != -1) { return PROCESS_LIB_SUCCESS; }
 
   errno = 0;
 
@@ -178,6 +182,8 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
   assert(process);
   assert(process->pid);
 
+  if (process->exit_status != -1) { return PROCESS_LIB_SUCCESS; }
+
   errno = 0;
 
   if (kill(process->pid, SIGKILL) == -1) {
@@ -185,6 +191,17 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
   }
 
   return process_wait(process, milliseconds);
+}
+
+PROCESS_LIB_ERROR process_exit_status(Process *process, int32_t *exit_status)
+{
+  assert(process);
+
+  if (process->exit_status == -1) { return PROCESS_LIB_STILL_RUNNING; }
+
+  *exit_status = process->exit_status;
+
+  return PROCESS_LIB_SUCCESS;
 }
 
 PROCESS_LIB_ERROR process_free(struct process *process)

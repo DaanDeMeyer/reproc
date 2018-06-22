@@ -5,3 +5,4 @@ Language: Cpp
 BreakBeforeBraces: Linux
 AllowShortBlocksOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
+SpaceAfterCStyleCast: true

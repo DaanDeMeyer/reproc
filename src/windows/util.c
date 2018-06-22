@@ -38,7 +38,7 @@ PROCESS_LIB_ERROR pipe_disable_inherit(HANDLE pipe)
 }
 
 PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
-                         uint32_t *actual)
+                             uint32_t *actual)
 {
   assert(pipe);
   assert(buffer);
@@ -47,7 +47,7 @@ PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
   SetLastError(0);
 
   // Cast is valid since DWORD = unsigned int on Windows
-  if (!WriteFile(pipe, buffer, to_write, (LPDWORD)actual, NULL)) {
+  if (!WriteFile(pipe, buffer, to_write, (LPDWORD) actual, NULL)) {
     return system_error_to_process_error(GetLastError());
   }
 
@@ -55,7 +55,7 @@ PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
 }
 
 PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
-                        uint32_t *actual)
+                            uint32_t *actual)
 {
   assert(pipe);
   assert(buffer);
@@ -63,7 +63,7 @@ PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
 
   SetLastError(0);
 
-  if (!ReadFile(pipe, buffer, to_read, (LPDWORD)actual, NULL)) {
+  if (!ReadFile(pipe, buffer, to_read, (LPDWORD) actual, NULL)) {
     return system_error_to_process_error(GetLastError());
   }
 

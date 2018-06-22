@@ -26,3 +26,5 @@ PROCESS_LIB_ERROR wait_no_hang(struct process *process);
 PROCESS_LIB_ERROR wait_infinite(struct process *process);
 
 PROCESS_LIB_ERROR wait_timeout(struct process *process, uint32_t milliseconds);
+
+int32_t parse_exit_status(int status);
