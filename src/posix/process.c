@@ -73,9 +73,6 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
     // why _exit? See:
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
 
-    // Put process in its own process group which is needed by process_wait
-    setpgid(0, 0);
-
     if (working_directory) { chdir(working_directory); }
 
     // redirect stdin, stdout and stderr
@@ -105,6 +102,12 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   }
 
   PROCESS_LIB_ERROR error = system_error_to_process_error(errno);
+
+  // Put process in its own process group which is needed by process_wait
+  errno = 0;
+  if (setpgid(process->pid, 0) == -1) {
+    return system_error_to_process_error(errno);
+  }
 
   close(process->child_stdin);
   close(process->child_stdout);
@@ -198,7 +201,8 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
   return process_wait(process, milliseconds);
 }
 
-PROCESS_LIB_ERROR process_exit_status(Process *process, int32_t *exit_status)
+PROCESS_LIB_ERROR process_exit_status(struct process *process,
+                                      int32_t *exit_status)
 {
   assert(process);
 

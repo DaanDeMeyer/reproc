@@ -117,10 +117,6 @@ PROCESS_LIB_ERROR wait_timeout(struct process *process, uint32_t milliseconds)
   if (timeout_pid == -1) { return system_error_to_process_error(errno); }
 
   if (timeout_pid == 0) {
-    // Set process group to the same process group of the process we're waiting
-    // for
-    setpgid(0, process->pid);
-
     struct timeval tv;
     tv.tv_sec = milliseconds / 1000;           // ms -> s
     tv.tv_usec = (milliseconds % 1000) * 1000; // leftover ms -> us
@@ -130,6 +126,12 @@ PROCESS_LIB_ERROR wait_timeout(struct process *process, uint32_t milliseconds)
 
     _exit(0);
   }
+
+  // Set process group to the same process group of the process we're waiting
+  // for
+  if (setpgid(timeout_pid, process->pid) == -1) {
+    return system_error_to_process_error(errno);
+  };
 
   // -process->pid waits for all processes in the process->pid process group
   // which in this case will be the process we want to wait for and the timeout

@@ -4,7 +4,7 @@ add_subdirectory(res)
 
 add_executable(tests "")
 
-add_dependencies(tests echo)
+add_dependencies(tests echo infinite)
 
 target_include_directories(tests PRIVATE 
   ${CMAKE_SOURCE_DIR}/third-party/doctest
@@ -13,13 +13,13 @@ target_include_directories(tests PRIVATE
 target_link_libraries(tests PRIVATE common-warnings process)
 
 target_compile_definitions(tests PRIVATE
-  DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
   DOCTEST_CONFIG_TREAT_CHAR_STAR_AS_STRING
-  DOCTEST_CONFIG_WITH_RVALUE_REFERENCES
 )
 
-target_sources(tests PRIVATE 
-  simple-process.cpp  
+target_sources(tests PRIVATE
+  doctest_impl.cpp
+  read-write.cpp
+  terminate.cpp
 )
 
 add_custom_target(test
