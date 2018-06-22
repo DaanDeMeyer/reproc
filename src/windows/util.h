@@ -21,7 +21,7 @@ PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
 /* Joins all the strings in string_array together using a single whitespace as
  * the delimiter.
  */
-char *string_join(char **string_array, int array_length);
+char *string_join(const char **string_array, int array_length);
 
 /* Converts narrow string (uft-8) to wide string (utf-16) */
 wchar_t *string_to_wstring(const char *string);

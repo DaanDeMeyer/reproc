@@ -70,7 +70,7 @@ PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
   return PROCESS_LIB_SUCCESS;
 }
 
-char *string_join(char **string_array, int array_length)
+char *string_join(const char **string_array, int array_length)
 {
   assert(string_array);
   assert(array_length >= 0);
@@ -119,13 +119,9 @@ wchar_t *string_to_wstring(const char *string)
 PROCESS_LIB_ERROR system_error_to_process_error(DWORD system_error)
 {
   switch (system_error) {
-  case ERROR_SUCCESS:
-    return PROCESS_LIB_SUCCESS;
-  case ERROR_BROKEN_PIPE:
-    return PROCESS_LIB_STREAM_CLOSED;
-  case ERROR_INVALID_HANDLE:
-    return PROCESS_LIB_CLOSE_ERROR;
-  default:
-    return PROCESS_LIB_UNKNOWN_ERROR;
+  case ERROR_SUCCESS: return PROCESS_LIB_SUCCESS;
+  case ERROR_BROKEN_PIPE: return PROCESS_LIB_STREAM_CLOSED;
+  case ERROR_INVALID_HANDLE: return PROCESS_LIB_CLOSE_ERROR;
+  default: return PROCESS_LIB_UNKNOWN_ERROR;
   }
 }

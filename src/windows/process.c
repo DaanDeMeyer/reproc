@@ -49,7 +49,9 @@ PROCESS_LIB_ERROR process_init(struct process *process)
 // signals to each of them
 static const DWORD CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP;
 
-PROCESS_LIB_ERROR process_start(struct process *process, int argc, char *argv[])
+PROCESS_LIB_ERROR process_start(struct process *process, int argc,
+                                const char *argv[],
+                                const char *working_directory)
 {
   assert(process);
 
@@ -86,14 +88,21 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc, char *argv[])
   char *command_line_string = string_join(argv, argc);
   // Convert utf-8 to utf-16 as required by CreateProcessW
   wchar_t *command_line_wstring = string_to_wstring(command_line_string);
+  free(command_line_string);
+
+  wchar_t *working_directory_wstring = NULL;
+  if (working_directory) {
+    working_directory_wstring = string_to_wstring(working_directory);
+  }
 
   SetLastError(0);
 
   CreateProcessW(NULL, command_line_wstring, NULL, NULL, TRUE, CREATION_FLAGS,
-                 NULL, NULL, &startup_info, &process->info);
+                 NULL, working_directory_wstring, &startup_info,
+                 &process->info);
 
-  free(command_line_string);
   free(command_line_wstring);
+  free(working_directory_wstring);
 
   PROCESS_LIB_ERROR error = system_error_to_process_error(GetLastError());
 
@@ -156,10 +165,8 @@ PROCESS_LIB_ERROR process_wait(struct process *process, uint32_t milliseconds)
   DWORD wait_result = WaitForSingleObject(process->info.hProcess, milliseconds);
 
   switch (wait_result) {
-  case WAIT_TIMEOUT:
-    return PROCESS_LIB_WAIT_TIMEOUT;
-  case WAIT_FAILED:
-    return system_error_to_process_error(GetLastError());
+  case WAIT_TIMEOUT: return PROCESS_LIB_WAIT_TIMEOUT;
+  case WAIT_FAILED: return system_error_to_process_error(GetLastError());
   }
 
   return PROCESS_LIB_SUCCESS;

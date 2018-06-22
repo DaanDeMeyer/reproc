@@ -230,17 +230,4 @@ PROCESS_LIB_ERROR process_free(struct process *process)
   return error;
 }
 
-const char *process_error_to_string(PROCESS_LIB_ERROR error)
-{
-  switch (error) {
-  case PROCESS_LIB_SUCCESS: return "PROCESS_LIB_SUCCESS";
-  case PROCESS_LIB_UNKNOWN_ERROR: return "PROCESS_LIB_UNKNOWN_ERROR";
-  case PROCESS_LIB_WAIT_TIMEOUT: return "PROCESS_LIB_WAIT_TIMEOUT";
-  case PROCESS_LIB_STREAM_CLOSED: return "PROCESS_LIB_STREAM_CLOSED";
-  case PROCESS_LIB_CLOSE_ERROR: return "PROCESS_LIB_CLOSE_ERROR";
-  case PROCESS_LIB_STILL_RUNNING: return "PROCESS_LIB_STILL_RUNNING";
-  default: return "PROCESS_LIB_UNKNOWN_ERROR";
-  }
-}
-
 int64_t process_system_error(void) { return errno; }

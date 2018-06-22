@@ -2,6 +2,8 @@ add_library(process "")
 
 target_include_directories(process PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
+target_sources(process PRIVATE common.c)
+
 if(WIN32)
   target_include_directories(process PRIVATE src/windows)
   target_sources(process PRIVATE windows/process.c windows/util.c)
