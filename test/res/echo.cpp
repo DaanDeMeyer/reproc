@@ -18,9 +18,7 @@ int main(void)
   std::getline(std::cin, input);
   std::cout << input << std::endl;
   std::getline(std::cin, input);
-  std::cout << input << std::endl;
-  std::getline(std::cin, input);
-  std::cout << input << std::endl;
+  std::cerr << input << std::endl;
 
   return 0;
 }
