@@ -28,6 +28,7 @@ PROCESS_LIB_ERROR process_init(struct process *process)
   process->child_stdin = 0;
   process->child_stdout = 0;
   process->child_stderr = 0;
+  process->exit_status = -1; // Exit codes on unix are in range [0,256)
 
   PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
   error = pipe_init(&process->child_stdin, &process->stdin);

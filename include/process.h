@@ -7,7 +7,7 @@
 /* Opaque pointer to struct process *. The typedef is uppercased since _t suffix
  * is reserved by POSIX.
  */
-typedef struct process *Process;
+typedef struct process Process;
 
 typedef enum {
   PROCESS_LIB_SUCCESS = 0,
@@ -21,34 +21,34 @@ typedef enum {
 /* Accolates memory for Process and returns the resulting pointer. NULL is
  * returned on failure.
  */
-Process process_alloc(void);
+Process *process_alloc(void);
 
 /* Initializes Process including allocating the required pipes for redirecting
  * stdin/stdout/stderr.
  */
-PROCESS_LIB_ERROR process_init(Process process);
+PROCESS_LIB_ERROR process_init(Process *process);
 
 /* argc and argv follow the conventions of the main function in c/c++ programs.
  * argv must begin with the name of the program to execute and end with a NULL
  * value (example: ["ls", "-l", NULL]). argc represents the number of arguments
  * excluding the NULL value (for the previous example, argc would be 2).
  */
-PROCESS_LIB_ERROR process_start(Process process, int argc, char *argv[]);
+PROCESS_LIB_ERROR process_start(Process *process, int argc, char *argv[]);
 
-PROCESS_LIB_ERROR process_write(Process process, const void *buffer,
+PROCESS_LIB_ERROR process_write(Process *process, const void *buffer,
                             uint32_t to_write, uint32_t *actual);
 
-PROCESS_LIB_ERROR process_read(Process process, void *buffer, uint32_t to_read,
+PROCESS_LIB_ERROR process_read(Process *process, void *buffer, uint32_t to_read,
                            uint32_t *actual);
 
-PROCESS_LIB_ERROR process_read_stderr(Process process, void *buffer,
+PROCESS_LIB_ERROR process_read_stderr(Process *process, void *buffer,
                                   uint32_t to_read, uint32_t *actual);
 
 /* Waits the specified amount of time for the process to exit. if the timeout is
  * exceeded PROCESS_WAIT_TIMEOUT is returned. If milliseconds is INFINITE the
  * function waits indefinitely for the process to exit.
  */
-PROCESS_LIB_ERROR process_wait(Process process, uint32_t milliseconds);
+PROCESS_LIB_ERROR process_wait(Process *process, uint32_t milliseconds);
 
 /* Tries to terminate the process cleanly (allows for cleanup of resources). On
  * Windows a CTRL-BREAK signal is sent to the process. On POSIX a SIGTERM signal
@@ -57,22 +57,22 @@ PROCESS_LIB_ERROR process_wait(Process process, uint32_t milliseconds);
  * PROCESS_WAIT_TIMEOUT is returned. If milliseconds is INFINITE the function
  * waits indefinitely for the process to exit.
  */
-PROCESS_LIB_ERROR process_terminate(Process process, uint32_t milliseconds);
+PROCESS_LIB_ERROR process_terminate(Process *process, uint32_t milliseconds);
 
 /* Kills the process without allowing for cleanup. On Windows TerminateProcess
  * is called. On POSIX a SIGKILL signal is sent to the process. if the timeout
  * is exceeded PROCESS_WAIT_TIMEOUT is returned. If milliseconds is INFINITE the
  * function waits indefinitely for the process to exit.
  */
-PROCESS_LIB_ERROR process_kill(Process process, uint32_t milliseconds);
+PROCESS_LIB_ERROR process_kill(Process *process, uint32_t milliseconds);
 
-PROCESS_LIB_ERROR process_exit_status(Process process, int32_t *exit_status);
+PROCESS_LIB_ERROR process_exit_status(Process *process, int32_t *exit_status);
 
 /* Releases all resources associated with the process. Call this function if no
  * further interaction with the process is necessary. Call process_terminate or
  * process_kill first if you want to stop the process
  */
-PROCESS_LIB_ERROR process_free(Process process);
+PROCESS_LIB_ERROR process_free(Process *process);
 
 /* Returns the last system error code. On Windows the result of GetLastError
  * is returned and on POSIX the value of errno is returned. The value is not

@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
   char buffer[1000];
   uint32_t actual = 0;
 
-  Process process = process_alloc();
+  Process *process = process_alloc();
   PROCESS_LIB_ERROR error = process_init(process);
   error = error ? error : process_start(process, 2, args);
   error = error ? error : process_read(process, buffer, 10, &actual);
