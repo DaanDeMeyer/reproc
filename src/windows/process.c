@@ -57,7 +57,7 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
 
   assert(argc > 0);
   assert(argv);
-  assert(argv[argc]);
+  assert(argv[argc] == NULL);
 
   for (int i = 0; i < argc; i++) {
     assert(argv[i]);
