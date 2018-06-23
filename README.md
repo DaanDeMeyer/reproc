@@ -1,5 +1,19 @@
 # process-lib
 
+## Gotcha's
+
+- Immediately terminating a process after starting it on Windows might result in
+  an error window with error 0xc0000142 popping up. This indicates the process
+  was terminated before it was fully initialized. I was not able to find a
+  Windows function that allows waiting until a console process is fully
+  initialized. This problem shouldn't pop up with normal use of the library
+  since most of the time you'll want to read/write to the process or wait until
+  it exits normally.
+
+  If someone runs into this problem, I mitigated it in process-lib's tests by
+  waiting a few milliseconds using `process_wait` before terminating the
+  process.
+
 ## Design
 
 process-lib is designed to be a minimal wrapper around the platform-specific

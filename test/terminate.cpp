@@ -3,7 +3,7 @@
 
 TEST_CASE("kill")
 {
-  const char *argv[2] = {"res/infinite", 0};
+  const char *argv[2] = {INFINITE_PATH, 0};
   int argc = 1;
 
   Process *process = 0;
@@ -14,9 +14,11 @@ TEST_CASE("kill")
   error = process_start(process, argc, argv, 0);
   REQUIRE(!error);
 
-  error = process_wait(process, 0);
-  REQUIRE(error == PROCESS_LIB_WAIT_TIMEOUT);
+  // Wait 50ms to avoid terminating the process on Windows before it is
+  // initialized
+  error = process_wait(process, 50);
+  REQUIRE((error == PROCESS_LIB_WAIT_TIMEOUT));
 
-  error = process_terminate(process, 100);
+  error = process_terminate(process, 50);
   REQUIRE(!error);
 }

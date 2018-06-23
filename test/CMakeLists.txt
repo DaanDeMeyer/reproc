@@ -14,15 +14,12 @@ target_link_libraries(tests PRIVATE common-warnings process)
 
 target_compile_definitions(tests PRIVATE
   DOCTEST_CONFIG_TREAT_CHAR_STAR_AS_STRING
+  ECHO_PATH="$<TARGET_FILE:echo>"
+  INFINITE_PATH="$<TARGET_FILE:infinite>"
 )
 
 target_sources(tests PRIVATE
-  doctest_impl.cpp
+  impl.cpp
   read-write.cpp
   terminate.cpp
-)
-
-add_custom_target(test
-  COMMAND tests
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}
 )

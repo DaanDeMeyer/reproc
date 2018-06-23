@@ -8,7 +8,7 @@
  */
 TEST_CASE("read-write")
 {
-  const char *argv[2] = {"res/echo", 0};
+  const char *argv[2] = {ECHO_PATH, 0};
   int argc = 1;
   uint32_t timeout = 100;
 

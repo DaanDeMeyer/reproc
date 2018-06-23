@@ -17,9 +17,14 @@ struct process {
 
 struct process *process_alloc(void) { return malloc(sizeof(struct process)); }
 
-PROCESS_LIB_ERROR process_init(struct process *process)
+PROCESS_LIB_ERROR process_init(struct process **process_address)
 {
-  assert(process);
+  assert(process_address);
+
+  *process_address = malloc(sizeof(struct process));
+  struct process *process = *process_address;
+
+  if (!process) { return PROCESS_LIB_MALLOC_FAILED; }
 
   ZeroMemory(&process->info, sizeof(PROCESS_INFORMATION));
   process->info.hThread = NULL;
@@ -86,7 +91,7 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   STARTUPINFOW startup_info;
   ZeroMemory(&startup_info, sizeof(STARTUPINFOW));
   startup_info.cb = sizeof(STARTUPINFOW);
-  startup_info.dwFlags |= STARTF_USESTDHANDLES;
+  startup_info.dwFlags = STARTF_USESTDHANDLES;
 
   // Assign child pipe endpoints to child process stdin/stdout/stderr
   startup_info.hStdInput = process->child_stdin;
@@ -106,9 +111,13 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
 
   SetLastError(0);
 
+  DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+
   CreateProcessW(NULL, command_line_wstring, NULL, NULL, TRUE, CREATION_FLAGS,
                  NULL, working_directory_wstring, &startup_info,
                  &process->info);
+
+  SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
 
   free(command_line_wstring);
   free(working_directory_wstring);
