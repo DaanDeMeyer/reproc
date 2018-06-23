@@ -15,22 +15,18 @@ typedef enum {
   PROCESS_LIB_WAIT_TIMEOUT = -2,
   PROCESS_LIB_STREAM_CLOSED = -3,
   PROCESS_LIB_CLOSE_ERROR = -4,
-  PROCESS_LIB_STILL_RUNNING = -5
+  PROCESS_LIB_STILL_RUNNING = -5,
+  PROCESS_LIB_MALLOC_FAILED = -6
 } PROCESS_LIB_ERROR;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Accolates memory for Process and returns the resulting pointer. NULL is
- * returned on failure.
+/* Allocates memory for Process and initializes its members including allocating
+ * the required pipes for redirecting stdin/stdout/stderr.
  */
-Process *process_alloc(void);
-
-/* Initializes Process including allocating the required pipes for redirecting
- * stdin/stdout/stderr.
- */
-PROCESS_LIB_ERROR process_init(Process *process);
+PROCESS_LIB_ERROR process_init(Process **process_address);
 
 /* argc and argv follow the conventions of the main function in c/c++ programs.
  * argv must begin with the name of the program to execute and end with a NULL

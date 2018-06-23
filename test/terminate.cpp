@@ -6,11 +6,10 @@ TEST_CASE("kill")
   const char *argv[2] = {"res/infinite", 0};
   int argc = 1;
 
-  Process *process = process_alloc();
-  REQUIRE(process);
-
-  PROCESS_LIB_ERROR error = process_init(process);
+  Process *process = 0;
+  PROCESS_LIB_ERROR error = process_init(&process);
   REQUIRE(!error);
+  REQUIRE(process);
 
   error = process_start(process, argc, argv, 0);
   REQUIRE(!error);
@@ -19,6 +18,5 @@ TEST_CASE("kill")
   REQUIRE(error == PROCESS_LIB_WAIT_TIMEOUT);
 
   error = process_terminate(process, 100);
-  int64_t error_string = process_system_error();
-  REQUIRE_MESSAGE(!error, error_string);
+  REQUIRE(!error);
 }

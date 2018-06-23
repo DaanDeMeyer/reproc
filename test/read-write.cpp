@@ -18,11 +18,10 @@ TEST_CASE("read-write")
   char buffer[1000];
   uint32_t actual = 0;
 
-  Process *process = process_alloc();
-  REQUIRE(process);
-
-  PROCESS_LIB_ERROR error = process_init(process);
+  Process *process = NULL;
+  PROCESS_LIB_ERROR error = process_init(&process);
   REQUIRE(!error);
+  REQUIRE(process);
 
   error = process_start(process, argc, argv, NULL);
   REQUIRE(!error);

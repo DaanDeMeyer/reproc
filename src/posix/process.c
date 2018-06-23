@@ -12,11 +12,14 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-struct process *process_alloc(void) { return malloc(sizeof(struct process)); }
-
-PROCESS_LIB_ERROR process_init(struct process *process)
+PROCESS_LIB_ERROR process_init(struct process **process_address)
 {
-  assert(process);
+  assert(process_address);
+
+  *process_address = malloc(sizeof(struct process));
+  struct process *process = *process_address;
+
+  if (!process) { return PROCESS_LIB_MALLOC_FAILED; }
 
   process->pid = 0;
 
@@ -174,8 +177,10 @@ PROCESS_LIB_ERROR process_terminate(struct process *process,
   assert(process);
   assert(process->pid);
 
-  if (process->exit_status != -1) { return PROCESS_LIB_SUCCESS; }
-  if (process_wait(process, 0)) { return PROCESS_LIB_SUCCESS; }
+  PROCESS_LIB_ERROR error = process_wait(process, 0);
+  // Return if wait succeeds (which means process has already exited) or if 
+  // an error other than a wait timeout occurs during waiting
+  if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; } 
 
   errno = 0;
 
@@ -191,8 +196,10 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
   assert(process);
   assert(process->pid);
 
-  if (process->exit_status != -1) { return PROCESS_LIB_SUCCESS; }
-  if (process_wait(process, 0)) { return PROCESS_LIB_SUCCESS; }
+  PROCESS_LIB_ERROR error = process_wait(process, 0);
+  // Return if wait succeeds (which means process has already exited) or if 
+  // an error other than a wait timeout occurs during waiting
+  if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; } 
 
   errno = 0;
 
