@@ -1,7 +1,7 @@
 #include <doctest/doctest.h>
 #include <process.h>
 
-TEST_CASE("kill")
+TEST_CASE("terminate")
 {
   const char *argv[2] = {INFINITE_PATH, 0};
   int argc = 1;
