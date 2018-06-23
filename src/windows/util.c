@@ -4,6 +4,16 @@
 #include <malloc.h>
 #include <string.h>
 
+PROCESS_LIB_ERROR system_error_to_process_error(DWORD system_error)
+{
+  switch (system_error) {
+  case ERROR_SUCCESS: return PROCESS_LIB_SUCCESS;
+  case ERROR_BROKEN_PIPE: return PROCESS_LIB_STREAM_CLOSED;
+  case ERROR_INVALID_HANDLE: return PROCESS_LIB_CLOSE_ERROR;
+  default: return PROCESS_LIB_UNKNOWN_ERROR;
+  }
+}
+
 // Ensures pipe is inherited by child process
 static SECURITY_ATTRIBUTES security_attributes = {
     .nLength = sizeof(SECURITY_ATTRIBUTES),
@@ -70,10 +80,12 @@ PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
   return PROCESS_LIB_SUCCESS;
 }
 
-char *string_join(const char **string_array, int array_length)
+PROCESS_LIB_ERROR string_join(const char **string_array, int array_length,
+                              char **result)
 {
   assert(string_array);
   assert(array_length >= 0);
+  assert(result);
 
   for (int i = 0; i < array_length; i++) {
     assert(string_array[i]);
@@ -86,7 +98,7 @@ char *string_join(const char **string_array, int array_length)
   }
 
   char *string = malloc(sizeof(char) * string_length);
-  if (string == NULL) { return NULL; }
+  if (string == NULL) { return PROCESS_LIB_MALLOC_FAILED; }
 
   char *current = string; // iterator
   for (int i = 0; i < array_length; i++) {
@@ -102,26 +114,52 @@ char *string_join(const char **string_array, int array_length)
 
   *current = '\0';
 
-  return string;
+  *result = string;
+
+  return PROCESS_LIB_SUCCESS;
 }
 
-wchar_t *string_to_wstring(const char *string)
+PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result)
 {
   assert(string);
+  assert(result);
+
+  SetLastError(0);
 
   int wstring_length = MultiByteToWideChar(CP_UTF8, 0, string, -1, NULL, 0);
-  wchar_t *wstring = malloc(sizeof(wchar_t) * wstring_length);
-  MultiByteToWideChar(CP_UTF8, 0, string, -1, wstring, wstring_length);
+  if (wstring_length == 0) {
+    return system_error_to_process_error(GetLastError());
+  }
 
-  return wstring;
+  wchar_t *wstring = malloc(sizeof(wchar_t) * wstring_length);
+  if (!wstring) { return PROCESS_LIB_MALLOC_FAILED; }
+
+  int written = MultiByteToWideChar(CP_UTF8, 0, string, -1, wstring,
+                                    wstring_length);
+
+  if (written == 0) { return system_error_to_process_error(GetLastError()); }
+
+  *result = wstring;
+
+  return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR system_error_to_process_error(DWORD system_error)
+PROCESS_LIB_ERROR handle_close(HANDLE *handle_address)
 {
-  switch (system_error) {
-  case ERROR_SUCCESS: return PROCESS_LIB_SUCCESS;
-  case ERROR_BROKEN_PIPE: return PROCESS_LIB_STREAM_CLOSED;
-  case ERROR_INVALID_HANDLE: return PROCESS_LIB_CLOSE_ERROR;
-  default: return PROCESS_LIB_UNKNOWN_ERROR;
-  }
+  assert(handle_address);
+
+  HANDLE handle = *handle_address;
+
+  // Do nothing and return success on null handle so callers don't have to check
+  // each time if a handle has been closed already
+  if (!handle) { return PROCESS_LIB_SUCCESS; }
+
+  SetLastError(0);
+
+  DWORD result = CloseHandle(handle);
+  *handle_address = NULL; // Resources should only be closed once
+
+  if (!result) { return system_error_to_process_error(GetLastError()); }
+
+  return PROCESS_LIB_SUCCESS;
 }

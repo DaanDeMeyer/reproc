@@ -86,6 +86,30 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   assert(process->child_stdout);
   assert(process->child_stderr);
 
+  // Join argv to whitespace delimited string as required by CreateProcess
+  char *command_line_string;
+  PROCESS_LIB_ERROR error = string_join(argv, argc, &command_line_string);
+  if (error) { return error; }
+
+  // Convert utf-8 to utf-16 as required by CreateProcessW
+  wchar_t *command_line_wstring;
+  error = string_to_wstring(command_line_string, &command_line_wstring);
+  free(command_line_string); // Not needed anymore
+  if (error) { return error; }
+
+  // Do the same for the working directory string if one was provided
+  wchar_t *working_directory_wstring = NULL;
+  error = working_directory
+              ? string_to_wstring(working_directory, &working_directory_wstring)
+              : PROCESS_LIB_SUCCESS;
+  if (error) {
+    free(command_line_wstring);
+    return error;
+  }
+
+  // Following code is based on:
+  // https://msdn.microsoft.com/en-us/library/windows/desktop/ms682499(v=vs.85).aspx
+
   STARTUPINFOW startup_info;
   ZeroMemory(&startup_info, sizeof(STARTUPINFOW));
   startup_info.cb = sizeof(STARTUPINFOW);
@@ -96,47 +120,38 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   startup_info.hStdOutput = process->child_stdout;
   startup_info.hStdError = process->child_stderr;
 
-  // Join argv to whitespace delimited string as required by CreateProcess
-  char *command_line_string = string_join(argv, argc);
-  // Convert utf-8 to utf-16 as required by CreateProcessW
-  wchar_t *command_line_wstring = string_to_wstring(command_line_string);
-  free(command_line_string);
-
-  wchar_t *working_directory_wstring = NULL;
-  if (working_directory) {
-    working_directory_wstring = string_to_wstring(working_directory);
-  }
-
-  SetLastError(0);
-
   // Child processes inherit error mode of their parents. To avoid child
   // processes creating error dialogs we set our error mode to not create error
   // dialogs temporarily.
-  DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+  DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+
+  SetLastError(0);
 
   CreateProcessW(NULL, command_line_wstring, NULL, NULL, TRUE, CREATION_FLAGS,
                  NULL, working_directory_wstring, &startup_info,
                  &process->info);
 
-  SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
+  SetErrorMode(previous_error_mode);
 
   free(command_line_wstring);
   free(working_directory_wstring);
 
-  PROCESS_LIB_ERROR error = system_error_to_process_error(GetLastError());
+  // Check if error occurred during CreateProcessW
+  error = system_error_to_process_error(GetLastError());
+  if (error) { return error; } // Handles can still be closed in process_free
 
-  CloseHandle(process->info.hThread);
+  // We don't need the handle to the primary thread of the child process
+  error = handle_close(&process->info.hThread);
+  if (error) { return error; }
 
-  CloseHandle(process->child_stdin);
-  CloseHandle(process->child_stdout);
-  CloseHandle(process->child_stderr);
-
-  process->child_stdin = NULL;
-  process->child_stdout = NULL;
-  process->child_stderr = NULL;
-
-  // CreateProcessW error has priority over CloseHandle errors
-  error = error ? error : system_error_to_process_error(GetLastError());
+  // The child process handles are copied to the child process. We close them in
+  // the parent so their resources are freed once the child process exits
+  error = handle_close(&process->child_stdin);
+  if (error) { return error; }
+  error = handle_close(&process->child_stdout);
+  if (error) { return error; }
+  error = handle_close(&process->child_stderr);
+  if (error) { return error; }
 
   return error;
 }
@@ -244,28 +259,44 @@ PROCESS_LIB_ERROR process_exit_status(struct process *process,
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR process_free(struct process *process)
+PROCESS_LIB_ERROR process_free(struct process **process_address)
 {
-  assert(process);
+  assert(process_address);
+  assert(*process_address);
 
-  SetLastError(0);
+  struct process *process = *process_address;
+
+  // All resources are closed regardless of errors but only the first error
+  // is returned
+  PROCESS_LIB_ERROR result = PROCESS_LIB_SUCCESS;
+  PROCESS_LIB_ERROR error;
 
   // NULL checks so free works even if process was only partially initialized
   // (can happen if error occurs during initialization or if start is not
   // called)
-  if (process->info.hProcess) { CloseHandle(process->info.hProcess); }
+  error = handle_close(&process->info.hThread);
+  if (!result) { result = error; }
+  error = handle_close(&process->info.hProcess);
+  if (!result) { result = error; }
 
-  if (process->stdin) { CloseHandle(process->stdin); }
-  if (process->stdout) { CloseHandle(process->stdout); }
-  if (process->stderr) { CloseHandle(process->stderr); }
+  error = handle_close(&process->stdin);
+  if (!result) { result = error; }
+  error = handle_close(&process->stdout);
+  if (!result) { result = error; }
+  error = handle_close(&process->stderr);
+  if (!result) { result = error; }
 
-  if (process->child_stdin) { CloseHandle(process->child_stdin); }
-  if (process->child_stdout) { CloseHandle(process->child_stdout); }
-  if (process->child_stderr) { CloseHandle(process->child_stderr); }
+  error = handle_close(&process->child_stdin);
+  if (!result) { result = error; }
+  error = handle_close(&process->child_stdout);
+  if (!result) { result = error; }
+  error = handle_close(&process->child_stderr);
+  if (!result) { result = error; }
 
-  PROCESS_LIB_ERROR error = system_error_to_process_error(GetLastError());
+  free(process);
+  *process_address = NULL;
 
-  return error;
+  return result;
 }
 
 int64_t process_system_error(void) { return GetLastError(); }

@@ -7,3 +7,4 @@ AllowShortBlocksOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 SpaceAfterCStyleCast: true
 AllowShortCaseLabelsOnASingleLine: true
+PenaltyBreakAssignment: 100
