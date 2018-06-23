@@ -20,11 +20,11 @@ int main(void)
   fprintf(stdout, "%s\n", input.c_str());
   fflush(stdout);
   std::getline(std::cin, input);
-  fprintf(stdout, "%s\n", input.c_str());
-  fflush(stdout);
-  std::getline(std::cin, input);
   fprintf(stderr, "%s\n", input.c_str());
   fflush(stderr);
+  std::getline(std::cin, input);
+  fprintf(stdout, "%s\n", input.c_str());
+  fflush(stdout);
   std::getline(std::cin, input);
   fprintf(stderr, "%s\n", input.c_str());
   fflush(stderr);

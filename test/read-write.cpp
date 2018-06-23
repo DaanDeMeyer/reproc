@@ -2,8 +2,8 @@
 #include <process.h>
 #include <string.h>
 
-/* 2x write to stdin and read from stdout
- * 2x write to stdin and read from stderr
+/* Alternates between writing to stdin and reading from stdout and writing to
+ * stdin and reading from stderr.
  * See res/echo for the child process code
  */
 TEST_CASE("read-write")
@@ -36,16 +36,6 @@ TEST_CASE("read-write")
   buffer[actual] = '\0';
   CHECK_EQ(buffer, stdout_msg);
 
-  error = process_write(process, stdout_msg, (uint32_t) strlen(stdout_msg),
-                        &actual);
-  REQUIRE(!error);
-
-  error = process_read(process, buffer, 1000, &actual);
-  REQUIRE(!error);
-
-  buffer[actual] = '\0';
-  CHECK_EQ(buffer, stdout_msg);
-
   error = process_write(process, stderr_msg, (uint32_t) strlen(stderr_msg),
                         &actual);
   REQUIRE(!error);
@@ -55,6 +45,16 @@ TEST_CASE("read-write")
 
   buffer[actual] = '\0';
   CHECK_EQ(buffer, stderr_msg);
+
+  error = process_write(process, stdout_msg, (uint32_t) strlen(stdout_msg),
+                        &actual);
+  REQUIRE(!error);
+
+  error = process_read(process, buffer, 1000, &actual);
+  REQUIRE(!error);
+
+  buffer[actual] = '\0';
+  CHECK_EQ(buffer, stdout_msg);
 
   error = process_write(process, stderr_msg, (uint32_t) strlen(stderr_msg),
                         &actual);
