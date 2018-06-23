@@ -21,5 +21,5 @@ target_compile_definitions(tests PRIVATE
 target_sources(tests PRIVATE
   impl.cpp
   read-write.cpp
-  terminate.cpp
+  stop.cpp
 )

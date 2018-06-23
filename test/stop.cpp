@@ -1,7 +1,7 @@
 #include <doctest/doctest.h>
 #include <process.h>
 
-TEST_CASE("terminate")
+TEST_CASE("stop")
 {
   const char *argv[2] = {INFINITE_PATH, 0};
   int argc = 1;
@@ -15,10 +15,22 @@ TEST_CASE("terminate")
   REQUIRE(!error);
 
   // Wait 50ms to avoid terminating the process on Windows before it is
-  // initialized
+  // initialized (which would result in an error window appearing)
   error = process_wait(process, 50);
   REQUIRE((error == PROCESS_LIB_WAIT_TIMEOUT));
 
-  error = process_terminate(process, 50);
+  SUBCASE("terminate")
+  {
+    error = process_terminate(process, 50);
+    REQUIRE(!error);
+  }
+
+  SUBCASE("kill")
+  {
+    error = process_kill(process, 50);
+    REQUIRE(!error);
+  }
+
+  error = process_free(process);
   REQUIRE(!error);
 }

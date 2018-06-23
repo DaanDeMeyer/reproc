@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#define INFINITE 0xFFFFFFFF
+static const uint32_t PROCESS_LIB_INFINITE = 0xFFFFFFFF;
 
 /* Opaque pointer to struct process *. The typedef is uppercased since _t suffix
  * is reserved by POSIX.
@@ -46,8 +46,8 @@ PROCESS_LIB_ERROR process_read_stderr(Process *process, void *buffer,
                                       uint32_t to_read, uint32_t *actual);
 
 /* Waits the specified amount of time for the process to exit. if the timeout is
- * exceeded PROCESS_WAIT_TIMEOUT is returned. If milliseconds is INFINITE the
- * function waits indefinitely for the process to exit.
+ * exceeded PROCESS_WAIT_TIMEOUT is returned. If milliseconds is
+ * PROCESS_LIB_INFINITE the function waits indefinitely for the process to exit.
  */
 PROCESS_LIB_ERROR process_wait(Process *process, uint32_t milliseconds);
 
@@ -55,15 +55,15 @@ PROCESS_LIB_ERROR process_wait(Process *process, uint32_t milliseconds);
  * Windows a CTRL-BREAK signal is sent to the process. On POSIX a SIGTERM signal
  * is sent to the process. The function waits for the specified amount of
  * milliseconds for the process to exit. if the timeout is exceeded
- * PROCESS_WAIT_TIMEOUT is returned. If milliseconds is INFINITE the function
- * waits indefinitely for the process to exit.
+ * PROCESS_WAIT_TIMEOUT is returned. If milliseconds is PROCESS_LIB_INFINITE the
+ * function waits indefinitely for the process to exit.
  */
 PROCESS_LIB_ERROR process_terminate(Process *process, uint32_t milliseconds);
 
 /* Kills the process without allowing for cleanup. On Windows TerminateProcess
  * is called. On POSIX a SIGKILL signal is sent to the process. if the timeout
- * is exceeded PROCESS_WAIT_TIMEOUT is returned. If milliseconds is INFINITE the
- * function waits indefinitely for the process to exit.
+ * is exceeded PROCESS_WAIT_TIMEOUT is returned. If milliseconds is
+ * PROCESS_LIB_INFINITE the function waits indefinitely for the process to exit.
  */
 PROCESS_LIB_ERROR process_kill(Process *process, uint32_t milliseconds);
 
@@ -74,8 +74,6 @@ PROCESS_LIB_ERROR process_exit_status(Process *process, int32_t *exit_status);
  * process_kill first if you want to stop the process
  */
 PROCESS_LIB_ERROR process_free(Process *process);
-
-const char *process_error_to_string(PROCESS_LIB_ERROR error);
 
 /* Returns the last system error code. On Windows the result of GetLastError
  * is returned and on POSIX the value of errno is returned. The value is not
