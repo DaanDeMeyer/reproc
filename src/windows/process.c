@@ -109,6 +109,9 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
 
   SetLastError(0);
 
+  // Child processes inherit error mode of their parents. To avoid child
+  // processes creating error dialogs we set our error mode to not create error
+  // dialogs temporarily.
   DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
 
   CreateProcessW(NULL, command_line_wstring, NULL, NULL, TRUE, CREATION_FLAGS,
