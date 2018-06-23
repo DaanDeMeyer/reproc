@@ -15,8 +15,6 @@ struct process {
   HANDLE child_stderr;
 };
 
-struct process *process_alloc(void) { return malloc(sizeof(struct process)); }
-
 PROCESS_LIB_ERROR process_init(struct process **process_address)
 {
   assert(process_address);
