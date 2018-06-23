@@ -62,20 +62,19 @@ Disadvantages:
   out its size with sizeof.
 
   Because the library has to allocate memory regardless (see
-  [Memory Allocation](#memory-allocation)), this problem is solved by providing
-  the `process_alloc` function which allocates the required memory returns the
-  resulting pointer to the user. If no memory allocations were required in the
-  rest of the library, `process_alloc` would likely be replaced with a
-  `process_size` function which would allow the user to allocate the required
-  memory himself and allow the library code to be completely free of dynamic
-  memory allocations.
+  [Memory Allocation](#memory-allocation)), this problem is solved by allocating
+  the required memory in the `process_init` function. If no memory allocations
+  were required in the rest of the library, we could have the user allocate the
+  memory himself by providing him with a `process_size` function which would
+  allow the user to allocate the required memory himself and allow the library
+  code to be completely free of dynamic memory allocations.
 
 ### Memory allocation
 
 process-lib aims to do as few dynamic memory allocations as possible. As of this
 moment, memory allocation is only done when allocating memory for the process
-struct in `process_alloc` and when converting the array of program arguments to
-a single string as required by the Windows
+struct in `process_init` and when converting the array of program arguments to a
+single string as required by the Windows
 [CreateProcess](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms682425(v=vs.85).aspx>)
 function.
 
