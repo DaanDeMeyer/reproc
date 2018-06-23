@@ -1,5 +1,4 @@
 #include "process.h"
-#include "process_impl.h"
 #include "util.h"
 
 #include <assert.h>
@@ -11,6 +10,17 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+struct process {
+  pid_t pid;
+  int stdin;
+  int stdout;
+  int stderr;
+  int child_stdin;
+  int child_stdout;
+  int child_stderr;
+  int exit_status;
+};
 
 PROCESS_LIB_ERROR process_init(struct process **process_address)
 {
@@ -164,11 +174,15 @@ PROCESS_LIB_ERROR process_wait(struct process *process, uint32_t milliseconds)
 
   if (process->exit_status != -1) { return PROCESS_LIB_SUCCESS; }
 
-  if (milliseconds == 0) { return wait_no_hang(process); }
+  if (milliseconds == 0) {
+    return wait_no_hang(process->pid, &process->exit_status);
+  }
 
-  if (milliseconds == INFINITE) { return wait_infinite(process); }
+  if (milliseconds == INFINITE) {
+    return wait_infinite(process->pid, &process->exit_status);
+  }
 
-  return wait_timeout(process, milliseconds);
+  return wait_timeout(process->pid, &process->exit_status, milliseconds);
 }
 
 PROCESS_LIB_ERROR process_terminate(struct process *process,
@@ -178,9 +192,9 @@ PROCESS_LIB_ERROR process_terminate(struct process *process,
   assert(process->pid);
 
   PROCESS_LIB_ERROR error = process_wait(process, 0);
-  // Return if wait succeeds (which means process has already exited) or if 
+  // Return if wait succeeds (which means process has already exited) or if
   // an error other than a wait timeout occurs during waiting
-  if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; } 
+  if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; }
 
   errno = 0;
 
@@ -197,9 +211,9 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
   assert(process->pid);
 
   PROCESS_LIB_ERROR error = process_wait(process, 0);
-  // Return if wait succeeds (which means process has already exited) or if 
+  // Return if wait succeeds (which means process has already exited) or if
   // an error other than a wait timeout occurs during waiting
-  if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; } 
+  if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; }
 
   errno = 0;
 

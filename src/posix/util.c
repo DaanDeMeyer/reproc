@@ -1,5 +1,4 @@
 #include "util.h"
-#include "process_impl.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -69,45 +68,45 @@ PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, uint32_t to_read,
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR wait_no_hang(struct process *process)
+PROCESS_LIB_ERROR wait_no_hang(pid_t pid, int *exit_status)
 {
-  assert(process);
-  assert(process->pid);
+  assert(pid);
+  assert(exit_status);
 
   errno = 0;
 
   int status = 0;
-  pid_t wait_result = waitpid(process->pid, &status, WNOHANG);
+  pid_t wait_result = waitpid(pid, &status, WNOHANG);
 
   if (wait_result == 0) { return PROCESS_LIB_WAIT_TIMEOUT; }
   if (wait_result == -1) { return system_error_to_process_error(errno); }
 
-  process->exit_status = parse_exit_status(status);
+  *exit_status = parse_exit_status(status);
 
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR wait_infinite(struct process *process)
+PROCESS_LIB_ERROR wait_infinite(pid_t pid, int *exit_status)
 {
-  assert(process);
-  assert(process->pid);
+  assert(pid);
+  assert(exit_status);
 
   errno = 0;
 
   int status = 0;
-  pid_t wait_result = waitpid(process->pid, &status, 0);
+  pid_t wait_result = waitpid(pid, &status, 0);
 
   if (wait_result == -1) { return system_error_to_process_error(errno); }
 
-  process->exit_status = parse_exit_status(status);
+  *exit_status = parse_exit_status(status);
 
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR wait_timeout(struct process *process, uint32_t milliseconds)
-{
-  assert(process);
-  assert(process->pid);
+PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
+                               uint32_t milliseconds){
+  assert(pid);
+  assert(exit_status);
   assert(milliseconds > 0);
 
   errno = 0;
@@ -129,7 +128,7 @@ PROCESS_LIB_ERROR wait_timeout(struct process *process, uint32_t milliseconds)
 
   // Set process group to the same process group of the process we're waiting
   // for
-  if (setpgid(timeout_pid, process->pid) == -1) {
+  if (setpgid(timeout_pid, pid) == -1) {
     return system_error_to_process_error(errno);
   };
 
@@ -138,13 +137,13 @@ PROCESS_LIB_ERROR wait_timeout(struct process *process, uint32_t milliseconds)
   // process. waitpid will return the process id of whichever process exits
   // first.
   int status = 0;
-  pid_t exit_pid = waitpid(-process->pid, &status, 0);
+  pid_t exit_pid = waitpid(-pid, &status, 0);
 
   if (exit_pid == -1) { return system_error_to_process_error(errno); }
   // If the timeout process exits first the timeout will have been exceeded
   if (exit_pid == timeout_pid) { return PROCESS_LIB_WAIT_TIMEOUT; }
 
-  process->exit_status = parse_exit_status(status);
+  *exit_status = parse_exit_status(status);
 
   return PROCESS_LIB_SUCCESS;
 }

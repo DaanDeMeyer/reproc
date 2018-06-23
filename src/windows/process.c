@@ -1,10 +1,19 @@
 #include "process.h"
-#include "process_impl.h"
 #include "util.h"
 
 #include <assert.h>
 #include <malloc.h>
 #include <windows.h>
+
+struct process {
+  PROCESS_INFORMATION info;
+  HANDLE stdin;
+  HANDLE stdout;
+  HANDLE stderr;
+  HANDLE child_stdin;
+  HANDLE child_stdout;
+  HANDLE child_stderr;
+};
 
 struct process *process_alloc(void) { return malloc(sizeof(struct process)); }
 

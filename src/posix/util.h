@@ -3,6 +3,7 @@
 #include "process.h"
 
 #include <stdint.h>
+#include <sys/types.h>
 
 /* Returns a matching process error for the given system error. Returns
  * PROCESS_UNKNOWN_ERROR if no matching process error is defined for the given
@@ -21,10 +22,11 @@ PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer, uint32_t to_write,
 PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, uint32_t to_read,
                             uint32_t *actual);
 
-PROCESS_LIB_ERROR wait_no_hang(struct process *process);
+PROCESS_LIB_ERROR wait_no_hang(pid_t pid, int *exit_status);
 
-PROCESS_LIB_ERROR wait_infinite(struct process *process);
+PROCESS_LIB_ERROR wait_infinite(pid_t pid, int *exit_status);
 
-PROCESS_LIB_ERROR wait_timeout(struct process *process, uint32_t milliseconds);
+PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
+                               uint32_t milliseconds);
 
 int32_t parse_exit_status(int status);
