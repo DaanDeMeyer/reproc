@@ -2,10 +2,33 @@
 
 ## Gotcha's
 
-- Immediately terminating a process after starting it on Windows might result in
-  an error window with error 0xc0000142 popping up. This indicates the process
-  was terminated before it was fully initialized. I was not able to find a
-  Windows function that allows waiting until a console process is fully
+- While `process_terminate` allows the child process to perform cleanup it is up
+  to the child process to correctly clean up after itself. process-lib only
+  sends a termination signal to the child process itself. The child process is
+  responsible for cleaning up its own child processes and other resources in its
+  signal handler.
+
+- When using `process_kill` the child process does not receive a chance to
+  perform cleanup which could result in leaking of resources. Chief among these
+  leaks is that the child process will not be able to stop its own child
+  processes. Always let a child process exit normally or try to stop it with
+  `process_terminate` before switching to `process_kill`.
+
+- (POSIX) On POSIX a parent process is required to wait on a child process
+  (using `process_wait`) after it has exited before all resources related to
+  that process can be freed by the kernel. If the parent doesn't wait on a child
+  process after it exits, the child process becomes a
+  [zombie process](https://en.wikipedia.org/wiki/Zombie_process).
+
+- (Windows) `process_kill` is not guaranteed to kill a process on Windows. For
+  more information, read the Remarks section in the documentation of
+  [TerminateProcess](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms686714(v=vs.85).aspx>)
+  which process-lib uses to kill processes on Windows.
+
+- (Windows) Immediately terminating a process after starting it on Windows might
+  result in an error window with error 0xc0000142 popping up. This indicates the
+  process was terminated before it was fully initialized. I was not able to find
+  a Windows function that allows waiting until a console process is fully
   initialized. This problem shouldn't pop up with normal use of the library
   since most of the time you'll want to read/write to the process or wait until
   it exits normally.
@@ -103,7 +126,7 @@ process-lib uses the standard `malloc` and `free` functions to allocate and free
 memory. However, providing support for custom allocators should be
 straightforward. If you need them, please open an issue.
 
-### (Posix) Waiting on process with timeout
+### (Posix) Waiting on child process with timeout
 
 I did not find a counterpart for the Windows
 [WaitForSingleObject](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms687032(v=vs.85).aspx>)
