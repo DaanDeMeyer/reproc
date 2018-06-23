@@ -175,6 +175,7 @@ PROCESS_LIB_ERROR process_terminate(struct process *process,
   assert(process->pid);
 
   if (process->exit_status != -1) { return PROCESS_LIB_SUCCESS; }
+  if (process_wait(process, 0)) { return PROCESS_LIB_SUCCESS; }
 
   errno = 0;
 
@@ -191,6 +192,7 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
   assert(process->pid);
 
   if (process->exit_status != -1) { return PROCESS_LIB_SUCCESS; }
+  if (process_wait(process, 0)) { return PROCESS_LIB_SUCCESS; }
 
   errno = 0;
 
