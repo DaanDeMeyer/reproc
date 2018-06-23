@@ -31,6 +31,6 @@ TEST_CASE("stop")
     REQUIRE(!error);
   }
 
-  error = process_free(process);
+  error = process_free(&process);
   REQUIRE(!error);
 }
