@@ -8,23 +8,17 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-PROCESS_LIB_ERROR system_error_to_process_error(int system_error)
-{
-  switch (system_error) {
-  case 0: return PROCESS_LIB_SUCCESS;
-  default: return PROCESS_LIB_UNKNOWN_ERROR;
-  }
-}
-
 PROCESS_LIB_ERROR pipe_init(int *read, int *write)
 {
   int pipefd[2];
 
   errno = 0;
-
-  int result = pipe(pipefd);
-
-  if (result == -1) { return system_error_to_process_error(errno); }
+  if (pipe(pipefd) == -1) {
+    switch (errno) {
+    case ENFILE: return PROCESS_LIB_PIPE_LIMIT_REACHED;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
 
   // Assign file desccriptors if create pipe was succesful
   *read = pipefd[0];
@@ -41,11 +35,18 @@ PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer, uint32_t to_write,
   assert(actual);
 
   errno = 0;
+  ssize_t bytes_written = write(pipe, buffer, to_write);
 
-  *actual = write(pipe, buffer, to_write);
+  if (bytes_written == -1) {
+    switch (errno) {
+    case EPIPE: return PROCESS_LIB_STREAM_CLOSED;
+    case EINTR: return PROCESS_LIB_INTERRUPTED;
+    case EIO: return PROCESS_LIB_IO_ERROR;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
 
-  // write returns -1 on error which is the max unsigned value
-  if (*actual == UINT32_MAX) { return system_error_to_process_error(errno); }
+  *actual = (uint32_t) bytes_written;
 
   return PROCESS_LIB_SUCCESS;
 }
@@ -58,10 +59,17 @@ PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, uint32_t to_read,
   assert(actual);
 
   errno = 0;
+  ssize_t bytes_read = read(pipe, buffer, to_read);
 
-  *actual = read(pipe, buffer, to_read);
+  if (bytes_read == -1) {
+    switch (errno) {
+    case EINTR: return PROCESS_LIB_INTERRUPTED;
+    case EIO: return PROCESS_LIB_IO_ERROR;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
 
-  if (*actual == UINT32_MAX) { return system_error_to_process_error(errno); }
+  *actual = (uint32_t) bytes_read;
 
   return PROCESS_LIB_SUCCESS;
 }
@@ -77,11 +85,16 @@ PROCESS_LIB_ERROR pipe_close(int *pipe_address)
   if (!pipe) { return PROCESS_LIB_SUCCESS; }
 
   errno = 0;
-
   int result = close(pipe);
   *pipe_address = 0; // Resources should only be closed once
 
-  if (result == -1) { return system_error_to_process_error(errno); }
+  if (result == -1) {
+    switch (errno) {
+    case EINTR: return PROCESS_LIB_INTERRUPTED;
+    case EIO: return PROCESS_LIB_IO_ERROR;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
 
   return PROCESS_LIB_SUCCESS;
 }
@@ -91,13 +104,19 @@ PROCESS_LIB_ERROR wait_no_hang(pid_t pid, int *exit_status)
   assert(pid);
   assert(exit_status);
 
-  errno = 0;
-
   int status = 0;
+  errno = 0;
   pid_t wait_result = waitpid(pid, &status, WNOHANG);
 
   if (wait_result == 0) { return PROCESS_LIB_WAIT_TIMEOUT; }
-  if (wait_result == -1) { return system_error_to_process_error(errno); }
+  if (wait_result == -1) {
+    switch (errno) {
+    case EINTR: return PROCESS_LIB_INTERRUPTED;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
+
+  assert(wait_result == pid);
 
   *exit_status = parse_exit_status(status);
 
@@ -109,12 +128,16 @@ PROCESS_LIB_ERROR wait_infinite(pid_t pid, int *exit_status)
   assert(pid);
   assert(exit_status);
 
-  errno = 0;
-
   int status = 0;
+  errno = 0;
   pid_t wait_result = waitpid(pid, &status, 0);
 
-  if (wait_result == -1) { return system_error_to_process_error(errno); }
+  if (wait_result == -1) {
+    switch (errno) {
+    case EINTR: return PROCESS_LIB_INTERRUPTED;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
 
   *exit_status = parse_exit_status(status);
 
@@ -129,26 +152,38 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
   assert(milliseconds > 0);
 
   errno = 0;
-
   pid_t timeout_pid = fork();
 
-  if (timeout_pid == -1) { return system_error_to_process_error(errno); }
+  if (timeout_pid == -1) {
+    switch (errno) {
+    case EAGAIN: return PROCESS_LIB_PROCESS_LIMIT_REACHED;
+    case ENOMEM: return PROCESS_LIB_NO_MEMORY;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
+
+  // Process group of child is set in both parent and child to avoid race
+  // conditions
 
   if (timeout_pid == 0) {
+    errno = 0;
+    if (setpgid(0, pid) == -1) { _exit(errno); }
+
     struct timeval tv;
     tv.tv_sec = milliseconds / 1000;           // ms -> s
     tv.tv_usec = (milliseconds % 1000) * 1000; // leftover ms -> us
 
     // Select with no fd's can be used as a makeshift sleep function
-    select(0, NULL, NULL, NULL, &tv);
+    errno = 0;
+    if (select(0, NULL, NULL, NULL, &tv) == -1) { _exit(errno); }
 
     _exit(0);
   }
 
-  // Set process group to the same process group of the process we're waiting
-  // for
+  errno = 0;
   if (setpgid(timeout_pid, pid) == -1) {
-    return system_error_to_process_error(errno);
+    // EACCES should not occur since we don't execve in timeout process
+    return PROCESS_LIB_UNKNOWN_ERROR;
   };
 
   // -process->pid waits for all processes in the process->pid process group
@@ -156,11 +191,17 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
   // process. waitpid will return the process id of whichever process exits
   // first.
   int status = 0;
+  errno = 0;
   pid_t exit_pid = waitpid(-pid, &status, 0);
 
-  if (exit_pid == -1) { return system_error_to_process_error(errno); }
   // If the timeout process exits first the timeout will have been exceeded
   if (exit_pid == timeout_pid) { return PROCESS_LIB_WAIT_TIMEOUT; }
+  if (exit_pid == -1) {
+    switch (errno) {
+    case EINTR: return PROCESS_LIB_INTERRUPTED;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
 
   *exit_status = parse_exit_status(status);
 

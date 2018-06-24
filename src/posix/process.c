@@ -27,9 +27,9 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   assert(process_address);
 
   *process_address = malloc(sizeof(struct process));
-  struct process *process = *process_address;
 
-  if (!process) { return PROCESS_LIB_MALLOC_FAILED; }
+  struct process *process = *process_address;
+  if (!process) { return PROCESS_LIB_NO_MEMORY; }
 
   process->pid = 0;
 
@@ -43,7 +43,7 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   process->child_stderr = 0;
   process->exit_status = -1; // Exit codes on unix are in range [0,256)
 
-  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
+  PROCESS_LIB_ERROR error;
   error = pipe_init(&process->child_stdin, &process->stdin);
   if (error) { return error; }
   error = pipe_init(&process->stdout, &process->child_stdout);
@@ -78,9 +78,20 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   assert(process->child_stderr);
   assert(process->exit_status == -1);
 
-  errno = 0;
+  // We put process in its own process group which is needed by process_wait.
+  // The process group is set in both parent and child to avoid race conditions
 
+  errno = 0;
   process->pid = fork();
+
+  if (process->pid == -1) {
+    switch (errno) {
+    case EAGAIN: return PROCESS_LIB_PROCESS_LIMIT_REACHED;
+    case ENOMEM: return PROCESS_LIB_NO_MEMORY;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
+
   if (process->pid == 0) {
     // In child process
     // Since we're in a child process we can exit on error
@@ -88,6 +99,8 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
 
     errno = 0;
+
+    if (setpgid(0, 0) == -1) { _exit(errno); }
 
     if (working_directory && chdir(working_directory) == -1) { _exit(errno); }
 
@@ -117,14 +130,18 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
     _exit(errno);
   }
 
-  PROCESS_LIB_ERROR error = system_error_to_process_error(errno);
-  if (error) { return error; }
-
-  // Put process in its own process group which is needed by process_wait
+  errno = 0;
   if (setpgid(process->pid, 0) == -1) {
-    return system_error_to_process_error(errno);
+    switch (errno) {
+    // If we get EACCESS the child process has already executed execvp which
+    // means it also has executed setpgid(0, 0) which means the process group
+    // is set correctly so EACCES isn't an error for us in this case.
+    case EACCES: break;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
   }
 
+  PROCESS_LIB_ERROR error;
   error = pipe_close(&process->child_stdin);
   if (error) { return error; }
   error = pipe_close(&process->child_stdout);
@@ -197,10 +214,7 @@ PROCESS_LIB_ERROR process_terminate(struct process *process,
   if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; }
 
   errno = 0;
-
-  if (kill(process->pid, SIGTERM) == -1) {
-    return system_error_to_process_error(errno);
-  }
+  if (kill(process->pid, SIGTERM) == -1) { return PROCESS_LIB_UNKNOWN_ERROR; }
 
   return process_wait(process, milliseconds);
 }
@@ -216,10 +230,7 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
   if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; }
 
   errno = 0;
-
-  if (kill(process->pid, SIGKILL) == -1) {
-    return system_error_to_process_error(errno);
-  }
+  if (kill(process->pid, SIGKILL) == -1) { return PROCESS_LIB_UNKNOWN_ERROR; }
 
   return process_wait(process, milliseconds);
 }
