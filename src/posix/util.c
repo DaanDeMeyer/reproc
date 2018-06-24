@@ -11,10 +11,8 @@
 PROCESS_LIB_ERROR system_error_to_process_error(int system_error)
 {
   switch (system_error) {
-  case 0:
-    return PROCESS_LIB_SUCCESS;
-  default:
-    return PROCESS_LIB_UNKNOWN_ERROR;
+  case 0: return PROCESS_LIB_SUCCESS;
+  default: return PROCESS_LIB_UNKNOWN_ERROR;
   }
 }
 
@@ -68,6 +66,26 @@ PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, uint32_t to_read,
   return PROCESS_LIB_SUCCESS;
 }
 
+PROCESS_LIB_ERROR pipe_close(int *pipe_address)
+{
+  assert(pipe_address);
+
+  int pipe = *pipe_address;
+
+  // Do nothing and return success on null pipe (0) so callers don't have to
+  // check each time if a pipe has been closed already
+  if (!pipe) { return PROCESS_LIB_SUCCESS; }
+
+  errno = 0;
+
+  int result = close(pipe);
+  *pipe_address = 0; // Resources should only be closed once
+
+  if (result == -1) { return system_error_to_process_error(errno); }
+
+  return PROCESS_LIB_SUCCESS;
+}
+
 PROCESS_LIB_ERROR wait_no_hang(pid_t pid, int *exit_status)
 {
   assert(pid);
@@ -104,7 +122,8 @@ PROCESS_LIB_ERROR wait_infinite(pid_t pid, int *exit_status)
 }
 
 PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
-                               uint32_t milliseconds){
+                               uint32_t milliseconds)
+{
   assert(pid);
   assert(exit_status);
   assert(milliseconds > 0);

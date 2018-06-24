@@ -73,7 +73,7 @@ PROCESS_LIB_ERROR process_exit_status(Process *process, int32_t *exit_status);
  * further interaction with the process is necessary. Call process_terminate or
  * process_kill first if you want to stop the process
  */
-PROCESS_LIB_ERROR process_free(Process **process);
+PROCESS_LIB_ERROR process_free(Process **process_address);
 
 /* Returns the last system error code. On Windows the result of GetLastError
  * is returned and on POSIX the value of errno is returned. The value is not

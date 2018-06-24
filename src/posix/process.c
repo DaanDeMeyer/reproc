@@ -76,6 +76,7 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   assert(process->child_stdin);
   assert(process->child_stdout);
   assert(process->child_stderr);
+  assert(process->exit_status == -1);
 
   errno = 0;
 
@@ -86,7 +87,9 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
     // why _exit? See:
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
 
-    if (working_directory) { chdir(working_directory); }
+    errno = 0;
+
+    if (working_directory && chdir(working_directory) == -1) { _exit(errno); }
 
     // redirect stdin, stdout and stderr
     // _exit ensures open file descriptors (pipes) are closed
@@ -96,15 +99,15 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
 
     // We copied the pipes to the actual streams (stdin/stdout/stderr) so we
     // don't need the originals anymore
-    close(process->child_stdin);
-    close(process->child_stdout);
-    close(process->child_stderr);
+    if (close(process->child_stdin) == -1) { _exit(errno); };
+    if (close(process->child_stdout) == -1) { _exit(errno); };
+    if (close(process->child_stderr) == -1) { _exit(errno); };
 
     // We also have no use for the parent endpoints of the pipes in the child
     // process
-    close(process->stdin);
-    close(process->stdout);
-    close(process->stderr);
+    if (close(process->stdin) == -1) { _exit(errno); };
+    if (close(process->stdout) == -1) { _exit(errno); };
+    if (close(process->stderr) == -1) { _exit(errno); };
 
     // Replace forked child with process we want to run
     // Safe cast (execvp doesn't actually change the contents of argv)
@@ -115,22 +118,19 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   }
 
   PROCESS_LIB_ERROR error = system_error_to_process_error(errno);
+  if (error) { return error; }
 
   // Put process in its own process group which is needed by process_wait
-  errno = 0;
   if (setpgid(process->pid, 0) == -1) {
     return system_error_to_process_error(errno);
   }
 
-  close(process->child_stdin);
-  close(process->child_stdout);
-  close(process->child_stderr);
-
-  process->child_stdin = 0;
-  process->child_stdout = 0;
-  process->child_stderr = 0;
-
-  error = error ? error : system_error_to_process_error(errno);
+  error = pipe_close(&process->child_stdin);
+  if (error) { return error; }
+  error = pipe_close(&process->child_stdout);
+  if (error) { return error; }
+  error = pipe_close(&process->child_stderr);
+  if (error) { return error; }
 
   return error;
 }
@@ -178,7 +178,7 @@ PROCESS_LIB_ERROR process_wait(struct process *process, uint32_t milliseconds)
     return wait_no_hang(process->pid, &process->exit_status);
   }
 
-  if (milliseconds == INFINITE) {
+  if (milliseconds == PROCESS_LIB_INFINITE) {
     return wait_infinite(process->pid, &process->exit_status);
   }
 
@@ -236,23 +236,34 @@ PROCESS_LIB_ERROR process_exit_status(struct process *process,
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR process_free(struct process *process)
+PROCESS_LIB_ERROR process_free(struct process **process_address)
 {
-  assert(process);
+  assert(process_address);
+  assert(*process_address);
 
-  errno = 0;
+  struct process *process = *process_address;
 
-  if (process->stdin) { close(process->stdin); }
-  if (process->stdout) { close(process->stdout); }
-  if (process->stderr) { close(process->stderr); }
+  // All resources are closed regardless of errors but only the first error
+  // is returned
+  PROCESS_LIB_ERROR result = PROCESS_LIB_SUCCESS;
+  PROCESS_LIB_ERROR error;
 
-  if (process->child_stdin) { close(process->child_stdin); }
-  if (process->child_stdout) { close(process->child_stdout); }
-  if (process->child_stderr) { close(process->child_stderr); }
+  error = pipe_close(&process->stdin);
+  if (!result) { result = error; }
+  error = pipe_close(&process->stdout);
+  if (!result) { result = error; }
+  error = pipe_close(&process->stderr);
+  if (!result) { result = error; }
+
+  error = pipe_close(&process->child_stdin);
+  if (!result) { result = error; }
+  error = pipe_close(&process->child_stdout);
+  if (!result) { result = error; }
+  error = pipe_close(&process->child_stderr);
+  if (!result) { result = error; }
 
   free(process);
-
-  PROCESS_LIB_ERROR error = system_error_to_process_error(errno);
+  *process_address = NULL;
 
   return error;
 }
