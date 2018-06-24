@@ -17,6 +17,7 @@ TEST_CASE("read-write")
 
   char buffer[1000];
   uint32_t actual = 0;
+  uint32_t to_read;
 
   Process *process = NULL;
   PROCESS_LIB_ERROR error = process_init(&process);
@@ -30,8 +31,12 @@ TEST_CASE("read-write")
                         &actual);
   REQUIRE(!error);
 
-  error = process_read(process, buffer, 1000, &actual);
-  REQUIRE(!error);
+  to_read = (uint32_t) strlen(stdout_msg);
+  while (to_read != 0) {
+    error = process_read(process, buffer, to_read, &actual);
+    REQUIRE(!error);
+    to_read -= actual;
+  }
 
   buffer[actual] = '\0';
   CHECK_EQ(buffer, stdout_msg);
@@ -40,8 +45,12 @@ TEST_CASE("read-write")
                         &actual);
   REQUIRE(!error);
 
-  error = process_read_stderr(process, buffer, 1000, &actual);
-  REQUIRE(!error);
+  to_read = (uint32_t) strlen(stderr_msg);
+  while (to_read != 0) {
+    error = process_read_stderr(process, buffer, to_read, &actual);
+    REQUIRE(!error);
+    to_read -= actual;
+  }
 
   buffer[actual] = '\0';
   CHECK_EQ(buffer, stderr_msg);
@@ -50,8 +59,12 @@ TEST_CASE("read-write")
                         &actual);
   REQUIRE(!error);
 
-  error = process_read(process, buffer, 1000, &actual);
-  REQUIRE(!error);
+  to_read = (uint32_t) strlen(stdout_msg);
+  while (to_read != 0) {
+    error = process_read(process, buffer, to_read, &actual);
+    REQUIRE(!error);
+    to_read -= actual;
+  }
 
   buffer[actual] = '\0';
   CHECK_EQ(buffer, stdout_msg);
@@ -60,8 +73,12 @@ TEST_CASE("read-write")
                         &actual);
   REQUIRE(!error);
 
-  error = process_read_stderr(process, buffer, 1000, &actual);
-  REQUIRE(!error);
+  to_read = (uint32_t) strlen(stderr_msg);
+  while (to_read != 0) {
+    error = process_read_stderr(process, buffer, to_read, &actual);
+    REQUIRE(!error);
+    to_read -= actual;
+  }
 
   buffer[actual] = '\0';
   CHECK_EQ(buffer, stderr_msg);
