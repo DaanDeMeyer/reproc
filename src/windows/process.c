@@ -207,6 +207,9 @@ PROCESS_LIB_ERROR process_terminate(struct process *process,
   assert(process);
   assert(process->info.dwProcessId);
 
+  PROCESS_LIB_ERROR error = process_wait(process, 0);
+  if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; }
+
   // process group of process started with CREATE_NEW_PROCESS_GROUP is equal to
   // the process id
   SetLastError(0);
@@ -221,6 +224,9 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
 {
   assert(process);
   assert(process->info.hProcess);
+
+  PROCESS_LIB_ERROR error = process_wait(process, 0);
+  if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; }
 
   SetLastError(0);
   if (!TerminateProcess(process->info.hProcess, 1)) {
