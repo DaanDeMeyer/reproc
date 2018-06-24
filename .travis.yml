@@ -55,6 +55,6 @@ matrix:
       env: CXX=clang++
 
 script:
-  - cmake -DCMAKE_BUILD_TYPE=Debug .
+  - cmake -DCMAKE_BUILD_TYPE=Debug -DPROCESS_LIB_BUILD_TESTS=ON .
   - cmake --build . -- -j 3
   - ./test/tests
