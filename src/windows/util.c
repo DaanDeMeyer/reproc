@@ -1,7 +1,7 @@
 #include "util.h"
 
 #include <assert.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 
 // Ensures pipe is inherited by child process

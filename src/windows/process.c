@@ -2,7 +2,7 @@
 #include "util.h"
 
 #include <assert.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <windows.h>
 
 struct process {

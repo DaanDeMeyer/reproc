@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <sys/select.h>
 #include <sys/types.h>
