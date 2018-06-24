@@ -215,6 +215,7 @@ PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result)
   int written = MultiByteToWideChar(CP_UTF8, 0, string, -1, wstring,
                                     wstring_length);
   if (written == 0) {
+    free(wstring);
     switch (GetLastError()) {
     case ERROR_NO_UNICODE_TRANSLATION: return PROCESS_LIB_INVALID_UNICODE;
     default: return PROCESS_LIB_UNKNOWN_ERROR;
