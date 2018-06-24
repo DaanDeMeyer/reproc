@@ -1,0 +1,22 @@
+version: "{build}"
+image: Visual Studio 2017
+platform: x64
+configuration: Debug
+
+environment:
+  CLICOLOR_FORCE: 1
+  matrix:
+    - MSYSTEM: MINGW64
+    - MSYSTEM: MSVC
+
+matrix:
+  fast_finish: true # Immediately finish build if one of the jobs fails.
+
+before_build: 
+  - cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DPROCESS_LIB_BUILD_TESTS=ON .
+
+build:
+  project: process-lib.sln
+
+test_script:
+  - .\test\Debug\tests.exe
