@@ -3,6 +3,9 @@ image: Visual Studio 2017
 platform: x64
 configuration: Debug
 
+install:
+  - git submodule update --init --recursive
+
 environment:
   CLICOLOR_FORCE: 1
   matrix:
