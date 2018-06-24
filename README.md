@@ -1,5 +1,7 @@
 # process-lib
 
+[![Build Status](https://travis-ci.com/DaanDeMeyer/process-lib.svg?branch=master)](https://travis-ci.com/DaanDeMeyer/process-lib)
+
 ## Gotcha's
 
 - While `process_terminate` allows the child process to perform cleanup it is up
