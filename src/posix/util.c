@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <signal.h>
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -196,6 +197,23 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
 
   // If the timeout process exits first the timeout will have been exceeded
   if (exit_pid == timeout_pid) { return PROCESS_LIB_WAIT_TIMEOUT; }
+
+  // Else we make sure the timeout process is cleaned up correctly by sending a
+  // SIGTERM signal and waiting for it
+  errno = 0;
+  if (kill(timeout_pid, SIGTERM) == -1) { return PROCESS_LIB_UNKNOWN_ERROR; }
+
+  errno = 0;
+  if (waitpid(timeout_pid, NULL, 0) == -1) {
+    switch (errno) {
+    case EINTR: return PROCESS_LIB_INTERRUPTED;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
+
+  // After cleaning up the timeout process we can check if an error occurred
+  // while waiting for the timeout process/actual process. This ensures the
+  // timeout process is always cleaned up
   if (exit_pid == -1) {
     switch (errno) {
     case EINTR: return PROCESS_LIB_INTERRUPTED;
