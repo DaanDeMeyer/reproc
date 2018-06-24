@@ -20,9 +20,9 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   assert(process_address);
 
   *process_address = malloc(sizeof(struct process));
-  struct process *process = *process_address;
 
-  if (!process) { return PROCESS_LIB_MALLOC_FAILED; }
+  struct process *process = *process_address;
+  if (!process) { return PROCESS_LIB_MEMORY_ERROR; }
 
   ZeroMemory(&process->info, sizeof(PROCESS_INFORMATION));
   process->info.hThread = NULL;
@@ -36,9 +36,9 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   process->child_stdout = NULL;
   process->child_stderr = NULL;
 
-  // Continue allocating pipes until error occurs (PROCESS_SUCCESS = 0)
   PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
 
+  // Continue allocating pipes until error occurs (PROCESS_SUCCESS = 0)
   error = pipe_init(&process->child_stdin, &process->stdin);
   if (error) { return error; }
   error = pipe_disable_inherit(process->stdin);
@@ -86,13 +86,15 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   assert(process->child_stdout);
   assert(process->child_stderr);
 
+  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
+
   // Join argv to whitespace delimited string as required by CreateProcess
-  char *command_line_string;
-  PROCESS_LIB_ERROR error = string_join(argv, argc, &command_line_string);
+  char *command_line_string = NULL;
+  error = string_join(argv, argc, &command_line_string);
   if (error) { return error; }
 
   // Convert utf-8 to utf-16 as required by CreateProcessW
-  wchar_t *command_line_wstring;
+  wchar_t *command_line_wstring = NULL;
   error = string_to_wstring(command_line_string, &command_line_wstring);
   free(command_line_string); // Not needed anymore
   if (error) { return error; }
@@ -126,19 +128,16 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
 
   SetLastError(0);
-
-  CreateProcessW(NULL, command_line_wstring, NULL, NULL, TRUE, CREATION_FLAGS,
-                 NULL, working_directory_wstring, &startup_info,
-                 &process->info);
+  BOOL result = CreateProcessW(NULL, command_line_wstring, NULL, NULL, TRUE,
+                               CREATION_FLAGS, NULL, working_directory_wstring,
+                               &startup_info, &process->info);
 
   SetErrorMode(previous_error_mode);
 
   free(command_line_wstring);
   free(working_directory_wstring);
 
-  // Check if error occurred during CreateProcessW
-  error = system_error_to_process_error(GetLastError());
-  if (error) { return error; } // Handles can still be closed in process_free
+  if (!result) { return PROCESS_LIB_UNKNOWN_ERROR; }
 
   // We don't need the handle to the primary thread of the child process
   error = handle_close(&process->info.hThread);
@@ -195,13 +194,9 @@ PROCESS_LIB_ERROR process_wait(struct process *process, uint32_t milliseconds)
   assert(process->info.hProcess);
 
   SetLastError(0);
-
   DWORD wait_result = WaitForSingleObject(process->info.hProcess, milliseconds);
-
-  switch (wait_result) {
-  case WAIT_TIMEOUT: return PROCESS_LIB_WAIT_TIMEOUT;
-  case WAIT_FAILED: return system_error_to_process_error(GetLastError());
-  }
+  if (wait_result == WAIT_TIMEOUT) { return PROCESS_LIB_WAIT_TIMEOUT; }
+  if (wait_result == WAIT_FAILED) { return PROCESS_LIB_UNKNOWN_ERROR; }
 
   return PROCESS_LIB_SUCCESS;
 }
@@ -212,12 +207,11 @@ PROCESS_LIB_ERROR process_terminate(struct process *process,
   assert(process);
   assert(process->info.dwProcessId);
 
-  SetLastError(0);
-
   // process group of process started with CREATE_NEW_PROCESS_GROUP is equal to
   // the process id
+  SetLastError(0);
   if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, process->info.dwProcessId)) {
-    return system_error_to_process_error(GetLastError());
+    return PROCESS_LIB_UNKNOWN_ERROR;
   }
 
   return process_wait(process, milliseconds);
@@ -229,9 +223,8 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
   assert(process->info.hProcess);
 
   SetLastError(0);
-
   if (!TerminateProcess(process->info.hProcess, 1)) {
-    return system_error_to_process_error(GetLastError());
+    return PROCESS_LIB_UNKNOWN_ERROR;
   }
 
   return process_wait(process, milliseconds);
@@ -243,11 +236,10 @@ PROCESS_LIB_ERROR process_exit_status(struct process *process,
   assert(process);
   assert(process->info.hProcess);
 
-  errno = 0;
-
   DWORD unsigned_exit_status = 0;
+  SetLastError(0);
   if (!GetExitCodeProcess(process->info.hProcess, &unsigned_exit_status)) {
-    return system_error_to_process_error(GetLastError());
+    return PROCESS_LIB_UNKNOWN_ERROR;
   }
 
   if (unsigned_exit_status == STILL_ACTIVE) {

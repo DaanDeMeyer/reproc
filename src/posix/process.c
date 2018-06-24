@@ -29,7 +29,7 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   *process_address = malloc(sizeof(struct process));
 
   struct process *process = *process_address;
-  if (!process) { return PROCESS_LIB_NO_MEMORY; }
+  if (!process) { return PROCESS_LIB_MEMORY_ERROR; }
 
   process->pid = 0;
 
@@ -87,7 +87,7 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   if (process->pid == -1) {
     switch (errno) {
     case EAGAIN: return PROCESS_LIB_PROCESS_LIMIT_REACHED;
-    case ENOMEM: return PROCESS_LIB_NO_MEMORY;
+    case ENOMEM: return PROCESS_LIB_MEMORY_ERROR;
     default: return PROCESS_LIB_UNKNOWN_ERROR;
     }
   }

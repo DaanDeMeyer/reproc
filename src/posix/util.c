@@ -157,7 +157,7 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
   if (timeout_pid == -1) {
     switch (errno) {
     case EAGAIN: return PROCESS_LIB_PROCESS_LIMIT_REACHED;
-    case ENOMEM: return PROCESS_LIB_NO_MEMORY;
+    case ENOMEM: return PROCESS_LIB_MEMORY_ERROR;
     default: return PROCESS_LIB_UNKNOWN_ERROR;
     }
   }

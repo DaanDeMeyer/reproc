@@ -4,16 +4,6 @@
 #include <malloc.h>
 #include <string.h>
 
-PROCESS_LIB_ERROR system_error_to_process_error(DWORD system_error)
-{
-  switch (system_error) {
-  case ERROR_SUCCESS: return PROCESS_LIB_SUCCESS;
-  case ERROR_BROKEN_PIPE: return PROCESS_LIB_STREAM_CLOSED;
-  case ERROR_INVALID_HANDLE: return PROCESS_LIB_CLOSE_ERROR;
-  default: return PROCESS_LIB_UNKNOWN_ERROR;
-  }
-}
-
 // Ensures pipe is inherited by child process
 static SECURITY_ATTRIBUTES security_attributes = {
     .nLength = sizeof(SECURITY_ATTRIBUTES),
@@ -26,9 +16,8 @@ PROCESS_LIB_ERROR pipe_init(HANDLE *read, HANDLE *write)
   assert(write);
 
   SetLastError(0);
-
   if (!CreatePipe(read, write, &security_attributes, 0)) {
-    return system_error_to_process_error(GetLastError());
+    return PROCESS_LIB_UNKNOWN_ERROR;
   }
 
   return PROCESS_LIB_SUCCESS;
@@ -39,9 +28,8 @@ PROCESS_LIB_ERROR pipe_disable_inherit(HANDLE pipe)
   assert(pipe);
 
   SetLastError(0);
-
   if (!SetHandleInformation(pipe, HANDLE_FLAG_INHERIT, 0)) {
-    return system_error_to_process_error(GetLastError());
+    return PROCESS_LIB_UNKNOWN_ERROR;
   }
 
   return PROCESS_LIB_SUCCESS;
@@ -54,11 +42,14 @@ PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
   assert(buffer);
   assert(actual);
 
-  SetLastError(0);
-
   // Cast is valid since DWORD = unsigned int on Windows
+  SetLastError(0);
   if (!WriteFile(pipe, buffer, to_write, (LPDWORD) actual, NULL)) {
-    return system_error_to_process_error(GetLastError());
+    switch (GetLastError()) {
+    case ERROR_OPERATION_ABORTED: return PROCESS_LIB_INTERRUPTED;
+    case ERROR_BROKEN_PIPE: return PROCESS_LIB_STREAM_CLOSED;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
   }
 
   return PROCESS_LIB_SUCCESS;
@@ -72,9 +63,12 @@ PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
   assert(actual);
 
   SetLastError(0);
-
   if (!ReadFile(pipe, buffer, to_read, (LPDWORD) actual, NULL)) {
-    return system_error_to_process_error(GetLastError());
+    switch (GetLastError()) {
+    case ERROR_OPERATION_ABORTED: return PROCESS_LIB_INTERRUPTED;
+    case ERROR_BROKEN_PIPE: return PROCESS_LIB_STREAM_CLOSED;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
   }
 
   return PROCESS_LIB_SUCCESS;
@@ -98,7 +92,7 @@ PROCESS_LIB_ERROR string_join(const char **string_array, int array_length,
   }
 
   char *string = malloc(sizeof(char) * string_length);
-  if (string == NULL) { return PROCESS_LIB_MALLOC_FAILED; }
+  if (string == NULL) { return PROCESS_LIB_MEMORY_ERROR; }
 
   char *current = string; // iterator
   for (int i = 0; i < array_length; i++) {
@@ -125,19 +119,26 @@ PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result)
   assert(result);
 
   SetLastError(0);
-
   int wstring_length = MultiByteToWideChar(CP_UTF8, 0, string, -1, NULL, 0);
   if (wstring_length == 0) {
-    return system_error_to_process_error(GetLastError());
+    switch (GetLastError()) {
+    case ERROR_NO_UNICODE_TRANSLATION: return PROCESS_LIB_INVALID_UNICODE;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
   }
 
   wchar_t *wstring = malloc(sizeof(wchar_t) * wstring_length);
-  if (!wstring) { return PROCESS_LIB_MALLOC_FAILED; }
+  if (!wstring) { return PROCESS_LIB_MEMORY_ERROR; }
 
+  SetLastError(0);
   int written = MultiByteToWideChar(CP_UTF8, 0, string, -1, wstring,
                                     wstring_length);
-
-  if (written == 0) { return system_error_to_process_error(GetLastError()); }
+  if (written == 0) {
+    switch (GetLastError()) {
+    case ERROR_NO_UNICODE_TRANSLATION: return PROCESS_LIB_INVALID_UNICODE;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
 
   *result = wstring;
 
@@ -155,11 +156,10 @@ PROCESS_LIB_ERROR handle_close(HANDLE *handle_address)
   if (!handle) { return PROCESS_LIB_SUCCESS; }
 
   SetLastError(0);
-
   DWORD result = CloseHandle(handle);
   *handle_address = NULL; // Resources should only be closed once
 
-  if (!result) { return system_error_to_process_error(GetLastError()); }
+  if (!result) { return PROCESS_LIB_UNKNOWN_ERROR; }
 
   return PROCESS_LIB_SUCCESS;
 }
