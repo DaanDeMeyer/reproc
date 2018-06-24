@@ -1,0 +1,60 @@
+dist: trusty
+sudo: false
+# Use generic to avoid travis-ci overwriting CC and CXX
+# See: https://stackoverflow.com/questions/35110123/travis-ci-with-c14-and-linux
+language: generic 
+
+addons:
+  apt:
+    sources: &sources
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-precise-3.6
+      - llvm-toolchain-trusty-6.0
+
+# When building with Clang GCC still has to be installed to provide libstdc++
+# that Clang uses (Clang doesn't bundle libc++)
+matrix:
+  fast_finish: true
+  include:
+    - os: linux
+      env: CXX=g++-5
+      addons:
+        apt:
+          sources: *sources
+          packages: 
+            - g++-5
+
+    - os: linux
+      env: CXX=g++-8
+      addons:
+        apt:
+          sources: *sources
+          packages: 
+            - g++-8
+
+    - os: linux
+      env: CXX=clang++-3.6
+      addons:
+        apt:
+          sources: *sources
+          packages: 
+            - clang-3.6
+            - g++-5
+
+    - os: linux
+      env: CXX=clang++-6.0
+      addons:
+        apt:
+          sources: *sources
+          packages:
+            - clang-6.0
+            - g++-5
+
+    - os: osx
+      osx_image: xcode9.2
+      env: CXX=clang++
+
+script:
+  - cmake -DCMAKE_BUILD_TYPE=Debug .
+  - cmake --build . -- -j 3
+  - ./test/tests
