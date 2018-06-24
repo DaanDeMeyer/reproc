@@ -160,7 +160,7 @@ PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,
   assert(buffer);
   assert(actual);
 
-  return pipe_write(process->stdin, buffer, to_write, actual);
+  return pipe_write_fully(process->stdin, buffer, to_write, actual);
 }
 
 PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
@@ -171,7 +171,7 @@ PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
   assert(buffer);
   assert(actual);
 
-  return pipe_read(process->stdout, buffer, to_read, actual);
+  return pipe_read_fully(process->stdout, buffer, to_read, actual);
 }
 
 PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
@@ -182,7 +182,7 @@ PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
   assert(buffer);
   assert(actual);
 
-  return pipe_read(process->stderr, buffer, to_read, actual);
+  return pipe_read_fully(process->stderr, buffer, to_read, actual);
 }
 
 PROCESS_LIB_ERROR process_wait(struct process *process, uint32_t milliseconds)

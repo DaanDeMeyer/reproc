@@ -13,8 +13,14 @@ PROCESS_LIB_ERROR pipe_init(int *read, int *write);
 PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer, uint32_t to_write,
                              uint32_t *actual);
 
+PROCESS_LIB_ERROR pipe_write_fully(int pipe, const void *buffer,
+                                   uint32_t to_write, uint32_t *actual);
+
 PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, uint32_t to_read,
                             uint32_t *actual);
+
+PROCESS_LIB_ERROR pipe_read_fully(int pipe, void *buffer, uint32_t to_read,
+                                  uint32_t *actual);
 
 PROCESS_LIB_ERROR pipe_close(int *pipe);
 

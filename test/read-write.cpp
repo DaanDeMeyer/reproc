@@ -17,8 +17,6 @@ TEST_CASE("read-write")
 
   char buffer[1000];
   uint32_t actual = 0;
-  uint32_t to_read;
-  char *current;
 
   Process *process = NULL;
   PROCESS_LIB_ERROR error = process_init(&process);
@@ -32,64 +30,42 @@ TEST_CASE("read-write")
                         &actual);
   REQUIRE(!error);
 
-  to_read = (uint32_t) strlen(stdout_msg);
-  current = buffer;
-  while (to_read != 0) {
-    error = process_read(process, current, to_read, &actual);
-    REQUIRE(!error);
-    to_read -= actual;
-    current += actual;
-  }
+  error = process_read(process, buffer, (uint32_t) strlen(stdout_msg), &actual);
+  REQUIRE(!error);
 
-  *current = '\0';
+  buffer[actual] = '\0';
   CHECK_EQ(buffer, stdout_msg);
 
   error = process_write(process, stderr_msg, (uint32_t) strlen(stderr_msg),
                         &actual);
   REQUIRE(!error);
 
-  to_read = (uint32_t) strlen(stderr_msg);
-  current = buffer;
-  while (to_read != 0) {
-    error = process_read_stderr(process, current, to_read, &actual);
-    REQUIRE(!error);
-    to_read -= actual;
-    current += actual;
-  }
+  error = process_read_stderr(process, buffer, (uint32_t) strlen(stderr_msg),
+                              &actual);
+  REQUIRE(!error);
 
-  *current = '\0';
+  buffer[actual] = '\0';
   CHECK_EQ(buffer, stderr_msg);
 
   error = process_write(process, stdout_msg, (uint32_t) strlen(stdout_msg),
                         &actual);
   REQUIRE(!error);
 
-  to_read = (uint32_t) strlen(stdout_msg);
-  current = buffer;
-  while (to_read != 0) {
-    error = process_read(process, current, to_read, &actual);
-    REQUIRE(!error);
-    to_read -= actual;
-    current += actual;
-  }
+  error = process_read(process, buffer, (uint32_t) strlen(stdout_msg), &actual);
+  REQUIRE(!error);
 
-  *current = '\0';
+  buffer[actual] = '\0';
   CHECK_EQ(buffer, stdout_msg);
 
   error = process_write(process, stderr_msg, (uint32_t) strlen(stderr_msg),
                         &actual);
   REQUIRE(!error);
 
-  to_read = (uint32_t) strlen(stderr_msg);
-  current = buffer;
-  while (to_read != 0) {
-    error = process_read_stderr(process, current, to_read, &actual);
-    REQUIRE(!error);
-    to_read -= actual;
-    current += actual;
-  }
+  error = process_read_stderr(process, buffer, (uint32_t) strlen(stderr_msg),
+                              &actual);
+  REQUIRE(!error);
 
-  *current = '\0';
+  buffer[actual] = '\0';
   CHECK_EQ(buffer, stderr_msg);
 
   error = process_wait(process, timeout);
