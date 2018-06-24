@@ -41,7 +41,7 @@ TEST_CASE("read-write")
     current += actual;
   }
 
-  buffer[actual] = '\0';
+  *current = '\0';
   CHECK_EQ(buffer, stdout_msg);
 
   error = process_write(process, stderr_msg, (uint32_t) strlen(stderr_msg),
@@ -57,7 +57,7 @@ TEST_CASE("read-write")
     current += actual;
   }
 
-  buffer[actual] = '\0';
+  *current = '\0';
   CHECK_EQ(buffer, stderr_msg);
 
   error = process_write(process, stdout_msg, (uint32_t) strlen(stdout_msg),
@@ -73,7 +73,7 @@ TEST_CASE("read-write")
     current += actual;
   }
 
-  buffer[actual] = '\0';
+  *current = '\0';
   CHECK_EQ(buffer, stdout_msg);
 
   error = process_write(process, stderr_msg, (uint32_t) strlen(stderr_msg),
@@ -89,7 +89,7 @@ TEST_CASE("read-write")
     current += actual;
   }
 
-  buffer[actual] = '\0';
+  *current = '\0';
   CHECK_EQ(buffer, stderr_msg);
 
   error = process_wait(process, timeout);
