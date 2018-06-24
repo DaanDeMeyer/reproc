@@ -22,7 +22,7 @@ PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, uint32_t to_read,
 PROCESS_LIB_ERROR pipe_read_fully(int pipe, void *buffer, uint32_t to_read,
                                   uint32_t *actual);
 
-PROCESS_LIB_ERROR pipe_close(int *pipe);
+PROCESS_LIB_ERROR pipe_close(int *pipe_address);
 
 PROCESS_LIB_ERROR wait_no_hang(pid_t pid, int *exit_status);
 

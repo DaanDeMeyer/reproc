@@ -1,5 +1,7 @@
 ---
-Checks: '*,-fuchsia-*,-llvm-header-guard,-misc-definitions-in-headers,-readability-avoid-const-params-in-decls,-clang-analyzer-security.insecureAPI.strcpy'
+Checks: '*,-fuchsia-*,-llvm-header-guard,-misc-definitions-in-headers,
+-readability-avoid-const-params-in-decls,-hicpp-signed-bitwise,
+-clang-analyzer-security.insecureAPI.strcpy'
 HeaderFilterRegex: '.*'
 AnalyzeTemporaryDtors: false
 ...

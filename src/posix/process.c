@@ -4,8 +4,8 @@
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
-#include <stdlib.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -276,7 +276,7 @@ PROCESS_LIB_ERROR process_free(struct process **process_address)
   free(process);
   *process_address = NULL;
 
-  return error;
+  return result;
 }
 
 int64_t process_system_error(void) { return errno; }
