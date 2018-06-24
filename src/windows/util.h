@@ -18,6 +18,8 @@ PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
 PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
                              uint32_t *actual);
 
+PROCESS_LIB_ERROR handle_close(HANDLE *handle);
+
 /* Joins all the strings in string_array together using a single whitespace as
  * the delimiter.
  */
@@ -26,5 +28,3 @@ PROCESS_LIB_ERROR string_join(const char **string_array, int array_length,
 
 /* Converts narrow string (uft-8) to wide string (utf-16) */
 PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result);
-
-PROCESS_LIB_ERROR handle_close(HANDLE *handle);

@@ -74,6 +74,25 @@ PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
   return PROCESS_LIB_SUCCESS;
 }
 
+PROCESS_LIB_ERROR handle_close(HANDLE *handle_address)
+{
+  assert(handle_address);
+
+  HANDLE handle = *handle_address;
+
+  // Do nothing and return success on null handle so callers don't have to check
+  // each time if a handle has been closed already
+  if (!handle) { return PROCESS_LIB_SUCCESS; }
+
+  SetLastError(0);
+  DWORD result = CloseHandle(handle);
+  *handle_address = NULL; // Resources should only be closed once
+
+  if (!result) { return PROCESS_LIB_UNKNOWN_ERROR; }
+
+  return PROCESS_LIB_SUCCESS;
+}
+
 PROCESS_LIB_ERROR string_join(const char **string_array, int array_length,
                               char **result)
 {
@@ -141,25 +160,6 @@ PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result)
   }
 
   *result = wstring;
-
-  return PROCESS_LIB_SUCCESS;
-}
-
-PROCESS_LIB_ERROR handle_close(HANDLE *handle_address)
-{
-  assert(handle_address);
-
-  HANDLE handle = *handle_address;
-
-  // Do nothing and return success on null handle so callers don't have to check
-  // each time if a handle has been closed already
-  if (!handle) { return PROCESS_LIB_SUCCESS; }
-
-  SetLastError(0);
-  DWORD result = CloseHandle(handle);
-  *handle_address = NULL; // Resources should only be closed once
-
-  if (!result) { return PROCESS_LIB_UNKNOWN_ERROR; }
 
   return PROCESS_LIB_SUCCESS;
 }
