@@ -13,7 +13,7 @@ environment:
     - MSYSTEM: MSVC
 
 before_build: 
-  - cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DPROCESS_LIB_BUILD_TESTS=ON .
+  - cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DPROCESS_LIB_BUILD_TESTS=ON -DPROCESS_LIB_BUILD_EXAMPLES=ON .
 
 build:
   project: process-lib.sln
