@@ -35,7 +35,7 @@ TEST_CASE("read-write")
     std::stringstream ss;
 
     while (true) {
-      error = process_read(process, buffer, buffer_size, &actual);
+      error = process_read(process, buffer, buffer_size - 1, &actual);
       if (error) { break; }
 
       buffer[actual] = '\0';
