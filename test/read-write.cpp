@@ -26,7 +26,7 @@ TEST_CASE("read-write")
     int argc = 2;
     const char *argv[3] = {ECHO_PATH, "stdout", 0};
 
-    error = process_start(process, argc, argv, NULL);
+    error = process_start(process, argv, argc, NULL);
     REQUIRE(!error);
 
     error = process_write(process, msg, (uint32_t) strlen(msg), &actual);
@@ -52,7 +52,7 @@ TEST_CASE("read-write")
     int argc = 2;
     const char *argv[3] = {ECHO_PATH, "stderr", 0};
 
-    error = process_start(process, argc, argv, NULL);
+    error = process_start(process, argv, argc, NULL);
     REQUIRE(!error);
 
     error = process_write(process, msg, (uint32_t) strlen(msg), &actual);
@@ -61,7 +61,7 @@ TEST_CASE("read-write")
     std::stringstream ss;
 
     while (true) {
-      error = process_read_stderr(process, buffer, buffer_size, &actual);
+      error = process_read_stderr(process, buffer, buffer_size - 1, &actual);
       if (error) { break; }
 
       buffer[actual] = '\0';
@@ -70,7 +70,7 @@ TEST_CASE("read-write")
 
     REQUIRE_EQ(ss.str().c_str(), msg);
   }
-  
+
   error = process_wait(process, timeout);
   REQUIRE(!error);
 
