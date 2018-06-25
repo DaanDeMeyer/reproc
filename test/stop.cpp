@@ -11,7 +11,7 @@ TEST_CASE("stop")
   REQUIRE(!error);
   REQUIRE(process);
 
-  error = process_start(process, argc, argv, 0);
+  error = process_start(process, argv, argc, 0);
   REQUIRE(!error);
 
   // Wait 50ms to avoid terminating the process on Windows before it is

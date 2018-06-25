@@ -13,7 +13,7 @@ int main(void)
   int argc = 2;
   const char *argv[3] = {"cmake", "--help", 0};
 
-  error = process_start(process, argc, argv, 0);
+  error = process_start(process, argv, argc, 0);
   if (error) { return 1; }
 
   char buffer[1024];
