@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 #include <process.h>
+#include <sstream>
 #include <string.h>
 
 /* Alternates between writing to stdin and reading from stdout and writing to
@@ -8,14 +9,10 @@
  */
 TEST_CASE("read-write")
 {
-  const char *argv[2] = {ECHO_PATH, 0};
-  int argc = 1;
   uint32_t timeout = 100;
 
-  const char *stdout_msg = "stdout\n";
-  const char *stderr_msg = "stderr\n";
-
   char buffer[1000];
+  uint32_t buffer_size = 1000;
   uint32_t actual = 0;
 
   Process *process = NULL;
@@ -23,51 +20,58 @@ TEST_CASE("read-write")
   REQUIRE(!error);
   REQUIRE(process);
 
-  error = process_start(process, argc, argv, NULL);
-  REQUIRE(!error);
+  SUBCASE("stdout")
+  {
+    const char *msg = "This is stdout\n";
 
-  error = process_write(process, stdout_msg, (uint32_t) strlen(stdout_msg),
-                        &actual);
-  REQUIRE(!error);
+    int argc = 2;
+    const char *argv[3] = {ECHO_PATH, "stdout", 0};
 
-  error = process_read(process, buffer, (uint32_t) strlen(stdout_msg), &actual);
-  REQUIRE(!error);
+    error = process_start(process, argc, argv, NULL);
+    REQUIRE(!error);
 
-  buffer[actual] = '\0';
-  CHECK_EQ(buffer, stdout_msg);
+    error = process_write(process, msg, (uint32_t) strlen(msg), &actual);
+    REQUIRE(!error);
 
-  error = process_write(process, stderr_msg, (uint32_t) strlen(stderr_msg),
-                        &actual);
-  REQUIRE(!error);
+    std::stringstream ss;
 
-  error = process_read_stderr(process, buffer, (uint32_t) strlen(stderr_msg),
-                              &actual);
-  REQUIRE(!error);
+    while (true) {
+      error = process_read(process, buffer, buffer_size, &actual);
+      if (error) { break; }
 
-  buffer[actual] = '\0';
-  CHECK_EQ(buffer, stderr_msg);
+      buffer[actual] = '\0';
+      ss << buffer;
+    }
 
-  error = process_write(process, stdout_msg, (uint32_t) strlen(stdout_msg),
-                        &actual);
-  REQUIRE(!error);
+    REQUIRE_EQ(ss.str().c_str(), msg);
+  }
 
-  error = process_read(process, buffer, (uint32_t) strlen(stdout_msg), &actual);
-  REQUIRE(!error);
+  SUBCASE("stderr")
+  {
+    const char *msg = "This is stderr\n";
 
-  buffer[actual] = '\0';
-  CHECK_EQ(buffer, stdout_msg);
+    int argc = 2;
+    const char *argv[3] = {ECHO_PATH, "stderr", 0};
 
-  error = process_write(process, stderr_msg, (uint32_t) strlen(stderr_msg),
-                        &actual);
-  REQUIRE(!error);
+    error = process_start(process, argc, argv, NULL);
+    REQUIRE(!error);
 
-  error = process_read_stderr(process, buffer, (uint32_t) strlen(stderr_msg),
-                              &actual);
-  REQUIRE(!error);
+    error = process_write(process, msg, (uint32_t) strlen(msg), &actual);
+    REQUIRE(!error);
 
-  buffer[actual] = '\0';
-  CHECK_EQ(buffer, stderr_msg);
+    std::stringstream ss;
 
+    while (true) {
+      error = process_read_stderr(process, buffer, buffer_size, &actual);
+      if (error) { break; }
+
+      buffer[actual] = '\0';
+      ss << buffer;
+    }
+
+    REQUIRE_EQ(ss.str().c_str(), msg);
+  }
+  
   error = process_wait(process, timeout);
   REQUIRE(!error);
 

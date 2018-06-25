@@ -55,37 +55,6 @@ PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR pipe_write_fully(HANDLE pipe, const void *buffer,
-                                   uint32_t to_write, uint32_t *actual)
-{
-  assert(pipe);
-  assert(buffer);
-  assert(actual);
-
-  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
-  uint32_t total = 0;
-  uint8_t *current = (uint8_t *) buffer;
-
-  while (total != to_write) {
-    // We temporarily use actual to store actual bytes written of single calls
-    error = pipe_write(pipe, current, to_write - total, actual);
-    if (error) { break; }
-
-    total += *actual;
-    current += *actual;
-
-    // Sanity check that total never becomes bigger than to_write
-    assert(total <= to_write);
-  }
-
-  // Now we set actual to its return value
-  *actual = total;
-
-  if (error) { return error; }
-
-  return PROCESS_LIB_SUCCESS;
-}
-
 PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
                             uint32_t *actual)
 {
@@ -101,37 +70,6 @@ PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
     default: return PROCESS_LIB_UNKNOWN_ERROR;
     }
   }
-
-  return PROCESS_LIB_SUCCESS;
-}
-
-PROCESS_LIB_ERROR pipe_read_fully(HANDLE pipe, const void *buffer,
-                                  uint32_t to_read, uint32_t *actual)
-{
-  assert(pipe);
-  assert(buffer);
-  assert(actual);
-
-  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
-  uint32_t total = 0;
-  uint8_t *current = (uint8_t *) buffer;
-
-  while (total != to_read) {
-    // We temporarily use actual to store actual bytes read of single calls
-    error = pipe_read(pipe, current, to_read - total, actual);
-    if (error) { break; }
-
-    total += *actual;
-    current += *actual;
-
-    // Sanity check that total never becomes bigger than to_read
-    assert(total <= to_read);
-  }
-
-  // Now we set actual to its return value
-  *actual = total;
-
-  if (error) { return error; }
 
   return PROCESS_LIB_SUCCESS;
 }

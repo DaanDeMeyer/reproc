@@ -5,6 +5,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 include(common-warnings)
 
 option(PROCESS_LIB_BUILD_TESTS OFF)
+option(PROCESS_LIB_BUILD_EXAMPLES OFF)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -20,4 +21,7 @@ if(PROCESS_LIB_BUILD_TESTS)
   add_subdirectory(test)
 endif()
 
+if(PROCESS_LIB_BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif()
 

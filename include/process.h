@@ -27,8 +27,21 @@ typedef enum {
 extern "C" {
 #endif
 
-/* Allocates memory for Process and initializes its members including allocating
- * the required pipes for redirecting stdin/stdout/stderr.
+/**
+ * @brief Allocates memory for the Process pointer and initializes it.
+ *
+ * Aside from allocating the required memory for the Process pointer this
+ * function also allocates the pipes used to redirect the standard streams of
+ * the child process (stdin/stdout/stderr).
+ *
+ * Possible Errors:
+ *   - PROCESS_LIB_MEMORY_ERROR: When allocating the Process pointer fails
+ *   - PROCESS_LIB_PIPE_LIMIT_REACHED: When one or more of the pipes could not
+ *     be allocated
+ *
+ * @param process_address Address of a Process pointer. Cannot be NULL. Any
+ * already allocated memory to the Process pointer will be discarded.
+ * @return PROCESS_LIB_ERROR
  */
 PROCESS_LIB_ERROR process_init(Process **process_address);
 
