@@ -3,10 +3,9 @@
 #include <sstream>
 #include <string.h>
 
-/* Alternates between writing to stdin and reading from stdout and writing to
- * stdin and reading from stderr.
- * See res/echo for the child process code
- */
+// Alternates between writing to stdin and reading from stdout and writing to
+// stdin and reading from stderr.
+// See res/echo for the child process code
 TEST_CASE("read-write")
 {
   uint32_t timeout = 100;
