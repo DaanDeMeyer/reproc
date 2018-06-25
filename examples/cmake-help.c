@@ -28,7 +28,19 @@ int main(void)
     fprintf(stdout, "%s", buffer);
   }
 
+  if (error != PROCESS_LIB_STREAM_CLOSED) { return 1; }
+
   fflush(stdout);
 
-  return 0;
+  error = process_wait(process, 50);
+  if (error) { return 1; }
+
+  int exit_status;
+  error = process_exit_status(process, &exit_status);
+  if (error) { return 1; }
+
+  error = process_free(&process);
+  if (error) { return 1; }
+
+  return exit_status;
 }
