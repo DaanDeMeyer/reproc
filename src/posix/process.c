@@ -54,9 +54,8 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR process_start(struct process *process, int argc,
-                                const char *argv[],
-                                const char *working_directory)
+PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
+                                int argc, const char *working_directory)
 {
   assert(process);
 
