@@ -2,7 +2,10 @@ dist: trusty
 sudo: false
 # Use generic to avoid travis-ci overwriting CC and CXX
 # See: https://stackoverflow.com/questions/35110123/travis-ci-with-c14-and-linux
-language: generic 
+language: generic
+
+notifications:
+  email: false
 
 addons:
   apt:
