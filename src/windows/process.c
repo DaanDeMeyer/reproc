@@ -27,6 +27,7 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   ZeroMemory(&process->info, sizeof(PROCESS_INFORMATION));
   process->info.hThread = NULL;
   process->info.hProcess = NULL;
+  // process id 0 is reserved by the system so we can use it as a null value
   process->info.dwProcessId = 0;
 
   process->stdin = NULL;
@@ -36,9 +37,11 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   process->child_stdout = NULL;
   process->child_stderr = NULL;
 
-  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
-
-  // Continue allocating pipes until error occurs (PROCESS_SUCCESS = 0)
+  // pipe_init makes the child process inherit both the read and write handle of
+  // each pipe but the child process only needs one handle (read for stdin,
+  // write for stdout/stderr) for each pipe so we disable inheritance of the
+  // handle that is not needed with pipe_disable_inherit
+  PROCESS_LIB_ERROR error;
   error = pipe_init(&process->child_stdin, &process->stdin);
   if (error) { return error; }
   error = pipe_disable_inherit(process->stdin);
@@ -57,8 +60,8 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   return PROCESS_LIB_SUCCESS;
 }
 
-// Create each process in a new process group so we can send separate CTRL-BREAK
-// signals to each of them
+// Create each process in a new process group so we don't send CTRL-BREAK
+// signals to more than one child process in process_terminate.
 static const DWORD CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP;
 
 PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
@@ -76,6 +79,7 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
 
   // Make sure process_start is only called once for each process_init call
   assert(!process->info.hProcess);
+  assert(!process->info.dwProcessId);
 
   // Make sure process was initialized completely
   assert(process->stdin);
@@ -85,7 +89,7 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   assert(process->child_stdout);
   assert(process->child_stderr);
 
-  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
+  PROCESS_LIB_ERROR error;
 
   // Join argv to whitespace delimited string as required by CreateProcess
   char *command_line_string = NULL;
@@ -133,6 +137,7 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
 
   SetErrorMode(previous_error_mode);
 
+  // Free allocated memory before returning possible error
   free(command_line_wstring);
   free(working_directory_wstring);
 
@@ -206,11 +211,17 @@ PROCESS_LIB_ERROR process_terminate(struct process *process,
   assert(process);
   assert(process->info.dwProcessId);
 
+  // Check if child process has already exited before sending signal
   PROCESS_LIB_ERROR error = process_wait(process, 0);
+
+  // Return if wait succeeds (which means process has already exited) or if
+  // an error other than a wait timeout occurs during waiting
   if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; }
 
-  // process group of process started with CREATE_NEW_PROCESS_GROUP is equal to
-  // the process id
+  // GenerateConsoleCtrlEvent can only be passed a process group id. This is why
+  // we start each child process in its own process group (which has the same id
+  // as the child process id) so we can call GenerateConsoleCtrlEvent on single
+  // child processes
   SetLastError(0);
   if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, process->info.dwProcessId)) {
     return PROCESS_LIB_UNKNOWN_ERROR;
@@ -224,7 +235,11 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
   assert(process);
   assert(process->info.hProcess);
 
+  // Check if child process has already exited before sending signal
   PROCESS_LIB_ERROR error = process_wait(process, 0);
+
+  // Return if wait succeeds (which means process has already exited) or if
+  // an error other than a wait timeout occurs during waiting
   if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; }
 
   SetLastError(0);
@@ -268,9 +283,6 @@ PROCESS_LIB_ERROR process_free(struct process **process_address)
   PROCESS_LIB_ERROR result = PROCESS_LIB_SUCCESS;
   PROCESS_LIB_ERROR error;
 
-  // NULL checks so free works even if process was only partially initialized
-  // (can happen if error occurs during initialization or if start is not
-  // called)
   error = handle_close(&process->info.hThread);
   if (!result) { result = error; }
   error = handle_close(&process->info.hProcess);

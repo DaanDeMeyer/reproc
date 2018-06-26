@@ -42,8 +42,8 @@ PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer, uint32_t to_write,
   assert(buffer);
   assert(actual);
 
-  // Cast is valid since DWORD = unsigned int on Windows
   SetLastError(0);
+  // Cast is valid since DWORD = unsigned int on Windows
   if (!WriteFile(pipe, buffer, to_write, (LPDWORD) actual, NULL)) {
     switch (GetLastError()) {
     case ERROR_OPERATION_ABORTED: return PROCESS_LIB_INTERRUPTED;
@@ -63,6 +63,7 @@ PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, uint32_t to_read,
   assert(actual);
 
   SetLastError(0);
+  // Cast is valid since DWORD = unsigned int on Windows
   if (!ReadFile(pipe, buffer, to_read, (LPDWORD) actual, NULL)) {
     switch (GetLastError()) {
     case ERROR_OPERATION_ABORTED: return PROCESS_LIB_INTERRUPTED;
@@ -86,7 +87,9 @@ PROCESS_LIB_ERROR handle_close(HANDLE *handle_address)
 
   SetLastError(0);
   DWORD result = CloseHandle(handle);
-  *handle_address = NULL; // Resources should only be closed once
+  // CloseHandle should not be repeated on error so always set handle to NULL
+  // after CloseHandle
+  *handle_address = NULL;
 
   if (!result) { return PROCESS_LIB_UNKNOWN_ERROR; }
 
@@ -113,7 +116,7 @@ PROCESS_LIB_ERROR string_join(const char **string_array, int array_length,
   char *string = malloc(sizeof(char) * string_length);
   if (string == NULL) { return PROCESS_LIB_MEMORY_ERROR; }
 
-  char *current = string; // iterator
+  char *current = string; // Keeps track of where we are in the result string
   for (int i = 0; i < array_length; i++) {
     size_t part_length = strlen(string_array[i]);
     strcpy(current, string_array[i]);

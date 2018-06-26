@@ -31,8 +31,8 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   struct process *process = *process_address;
   if (!process) { return PROCESS_LIB_MEMORY_ERROR; }
 
+  // process id 0 is reserved by the system so we can use it as a null value
   process->pid = 0;
-
   // File descriptor 0 won't be assigned by pipe() call so we use it as a null
   // value
   process->stdin = 0;
@@ -41,7 +41,10 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   process->child_stdin = 0;
   process->child_stdout = 0;
   process->child_stderr = 0;
-  // Exit codes on unix are in range [0,256) so we can use -1 as a null value
+  // Exit codes on unix are in range [0,256) so we can use -1 as a null value.
+  // We save the exit status because after calling waitpid multiple times on a
+  // process that has already exited is unsafe since after the first time the
+  // system can reuse the process id for another process.
   process->exit_status = -1;
 
   PROCESS_LIB_ERROR error;
@@ -68,8 +71,10 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
     assert(argv[i]);
   }
 
+  // Make sure process_start is only called once for each process_init call
   assert(!process->pid);
 
+  // Make sure process was initialized completely
   assert(process->stdin);
   assert(process->stdout);
   assert(process->stderr);
@@ -190,7 +195,9 @@ PROCESS_LIB_ERROR process_wait(struct process *process, uint32_t milliseconds)
   assert(process);
   assert(process->pid);
 
-  // Don't wait if program has already exited
+  // Don't wait if child process has already exited. We don't use waitpid for
+  // this because if we've already waited once after the process has exited the
+  // pid of the process might have already been reused by the system.
   if (process->exit_status != -1) { return PROCESS_LIB_SUCCESS; }
 
   if (milliseconds == 0) {
@@ -210,7 +217,7 @@ PROCESS_LIB_ERROR process_terminate(struct process *process,
   assert(process);
   assert(process->pid);
 
-  // Check if program has already exited before sending signal
+  // Check if child process has already exited before sending signal
   PROCESS_LIB_ERROR error = process_wait(process, 0);
 
   // Return if wait succeeds (which means process has already exited) or if
@@ -228,7 +235,7 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
   assert(process);
   assert(process->pid);
 
-  // Check if program has already exited before sending signal
+  // Check if child process has already exited before sending signal
   PROCESS_LIB_ERROR error = process_wait(process, 0);
 
   // Return if wait succeeds (which means process has already exited) or if
