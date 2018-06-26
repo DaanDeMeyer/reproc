@@ -5,10 +5,6 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-/*
-Creates a pipe with pipe() and if the call succeeds assign the read endpoint
-of the pipe to read and the write endpoint to write.
-*/
 PROCESS_LIB_ERROR pipe_init(int *read, int *write);
 
 PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer, uint32_t to_write,

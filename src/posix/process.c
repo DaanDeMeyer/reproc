@@ -41,7 +41,8 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   process->child_stdin = 0;
   process->child_stdout = 0;
   process->child_stderr = 0;
-  process->exit_status = -1; // Exit codes on unix are in range [0,256)
+  // Exit codes on unix are in range [0,256) so we can use -1 as a null value
+  process->exit_status = -1;
 
   PROCESS_LIB_ERROR error;
   error = pipe_init(&process->child_stdin, &process->stdin);
@@ -77,8 +78,9 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   assert(process->child_stderr);
   assert(process->exit_status == -1);
 
-  // We put process in its own process group which is needed by process_wait.
+  // We put process in its own process group which is needed by process_wait
   // The process group is set in both parent and child to avoid race conditions
+  // (see setpgid calls)
 
   errno = 0;
   process->pid = fork();
@@ -92,9 +94,8 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   }
 
   if (process->pid == 0) {
-    // In child process
-    // Since we're in a child process we can exit on error
-    // why _exit? See:
+    // In child process (Since we're in the child process we can exit on error)
+    // Why _exit? See:
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
 
     errno = 0;
@@ -103,7 +104,7 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
 
     if (working_directory && chdir(working_directory) == -1) { _exit(errno); }
 
-    // redirect stdin, stdout and stderr
+    // Redirect stdin, stdout and stderr
     // _exit ensures open file descriptors (pipes) are closed
     if (dup2(process->child_stdin, STDIN_FILENO) == -1) { _exit(errno); }
     if (dup2(process->child_stdout, STDOUT_FILENO) == -1) { _exit(errno); }
@@ -134,7 +135,7 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
     switch (errno) {
     // If we get EACCESS the child process has already executed execvp which
     // means it also has executed setpgid(0, 0) which means the process group
-    // is set correctly so EACCES isn't an error for us in this case.
+    // is already set correctly so EACCES isn't an error in this case.
     case EACCES: break;
     default: return PROCESS_LIB_UNKNOWN_ERROR;
     }
@@ -189,6 +190,7 @@ PROCESS_LIB_ERROR process_wait(struct process *process, uint32_t milliseconds)
   assert(process);
   assert(process->pid);
 
+  // Don't wait if program has already exited
   if (process->exit_status != -1) { return PROCESS_LIB_SUCCESS; }
 
   if (milliseconds == 0) {
@@ -208,7 +210,9 @@ PROCESS_LIB_ERROR process_terminate(struct process *process,
   assert(process);
   assert(process->pid);
 
+  // Check if program has already exited before sending signal
   PROCESS_LIB_ERROR error = process_wait(process, 0);
+
   // Return if wait succeeds (which means process has already exited) or if
   // an error other than a wait timeout occurs during waiting
   if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; }
@@ -224,7 +228,9 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
   assert(process);
   assert(process->pid);
 
+  // Check if program has already exited before sending signal
   PROCESS_LIB_ERROR error = process_wait(process, 0);
+
   // Return if wait succeeds (which means process has already exited) or if
   // an error other than a wait timeout occurs during waiting
   if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; }

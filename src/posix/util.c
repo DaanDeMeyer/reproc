@@ -11,6 +11,9 @@
 
 PROCESS_LIB_ERROR pipe_init(int *read, int *write)
 {
+  assert(read);
+  assert(write);
+
   int pipefd[2];
 
   errno = 0;
@@ -21,7 +24,7 @@ PROCESS_LIB_ERROR pipe_init(int *read, int *write)
     }
   }
 
-  // Assign file desccriptors if create pipe was succesful
+  // Assign file descriptors if pipe() call was succesful
   *read = pipefd[0];
   *write = pipefd[1];
 
@@ -37,7 +40,7 @@ PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer, uint32_t to_write,
 
   errno = 0;
   ssize_t bytes_written = write(pipe, buffer, to_write);
-  *actual = 0; // if error actual = 0
+  *actual = 0; // changed to bytes_written if write was succesful
 
   if (bytes_written == -1) {
     switch (errno) {
@@ -62,7 +65,7 @@ PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, uint32_t to_read,
 
   errno = 0;
   ssize_t bytes_read = read(pipe, buffer, to_read);
-  *actual = 0; // if error or stream closed actual = 0
+  *actual = 0; // changed to bytes_read if read was succesful
 
   if (bytes_read == 0) { return PROCESS_LIB_STREAM_CLOSED; }
   if (bytes_read == -1) {
@@ -90,7 +93,8 @@ PROCESS_LIB_ERROR pipe_close(int *pipe_address)
 
   errno = 0;
   int result = close(pipe);
-  *pipe_address = 0; // Resources should only be closed once
+  // Close should not be repeated on error so always set pipe to 0 after close
+  *pipe_address = 0;
 
   if (result == -1) {
     switch (errno) {
@@ -120,8 +124,6 @@ PROCESS_LIB_ERROR wait_no_hang(pid_t pid, int *exit_status)
     }
   }
 
-  assert(wait_result == pid);
-
   *exit_status = parse_exit_status(status);
 
   return PROCESS_LIB_SUCCESS;
@@ -148,6 +150,7 @@ PROCESS_LIB_ERROR wait_infinite(pid_t pid, int *exit_status)
   return PROCESS_LIB_SUCCESS;
 }
 
+// See Design section in README.md for an explanation of how this works
 PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
                                uint32_t milliseconds)
 {
@@ -177,7 +180,8 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
     tv.tv_sec = milliseconds / 1000;           // ms -> s
     tv.tv_usec = (milliseconds % 1000) * 1000; // leftover ms -> us
 
-    // Select with no fd's can be used as a makeshift sleep function
+    // Select with no fd's can be used as a makeshift sleep function (that can
+    // still be interrupted by SIGTERM)
     errno = 0;
     if (select(0, NULL, NULL, NULL, &tv) == -1) { _exit(errno); }
 
@@ -186,14 +190,14 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
 
   errno = 0;
   if (setpgid(timeout_pid, pid) == -1) {
-    // EACCES should not occur since we don't execve in timeout process
+    // EACCES should not occur since we don't call execve in the timeout process
     return PROCESS_LIB_UNKNOWN_ERROR;
   };
 
   // -process->pid waits for all processes in the process->pid process group
   // which in this case will be the process we want to wait for and the timeout
   // process. waitpid will return the process id of whichever process exits
-  // first.
+  // first
   int status = 0;
   errno = 0;
   pid_t exit_pid = waitpid(-pid, &status, 0);
@@ -201,8 +205,8 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
   // If the timeout process exits first the timeout will have been exceeded
   if (exit_pid == timeout_pid) { return PROCESS_LIB_WAIT_TIMEOUT; }
 
-  // Else we make sure the timeout process is cleaned up correctly by sending a
-  // SIGTERM signal and waiting for it
+  // If the child process exits first we make sure the timeout process is
+  // cleaned up correctly by sending a SIGTERM signal and waiting for it
   errno = 0;
   if (kill(timeout_pid, SIGTERM) == -1) { return PROCESS_LIB_UNKNOWN_ERROR; }
 
@@ -215,8 +219,7 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
   }
 
   // After cleaning up the timeout process we can check if an error occurred
-  // while waiting for the timeout process/actual process. This ensures the
-  // timeout process is always cleaned up
+  // while waiting for the timeout process/child process
   if (exit_pid == -1) {
     switch (errno) {
     case EINTR: return PROCESS_LIB_INTERRUPTED;
