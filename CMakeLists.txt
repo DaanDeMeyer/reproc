@@ -8,20 +8,17 @@ option(PROCESS_LIB_BUILD_TESTS OFF)
 option(PROCESS_LIB_BUILD_EXAMPLES OFF)
 option(PROCESS_LIB_BUILD_CPP_WRAPPER OFF)
 
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS OFF)
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-### src ###
+### Library ###
 
 add_library(process "")
 
-target_link_libraries(process PRIVATE common-warnings)
-set_target_properties(process PROPERTIES ARCHIVE_OUTPUT_DIRECTORY lib)
+set_property(TARGET process PROPERTY ARCHIVE_OUTPUT_DIRECTORY lib)
+
+target_compile_features(process PRIVATE c_std_99)
+set_target_properties(process PROPERTIES 
+  C_STANDARD_REQUIRED ON
+  C_EXTENSIONS OFF
+)
 
 target_include_directories(process PUBLIC include/c)
 
@@ -51,6 +48,12 @@ endif()
 if(PROCESS_LIB_BUILD_CPP_WRAPPER)
   enable_language(CXX)
 
+  target_compile_features(process PUBLIC cxx_std_11)
+  set_target_properties(process PROPERTIES 
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF  
+  )
+
   target_include_directories(process PUBLIC include/cpp)
   target_sources(process PRIVATE src/cpp/process.cpp)
 endif()
@@ -58,6 +61,9 @@ endif()
 ### Tests ###
 
 if(PROCESS_LIB_BUILD_TESTS)
+
+  ### Helper programs ###
+
   enable_language(CXX)
 
   add_executable(echo test/res/echo.cpp)
@@ -66,14 +72,14 @@ if(PROCESS_LIB_BUILD_TESTS)
   add_executable(infinite test/res/infinite.cpp)
   target_link_libraries(infinite PRIVATE common-warnings)
 
-  set_target_properties(echo infinite PROPERTIES 
-    RUNTIME_OUTPUT_DIRECTORY test/res
-  )
+  set_property(TARGET echo infinite PROPERTY RUNTIME_OUTPUT_DIRECTORY test/res)
 
+  ### Tests ###
+  
   add_executable(tests "")
   
   add_dependencies(tests echo infinite)
-  set_target_properties(tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY test)
+  set_property(TARGET tests PROPERTY RUNTIME_OUTPUT_DIRECTORY test)
   
   target_link_libraries(tests PRIVATE common-warnings process)
   target_include_directories(tests PRIVATE third-party/doctest/doctest)
@@ -95,7 +101,7 @@ endif()
 
 if(PROCESS_LIB_BUILD_EXAMPLES)  
   add_executable(cmake-help examples/cmake-help.c)
+  set_property(TARGET cmake-help PROPERTY RUNTIME_OUTPUT_DIRECTORY examples)
   target_link_libraries(cmake-help PRIVATE common-warnings process)
-  set_target_properties(cmake-help PROPERTIES RUNTIME_OUTPUT_DIRECTORY examples)
 endif()
 
