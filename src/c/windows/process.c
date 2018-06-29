@@ -172,7 +172,8 @@ PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
 }
 
 PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
-                                      unsigned int to_read, unsigned int *actual)
+                                      unsigned int to_read,
+                                      unsigned int *actual)
 {
   assert(process);
   assert(process->stderr);
@@ -182,7 +183,8 @@ PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
   return pipe_read(process->stderr, buffer, to_read, actual);
 }
 
-PROCESS_LIB_ERROR process_wait(struct process *process, unsigned int milliseconds)
+PROCESS_LIB_ERROR process_wait(struct process *process,
+                               unsigned int milliseconds)
 {
   assert(process);
   assert(process->info.hProcess);
@@ -220,7 +222,8 @@ PROCESS_LIB_ERROR process_terminate(struct process *process,
   return process_wait(process, milliseconds);
 }
 
-PROCESS_LIB_ERROR process_kill(struct process *process, unsigned int milliseconds)
+PROCESS_LIB_ERROR process_kill(struct process *process,
+                               unsigned int milliseconds)
 {
   assert(process);
   assert(process->info.hProcess);
@@ -240,8 +243,7 @@ PROCESS_LIB_ERROR process_kill(struct process *process, unsigned int millisecond
   return process_wait(process, milliseconds);
 }
 
-PROCESS_LIB_ERROR process_exit_status(struct process *process,
-                                      int *exit_status)
+PROCESS_LIB_ERROR process_exit_status(struct process *process, int *exit_status)
 {
   assert(process);
   assert(process->info.hProcess);
@@ -298,4 +300,4 @@ PROCESS_LIB_ERROR process_free(struct process **process_address)
   return result;
 }
 
-long long process_system_error(void) { return GetLastError(); }
+unsigned int process_system_error(void) { return GetLastError(); }

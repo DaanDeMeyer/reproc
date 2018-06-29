@@ -209,7 +209,8 @@ Additional errors when milliseconds is not 0 or PROCESS_LIB_INFINITE:
 - (POSIX) PROCESS_LIB_PROCESS_LIMIT_REACHED
 - (POSIX) PROCESS_LIB_MEMORY_ERROR
 */
-PROCESS_LIB_ERROR process_wait(process_type *process, unsigned int milliseconds);
+PROCESS_LIB_ERROR process_wait(process_type *process,
+                               unsigned int milliseconds);
 
 /*!
 Tries to terminate the child process cleanly (the child process has a chance to
@@ -246,10 +247,10 @@ process to exit. If the child process has already exited no signal is sent.
 
 Possible errors: See \see process_wait
 */
-PROCESS_LIB_ERROR process_kill(process_type *process, unsigned int milliseconds);
+PROCESS_LIB_ERROR process_kill(process_type *process,
+                               unsigned int milliseconds);
 
-PROCESS_LIB_ERROR process_exit_status(process_type *process,
-                                      int *exit_status);
+PROCESS_LIB_ERROR process_exit_status(process_type *process, int *exit_status);
 
 /*!
 Releases all resources associated with the process.
@@ -281,7 +282,7 @@ that modify the results of GetLastError or errno should not be called if you
 want to retrieve the last system error that occurred in one of process-lib's
 functions.
 */
-long long process_system_error(void);
+unsigned int process_system_error(void);
 
 #ifdef __cplusplus
 }

@@ -1,7 +1,7 @@
 #include "process.hpp"
 
-#include <process.h>
 #include <new>
+#include <process.h>
 
 Process::Process() : process(nullptr)
 {
@@ -39,7 +39,8 @@ Process::Error Process::write(const void *buffer, unsigned int to_write,
   return static_cast<Error>(process_write(process, buffer, to_write, actual));
 }
 
-Process::Error Process::read(void *buffer, unsigned int to_read, unsigned int *actual)
+Process::Error Process::read(void *buffer, unsigned int to_read,
+                             unsigned int *actual)
 {
   return static_cast<Error>(process_read(process, buffer, to_read, actual));
 }
@@ -71,4 +72,4 @@ Process::Error Process::exit_status(int *exit_status)
   return static_cast<Error>(process_exit_status(process, exit_status));
 }
 
-long long Process::system_error() { return process_system_error(); }
+unsigned int Process::system_error() { return process_system_error(); }

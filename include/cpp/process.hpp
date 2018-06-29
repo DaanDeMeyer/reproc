@@ -57,7 +57,7 @@ public:
   Process::Error exit_status(int *exit_status);
 
   /*! /see process_system_error */
-  long long system_error();
+  unsigned int system_error();
 
 private:
   struct process *process;
