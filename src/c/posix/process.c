@@ -47,14 +47,6 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   // system can reuse the process id for another process.
   process->exit_status = -1;
 
-  PROCESS_LIB_ERROR error;
-  error = pipe_init(&process->child_stdin, &process->stdin);
-  if (error) { return error; }
-  error = pipe_init(&process->stdout, &process->child_stdout);
-  if (error) { return error; }
-  error = pipe_init(&process->stderr, &process->child_stderr);
-  if (error) { return error; }
-
   return PROCESS_LIB_SUCCESS;
 }
 
@@ -83,9 +75,17 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   assert(process->child_stderr);
   assert(process->exit_status == -1);
 
-  // We put process in its own process group which is needed by process_wait
-  // The process group is set in both parent and child to avoid race conditions
-  // (see setpgid calls)
+  PROCESS_LIB_ERROR error;
+  error = pipe_init(&process->child_stdin, &process->stdin);
+  if (error) { return error; }
+  error = pipe_init(&process->stdout, &process->child_stdout);
+  if (error) { return error; }
+  error = pipe_init(&process->stderr, &process->child_stderr);
+  if (error) { return error; }
+
+  // We put the child process in its own process group which is needed by
+  // process_wait The process group is set in both parent and child to avoid
+  // race conditions (see setpgid calls)
 
   errno = 0;
   process->pid = fork();
@@ -146,7 +146,6 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
     }
   }
 
-  PROCESS_LIB_ERROR error;
   error = pipe_close(&process->child_stdin);
   if (error) { return error; }
   error = pipe_close(&process->child_stdout);

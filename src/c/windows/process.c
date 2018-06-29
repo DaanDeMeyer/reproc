@@ -24,7 +24,6 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   struct process *process = *process_address;
   if (!process) { return PROCESS_LIB_MEMORY_ERROR; }
 
-  ZeroMemory(&process->info, sizeof(PROCESS_INFORMATION));
   process->info.hThread = NULL;
   process->info.hProcess = NULL;
   // process id 0 is reserved by the system so we can use it as a null value
@@ -36,26 +35,6 @@ PROCESS_LIB_ERROR process_init(struct process **process_address)
   process->child_stdin = NULL;
   process->child_stdout = NULL;
   process->child_stderr = NULL;
-
-  // pipe_init makes the child process inherit both the read and write handle of
-  // each pipe but the child process only needs one handle (read for stdin,
-  // write for stdout/stderr) for each pipe so we disable inheritance of the
-  // handle that is not needed with pipe_disable_inherit
-  PROCESS_LIB_ERROR error;
-  error = pipe_init(&process->child_stdin, &process->stdin);
-  if (error) { return error; }
-  error = pipe_disable_inherit(process->stdin);
-  if (error) { return error; }
-
-  error = pipe_init(&process->stdout, &process->child_stdout);
-  if (error) { return error; }
-  error = pipe_disable_inherit(process->stdout);
-  if (error) { return error; }
-
-  error = pipe_init(&process->stderr, &process->child_stderr);
-  if (error) { return error; }
-  error = pipe_disable_inherit(process->stderr);
-  if (error) { return error; }
 
   return PROCESS_LIB_SUCCESS;
 }
@@ -90,6 +69,25 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   assert(process->child_stderr);
 
   PROCESS_LIB_ERROR error;
+
+  // pipe_init makes the child process inherit both the read and write handle of
+  // each pipe but the child process only needs one handle (read for stdin,
+  // write for stdout/stderr) for each pipe so we disable inheritance of the
+  // handle that is not needed with pipe_disable_inherit
+  error = pipe_init(&process->child_stdin, &process->stdin);
+  if (error) { return error; }
+  error = pipe_disable_inherit(process->stdin);
+  if (error) { return error; }
+
+  error = pipe_init(&process->stdout, &process->child_stdout);
+  if (error) { return error; }
+  error = pipe_disable_inherit(process->stdout);
+  if (error) { return error; }
+
+  error = pipe_init(&process->stderr, &process->child_stderr);
+  if (error) { return error; }
+  error = pipe_disable_inherit(process->stderr);
+  if (error) { return error; }
 
   // Join argv to whitespace delimited string as required by CreateProcess
   char *command_line_string = NULL;

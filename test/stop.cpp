@@ -1,4 +1,4 @@
-#include <doctest/doctest.h>
+#include <doctest.h>
 #include <process.h>
 
 TEST_CASE("stop")
@@ -6,7 +6,7 @@ TEST_CASE("stop")
   const char *argv[2] = {INFINITE_PATH, 0};
   int argc = 1;
 
-  Process *process = 0;
+  process_type *process = 0;
   PROCESS_LIB_ERROR error = process_init(&process);
   REQUIRE(!error);
   REQUIRE(process);

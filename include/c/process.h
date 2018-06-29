@@ -9,7 +9,7 @@ indefinitely. */
 static const uint32_t PROCESS_LIB_INFINITE = 0xFFFFFFFF;
 
 /*! Used to store child process information between multiple library calls */
-typedef struct process Process;
+typedef struct process process_type;
 
 typedef enum {
   /*!
@@ -63,10 +63,6 @@ extern "C" {
 /*!
 Allocates memory for the Process pointer and initializes it.
 
-Aside from allocating the required memory for the Process pointer this function
-also allocates the pipes used to redirect the standard streams of the child
-process (stdin/stdout/stderr).
-
 Every call to process_init should be followed with a call to \see process_free
 after the child process has exited.
 
@@ -77,12 +73,12 @@ already allocated memory to the Process pointer will be leaked.
 
 Possible Errors:
 - PROCESS_LIB_MEMORY_ERROR
-- PROCESS_LIB_PIPE_LIMIT_REACHED
 */
-PROCESS_LIB_ERROR process_init(Process **process_address);
+PROCESS_LIB_ERROR process_init(process_type **process_address);
 
 /*!
-Starts the process specified by argv in the given working directory.
+Starts the process specified by argv in the given working directory and
+redirects its standard output streams.
 
 This function should be called after process_init. After this function completes
 (without error) the child process actually starts running and can be seen in the
@@ -114,14 +110,15 @@ directory as the current process.
 \return PROCESS_LIB_ERROR
 
 Possible errors:
+- PROCESS_LIB_PIPE_LIMIT_REACHED
 - PROCESS_LIB_PROCESS_LIMIT_REACHED
 - PROCESS_LIB_MEMORY_ERROR
 - PROCESS_LIB_INTERRUPTED
 - PROCESS_LIB_IO_ERROR
 - PROCESS_LIB_INVALID_UNICODE
 */
-PROCESS_LIB_ERROR process_start(Process *process, const char *argv[], int argc,
-                                const char *working_directory);
+PROCESS_LIB_ERROR process_start(process_type *process, const char *argv[],
+                                int argc, const char *working_directory);
 
 /*!
 Writes up to \p to_write bytes from \p buffer to the standard input (stdin) of
@@ -144,7 +141,7 @@ Possible errors:
 - PROCESS_LIB_INTERRUPTED
 - PROCESS_LIB_IO_ERROR
 */
-PROCESS_LIB_ERROR process_write(Process *process, const void *buffer,
+PROCESS_LIB_ERROR process_write(process_type *process, const void *buffer,
                                 uint32_t to_write, uint32_t *actual);
 
 /*!
@@ -186,12 +183,12 @@ Possible errors:
 - PROCESS_LIB_INTERRUPTED
 - PROCESS_LIB_IO_ERROR
 */
-PROCESS_LIB_ERROR process_read(Process *process, void *buffer, uint32_t to_read,
-                               uint32_t *actual);
+PROCESS_LIB_ERROR process_read(process_type *process, void *buffer,
+                               uint32_t to_read, uint32_t *actual);
 
 /*! \see process_read for the standard error stream of the child process.
  */
-PROCESS_LIB_ERROR process_read_stderr(Process *process, void *buffer,
+PROCESS_LIB_ERROR process_read_stderr(process_type *process, void *buffer,
                                       uint32_t to_read, uint32_t *actual);
 
 /*!
@@ -213,7 +210,7 @@ Additional errors when milliseconds is not 0 or PROCESS_LIB_INFINITE:
 - (POSIX) PROCESS_LIB_PROCESS_LIMIT_REACHED
 - (POSIX) PROCESS_LIB_MEMORY_ERROR
 */
-PROCESS_LIB_ERROR process_wait(Process *process, uint32_t milliseconds);
+PROCESS_LIB_ERROR process_wait(process_type *process, uint32_t milliseconds);
 
 /*!
 Tries to terminate the child process cleanly (the child process has a chance to
@@ -231,7 +228,8 @@ exit. If the process has already exited no signal is sent.
 
 Possible errors: See \see process_wait
 */
-PROCESS_LIB_ERROR process_terminate(Process *process, uint32_t milliseconds);
+PROCESS_LIB_ERROR process_terminate(process_type *process,
+                                    uint32_t milliseconds);
 
 /*!
 Kills the child process without allowing for cleanup.
@@ -249,9 +247,10 @@ process to exit. If the child process has already exited no signal is sent.
 
 Possible errors: See \see process_wait
 */
-PROCESS_LIB_ERROR process_kill(Process *process, uint32_t milliseconds);
+PROCESS_LIB_ERROR process_kill(process_type *process, uint32_t milliseconds);
 
-PROCESS_LIB_ERROR process_exit_status(Process *process, int32_t *exit_status);
+PROCESS_LIB_ERROR process_exit_status(process_type *process,
+                                      int32_t *exit_status);
 
 /*!
 Releases all resources associated with the process.
@@ -272,7 +271,7 @@ Possible errors:
 - PROCESS_LIB_INTERRUPTED
 - PROCESS_LIB_IO_ERROR
 */
-PROCESS_LIB_ERROR process_free(Process **process_address);
+PROCESS_LIB_ERROR process_free(process_type **process_address);
 
 /*!
 Returns the last system error code.

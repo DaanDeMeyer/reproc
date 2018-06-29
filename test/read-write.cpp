@@ -1,4 +1,4 @@
-#include <doctest/doctest.h>
+#include <doctest.h>
 #include <process.h>
 #include <sstream>
 #include <string.h>
@@ -14,7 +14,7 @@ TEST_CASE("read-write")
   uint32_t buffer_size = 1000;
   uint32_t actual = 0;
 
-  Process *process = NULL;
+  process_type *process = NULL;
   PROCESS_LIB_ERROR error = process_init(&process);
   REQUIRE(!error);
   REQUIRE(process);

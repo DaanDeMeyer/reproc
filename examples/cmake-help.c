@@ -4,7 +4,7 @@
 
 int main(void)
 {
-  Process *process;
+  process_type *process;
   PROCESS_LIB_ERROR error;
 
   error = process_init(&process);
