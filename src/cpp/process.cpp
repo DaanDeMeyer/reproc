@@ -1,7 +1,7 @@
 #include "process.hpp"
 
 #include <process.h>
-#include <stdexcept>
+#include <new>
 
 Process::Process() : process(nullptr)
 {

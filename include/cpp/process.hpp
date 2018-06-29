@@ -22,6 +22,7 @@ public:
   Process();
   ~Process();
 
+  /* Enforce unique ownership */
   Process(const Process &) = delete;
   Process(Process &&);
 
