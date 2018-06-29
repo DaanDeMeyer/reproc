@@ -1,6 +1,7 @@
 #include <string>
 #include <iostream>
 #include <assert.h>
+#include <stdio.h>
 
 #ifdef _WIN32
 #include <io.h>

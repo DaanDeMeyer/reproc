@@ -103,5 +103,6 @@ if(PROCESS_LIB_BUILD_EXAMPLES)
   add_executable(cmake-help examples/cmake-help.c)
   set_property(TARGET cmake-help PROPERTY RUNTIME_OUTPUT_DIRECTORY examples)
   target_link_libraries(cmake-help PRIVATE common-warnings process)
+  target_compile_features(cmake-help PRIVATE c_std_99)
 endif()
 
