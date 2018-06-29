@@ -2,11 +2,9 @@
 
 #pragma once
 
-#include <stdint.h>
-
 /*! Used to indicate that a function that takes a timeout value should wait
 indefinitely. */
-static const uint32_t PROCESS_LIB_INFINITE = 0xFFFFFFFF;
+static const unsigned int PROCESS_LIB_INFINITE = 0xFFFFFFFF;
 
 /*! Used to store child process information between multiple library calls */
 typedef struct process process_type;
@@ -142,7 +140,7 @@ Possible errors:
 - PROCESS_LIB_IO_ERROR
 */
 PROCESS_LIB_ERROR process_write(process_type *process, const void *buffer,
-                                uint32_t to_write, uint32_t *actual);
+                                unsigned int to_write, unsigned int *actual);
 
 /*!
 Reads up to \p to_read bytes from the child process' standard output and
@@ -184,12 +182,13 @@ Possible errors:
 - PROCESS_LIB_IO_ERROR
 */
 PROCESS_LIB_ERROR process_read(process_type *process, void *buffer,
-                               uint32_t to_read, uint32_t *actual);
+                               unsigned int to_read, unsigned int *actual);
 
 /*! \see process_read for the standard error stream of the child process.
  */
 PROCESS_LIB_ERROR process_read_stderr(process_type *process, void *buffer,
-                                      uint32_t to_read, uint32_t *actual);
+                                      unsigned int to_read,
+                                      unsigned int *actual);
 
 /*!
 Waits the specified amount of time for the process to exit.
@@ -210,7 +209,7 @@ Additional errors when milliseconds is not 0 or PROCESS_LIB_INFINITE:
 - (POSIX) PROCESS_LIB_PROCESS_LIMIT_REACHED
 - (POSIX) PROCESS_LIB_MEMORY_ERROR
 */
-PROCESS_LIB_ERROR process_wait(process_type *process, uint32_t milliseconds);
+PROCESS_LIB_ERROR process_wait(process_type *process, unsigned int milliseconds);
 
 /*!
 Tries to terminate the child process cleanly (the child process has a chance to
@@ -229,7 +228,7 @@ exit. If the process has already exited no signal is sent.
 Possible errors: See \see process_wait
 */
 PROCESS_LIB_ERROR process_terminate(process_type *process,
-                                    uint32_t milliseconds);
+                                    unsigned int milliseconds);
 
 /*!
 Kills the child process without allowing for cleanup.
@@ -247,10 +246,10 @@ process to exit. If the child process has already exited no signal is sent.
 
 Possible errors: See \see process_wait
 */
-PROCESS_LIB_ERROR process_kill(process_type *process, uint32_t milliseconds);
+PROCESS_LIB_ERROR process_kill(process_type *process, unsigned int milliseconds);
 
 PROCESS_LIB_ERROR process_exit_status(process_type *process,
-                                      int32_t *exit_status);
+                                      int *exit_status);
 
 /*!
 Releases all resources associated with the process.
@@ -282,7 +281,7 @@ that modify the results of GetLastError or errno should not be called if you
 want to retrieve the last system error that occurred in one of process-lib's
 functions.
 */
-int64_t process_system_error(void);
+long long process_system_error(void);
 
 #ifdef __cplusplus
 }

@@ -60,14 +60,6 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   assert(!process->info.hProcess);
   assert(!process->info.dwProcessId);
 
-  // Make sure process was initialized completely
-  assert(process->stdin);
-  assert(process->stdout);
-  assert(process->stderr);
-  assert(process->child_stdin);
-  assert(process->child_stdout);
-  assert(process->child_stderr);
-
   PROCESS_LIB_ERROR error;
 
   // pipe_init makes the child process inherit both the read and write handle of
@@ -158,7 +150,7 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
 }
 
 PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,
-                                uint32_t to_write, uint32_t *actual)
+                                unsigned int to_write, unsigned int *actual)
 {
   assert(process);
   assert(process->stdin);
@@ -169,7 +161,7 @@ PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,
 }
 
 PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
-                               uint32_t to_read, uint32_t *actual)
+                               unsigned int to_read, unsigned int *actual)
 {
   assert(process);
   assert(process->stdout);
@@ -180,7 +172,7 @@ PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
 }
 
 PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
-                                      uint32_t to_read, uint32_t *actual)
+                                      unsigned int to_read, unsigned int *actual)
 {
   assert(process);
   assert(process->stderr);
@@ -190,7 +182,7 @@ PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
   return pipe_read(process->stderr, buffer, to_read, actual);
 }
 
-PROCESS_LIB_ERROR process_wait(struct process *process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_wait(struct process *process, unsigned int milliseconds)
 {
   assert(process);
   assert(process->info.hProcess);
@@ -204,7 +196,7 @@ PROCESS_LIB_ERROR process_wait(struct process *process, uint32_t milliseconds)
 }
 
 PROCESS_LIB_ERROR process_terminate(struct process *process,
-                                    uint32_t milliseconds)
+                                    unsigned int milliseconds)
 {
   assert(process);
   assert(process->info.dwProcessId);
@@ -228,7 +220,7 @@ PROCESS_LIB_ERROR process_terminate(struct process *process,
   return process_wait(process, milliseconds);
 }
 
-PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
+PROCESS_LIB_ERROR process_kill(struct process *process, unsigned int milliseconds)
 {
   assert(process);
   assert(process->info.hProcess);
@@ -249,7 +241,7 @@ PROCESS_LIB_ERROR process_kill(struct process *process, uint32_t milliseconds)
 }
 
 PROCESS_LIB_ERROR process_exit_status(struct process *process,
-                                      int32_t *exit_status)
+                                      int *exit_status)
 {
   assert(process);
   assert(process->info.hProcess);
@@ -264,7 +256,7 @@ PROCESS_LIB_ERROR process_exit_status(struct process *process,
     return PROCESS_LIB_STILL_RUNNING;
   }
 
-  *exit_status = (int32_t) unsigned_exit_status;
+  *exit_status = unsigned_exit_status;
 
   return PROCESS_LIB_SUCCESS;
 }
@@ -306,4 +298,4 @@ PROCESS_LIB_ERROR process_free(struct process **process_address)
   return result;
 }
 
-int64_t process_system_error(void) { return GetLastError(); }
+long long process_system_error(void) { return GetLastError(); }

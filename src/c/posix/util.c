@@ -31,8 +31,8 @@ PROCESS_LIB_ERROR pipe_init(int *read, int *write)
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer, uint32_t to_write,
-                             uint32_t *actual)
+PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer,
+                             unsigned int to_write, unsigned int *actual)
 {
   assert(pipe);
   assert(buffer);
@@ -51,13 +51,13 @@ PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer, uint32_t to_write,
     }
   }
 
-  *actual = (uint32_t) bytes_written;
+  *actual = (unsigned int) bytes_written;
 
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, uint32_t to_read,
-                            uint32_t *actual)
+PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, unsigned int to_read,
+                            unsigned int *actual)
 {
   assert(pipe);
   assert(buffer);
@@ -76,7 +76,7 @@ PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, uint32_t to_read,
     }
   }
 
-  *actual = (uint32_t) bytes_read;
+  *actual = (unsigned int) bytes_read;
 
   return PROCESS_LIB_SUCCESS;
 }
@@ -152,7 +152,7 @@ PROCESS_LIB_ERROR wait_infinite(pid_t pid, int *exit_status)
 
 // See Design section in README.md for an explanation of how this works
 PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
-                               uint32_t milliseconds)
+                               unsigned int milliseconds)
 {
   assert(pid);
   assert(exit_status);
@@ -180,8 +180,8 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
     tv.tv_sec = milliseconds / 1000;           // ms -> s
     tv.tv_usec = (milliseconds % 1000) * 1000; // leftover ms -> us
 
-    // Select with no fd's can be used as a makeshift sleep function (that can
-    // still be interrupted by SIGTERM)
+    // Select with no file descriptors can be used as a makeshift sleep function
+    // (that can still be interrupted by SIGTERM)
     errno = 0;
     if (select(0, NULL, NULL, NULL, &tv) == -1) { _exit(errno); }
 
@@ -232,7 +232,7 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
   return PROCESS_LIB_SUCCESS;
 }
 
-int32_t parse_exit_status(int status)
+int parse_exit_status(int status)
 {
   if (WIFEXITED(status)) { return WEXITSTATUS(status); }
 

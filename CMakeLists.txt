@@ -41,10 +41,6 @@ if(MSVC)
     NOMINMAX
   )
 else()
-  target_compile_options(process PRIVATE
-    -Wstrict-prototypes
-    -Wmissing-prototypes
-  )
   target_compile_definitions(process PRIVATE
     _POSIX_C_SOURCE
   )

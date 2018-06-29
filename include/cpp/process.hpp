@@ -5,7 +5,7 @@
 class Process
 {
 public:
-  static const uint32_t INFINITE = 0xFFFFFFFF;
+  static const unsigned int INFINITE = 0xFFFFFFFF;
 
   enum Error {
     SUCCESS = 0,
@@ -35,28 +35,30 @@ public:
                        const char *working_directory);
 
   /*! /see process_write */
-  Process::Error write(const void *buffer, uint32_t to_write, uint32_t *actual);
+  Process::Error write(const void *buffer, unsigned int to_write,
+                       unsigned int *actual);
 
   /*! /see process_read */
-  Process::Error read(void *buffer, uint32_t to_read, uint32_t *actual);
+  Process::Error read(void *buffer, unsigned int to_read, unsigned int *actual);
 
   /*! /see process_read_stderr */
-  Process::Error read_stderr(void *buffer, uint32_t to_read, uint32_t *actual);
+  Process::Error read_stderr(void *buffer, unsigned int to_read,
+                             unsigned int *actual);
 
   /*! /see process_wait */
-  Process::Error wait(uint32_t milliseconds);
+  Process::Error wait(unsigned int milliseconds);
 
   /*! /see process_terminate */
-  Process::Error terminate(uint32_t milliseconds);
+  Process::Error terminate(unsigned int milliseconds);
 
   /*! /see process_kill */
-  Process::Error kill(uint32_t milliseconds);
+  Process::Error kill(unsigned int milliseconds);
 
   /*! /see process_exit_status */
-  Process::Error exit_status(int32_t *exit_status);
+  Process::Error exit_status(int *exit_status);
 
   /*! /see process_system_error */
-  int64_t system_error();
+  long long system_error();
 
 private:
   struct process *process;

@@ -33,42 +33,42 @@ Process::Error Process::start(const char *argv[], int argc,
       process_start(process, argv, argc, working_directory));
 }
 
-Process::Error Process::write(const void *buffer, uint32_t to_write,
-                              uint32_t *actual)
+Process::Error Process::write(const void *buffer, unsigned int to_write,
+                              unsigned int *actual)
 {
   return static_cast<Error>(process_write(process, buffer, to_write, actual));
 }
 
-Process::Error Process::read(void *buffer, uint32_t to_read, uint32_t *actual)
+Process::Error Process::read(void *buffer, unsigned int to_read, unsigned int *actual)
 {
   return static_cast<Error>(process_read(process, buffer, to_read, actual));
 }
 
-Process::Error Process::read_stderr(void *buffer, uint32_t to_read,
-                                    uint32_t *actual)
+Process::Error Process::read_stderr(void *buffer, unsigned int to_read,
+                                    unsigned int *actual)
 {
   return static_cast<Error>(
       process_read_stderr(process, buffer, to_read, actual));
 }
 
-Process::Error Process::wait(uint32_t milliseconds)
+Process::Error Process::wait(unsigned int milliseconds)
 {
   return static_cast<Error>(process_wait(process, milliseconds));
 }
 
-Process::Error Process::terminate(uint32_t milliseconds)
+Process::Error Process::terminate(unsigned int milliseconds)
 {
   return static_cast<Error>(process_terminate(process, milliseconds));
 }
 
-Process::Error Process::kill(uint32_t milliseconds)
+Process::Error Process::kill(unsigned int milliseconds)
 {
   return static_cast<Error>(process_kill(process, milliseconds));
 }
 
-Process::Error Process::exit_status(int32_t *exit_status)
+Process::Error Process::exit_status(int *exit_status)
 {
   return static_cast<Error>(process_exit_status(process, exit_status));
 }
 
-int64_t Process::system_error() { return process_system_error(); }
+long long Process::system_error() { return process_system_error(); }

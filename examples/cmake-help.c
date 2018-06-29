@@ -17,8 +17,8 @@ int main(void)
   if (error) { return 1; }
 
   char buffer[1024];
-  uint32_t buffer_size = 1024;
-  uint32_t actual;
+  unsigned int buffer_size = 1024;
+  unsigned int actual;
 
   while (true) {
     error = process_read(process, buffer, buffer_size - 1, &actual);
