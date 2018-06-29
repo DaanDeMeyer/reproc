@@ -59,13 +59,13 @@ extern "C" {
 #endif
 
 /*!
-Allocates memory for the Process pointer and initializes it.
+Allocates memory for the process pointer and initializes it.
 
 Every call to process_init should be followed with a call to \see process_free
 after the child process has exited.
 
-\param[out] process_address Address of a Process pointer. Cannot be NULL. Any
-already allocated memory to the Process pointer will be leaked.
+\param[out] process_address Address of a process pointer. Cannot be NULL. Any
+already allocated memory to the process pointer will be leaked.
 
 \return PROCESS_LIB_ERROR
 
@@ -216,10 +216,10 @@ PROCESS_LIB_ERROR process_wait(process_type *process,
 Tries to terminate the child process cleanly (the child process has a chance to
 clean up).
 
-On Windows a CTRL-BREAK signal is sent to the child process. On POSIX
-a SIGTERM signal is sent to the child process. After sending the signal the
-function waits for the specified amount of milliseconds for the child process to
-exit. If the process has already exited no signal is sent.
+On Windows a CTRL-BREAK signal is sent to the child process. On POSIX a SIGTERM
+signal is sent to the child process. After sending the signal the function waits
+for the specified amount of milliseconds for the child process to exit. If the
+process has already exited no signal is sent.
 
 \param[in,out] process Cannot be NULL.
 \param[in] milliseconds See \see process_wait
@@ -234,11 +234,11 @@ PROCESS_LIB_ERROR process_terminate(process_type *process,
 /*!
 Kills the child process without allowing for cleanup.
 
-On Windows TerminateProcess
-is called. On POSIX a SIGKILL signal is sent to the child process. if the
-timeout is exceeded PROCESS_WAIT_TIMEOUT is returned. After sending the signal
-the function waits for the specified amount of milliseconds for the child
-process to exit. If the child process has already exited no signal is sent.
+On Windows TerminateProcess is called. On POSIX a SIGKILL signal is sent to the
+child process. if the timeout is exceeded PROCESS_WAIT_TIMEOUT is returned.
+After sending the signal the function waits for the specified amount of
+milliseconds for the child process to exit. If the child process has already
+exited no signal is sent.
 
 \param[in,out] process Cannot be NULL.
 \param[in] milliseconds See \see process_wait
@@ -261,9 +261,9 @@ process_kill first if you want to stop the child process.
 All resources will be freed regardless if any error occurs or not. This function
 should not be called again if an error occurs.
 
-\param[in,out] process_address Address of a Process pointer. Cannot be NULL and
-has to point to a Process pointer initialized with \see process_start. The
-Process pointer is set to NULL after it is freed.
+\param[in,out] process_address Address of a process_type pointer. Cannot be NULL
+and has to point to a process_Type pointer initialized with \see process_start.
+The process pointer is set to NULL after it is freed.
 
 \return PROCESS_LIB_ERROR
 
