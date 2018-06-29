@@ -52,11 +52,11 @@ process-lib uses a process struct to store information between calls to library
 functions. This struct is forward-declared in process.h with each
 platform-specific implementation hidden in the source files for that platform.
 
-This struct is typedefed to Process and exposed to the user as an opaque pointer
-(Process \*).
+This struct is typedefed to process_type and exposed to the user as an opaque
+pointer (process_type \*).
 
 ```c
-typedef struct process Process;
+typedef struct process process_type;
 ```
 
 The process.h header only contains a forward-declaration of the process struct.
@@ -92,7 +92,7 @@ Disadvantages:
   writing
 
   ```c
-  Process process;
+  process_type process;
   ```
 
 - Not possible to allocate on the heap without help from the library
@@ -156,4 +156,4 @@ want to wait for we know it has exited before the timeout process and that the
 timeout value has not been exceeded.
 
 This solution was inspired by [this](https://stackoverflow.com/a/8020324)
-Stackoverflow answer.
+Stack Overflow answer.
