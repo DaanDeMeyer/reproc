@@ -48,7 +48,7 @@ Process::Error Process::start(const std::vector<std::string> &args,
   }
   argv[args.size()] = nullptr;
 
-  int argc = args.size();
+  int argc = static_cast<int>(args.size());
 
   Error error = start(argv, argc,
                       working_directory ? working_directory->c_str() : nullptr);
