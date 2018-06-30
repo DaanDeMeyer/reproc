@@ -14,8 +14,8 @@ add_library(process "")
 
 set_property(TARGET process PROPERTY ARCHIVE_OUTPUT_DIRECTORY lib)
 
-target_compile_features(process PRIVATE c_std_99)
 set_target_properties(process PROPERTIES 
+  C_STANDARD 99
   C_STANDARD_REQUIRED ON
   C_EXTENSIONS OFF
 )
@@ -103,6 +103,10 @@ if(PROCESS_LIB_BUILD_EXAMPLES)
   add_executable(cmake-help examples/cmake-help.c)
   set_property(TARGET cmake-help PROPERTY RUNTIME_OUTPUT_DIRECTORY examples)
   target_link_libraries(cmake-help PRIVATE common-warnings process)
-  target_compile_features(cmake-help PRIVATE c_std_99)
+  set_target_properties(cmake-help PROPERTIES
+    C_STANDARD 99
+    C_STANDARD_REQUIRED ON
+    C_EXTENSIONS OFF
+  )
 endif()
 
