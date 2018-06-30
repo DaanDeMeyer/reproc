@@ -24,7 +24,7 @@ matrix:
       addons:
         apt:
           sources: *sources
-          packages: 
+          packages:
             - g++-5
 
     - os: linux
@@ -32,7 +32,7 @@ matrix:
       addons:
         apt:
           sources: *sources
-          packages: 
+          packages:
             - g++-8
 
     - os: linux
@@ -40,7 +40,7 @@ matrix:
       addons:
         apt:
           sources: *sources
-          packages: 
+          packages:
             - clang-3.6
             - g++-5
 
@@ -58,6 +58,6 @@ matrix:
       env: CXX=clang++
 
 script:
-  - cmake -DCMAKE_BUILD_TYPE=Debug -DPROCESS_LIB_BUILD_TESTS=ON -DPROCESS_LIB_BUILD_EXAMPLES=ON .
+  - cmake -DCMAKE_BUILD_TYPE=Debug -DPROCESS_LIB_BUILD_TESTS=ON -DPROCESS_LIB_BUILD_EXAMPLES=ON -DPROCESS_LIB_BUILD_CPP_WRAPPER=ON .
   - cmake --build . -- -j 3
   - ./test/tests
