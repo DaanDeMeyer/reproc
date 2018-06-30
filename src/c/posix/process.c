@@ -8,9 +8,9 @@
 
 struct process {
   pid_t pid;
-  int stdin;
-  int stdout;
-  int stderr;
+  int parent_stdin;
+  int parent_stdout;
+  int parent_stderr;
   int child_stdin;
   int child_stdout;
   int child_stderr;
@@ -31,9 +31,9 @@ PROCESS_LIB_ERROR process_init(struct process *process)
   process->pid = 0;
   // File descriptor 0 won't be assigned by pipe() call so we use it as a null
   // value
-  process->stdin = 0;
-  process->stdout = 0;
-  process->stderr = 0;
+  process->parent_stdin = 0;
+  process->parent_stdout = 0;
+  process->parent_stderr = 0;
   process->child_stdin = 0;
   process->child_stdout = 0;
   process->child_stderr = 0;
@@ -63,11 +63,11 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   assert(!process->pid);
 
   PROCESS_LIB_ERROR error;
-  error = pipe_init(&process->child_stdin, &process->stdin);
+  error = pipe_init(&process->child_stdin, &process->parent_stdin);
   if (error) { return error; }
-  error = pipe_init(&process->stdout, &process->child_stdout);
+  error = pipe_init(&process->parent_stdout, &process->child_stdout);
   if (error) { return error; }
-  error = pipe_init(&process->stderr, &process->child_stderr);
+  error = pipe_init(&process->parent_stderr, &process->child_stderr);
   if (error) { return error; }
 
   // We put the child process in its own process group which is needed by
@@ -110,9 +110,9 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
 
     // We also have no use for the parent endpoints of the pipes in the child
     // process
-    if (close(process->stdin) == -1) { _exit(errno); };
-    if (close(process->stdout) == -1) { _exit(errno); };
-    if (close(process->stderr) == -1) { _exit(errno); };
+    if (close(process->parent_stdin) == -1) { _exit(errno); };
+    if (close(process->parent_stdout) == -1) { _exit(errno); };
+    if (close(process->parent_stderr) == -1) { _exit(errno); };
 
     // Replace forked child with process we want to run
     // Safe cast (execvp doesn't actually change the contents of argv)
@@ -147,30 +147,30 @@ PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,
                                 unsigned int to_write, unsigned int *actual)
 {
   assert(process);
-  assert(process->stdin);
+  assert(process->parent_stdin);
   assert(buffer);
   assert(actual);
 
-  return pipe_write(process->stdin, buffer, to_write, actual);
+  return pipe_write(process->parent_stdin, buffer, to_write, actual);
 }
 
 PROCESS_LIB_ERROR process_close_stdin(struct process *process)
 {
   assert(process);
-  assert(process->stdin);
+  assert(process->parent_stdin);
 
-  return pipe_close(&process->stdin);
+  return pipe_close(&process->parent_stdin);
 }
 
 PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
                                unsigned int to_read, unsigned int *actual)
 {
   assert(process);
-  assert(process->stdout);
+  assert(process->parent_stdout);
   assert(buffer);
   assert(actual);
 
-  return pipe_read(process->stdout, buffer, to_read, actual);
+  return pipe_read(process->parent_stdout, buffer, to_read, actual);
 }
 
 PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
@@ -178,11 +178,11 @@ PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
                                       unsigned int *actual)
 {
   assert(process);
-  assert(process->stderr);
+  assert(process->parent_stderr);
   assert(buffer);
   assert(actual);
 
-  return pipe_read(process->stderr, buffer, to_read, actual);
+  return pipe_read(process->parent_stderr, buffer, to_read, actual);
 }
 
 PROCESS_LIB_ERROR process_wait(struct process *process,
@@ -265,11 +265,11 @@ PROCESS_LIB_ERROR process_free(struct process *process)
   PROCESS_LIB_ERROR result = PROCESS_LIB_SUCCESS;
   PROCESS_LIB_ERROR error;
 
-  error = pipe_close(&process->stdin);
+  error = pipe_close(&process->parent_stdin);
   if (!result) { result = error; }
-  error = pipe_close(&process->stdout);
+  error = pipe_close(&process->parent_stdout);
   if (!result) { result = error; }
-  error = pipe_close(&process->stderr);
+  error = pipe_close(&process->parent_stderr);
   if (!result) { result = error; }
 
   error = pipe_close(&process->child_stdin);

@@ -7,9 +7,9 @@
 
 struct process {
   PROCESS_INFORMATION info;
-  HANDLE stdin;
-  HANDLE stdout;
-  HANDLE stderr;
+  HANDLE parent_stdin;
+  HANDLE parent_stdout;
+  HANDLE parent_stderr;
   HANDLE child_stdin;
   HANDLE child_stdout;
   HANDLE child_stderr;
@@ -26,9 +26,9 @@ PROCESS_LIB_ERROR process_init(struct process *process)
   // process id 0 is reserved by the system so we can use it as a null value
   process->info.dwProcessId = 0;
 
-  process->stdin = NULL;
-  process->stdout = NULL;
-  process->stderr = NULL;
+  process->parent_stdin = NULL;
+  process->parent_stdout = NULL;
+  process->parent_stderr = NULL;
   process->child_stdin = NULL;
   process->child_stdout = NULL;
   process->child_stderr = NULL;
@@ -63,19 +63,19 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   // each pipe but the child process only needs one handle (read for stdin,
   // write for stdout/stderr) for each pipe so we disable inheritance of the
   // handle that is not needed with pipe_disable_inherit
-  error = pipe_init(&process->child_stdin, &process->stdin);
+  error = pipe_init(&process->child_stdin, &process->parent_stdin);
   if (error) { return error; }
-  error = pipe_disable_inherit(process->stdin);
-  if (error) { return error; }
-
-  error = pipe_init(&process->stdout, &process->child_stdout);
-  if (error) { return error; }
-  error = pipe_disable_inherit(process->stdout);
+  error = pipe_disable_inherit(process->parent_stdin);
   if (error) { return error; }
 
-  error = pipe_init(&process->stderr, &process->child_stderr);
+  error = pipe_init(&process->parent_stdout, &process->child_stdout);
   if (error) { return error; }
-  error = pipe_disable_inherit(process->stderr);
+  error = pipe_disable_inherit(process->parent_stdout);
+  if (error) { return error; }
+
+  error = pipe_init(&process->parent_stderr, &process->child_stderr);
+  if (error) { return error; }
+  error = pipe_disable_inherit(process->parent_stderr);
   if (error) { return error; }
 
   // Join argv to whitespace delimited string as required by CreateProcess
@@ -150,30 +150,30 @@ PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,
                                 unsigned int to_write, unsigned int *actual)
 {
   assert(process);
-  assert(process->stdin);
+  assert(process->parent_stdin);
   assert(buffer);
   assert(actual);
 
-  return pipe_write(process->stdin, buffer, to_write, actual);
+  return pipe_write(process->parent_stdin, buffer, to_write, actual);
 }
 
 PROCESS_LIB_ERROR process_close_stdin(struct process *process)
 {
   assert(process);
-  assert(process->stdin);
+  assert(process->parent_stdin);
 
-  return handle_close(&process->stdin);
+  return handle_close(&process->parent_stdin);
 }
 
 PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
                                unsigned int to_read, unsigned int *actual)
 {
   assert(process);
-  assert(process->stdout);
+  assert(process->parent_stdout);
   assert(buffer);
   assert(actual);
 
-  return pipe_read(process->stdout, buffer, to_read, actual);
+  return pipe_read(process->parent_stdout, buffer, to_read, actual);
 }
 
 PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
@@ -181,11 +181,11 @@ PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
                                       unsigned int *actual)
 {
   assert(process);
-  assert(process->stderr);
+  assert(process->parent_stderr);
   assert(buffer);
   assert(actual);
 
-  return pipe_read(process->stderr, buffer, to_read, actual);
+  return pipe_read(process->parent_stderr, buffer, to_read, actual);
 }
 
 PROCESS_LIB_ERROR process_wait(struct process *process,
@@ -282,11 +282,11 @@ PROCESS_LIB_ERROR process_free(struct process *process)
   error = handle_close(&process->info.hProcess);
   if (!result) { result = error; }
 
-  error = handle_close(&process->stdin);
+  error = handle_close(&process->parent_stdin);
   if (!result) { result = error; }
-  error = handle_close(&process->stdout);
+  error = handle_close(&process->parent_stdout);
   if (!result) { result = error; }
-  error = handle_close(&process->stderr);
+  error = handle_close(&process->parent_stderr);
   if (!result) { result = error; }
 
   error = handle_close(&process->child_stdin);
