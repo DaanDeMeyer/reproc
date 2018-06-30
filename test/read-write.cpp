@@ -1,7 +1,8 @@
 #include <doctest.h>
 #include <process.h>
 #include <sstream>
-#include <string.h>
+#include <cstring>
+#include <cstdlib>
 
 // Alternates between writing to stdin and reading from stdout and writing to
 // stdin and reading from stderr.
@@ -14,8 +15,10 @@ TEST_CASE("read-write")
   unsigned int buffer_size = 1000;
   unsigned int actual = 0;
 
-  process_type *process = NULL;
-  PROCESS_LIB_ERROR error = process_init(&process);
+  process_type *process = (process_type *) malloc(process_size());
+  REQUIRE(process);
+
+  PROCESS_LIB_ERROR error = process_init(process);
   REQUIRE(!error);
   REQUIRE(process);
 
@@ -79,6 +82,8 @@ TEST_CASE("read-write")
   REQUIRE(!error);
   REQUIRE((exit_status == 0));
 
-  error = process_free(&process);
+  error = process_free(process);
   REQUIRE(!error);
+
+  free(process);
 }

@@ -1,13 +1,14 @@
 #include <process.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 int main(void)
 {
-  process_type *process;
   PROCESS_LIB_ERROR error;
 
-  error = process_init(&process);
+  process_type *process = malloc(process_size());
+  error = process_init(process);
   if (error) { return 1; }
 
   int argc = 2;
@@ -39,8 +40,10 @@ int main(void)
   error = process_exit_status(process, &exit_status);
   if (error) { return 1; }
 
-  error = process_free(&process);
+  error = process_free(process);
   if (error) { return 1; }
+
+  free(process);
 
   return exit_status;
 }

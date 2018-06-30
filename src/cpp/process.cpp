@@ -2,16 +2,18 @@
 
 #include <new>
 #include <process.h>
+#include <cstdlib>
 
-Process::Process() : process(nullptr)
+Process::Process()
 {
-  PROCESS_LIB_ERROR error = process_init(&process);
-  if (error) { throw std::bad_alloc(); }
+  process = (process_type *) malloc(process_size());
+  if (!process) { throw std::bad_alloc(); }
+  PROCESS_LIB_ERROR error = process_init(process);
 }
 
 Process::~Process()
 {
-  if (process) { process_free(&process); }
+  if (process) { process_free(process); }
 }
 
 Process::Process(Process &&other) : process(other.process)

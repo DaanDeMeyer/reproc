@@ -101,20 +101,19 @@ Disadvantages:
   can't easily allocate the process struct on the heap because it can't figure
   out its size with sizeof.
 
-  Because the library has to allocate memory regardless (see
-  [Memory Allocation](#memory-allocation)), this problem is solved by allocating
-  the required memory in the `process_init` function. If no memory allocations
-  were required in the rest of the library, we could have the user allocate the
-  memory himself by providing him with a `process_size` function which would
-  allow the user to allocate the required memory himself and allow the library
-  code to be completely free of dynamic memory allocations.
+  This problem is solved by providing a `process_size` function that returns the
+  size of `process_type` on each platform. This function can then be used as
+  follows:
+
+  ```c
+  process_type *process = malloc(process_size());
+  ```
 
 ### Memory allocation
 
-process-lib aims to do as few dynamic memory allocations as possible. As of this
-moment, memory allocation is only done when allocating memory for the process
-struct in `process_init` and when converting the array of program arguments to a
-single string as required by the Windows
+process-lib aims to do as few dynamic memory allocations as possible in its own
+code. As of this moment, Dynamic memory allocation is only done on Windows when
+converting the array of program arguments to a single string as required by the
 [CreateProcess](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms682425(v=vs.85).aspx>)
 function.
 
@@ -155,5 +154,5 @@ value has been exceeded. If `waitpid` returns the process id of the process we
 want to wait for we know it has exited before the timeout process and that the
 timeout value has not been exceeded.
 
-This solution was inspired by [this](https://stackoverflow.com/a/8020324)
-Stack Overflow answer.
+This solution was inspired by [this](https://stackoverflow.com/a/8020324) Stack
+Overflow answer.

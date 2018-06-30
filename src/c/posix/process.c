@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 struct process {
@@ -18,14 +17,15 @@ struct process {
   int exit_status;
 };
 
-PROCESS_LIB_ERROR process_init(struct process **process_address)
+unsigned int process_size()
 {
-  assert(process_address);
+  // process struct is small so its size should always fit inside unsigned int
+  return (unsigned int) sizeof(struct process);
+}
 
-  *process_address = malloc(sizeof(struct process));
-
-  struct process *process = *process_address;
-  if (!process) { return PROCESS_LIB_MEMORY_ERROR; }
+PROCESS_LIB_ERROR process_init(struct process *process)
+{
+  assert(process);
 
   // process id 0 is reserved by the system so we can use it as a null value
   process->pid = 0;
@@ -248,12 +248,9 @@ PROCESS_LIB_ERROR process_exit_status(struct process *process, int *exit_status)
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR process_free(struct process **process_address)
+PROCESS_LIB_ERROR process_free(struct process *process)
 {
-  assert(process_address);
-  assert(*process_address);
-
-  struct process *process = *process_address;
+  assert(process);
 
   // All resources are closed regardless of errors but only the first error
   // is returned
@@ -273,9 +270,6 @@ PROCESS_LIB_ERROR process_free(struct process **process_address)
   if (!result) { result = error; }
   error = pipe_close(&process->child_stderr);
   if (!result) { result = error; }
-
-  free(process);
-  *process_address = NULL;
 
   return result;
 }

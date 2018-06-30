@@ -1,15 +1,17 @@
 #include <doctest.h>
 #include <process.h>
+#include <cstdlib>
 
 TEST_CASE("stop")
 {
   const char *argv[2] = {INFINITE_PATH, 0};
   int argc = 1;
 
-  process_type *process = 0;
-  PROCESS_LIB_ERROR error = process_init(&process);
-  REQUIRE(!error);
+  process_type *process = (process_type *) malloc(process_size());
   REQUIRE(process);
+
+  PROCESS_LIB_ERROR error = process_init(process);
+  REQUIRE(!error);
 
   error = process_start(process, argv, argc, 0);
   REQUIRE(!error);
@@ -31,6 +33,8 @@ TEST_CASE("stop")
     REQUIRE(!error);
   }
 
-  error = process_free(&process);
+  error = process_free(process);
   REQUIRE(!error);
+
+  free(process);
 }

@@ -59,7 +59,12 @@ extern "C" {
 #endif
 
 /*!
-Allocates memory for the process pointer and initializes it.
+Returns the size of process_type on the current platform so it can be allocated.
+*/
+unsigned int process_size();
+
+/*!
+Initializes the members of process_type.
 
 Every call to process_init should be followed with a call to \see process_free
 after the child process has exited.
@@ -68,11 +73,8 @@ after the child process has exited.
 already allocated memory to the process pointer will be leaked.
 
 \return PROCESS_LIB_ERROR
-
-Possible Errors:
-- PROCESS_LIB_MEMORY_ERROR
 */
-PROCESS_LIB_ERROR process_init(process_type **process_address);
+PROCESS_LIB_ERROR process_init(process_type *process);
 
 /*!
 Starts the process specified by argv in the given working directory and
@@ -271,7 +273,7 @@ Possible errors:
 - PROCESS_LIB_INTERRUPTED
 - PROCESS_LIB_IO_ERROR
 */
-PROCESS_LIB_ERROR process_free(process_type **process_address);
+PROCESS_LIB_ERROR process_free(process_type *process);
 
 /*!
 Returns the last system error code.

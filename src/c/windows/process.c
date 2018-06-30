@@ -15,14 +15,11 @@ struct process {
   HANDLE child_stderr;
 };
 
-PROCESS_LIB_ERROR process_init(struct process **process_address)
+unsigned int process_size() { return sizeof(struct process); }
+
+PROCESS_LIB_ERROR process_init(struct process *process)
 {
-  assert(process_address);
-
-  *process_address = malloc(sizeof(struct process));
-
-  struct process *process = *process_address;
-  if (!process) { return PROCESS_LIB_MEMORY_ERROR; }
+  assert(process);
 
   process->info.hThread = NULL;
   process->info.hProcess = NULL;
@@ -263,12 +260,9 @@ PROCESS_LIB_ERROR process_exit_status(struct process *process, int *exit_status)
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR process_free(struct process **process_address)
+PROCESS_LIB_ERROR process_free(struct process *process)
 {
-  assert(process_address);
-  assert(*process_address);
-
-  struct process *process = *process_address;
+  assert(process);
 
   // All resources are closed regardless of errors but only the first error
   // is returned
@@ -293,9 +287,6 @@ PROCESS_LIB_ERROR process_free(struct process **process_address)
   if (!result) { result = error; }
   error = handle_close(&process->child_stderr);
   if (!result) { result = error; }
-
-  free(process);
-  *process_address = NULL;
 
   return result;
 }
