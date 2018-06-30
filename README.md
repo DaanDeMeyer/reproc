@@ -3,6 +3,20 @@
 [![Build Status](https://travis-ci.com/DaanDeMeyer/process-lib.svg?branch=master)](https://travis-ci.com/DaanDeMeyer/process-lib)
 [![Build status](https://ci.appveyor.com/api/projects/status/nssmvol3nj683akq?svg=true)](https://ci.appveyor.com/project/DaanDeMeyer/process-lib)
 
+- [process-lib](#process-lib)
+  - [Installation](#installation)
+    - [FetchContent](#fetchcontent)
+    - [Git Submodule](#git-submodule)
+    - [Vendor](#vendor)
+    - [CMake Options](#cmake-options)
+  - [Usage](#usage)
+  - [Documentation](#documentation)
+  - [Gotcha's](#gotchas)
+  - [Design](#design)
+    - [Opaque pointer](#opaque-pointer)
+    - [Memory allocation](#memory-allocation)
+    - [(Posix) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
+
 ## Installation
 
 ### FetchContent
@@ -73,9 +87,9 @@ target_link_libraries(executable process)
 
 process-lib supports the following CMake options:
 
-- PROCESS_LIB_BUILD_CPP_WRAPPER (ON|OFF): Build the C++ wrapper (default: OFF)
-- PROCESS_LIB_BUILD_TESTS (ON|OFF): Build tests (default: OFF)
-- PROCESS_LIB_BUILD_EXAMPLES (ON|OFF): Build examples (default: OFF)
+- `PROCESS_LIB_BUILD_CPP_WRAPPER (ON|OFF)`: Build the C++ wrapper (default: OFF)
+- `PROCESS_LIB_BUILD_TESTS (ON|OFF)`: Build tests (default: OFF)
+- `PROCESS_LIB_BUILD_EXAMPLES (ON|OFF)`: Build examples (default: OFF)
 
 Options can be configured before calling `add_subdirectory` as follows:
 
