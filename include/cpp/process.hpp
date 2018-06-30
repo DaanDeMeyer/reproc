@@ -10,16 +10,16 @@ public:
 
   enum Error {
     SUCCESS = 0,
-    UNKNOWN_ERROR = -1,
-    WAIT_TIMEOUT = -2,
-    STREAM_CLOSED = -3,
-    STILL_RUNNING = -4,
-    MEMORY_ERROR = -5,
-    PIPE_LIMIT_REACHED = -6,
-    INTERRUPTED = -7,
-    IO_ERROR = -8,
-    PROCESS_LIMIT_REACHED = -9,
-    INVALID_UNICODE = -10
+    UNKNOWN_ERROR = 1,
+    WAIT_TIMEOUT = 2,
+    STREAM_CLOSED = 3,
+    STILL_RUNNING = 4,
+    MEMORY_ERROR = 5,
+    PIPE_LIMIT_REACHED = 6,
+    INTERRUPTED = 7,
+    IO_ERROR = 8,
+    PROCESS_LIMIT_REACHED = 9,
+    INVALID_UNICODE = 10
   };
 
   Process();

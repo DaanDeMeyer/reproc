@@ -112,6 +112,7 @@ if(PROCESS_LIB_BUILD_TESTS)
     test/impl.cpp
     test/read-write.cpp
     test/stop.cpp
+    test/enum.cpp
   )
 endif()
 
