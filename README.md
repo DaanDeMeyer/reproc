@@ -26,6 +26,8 @@ if(NOT PROCESS_LIB_POPULATED)
   FetchContent_Populate(PROCESS_LIB)
   add_subdirectory(${PROCESS_LIB_SOURCE_DIR} ${PROCESS_LIB_BINARY_DIR})
 endif()
+
+target_link_libraries(executable process)
 ```
 
 ### Git Submodule
@@ -46,7 +48,25 @@ Commit the result and you can call `add_subdirectory` with the process-lib
 directory:
 
 ```cmake
+add_subdirectory(third-party/process-lib)
 
+target_link_libraries(executable process)
+```
+
+### Vendor
+
+If you're not using git you can just download a zip/tar of the source code from
+Github and manually put the code in a third-party directory. To update you just
+overwrite the process-lib directory with the contents of an update zip/tar from
+Github.
+
+After unzipping the source code to third-party/process-lib you can then add the
+directory with add_subdirectory in CMake.
+
+```cmake
+add_subdirectory(third-party/process-lib)
+
+target_link_libraries(executable process)
 ```
 
 ### CMake Options
@@ -67,6 +87,8 @@ set(PROCESS_LIB_BUILD_CPP_WRAPPER ON CACHE BOOL)
 
 See this [examples/cmake-help.c](examples/cmake-help.c) for an example that uses
 process-lib to print the cmake CLI --help output.
+[examples/cmake-help.cpp](examples/cmake-help.cpp) does the same but with the
+C++ api.
 
 ## Documentation
 

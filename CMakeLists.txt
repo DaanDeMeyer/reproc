@@ -118,13 +118,25 @@ endif()
 ### Examples ###
 
 if(PROCESS_LIB_BUILD_EXAMPLES)
-  add_executable(cmake-help examples/cmake-help.c)
-  set_property(TARGET cmake-help PROPERTY RUNTIME_OUTPUT_DIRECTORY examples)
-  target_link_libraries(cmake-help PRIVATE common-warnings process)
-  set_target_properties(cmake-help PROPERTIES
+  add_executable(cmake-help-c examples/cmake-help.c)
+
+  target_link_libraries(cmake-help-c PRIVATE common-warnings process)
+  set_target_properties(cmake-help-c PROPERTIES
     C_STANDARD 99
     C_STANDARD_REQUIRED ON
     C_EXTENSIONS OFF
+  )
+
+  add_executable(cmake-help-cpp examples/cmake-help.cpp)
+  target_link_libraries(cmake-help-cpp common-warnings process)
+  set_target_properties(cmake-help-cpp PROPERTIES
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+  )
+
+  set_property(TARGET cmake-help-c cmake-help-cpp
+    PROPERTY RUNTIME_OUTPUT_DIRECTORY examples
   )
 endif()
 
