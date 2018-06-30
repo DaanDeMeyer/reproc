@@ -55,9 +55,9 @@ target_link_libraries(executable process)
 
 ### Vendor
 
-If you're not using git you can just download a zip/tar of the source code from
-Github and manually put the code in a third-party directory. To update you just
-overwrite the process-lib directory with the contents of an update zip/tar from
+If you're not using git you can download a zip/tar of the source code from
+Github and manually put the code in a third-party directory. To update you
+overwrite the process-lib directory with the contents of an updated zip/tar from
 Github.
 
 After unzipping the source code to third-party/process-lib you can then add the
