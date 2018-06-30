@@ -13,7 +13,10 @@ Process::Process()
 
 Process::~Process()
 {
-  if (process) { process_free(process); }
+  if (process) {
+    process_free(process);
+    free(process);
+  }
 }
 
 Process::Process(Process &&other) : process(other.process)
