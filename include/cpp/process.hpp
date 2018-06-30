@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 class Process
 {
 public:
@@ -32,6 +35,9 @@ public:
   /*! /see process_start */
   Process::Error start(const char *argv[], int argc,
                        const char *working_directory);
+
+  Process::Error start(const std::vector<std::string> &argv,
+                       const std::string *working_directory);
 
   /*! /see process_write */
   Process::Error write(const void *buffer, unsigned int to_write,

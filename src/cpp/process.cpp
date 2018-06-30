@@ -1,8 +1,8 @@
 #include "process.hpp"
 
+#include <cstdlib>
 #include <new>
 #include <process.h>
-#include <cstdlib>
 
 Process::Process()
 {
@@ -33,6 +33,25 @@ Process::Error Process::start(const char *argv[], int argc,
 {
   return static_cast<Error>(
       process_start(process, argv, argc, working_directory));
+}
+
+Process::Error Process::start(const std::vector<std::string> &args,
+                              const std::string *working_directory)
+{
+  const char **argv = new const char *[args.size() + 1];
+
+  for (int i = 0; i < args.size(); i++) {
+    argv[i] = args[i].c_str();
+  }
+  argv[args.size()] = nullptr;
+
+  int argc = args.size();
+
+  Error error = start(argv, argc,
+                      working_directory ? working_directory->c_str() : nullptr);
+  free(argv);
+
+  return error;
 }
 
 Process::Error Process::write(const void *buffer, unsigned int to_write,
