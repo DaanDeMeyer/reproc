@@ -85,7 +85,7 @@ set(PROCESS_LIB_BUILD_CPP_WRAPPER ON CACHE BOOL)
 
 ## Usage
 
-See this [examples/cmake-help.c](examples/cmake-help.c) for an example that uses
+See [examples/cmake-help.c](examples/cmake-help.c) for an example that uses
 process-lib to print the cmake CLI --help output.
 [examples/cmake-help.cpp](examples/cmake-help.cpp) does the same but with the
 C++ api.
