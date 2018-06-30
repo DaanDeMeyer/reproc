@@ -154,6 +154,14 @@ PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,
   return pipe_write(process->stdin, buffer, to_write, actual);
 }
 
+PROCESS_LIB_ERROR process_close_stdin(struct process *process)
+{
+  assert(process);
+  assert(process->stdin);
+
+  return pipe_close(&process->stdin);
+}
+
 PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
                                unsigned int to_read, unsigned int *actual)
 {

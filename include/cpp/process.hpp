@@ -43,6 +43,8 @@ public:
   Process::Error write(const void *buffer, unsigned int to_write,
                        unsigned int *actual);
 
+  Process::Error close_stdin();
+
   /*! /see process_read */
   Process::Error read(void *buffer, unsigned int to_read, unsigned int *actual);
 

@@ -57,6 +57,11 @@ Process::Error Process::start(const std::vector<std::string> &args,
   return error;
 }
 
+Process::Error Process::close_stdin()
+{
+  return static_cast<Error>(process_close_stdin(process));
+}
+
 Process::Error Process::write(const void *buffer, unsigned int to_write,
                               unsigned int *actual)
 {

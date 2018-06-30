@@ -24,34 +24,34 @@ typedef enum {
   errors can occur in its documentation. If we don't know which error occurs we
   return PROCESS_LIB_UNKNOWN_ERROR when an error occurs on Windows. All
   functions can return this error. */
-  PROCESS_LIB_UNKNOWN_ERROR = -1,
+  PROCESS_LIB_UNKNOWN_ERROR = 1,
   /*! Returned if a timeout value passed to a function expired. */
-  PROCESS_LIB_WAIT_TIMEOUT = -2,
+  PROCESS_LIB_WAIT_TIMEOUT = 2,
   /*! Returned when the child process closes one of its streams (and in case of
   stdout/stderr all of the data from that stream has been read. */
-  PROCESS_LIB_STREAM_CLOSED = -3,
+  PROCESS_LIB_STREAM_CLOSED = 3,
   /*! Returned if \see process_exit_status is called while the child process is
   still running. */
-  PROCESS_LIB_STILL_RUNNING = -4,
+  PROCESS_LIB_STILL_RUNNING = 4,
   /*! Returned if a memory allocation in the library code fails (Windows only)
   or the underlying system does not have enough memory to execute a system call.
   */
-  PROCESS_LIB_MEMORY_ERROR = -5,
+  PROCESS_LIB_MEMORY_ERROR = 5,
   /*! Returned if the current process is not allowed to create any more pipes.
    */
-  PROCESS_LIB_PIPE_LIMIT_REACHED = -6,
+  PROCESS_LIB_PIPE_LIMIT_REACHED = 6,
   /*! Returned if a waiting system call (read, write, close, ...) was
   interrupted by the system. */
-  PROCESS_LIB_INTERRUPTED = -7,
+  PROCESS_LIB_INTERRUPTED = 7,
   /*! (POSIX) Returned when something goes wrong during I/O. The Linux docs do
   not go in depth on when exactly this error occurs. */
-  PROCESS_LIB_IO_ERROR = -8,
+  PROCESS_LIB_IO_ERROR = 8,
   /*! Returned if the current process is not allowed to spawn any more child
   processes. */
-  PROCESS_LIB_PROCESS_LIMIT_REACHED = -9,
+  PROCESS_LIB_PROCESS_LIMIT_REACHED = 9,
   /*! (Windows) Returned if any of the UTF-8 strings passed to the library do
   not contain valid unicode. */
-  PROCESS_LIB_INVALID_UNICODE = -10
+  PROCESS_LIB_INVALID_UNICODE = 10
 } PROCESS_LIB_ERROR;
 
 #ifdef __cplusplus
@@ -143,6 +143,8 @@ Possible errors:
 */
 PROCESS_LIB_ERROR process_write(process_type *process, const void *buffer,
                                 unsigned int to_write, unsigned int *actual);
+
+PROCESS_LIB_ERROR process_close_stdin(process_type *process);
 
 /*!
 Reads up to \p to_read bytes from the child process' standard output and
