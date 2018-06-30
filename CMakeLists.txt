@@ -1,12 +1,30 @@
 cmake_minimum_required(VERSION 3.1)
 project(process-lib LANGUAGES C)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
-include(common-warnings)
+option(PROCESS_LIB_BUILD_TESTS "Build tests" OFF)
+option(PROCESS_LIB_BUILD_EXAMPLES "Build examples" OFF)
+option(PROCESS_LIB_BUILD_CPP_WRAPPER "Build C++ wrapper" OFF)
 
-option(PROCESS_LIB_BUILD_TESTS OFF)
-option(PROCESS_LIB_BUILD_EXAMPLES OFF)
-option(PROCESS_LIB_BUILD_CPP_WRAPPER OFF)
+### Common Warnings ###
+
+add_library(common-warnings INTERFACE)
+
+if(MSVC)
+  target_compile_options(common-warnings INTERFACE
+    $<BUILD_INTERFACE:
+      /W3
+    >
+  )
+else()
+  target_compile_options(common-warnings INTERFACE
+    $<BUILD_INTERFACE:
+      -Wall
+      -Wextra
+      -pedantic-errors
+      -Wshadow
+    >
+  )
+endif()
 
 ### Library ###
 
@@ -14,7 +32,7 @@ add_library(process "")
 
 set_property(TARGET process PROPERTY ARCHIVE_OUTPUT_DIRECTORY lib)
 
-set_target_properties(process PROPERTIES 
+set_target_properties(process PROPERTIES
   C_STANDARD 99
   C_STANDARD_REQUIRED ON
   C_EXTENSIONS OFF
@@ -31,7 +49,7 @@ elseif(UNIX)
 endif()
 
 if(MSVC)
-  target_compile_definitions(process PRIVATE 
+  target_compile_definitions(process PRIVATE
     _CRT_SECURE_NO_WARNINGS
     WIN32_LEAN_AND_MEAN
     VC_EXTRALEAN
@@ -49,9 +67,9 @@ if(PROCESS_LIB_BUILD_CPP_WRAPPER)
   enable_language(CXX)
 
   target_compile_features(process PUBLIC cxx_std_11)
-  set_target_properties(process PROPERTIES 
+  set_target_properties(process PROPERTIES
     CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS OFF  
+    CXX_EXTENSIONS OFF
   )
 
   target_include_directories(process PUBLIC include/cpp)
@@ -75,12 +93,12 @@ if(PROCESS_LIB_BUILD_TESTS)
   set_property(TARGET echo infinite PROPERTY RUNTIME_OUTPUT_DIRECTORY test/res)
 
   ### Tests ###
-  
+
   add_executable(tests "")
-  
+
   add_dependencies(tests echo infinite)
   set_property(TARGET tests PROPERTY RUNTIME_OUTPUT_DIRECTORY test)
-  
+
   target_link_libraries(tests PRIVATE common-warnings process)
   target_include_directories(tests PRIVATE third-party/doctest/doctest)
 
@@ -99,7 +117,7 @@ endif()
 
 ### Examples ###
 
-if(PROCESS_LIB_BUILD_EXAMPLES)  
+if(PROCESS_LIB_BUILD_EXAMPLES)
   add_executable(cmake-help examples/cmake-help.c)
   set_property(TARGET cmake-help PROPERTY RUNTIME_OUTPUT_DIRECTORY examples)
   target_link_libraries(cmake-help PRIVATE common-warnings process)

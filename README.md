@@ -3,6 +3,77 @@
 [![Build Status](https://travis-ci.com/DaanDeMeyer/process-lib.svg?branch=master)](https://travis-ci.com/DaanDeMeyer/process-lib)
 [![Build status](https://ci.appveyor.com/api/projects/status/nssmvol3nj683akq?svg=true)](https://ci.appveyor.com/project/DaanDeMeyer/process-lib)
 
+## Installation
+
+### FetchContent
+
+The easiest way to use process-lib is with the CMake build system. If you're
+using CMake 3.11 or later you can use the
+[FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) api
+to use process-lib in your project.
+
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(
+  PROCESS_LIB
+  GIT_REPOSITORY https://github.com/DaanDeMeyer/process-lib.git
+  GIT_TAG        origin/master
+)
+
+FetchContent_GetProperties(PROCESS_LIB)
+if(NOT PROCESS_LIB_POPULATED)
+  FetchContent_Populate(PROCESS_LIB)
+  add_subdirectory(${PROCESS_LIB_SOURCE_DIR} ${PROCESS_LIB_BINARY_DIR})
+endif()
+```
+
+### Git Submodule
+
+If you can't use CMake 3.11 or higher, you can add process-lib as a git
+submodule instead:
+
+```sh
+mkdir third-party
+cd third-party
+git submodule add https://github.com/DaanDeMeyer/process-lib.git
+# Optionally checkout a specific commit
+cd process-lib
+git checkout 41f90d0
+```
+
+Commit the result and you can call `add_subdirectory` with the process-lib
+directory:
+
+```cmake
+
+```
+
+### CMake Options
+
+process-lib supports the following CMake options:
+
+- PROCESS_LIB_BUILD_CPP_WRAPPER (ON|OFF): Build the C++ wrapper (default: OFF)
+- PROCESS_LIB_BUILD_TESTS (ON|OFF): Build tests (default: OFF)
+- PROCESS_LIB_BUILD_EXAMPLES (ON|OFF): Build examples (default: OFF)
+
+Options can be configured before calling `add_subdirectory` as follows:
+
+```cmake
+set(PROCESS_LIB_BUILD_CPP_WRAPPER ON CACHE BOOL)
+```
+
+## Usage
+
+See this [examples/cmake-help.c](examples/cmake-help.c) for an example that uses
+process-lib to print the cmake CLI --help output.
+
+## Documentation
+
+API documentation can be found in [process.h](include/c/process.h).
+Documentation for the C++ wrapper can be found in
+[process.hpp](include/cpp/process.hpp) (which mostly refers to process.h).
+
 ## Gotcha's
 
 - While `process_terminate` allows the child process to perform cleanup it is up
@@ -24,9 +95,9 @@
   [zombie process](https://en.wikipedia.org/wiki/Zombie_process).
 
 - (Windows) `process_kill` is not guaranteed to kill a process on Windows. For
-  more information, read the Remarks section in the documentation of
+  more information, read the Remarks section in the documentation of the
   [TerminateProcess](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms686714(v=vs.85).aspx>)
-  which process-lib uses to kill processes on Windows.
+  function that process-lib uses to kill processes on Windows.
 
 - (Windows) Immediately terminating a process after starting it on Windows might
   result in an error window with error 0xc0000142 popping up. This indicates the
@@ -63,6 +134,14 @@ The process.h header only contains a forward-declaration of the process struct.
 We provide an implementation in the source files of each supported platform
 where we store platform-specific members such as pipe handles, process id's,
 ....
+
+To enable the user to allocate memory for the opaque pointer we provide the
+`process_size` function that returns the required size for the opaque pointer on
+each platform. This function can be used as follows:
+
+```c
+process_type *process = malloc(process_size());
+```
 
 Advantages:
 
@@ -101,28 +180,29 @@ Disadvantages:
   can't easily allocate the process struct on the heap because it can't figure
   out its size with sizeof.
 
-  This problem is solved by providing a `process_size` function that returns the
-  size of `process_type` on each platform. This function can then be used as
-  follows:
-
-  ```c
-  process_type *process = malloc(process_size());
-  ```
+  We already mentioned that we solve this problem by providing the
+  `process_size` function that returns the size of the process struct.
 
 ### Memory allocation
 
 process-lib aims to do as few dynamic memory allocations as possible in its own
-code. As of this moment, Dynamic memory allocation is only done on Windows when
-converting the array of program arguments to a single string as required by the
-[CreateProcess](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms682425(v=vs.85).aspx>)
-function.
+code (not counting allocations that happen in system calls). As of this moment,
+dynamic memory allocation is only done on Windows:
+
+- When converting the array of program arguments to a single string as required
+  by the
+  [CreateProcess](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms682425(v=vs.85).aspx>)
+  function and when converting utf-8 strings to utf-16 (Windows native
+  encoding).
+- When converting utf-8 strings to utf-16 (Windows only supports utf-16) for
+  unicode.
 
 I have not found a way to avoid allocating memory while keeping a cross-platform
-api for POSIX and Windows. (Windows `CreateProcessW` requires a single string of
-arguments delimited by spaces while POSIX `execvp` requires an array of
-arguments). Since process-lib's api takes process arguments as an array we have
-to allocate memory to convert the array into a single string as required by
-Windows.
+api for POSIX and Windows. (Windows `CreateProcessW` requires a single utf-16
+string of arguments delimited by spaces while POSIX `execvp` requires an array
+of utf-8 string arguments). Since process-lib's api takes process arguments as
+an array of utf-8 strings we have to allocate memory to convert the array into a
+single utf-16 string as required by Windows.
 
 process-lib uses the standard `malloc` and `free` functions to allocate and free
 memory. However, providing support for custom allocators should be
