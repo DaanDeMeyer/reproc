@@ -55,9 +55,14 @@ if(MSVC)
     VC_EXTRALEAN
     NOMINMAX
   )
+elseif(APPLE)
+  target_compile_definitions(process PRIVATE
+    _POSIX_C_SOURCE
+  )
 else()
   target_compile_definitions(process PRIVATE
     _POSIX_C_SOURCE
+    _GNU_SOURCE
   )
 endif()
 

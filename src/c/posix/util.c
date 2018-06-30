@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <sys/select.h>
 #include <sys/wait.h>
@@ -15,7 +16,15 @@ PROCESS_LIB_ERROR pipe_init(int *read, int *write)
   int pipefd[2];
 
   errno = 0;
-  if (pipe(pipefd) == -1) {
+#ifdef __APPLE__
+  int result = pipe(pipefd);
+  fcntl(pipefd[0], FD_SET, FD_CLOEXEC);
+  fcntl(pipefd[0], FD_SET, FD_CLOEXEC);
+#else
+  int result = pipe2(pipefd, O_CLOEXEC);
+#endif
+
+  if (result) {
     switch (errno) {
     case ENFILE: return PROCESS_LIB_PIPE_LIMIT_REACHED;
     default: return PROCESS_LIB_UNKNOWN_ERROR;

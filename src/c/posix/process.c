@@ -102,17 +102,8 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
     if (dup2(process->child_stdout, STDOUT_FILENO) == -1) { _exit(errno); }
     if (dup2(process->child_stderr, STDERR_FILENO) == -1) { _exit(errno); }
 
-    // We copied the pipes to the actual streams (stdin/stdout/stderr) so we
-    // don't need the originals anymore
-    if (close(process->child_stdin) == -1) { _exit(errno); };
-    if (close(process->child_stdout) == -1) { _exit(errno); };
-    if (close(process->child_stderr) == -1) { _exit(errno); };
-
-    // We also have no use for the parent endpoints of the pipes in the child
-    // process
-    if (close(process->parent_stdin) == -1) { _exit(errno); };
-    if (close(process->parent_stdout) == -1) { _exit(errno); };
-    if (close(process->parent_stderr) == -1) { _exit(errno); };
+    // Pipes are created with FD_CLOEXEC which results in them getting
+    // automatically closed on exec
 
     // Replace forked child with process we want to run
     // Safe cast (execvp doesn't actually change the contents of argv)

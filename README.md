@@ -147,6 +147,22 @@ Documentation for the C++ wrapper can be found in
   waiting a few milliseconds using `process_wait` before terminating the
   process.
 
+- (OSX) On POSIX systems, file descriptors are inherited by default by child
+  processes when calling
+  [execve](http://man7.org/linux/man-pages/man2/execve.2.html). To prevent
+  leaking file descriptors to child processes, POSIX provides a function `fcntl`
+  which can be used to set the `FD_CLOEXEC` flag on the file descriptors
+  returned by `pipe` which causes them to get closed on exec. However, using
+  `fcntl` introduces a race condition since any process created in another
+  thread after calling `pipe` but before calling `fcntl` will still inherit the
+  file descriptors returned by `pipe`. To get around this race condition Linux
+  and the BSD's provide `pipe2` which takes the `O_CLOEXEC` flag as an argument
+  and ensures the file descriptors of the created pipe cannot be inherited by
+  child processes. However, `pipe2` is not available on OSX so we fall back to
+  `pipe` with `fcntl` on OSX. This means that it is possible for file
+  descriptors to leak on OSX if processes are created at the same time in
+  multiple threads.
+
 ## Design
 
 process-lib is designed to be a minimal wrapper around the platform-specific
