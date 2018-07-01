@@ -11,6 +11,8 @@
 #ifdef __APPLE__
 #include <spawn.h>
 
+extern char **environ;
+
 static PROCESS_LIB_ERROR posix_spawn_setup(posix_spawnattr_t *attributes,
                                            posix_spawn_file_actions_t *actions,
                                            int stdin_pipe, int stdout_pipe,
@@ -31,7 +33,7 @@ PROCESS_LIB_ERROR fork_exec_redirect(const char *argv[],
 
   posix_spawnattr_t attributes;
   posix_spawn_file_actions_t actions;
-  error = process_spawn_setup(&attributes, &actions, stdin_pipe, stdout_pipe,
+  error = posix_spawn_setup(&attributes, &actions, stdin_pipe, stdout_pipe,
                               stderr_pipe);
   if (error) {
     posix_spawnattr_destroy(&attributes);
@@ -42,7 +44,7 @@ PROCESS_LIB_ERROR fork_exec_redirect(const char *argv[],
 
   if (!working_directory) {
     spawn_error = posix_spawnp(pid, argv[0], &actions, &attributes,
-                               (char **) argv, NULL);
+                               (char **) argv, environ);
   } else {
     error = fork_posix_spawn(argv, working_directory, &attributes, &actions,
                              pid, &spawn_error);
@@ -132,7 +134,7 @@ static PROCESS_LIB_ERROR fork_posix_spawn(const char *argv[],
 
     // TODO check envp
     errno = posix_spawnp(pid, argv[0], actions, attributes, (char **) argv,
-                         NULL);
+                         environ);
     write(error_pipe_write, &errno, sizeof(errno));
     _exit(errno);
   }
