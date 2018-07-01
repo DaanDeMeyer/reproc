@@ -52,7 +52,7 @@ Process::Error Process::start(const std::vector<std::string> &args,
 
   Error error = start(argv, argc,
                       working_directory ? working_directory->c_str() : nullptr);
-  delete[]argv;
+  delete[] argv;
 
   return error;
 }

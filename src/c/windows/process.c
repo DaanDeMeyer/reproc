@@ -39,7 +39,8 @@ PROCESS_LIB_ERROR process_init(struct process *process)
 
 // Create each process in a new process group so we don't send CTRL-BREAK
 // signals to more than one child process in process_terminate.
-static const DWORD CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP;
+static const DWORD CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP |
+                                    EXTENDED_STARTUPINFO_PRESENT;
 
 PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
                                 int argc, const char *working_directory)
@@ -60,10 +61,11 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
 
   PROCESS_LIB_ERROR error;
 
-  // pipe_init makes the child process inherit both the read and write handle of
-  // each pipe but the child process only needs one handle (read for stdin,
-  // write for stdout/stderr) for each pipe so we disable inheritance of the
-  // handle that is not needed with pipe_disable_inherit
+  // While we already make sure the child process only inherits the child pipe
+  // handles using STARTUPINFOEXW (see further in this function) we still
+  // disable inheritance of the parent pipe handles to lower the chance of other
+  // CreateProcess calls (outside of this library) unintentionally inheriting
+  // these handles.
   error = pipe_init(&process->child_stdin, &process->parent_stdin);
   if (error) { return error; }
   error = pipe_disable_inherit(process->parent_stdin);
@@ -100,18 +102,26 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
     return error;
   }
 
-  // Following code is based on:
-  // https://msdn.microsoft.com/en-us/library/windows/desktop/ms682499(v=vs.85).aspx
+  // To ensure no handles other than those necessary are inherited we use the
+  // approach detailed in https://stackoverflow.com/a/2345126
+  HANDLE to_inherit[3] = { process->child_stdin, process->child_stdout,
+                           process->child_stderr };
+  LPPROC_THREAD_ATTRIBUTE_LIST attribute_list;
+  error = handle_inherit_list_create(to_inherit, 3, &attribute_list);
+  if (error) {
+    free(command_line_wstring);
+    free(working_directory_wstring);
+    return error;
+  }
 
-  STARTUPINFOW startup_info;
-  ZeroMemory(&startup_info, sizeof(STARTUPINFOW));
-  startup_info.cb = sizeof(STARTUPINFOW);
-  startup_info.dwFlags = STARTF_USESTDHANDLES;
-
-  // Assign child pipe endpoints to child process stdin/stdout/stderr
-  startup_info.hStdInput = process->child_stdin;
-  startup_info.hStdOutput = process->child_stdout;
-  startup_info.hStdError = process->child_stderr;
+  STARTUPINFOEXW startup_info = {
+    .StartupInfo = { .cb = sizeof(startup_info),
+                     .dwFlags = STARTF_USESTDHANDLES,
+                     .hStdInput = process->child_stdin,
+                     .hStdOutput = process->child_stdout,
+                     .hStdError = process->child_stderr },
+    .lpAttributeList = attribute_list
+  };
 
   // Child processes inherit error mode of their parents. To avoid child
   // processes creating error dialogs we set our error mode to not create error
@@ -121,13 +131,14 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   SetLastError(0);
   BOOL result = CreateProcessW(NULL, command_line_wstring, NULL, NULL, TRUE,
                                CREATION_FLAGS, NULL, working_directory_wstring,
-                               &startup_info, &process->info);
+                               &startup_info.StartupInfo, &process->info);
 
   SetErrorMode(previous_error_mode);
 
   // Free allocated memory before returning possible error
   free(command_line_wstring);
   free(working_directory_wstring);
+  free(attribute_list);
 
   if (!result) {
     switch (GetLastError()) {

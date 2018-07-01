@@ -162,8 +162,8 @@ unknown errors and add them to process-lib.
   waiting a few milliseconds using `process_wait` before terminating the
   process.
 
-- (OSX) On POSIX systems, file descriptors are inherited by default by child
-  processes when calling
+- (OSX/Windows) On POSIX systems, file descriptors are inherited by default by
+  child processes when calling
   [execve](http://man7.org/linux/man-pages/man2/execve.2.html). To prevent
   leaking file descriptors to child processes, POSIX provides a function `fcntl`
   which can be used to set the `FD_CLOEXEC` flag on the file descriptors
@@ -177,6 +177,14 @@ unknown errors and add them to process-lib.
   `pipe` with `fcntl` on OSX. This means that it is possible for file
   descriptors to leak on OSX if processes are created at the same time in
   multiple threads.
+
+  Windows Vista added the `STARTUPINFOEXW` structure in which we can put a list
+  of handles that should be inherited. Only these handles are inherited by the
+  child process. Note that this only stops process-lib's processes from
+  inheriting unintended handles. Other code in your application that calls
+  `CreateProcess` without passing a `STARTUPINFOEXW` struct containing the
+  handles it should inherit can still unintentionally inherit handles meant for
+  a process-lib process.
 
 ## Design
 

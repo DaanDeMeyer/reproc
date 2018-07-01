@@ -16,6 +16,10 @@ PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, unsigned int to_read,
 
 PROCESS_LIB_ERROR handle_close(HANDLE *handle_address);
 
+PROCESS_LIB_ERROR
+handle_inherit_list_create(HANDLE *handles, int amount,
+                           LPPROC_THREAD_ATTRIBUTE_LIST *result);
+
 /* Joins all the strings in string_array together delimited by spaces */
 PROCESS_LIB_ERROR string_join(const char **string_array, int array_length,
                               char **result);

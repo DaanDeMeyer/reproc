@@ -6,9 +6,10 @@
 
 // Ensures pipe is inherited by child process
 static SECURITY_ATTRIBUTES security_attributes = {
-    .nLength = sizeof(SECURITY_ATTRIBUTES),
-    .bInheritHandle = TRUE,
-    .lpSecurityDescriptor = NULL};
+  .nLength = sizeof(SECURITY_ATTRIBUTES),
+  .bInheritHandle = TRUE,
+  .lpSecurityDescriptor = NULL
+};
 
 PROCESS_LIB_ERROR pipe_init(HANDLE *read, HANDLE *write)
 {
@@ -35,8 +36,8 @@ PROCESS_LIB_ERROR pipe_disable_inherit(HANDLE pipe)
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer, unsigned int to_write,
-                             unsigned int *actual)
+PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer,
+                             unsigned int to_write, unsigned int *actual)
 {
   assert(pipe);
   assert(buffer);
@@ -92,6 +93,40 @@ PROCESS_LIB_ERROR handle_close(HANDLE *handle_address)
   *handle_address = NULL;
 
   if (!result) { return PROCESS_LIB_UNKNOWN_ERROR; }
+
+  return PROCESS_LIB_SUCCESS;
+}
+
+PROCESS_LIB_ERROR
+handle_inherit_list_create(HANDLE *handles, int amount,
+                           LPPROC_THREAD_ATTRIBUTE_LIST *result)
+{
+  SIZE_T attribute_list_size = 0;
+  SetLastError(0);
+  if (!InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size) &&
+      GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+    return PROCESS_LIB_UNKNOWN_ERROR;
+  }
+
+  LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = malloc(attribute_list_size);
+  if (!attribute_list) { return PROCESS_LIB_MEMORY_ERROR; }
+
+  SetLastError(0);
+  if (!InitializeProcThreadAttributeList(attribute_list, 1, 0,
+                                         &attribute_list_size)) {
+    free(attribute_list);
+    return PROCESS_LIB_UNKNOWN_ERROR;
+  }
+
+  SetLastError(0);
+  if (!UpdateProcThreadAttribute(attribute_list, 0,
+                                 PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,
+                                 3 * sizeof(HANDLE), NULL, NULL)) {
+    free(attribute_list);
+    return PROCESS_LIB_UNKNOWN_ERROR;
+  }
+
+  *result = attribute_list;
 
   return PROCESS_LIB_SUCCESS;
 }

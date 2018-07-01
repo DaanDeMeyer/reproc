@@ -1,8 +1,8 @@
+#include <cstdlib>
+#include <cstring>
 #include <doctest.h>
 #include <process.h>
 #include <sstream>
-#include <cstring>
-#include <cstdlib>
 
 // Alternates between writing to stdin and reading from stdout and writing to
 // stdin and reading from stderr.
@@ -27,7 +27,7 @@ TEST_CASE("read-write")
     const char *msg = "This is stdout\n";
 
     int argc = 2;
-    const char *argv[3] = {ECHO_PATH, "stdout", 0};
+    const char *argv[3] = { ECHO_PATH, "stdout", 0 };
 
     error = process_start(process, argv, argc, NULL);
     REQUIRE(!error);
@@ -53,7 +53,7 @@ TEST_CASE("read-write")
     const char *msg = "This is stderr\n";
 
     int argc = 2;
-    const char *argv[3] = {ECHO_PATH, "stderr", 0};
+    const char *argv[3] = { ECHO_PATH, "stderr", 0 };
 
     error = process_start(process, argv, argc, NULL);
     REQUIRE(!error);
