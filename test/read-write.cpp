@@ -9,8 +9,6 @@
 // See res/echo for the child process code
 TEST_CASE("read-write")
 {
-  unsigned int timeout = 100;
-
   char buffer[1000];
   unsigned int buffer_size = 1000;
   unsigned int actual = 0;
@@ -74,7 +72,7 @@ TEST_CASE("read-write")
     REQUIRE_EQ(ss.str().c_str(), msg);
   }
 
-  error = process_wait(process, timeout);
+  error = process_wait(process, PROCESS_LIB_INFINITE);
   REQUIRE(!error);
 
   int exit_status;
