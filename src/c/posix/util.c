@@ -16,6 +16,7 @@ PROCESS_LIB_ERROR pipe_init(int *read, int *write)
   int pipefd[2];
 
   errno = 0;
+  // See Gotcha's in the readme for a detailed explanation
 #ifdef __APPLE__
   int result = pipe(pipefd);
   fcntl(pipefd[0], F_SETFD, FD_CLOEXEC);
