@@ -51,7 +51,10 @@ typedef enum {
   PROCESS_LIB_PROCESS_LIMIT_REACHED = 9,
   /*! (Windows) Returned if any of the UTF-8 strings passed to the library do
   not contain valid unicode. */
-  PROCESS_LIB_INVALID_UNICODE = 10
+  PROCESS_LIB_INVALID_UNICODE = 10,
+  PROCESS_LIB_PERMISSION_DENIED = 11,
+  PROCESS_LIB_SYMLINK_LOOP = 12,
+  PROCESS_LIB_FILE_NOT_FOUND = 13
 } PROCESS_LIB_ERROR;
 
 #ifdef __cplusplus

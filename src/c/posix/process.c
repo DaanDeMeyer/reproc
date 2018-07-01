@@ -70,6 +70,15 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   error = pipe_init(&process->parent_stderr, &process->child_stderr);
   if (error) { return error; }
 
+  // We create an error pipe to receive pre-exec and exec errors from the child
+  // process. See the accepted answer of
+  // https://stackoverflow.com/questions/1584956/how-to-handle-execvp-errors-after-fork
+  // for more information
+  int error_pipe_read = 0;
+  int error_pipe_write = 0;
+  error = pipe_init(&error_pipe_read, &error_pipe_write);
+  if (error) { return error; }
+
   // We put the child process in its own process group which is needed by
   // process_wait The process group is set in both parent and child to avoid
   // race conditions (see setpgid calls)
@@ -92,37 +101,73 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
 
     errno = 0;
 
-    if (setpgid(0, 0) == -1) { _exit(errno); }
+    // Normally there might be a race condition if the parent process waits for
+    // the child process before the child process puts itself in its own
+    // process group (with setpgid) but this is avoided because we always read
+    // from the error pipe in the parent process after forking. When read
+    // returns the child process will either have errored out (and waiting won't
+    // be valid) or will have executed execvp (and as a result setpgid as well)
+    if (setpgid(0, 0) == -1) {
+      write(error_pipe_write, &errno, sizeof(errno));
+      _exit(errno);
+    }
 
-    if (working_directory && chdir(working_directory) == -1) { _exit(errno); }
+    if (working_directory && chdir(working_directory) == -1) {
+      write(error_pipe_write, &errno, sizeof(errno));
+      _exit(errno);
+    }
 
     // Redirect stdin, stdout and stderr
     // _exit ensures open file descriptors (pipes) are closed
-    if (dup2(process->child_stdin, STDIN_FILENO) == -1) { _exit(errno); }
-    if (dup2(process->child_stdout, STDOUT_FILENO) == -1) { _exit(errno); }
-    if (dup2(process->child_stderr, STDERR_FILENO) == -1) { _exit(errno); }
+    if (dup2(process->child_stdin, STDIN_FILENO) == -1) {
+      write(error_pipe_write, &errno, sizeof(errno));
+      _exit(errno);
+    }
+    if (dup2(process->child_stdout, STDOUT_FILENO) == -1) {
+      write(error_pipe_write, &errno, sizeof(errno));
+      _exit(errno);
+    }
+    if (dup2(process->child_stderr, STDERR_FILENO) == -1) {
+      write(error_pipe_write, &errno, sizeof(errno));
+      _exit(errno);
+    }
 
     // Pipes are created with FD_CLOEXEC which results in them getting
-    // automatically closed on exec
+    // automatically closed on exec so we don't need to close them manually in
+    // the child process
 
     // Replace forked child with process we want to run
     // Safe cast (execvp doesn't actually change the contents of argv)
     execvp(argv[0], (char **) argv);
 
+    write(error_pipe_write, &errno, sizeof(errno));
+
     // Exit if execvp fails
     _exit(errno);
   }
 
-  errno = 0;
-  if (setpgid(process->pid, 0) == -1) {
+  // Close write end on parent side so read will read 0 if it is closed on the
+  // child side as well
+  error = pipe_close(&error_pipe_write);
+  if (error) { return error; }
+
+  // If read does not return 0 an error will have occurred in the child process
+  // before execve (or an error with read itself (less likely))
+  if (read(error_pipe_read, &errno, sizeof(errno)) != 0) {
     switch (errno) {
-    // If we get EACCESS the child process has already executed execvp which
-    // means it also has executed setpgid(0, 0) which means the process group
-    // is already set correctly so EACCES isn't an error in this case.
-    case EACCES: break;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case EACCES: return PROCESS_LIB_PERMISSION_DENIED;
+    case EPERM: return PROCESS_LIB_PERMISSION_DENIED;
+    case EIO: return PROCESS_LIB_IO_ERROR;
+    case ELOOP: return PROCESS_LIB_SYMLINK_LOOP;
+    case ENOMEM: return PROCESS_LIB_MEMORY_ERROR;
+    case ENOENT: return PROCESS_LIB_FILE_NOT_FOUND;
+    case EINTR: return PROCESS_LIB_INTERRUPTED;
     }
   }
+  // Error pipe is not necessary anymore (write end is closed automatically on
+  // exec)
+  error = pipe_close(&error_pipe_read);
+  if (error) { return error; }
 
   error = pipe_close(&process->child_stdin);
   if (error) { return error; }

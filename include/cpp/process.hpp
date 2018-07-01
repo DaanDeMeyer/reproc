@@ -19,7 +19,10 @@ public:
     INTERRUPTED = 7,
     IO_ERROR = 8,
     PROCESS_LIMIT_REACHED = 9,
-    INVALID_UNICODE = 10
+    INVALID_UNICODE = 10,
+    PERMISSION_DENIED = 11,
+    SYMLINK_LOOP = 12,
+    FILE_NOT_FOUND = 13
   };
 
   Process();
