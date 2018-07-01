@@ -4,6 +4,10 @@
 
 #include <sys/types.h>
 
+PROCESS_LIB_ERROR process_spawn(const char *argv[],
+                                 const char *working_directory, int stdin_pipe,
+                                 int stdout_pipe, int stderr_pipe, pid_t *pid);
+
 PROCESS_LIB_ERROR pipe_init(int *read, int *write);
 
 PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer,
