@@ -25,6 +25,7 @@ PROCESS_LIB_ERROR process_init(struct process *process)
   process->info.hProcess = NULL;
   // process id 0 is reserved by the system so we can use it as a null value
   process->info.dwProcessId = 0;
+  process->info.dwThreadId = 0;
 
   process->parent_stdin = NULL;
   process->parent_stdout = NULL;

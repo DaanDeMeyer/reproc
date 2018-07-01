@@ -6,9 +6,9 @@
 
 Process::Process()
 {
-  process = (process_type *) malloc(process_size());
-  if (!process) { throw std::bad_alloc(); }
-  PROCESS_LIB_ERROR error = process_init(process);
+  process = static_cast<process_type *>(malloc(process_size()));
+  if (process) { throw std::bad_alloc(); }
+  process_init(process);
 }
 
 Process::~Process()
@@ -19,12 +19,12 @@ Process::~Process()
   }
 }
 
-Process::Process(Process &&other) : process(other.process)
+Process::Process(Process &&other) noexcept : process(other.process)
 {
   other.process = nullptr;
 }
 
-Process &Process::operator=(Process &&other)
+Process &Process::operator=(Process &&other) noexcept
 {
   process = other.process;
   other.process = nullptr;
@@ -52,7 +52,7 @@ Process::Error Process::start(const std::vector<std::string> &args,
 
   Error error = start(argv, argc,
                       working_directory ? working_directory->c_str() : nullptr);
-  free(argv);
+  delete[]argv;
 
   return error;
 }

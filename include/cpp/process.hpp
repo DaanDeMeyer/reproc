@@ -30,16 +30,16 @@ public:
 
   /* Enforce unique ownership */
   Process(const Process &) = delete;
-  Process(Process &&);
+  Process(Process &&other) noexcept;
 
   Process &operator=(const Process &) = delete;
-  Process &operator=(Process &&);
+  Process &operator=(Process &&other) noexcept;
 
   /*! /see process_start */
   Process::Error start(const char *argv[], int argc,
                        const char *working_directory);
 
-  Process::Error start(const std::vector<std::string> &argv,
+  Process::Error start(const std::vector<std::string> &args,
                        const std::string *working_directory);
 
   /*! /see process_write */
