@@ -57,11 +57,10 @@ if(MSVC)
   )
 elseif(APPLE)
   target_compile_definitions(process PRIVATE
-    _POSIX_C_SOURCE
+    _DARWIN_C_SOURCE
   )
 else()
   target_compile_definitions(process PRIVATE
-    _POSIX_C_SOURCE
     _GNU_SOURCE
   )
 endif()
