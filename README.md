@@ -186,6 +186,16 @@ unknown errors and add them to process-lib.
   handles it should inherit can still unintentionally inherit handles meant for
   a process-lib process.
 
+## Unsupported Platforms
+
+This list contains the platform version that we know process-lib won't work on.
+Note that platforms not on this list might not work either. If you encounter an
+issue with a platform not on this list, please open an issue.
+
+- Windows < Vista: `STARTUPINFOEXW` is only available from Vista onwards
+- FreeBSD < 10: pipe2 is only available from FreeBSD 10 onwards
+- Linux < 2.6: pipe2 is only available from Linux 2.6 onwards
+
 ## Design
 
 process-lib is designed to be a minimal wrapper around the platform-specific
