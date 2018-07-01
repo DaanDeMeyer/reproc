@@ -71,9 +71,8 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   if (error) { return error; }
 
   // We create an error pipe to receive pre-exec and exec errors from the child
-  // process. See the accepted answer of
-  // https://stackoverflow.com/questions/1584956/how-to-handle-execvp-errors-after-fork
-  // for more information
+  // process. See this answer https://stackoverflow.com/a/1586277 for more
+  // information
   int error_pipe_read = 0;
   int error_pipe_write = 0;
   error = pipe_init(&error_pipe_read, &error_pipe_write);

@@ -260,7 +260,7 @@ process-lib uses the standard `malloc` and `free` functions to allocate and free
 memory. However, providing support for custom allocators should be
 straightforward. If you need them, please open an issue.
 
-### (Posix) Waiting on child process with timeout
+### (POSIX) Waiting on child process with timeout
 
 I did not find a counterpart for the Windows
 [WaitForSingleObject](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms687032(v=vs.85).aspx>)
@@ -287,4 +287,20 @@ want to wait for we know it has exited before the timeout process and that the
 timeout value has not been exceeded.
 
 This solution was inspired by [this](https://stackoverflow.com/a/8020324) Stack
+Overflow answer.
+
+### (POSIX) Check if execve call was succesful
+
+process-lib uses a fork-exec model to start new child processes on POSIX
+systems. A problem that occured is that process-lib needs to differentiate
+between errors that happened before the exec call (which are errors from
+process-lib) and errors after the exec call (which are errors from the child
+process itself). To do this we create an extra pipe in the parent procces with
+the `FD_CLOEXEC` flag set and write any errors before and from exec to that
+pipe. If we then read from the error pipe after forking the `read` call will
+either read 0 which means exec was called and the write endpoint was closed
+(because of the `FD_CLOEXEC` flag) or it reads a single integer (errno) which
+indicates an error occured before or during exec.
+
+This solution was inspired by [this](https://stackoverflow.com/a/1586277) Stack
 Overflow answer.
