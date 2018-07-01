@@ -39,6 +39,12 @@ public:
   Process::Error start(const char *argv[], int argc,
                        const char *working_directory);
 
+  /*!
+  Overload for convenient usage from C++.
+
+  args has the same restrictions as argv in /see process_start except that the
+  last element does not have to be null.
+  */
   Process::Error start(const std::vector<std::string> &args,
                        const std::string *working_directory);
 
@@ -46,6 +52,7 @@ public:
   Process::Error write(const void *buffer, unsigned int to_write,
                        unsigned int *actual);
 
+  /*! /see process_close_stdin */
   Process::Error close_stdin();
 
   /*! /see process_read */

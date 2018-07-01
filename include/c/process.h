@@ -27,24 +27,22 @@ typedef enum {
   PROCESS_LIB_UNKNOWN_ERROR = 1,
   /*! Returned if a timeout value passed to a function expired. */
   PROCESS_LIB_WAIT_TIMEOUT = 2,
-  /*! Returned when the child process closes one of its streams (and in case of
-  stdout/stderr all of the data from that stream has been read. */
+  /*! The child process closed one of its streams (and in case of stdout/stderr
+  all of the data from that stream has been read). */
   PROCESS_LIB_STREAM_CLOSED = 3,
-  /*! Returned if \see process_exit_status is called while the child process is
-  still running. */
+  /*! \see process_exit_status was called while the child process was still
+  running. */
   PROCESS_LIB_STILL_RUNNING = 4,
-  /*! Returned if a memory allocation in the library code fails (Windows only)
-  or the underlying system does not have enough memory to execute a system call.
-  */
+  /*! A memory allocation in the library code failed (Windows only) or the
+  underlying system does not have enough memory to execute a system call. */
   PROCESS_LIB_MEMORY_ERROR = 5,
-  /*! Returned if the current process is not allowed to create any more pipes.
-   */
+  /*! The current process is not allowed to create any more pipes. */
   PROCESS_LIB_PIPE_LIMIT_REACHED = 6,
-  /*! Returned if a waiting system call (read, write, close, ...) was
-  interrupted by the system. */
+  /*! A waiting system call (read, write, close, ...) was interrupted by the
+  system. */
   PROCESS_LIB_INTERRUPTED = 7,
-  /*! (POSIX) Returned when something goes wrong during I/O. The Linux docs do
-  not go in depth on when exactly this error occurs. */
+  /*! (POSIX) Something wen wrong during I/O. The Linux docs do not go in depth
+  on when exactly this error occurs. */
   PROCESS_LIB_IO_ERROR = 8,
   /*! Returned if the current process is not allowed to spawn any more child
   processes. */
@@ -52,8 +50,11 @@ typedef enum {
   /*! (Windows) Returned if any of the UTF-8 strings passed to the library do
   not contain valid unicode. */
   PROCESS_LIB_INVALID_UNICODE = 10,
+  /*! The current process does not have permission to execute the program */
   PROCESS_LIB_PERMISSION_DENIED = 11,
+  /*! Too many symlinks were encountered while looking for the program */
   PROCESS_LIB_SYMLINK_LOOP = 12,
+  /*! The program was not found */
   PROCESS_LIB_FILE_NOT_FOUND = 13
 } PROCESS_LIB_ERROR;
 
@@ -119,6 +120,9 @@ Possible errors:
 - PROCESS_LIB_INTERRUPTED
 - PROCESS_LIB_IO_ERROR
 - PROCESS_LIB_INVALID_UNICODE
+- PROCESS_LIB_PERMISSION_DENIED
+- PROCESS_LIB_SYMLINK_LOOP
+- PROCESS_LIB_FILE_NOT_FOUND
 */
 PROCESS_LIB_ERROR process_start(process_type *process, const char *argv[],
                                 int argc, const char *working_directory);
@@ -147,6 +151,22 @@ Possible errors:
 PROCESS_LIB_ERROR process_write(process_type *process, const void *buffer,
                                 unsigned int to_write, unsigned int *actual);
 
+/*!
+Closes the standard input stream endpoint of the parent process.
+
+This function is necessary when a child process reads from stdin until it is
+closed. After writing all the input to the child process with \see process_write
+the standard input stream can be closed using this function.
+
+\param[in,out] process Cannot be NULL.
+
+\return PROCESS_LIB_ERROR
+
+Possible errors:
+- PROCESS_LIB_INTERRUPTED
+- PROCESS_LIB_IO_ERROR
+- PROCESS_LIB_UNKNOWN_ERROR
+*/
 PROCESS_LIB_ERROR process_close_stdin(process_type *process);
 
 /*!

@@ -1,21 +1,22 @@
-# process-lib
+# process-lib <!-- omit in toc -->
 
 [![Build Status](https://travis-ci.com/DaanDeMeyer/process-lib.svg?branch=master)](https://travis-ci.com/DaanDeMeyer/process-lib)
 [![Build status](https://ci.appveyor.com/api/projects/status/nssmvol3nj683akq?svg=true)](https://ci.appveyor.com/project/DaanDeMeyer/process-lib)
 
-- [process-lib](#process-lib)
-  - [Installation](#installation)
-    - [FetchContent](#fetchcontent)
-    - [Git Submodule](#git-submodule)
-    - [Vendor](#vendor)
-    - [CMake Options](#cmake-options)
-  - [Usage](#usage)
-  - [Documentation](#documentation)
-  - [Gotcha's](#gotchas)
-  - [Design](#design)
-    - [Opaque pointer](#opaque-pointer)
-    - [Memory allocation](#memory-allocation)
-    - [(Posix) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
+- [Installation](#installation)
+  - [FetchContent](#fetchcontent)
+  - [Git Submodule](#git-submodule)
+  - [Vendor](#vendor)
+  - [CMake Options](#cmake-options)
+- [Usage](#usage)
+- [Documentation](#documentation)
+- [Error Handling](#error-handling)
+- [Gotcha's](#gotchas)
+- [Design](#design)
+  - [Opaque pointer](#opaque-pointer)
+  - [Memory allocation](#memory-allocation)
+  - [(POSIX) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
+  - [(POSIX) Check if execve call was succesful](#posix-check-if-execve-call-was-succesful)
 
 ## Installation
 
@@ -87,14 +88,15 @@ target_link_libraries(executable process)
 
 process-lib supports the following CMake options:
 
-- `PROCESS_LIB_BUILD_CPP_WRAPPER (ON|OFF)`: Build the C++ wrapper (default: OFF)
-- `PROCESS_LIB_BUILD_TESTS (ON|OFF)`: Build tests (default: OFF)
-- `PROCESS_LIB_BUILD_EXAMPLES (ON|OFF)`: Build examples (default: OFF)
+- `PROCESS_LIB_BUILD_CPP_WRAPPER (ON|OFF)`: Build the C++ wrapper (default:
+  `OFF`)
+- `PROCESS_LIB_BUILD_TESTS (ON|OFF)`: Build tests (default: `OFF`)
+- `PROCESS_LIB_BUILD_EXAMPLES (ON|OFF)`: Build examples (default: `OFF`)
 
 Options can be configured before calling `add_subdirectory` as follows:
 
 ```cmake
-set(PROCESS_LIB_BUILD_CPP_WRAPPER ON CACHE BOOL)
+set(PROCESS_LIB_BUILD_CPP_WRAPPER ON CACHE BOOL FORCE)
 ```
 
 ## Usage
@@ -109,6 +111,19 @@ C++ api.
 API documentation can be found in [process.h](include/c/process.h).
 Documentation for the C++ wrapper can be found in
 [process.hpp](include/cpp/process.hpp) (which mostly refers to process.h).
+
+## Error Handling
+
+There are lots of things that can go wrong when working with child processes.
+process-lib tries to unify the different platform errors as much as possible but
+this is an ongoing effort. In particular, the Windows Win32 documentation mostly
+does not specify what errors a function can throw. As a result, when an error
+occurs on Windows process-lib will usually return `PROCESS_LIB_UNKNOWN_ERROR`.
+However, process-lib also provides the function `process_system_error` which
+gives the user the actual system error. Use this function to retrieve the actual
+system error and file an issue with the system error and the process-lib
+function that returned it. This way we can incrementally find all remaining
+unknown errors and add them to process-lib.
 
 ## Gotcha's
 
