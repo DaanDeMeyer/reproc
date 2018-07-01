@@ -12,11 +12,13 @@
 - [Documentation](#documentation)
 - [Error Handling](#error-handling)
 - [Gotcha's](#gotchas)
+- [Unsupported Platforms](#unsupported-platforms)
 - [Design](#design)
   - [Opaque pointer](#opaque-pointer)
   - [Memory allocation](#memory-allocation)
   - [(POSIX) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
   - [(POSIX) Check if execve call was succesful](#posix-check-if-execve-call-was-succesful)
+  - [Avoiding leaking of file descriptors and handles](#avoiding-leaking-of-file-descriptors-and-handles)
 
 ## Installation
 
@@ -162,29 +164,8 @@ unknown errors and add them to process-lib.
   waiting a few milliseconds using `process_wait` before terminating the
   process.
 
-- (OSX/Windows) On POSIX systems, file descriptors are inherited by default by
-  child processes when calling
-  [execve](http://man7.org/linux/man-pages/man2/execve.2.html). To prevent
-  leaking file descriptors to child processes, POSIX provides a function `fcntl`
-  which can be used to set the `FD_CLOEXEC` flag on the file descriptors
-  returned by `pipe` which causes them to get closed on exec. However, using
-  `fcntl` introduces a race condition since any process created in another
-  thread after calling `pipe` but before calling `fcntl` will still inherit the
-  file descriptors returned by `pipe`. To get around this race condition Linux
-  and the BSD's provide `pipe2` which takes the `O_CLOEXEC` flag as an argument
-  and ensures the file descriptors of the created pipe cannot be inherited by
-  child processes. However, `pipe2` is not available on OSX so we fall back to
-  `pipe` with `fcntl` on OSX. This means that it is possible for file
-  descriptors to leak on OSX if processes are created at the same time in
-  multiple threads.
-
-  Windows Vista added the `STARTUPINFOEXW` structure in which we can put a list
-  of handles that should be inherited. Only these handles are inherited by the
-  child process. Note that this only stops process-lib's processes from
-  inheriting unintended handles. Other code in your application that calls
-  `CreateProcess` without passing a `STARTUPINFOEXW` struct containing the
-  handles it should inherit can still unintentionally inherit handles meant for
-  a process-lib process.
+- (Windows/OSX) file descriptors/handles made by process-lib can unintentionally
+  leak to child processes not created by process-lib.
 
 ## Unsupported Platforms
 
@@ -192,9 +173,12 @@ This list contains the platform version that we know process-lib won't work on.
 Note that platforms not on this list might not work either. If you encounter an
 issue with a platform not on this list, please open an issue.
 
+- Linux < 2.6: `pipe2` is only available from Linux 2.6 onwards
+- OSX < 10.8: `POSIX_SPAWN_CLOEXEC_DEFAULT` causes kernel panics on OSX 10.7
 - Windows < Vista: `STARTUPINFOEXW` is only available from Vista onwards
-- FreeBSD < 10: pipe2 is only available from FreeBSD 10 onwards
-- Linux < 2.6: pipe2 is only available from Linux 2.6 onwards
+- FreeBSD < 10: `pipe2` is only available from FreeBSD 10 onwards
+- NetBSD < 6: `pipe2` is only available from NetBSD 6 onwards
+- OpenBSD < 5.7: `pipe2` is only available from OpenBSD 5.7 onwards
 
 ## Design
 
@@ -337,3 +321,59 @@ indicates an error occured before or during exec.
 
 This solution was inspired by [this](https://stackoverflow.com/a/1586277) Stack
 Overflow answer.
+
+### Avoiding leaking of file descriptors and handles
+
+On POSIX systems, file descriptors are inherited by default by child processes
+when calling [execve](http://man7.org/linux/man-pages/man2/execve.2.html). To
+prevent leaking unintended file descriptors to child processes, POSIX provides a
+function `fcntl` which can be used to set the `FD_CLOEXEC` flag on the file
+descriptors returned by `pipe` which causes them to get closed when execve (or
+one of its variants) is called. However, using `fcntl` introduces a race
+condition since any process created in another thread after calling `pipe` but
+before calling `fcntl` will still inherit the file descriptors created by
+`pipe`.
+
+To get around this race condition on Linux and the BSD's process-lib uses the
+`pipe2` function which takes the `O_CLOEXEC` flag as an argument. This ensures
+the file descriptors of the created pipe are not inherited by child processes.
+
+Unfortunately, `pipe2` is not available on OSX. Instead, process-lib deals with
+the problem in two ways:
+
+- We fall back to `pipe` with `fcntl` on OSX. This lowers the chance of
+  process-lib's pipes being inherited by other child processes (but does not
+  guarantee it because of the race condition).
+- Instead of manually calling fork and execve, we rely on the `posix_spawn`
+  function. OSX systems define an extra flag named `POSIX_SPAWN_CLOEXEC_DEFAULT`
+  that can be passed to `posix_spawn`. This flag ensures that all open file
+  descriptors are closed by default when `posix_spawn` is called, preventing
+  them from leaking to process-lib's child processes.
+
+While this makes it impossible for process-lib's child processes to inherit
+unintended file descriptors, it does not (completely) prevent process-lib's file
+descriptors from leaking to child processes made outside of process-lib. This
+will only be guaranteed if every child process in the application is spawned
+using `posix_spawn` with the `POSIX_SPAWN_CLOEXEC_DEFAULT` flag set.
+
+On Windows the same race condition occurs. The `CreatePipe` function receives a
+flag as part of its arguments that specifies if the returned handles can be
+inherited by child processes or not. The `CreateProcess` function also takes a
+flag indicating whether it should inherit handles or not. Inheritance for
+endpoints of a single pipe can be configured after the `CreatePipe` call using
+the function `SetHandleInformation`. The race condition occurs after calling
+`CreatePipe` (allowing inheritance) but before calling `SetHandleInformation` in
+one thread and calling `CreateProcess` (with inheriting pipes) in another
+thread. This would unintentionally leak handles into a child process. We again
+try to mitigate this in two ways:
+
+- We call `SetHandleInformation` after `CreatePipe` for the handles that should
+  not be inherited by any process to lower the chance of them accidentally being
+  inherited (just like with `fnctl` on OSX.
+- Windows Vista added the `STARTUPINFOEXW` structure in which we can put a list
+  of handles that should be inherited. Only these handles are inherited by the
+  child process. This again (just like OSX `posix_spawn`) only stops
+  process-lib's processes from inheriting unintended handles. Other code in your
+  application that calls `CreateProcess` without passing a `STARTUPINFOEXW`
+  struct containing the handles it should inherit can still unintentionally
+  inherit handles meant for a process-lib child process.
