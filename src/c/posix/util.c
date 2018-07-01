@@ -18,8 +18,8 @@ PROCESS_LIB_ERROR pipe_init(int *read, int *write)
   errno = 0;
 #ifdef __APPLE__
   int result = pipe(pipefd);
-  fcntl(pipefd[0], FD_SET, FD_CLOEXEC);
-  fcntl(pipefd[0], FD_SET, FD_CLOEXEC);
+  fcntl(pipefd[0], F_SETFD, FD_CLOEXEC);
+  fcntl(pipefd[0], F_SETFD, FD_CLOEXEC);
 #else
   int result = pipe2(pipefd, O_CLOEXEC);
 #endif
