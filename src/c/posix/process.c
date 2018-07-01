@@ -11,9 +11,6 @@ struct process {
   int parent_stdin;
   int parent_stdout;
   int parent_stderr;
-  int child_stdin;
-  int child_stdout;
-  int child_stderr;
   int exit_status;
 };
 
@@ -34,9 +31,6 @@ PROCESS_LIB_ERROR process_init(struct process *process)
   process->parent_stdin = 0;
   process->parent_stdout = 0;
   process->parent_stderr = 0;
-  process->child_stdin = 0;
-  process->child_stdout = 0;
-  process->child_stderr = 0;
   // Exit codes on unix are in range [0,256) so we can use -1 as a null value.
   // We save the exit status because after calling waitpid multiple times on a
   // process that has already exited is unsafe since after the first time the
@@ -62,27 +56,34 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   // Make sure process_start is only called once for each process_init call
   assert(!process->pid);
 
+  // Pipe endpoints for child process. These are copied to stdin/stdout/stderr
+  // when the child process is created.
+  int child_stdin = 0;
+  int child_stdout = 0;
+  int child_stderr = 0;
+
   PROCESS_LIB_ERROR error;
-  error = pipe_init(&process->child_stdin, &process->parent_stdin);
+  error = pipe_init(&child_stdin, &process->parent_stdin);
   if (error) { return error; }
-  error = pipe_init(&process->parent_stdout, &process->child_stdout);
+  error = pipe_init(&process->parent_stdout, &child_stdout);
   if (error) { return error; }
-  error = pipe_init(&process->parent_stderr, &process->child_stderr);
-  if (error) { return error; }
-
-  error = process_spawn(argv, working_directory, process->child_stdin,
-                        process->child_stdout, process->child_stderr,
-                        &process->pid);
+  error = pipe_init(&process->parent_stderr, &child_stderr);
   if (error) { return error; }
 
-  error = pipe_close(&process->child_stdin);
-  if (error) { return error; }
-  error = pipe_close(&process->child_stdout);
-  if (error) { return error; }
-  error = pipe_close(&process->child_stderr);
+  error = fork_exec_redirect(argv, working_directory, child_stdin, child_stdout,
+                        child_stderr, &process->pid);
+
+  // We ignore these pipe close errors since they've already been copied to the
+  // stdin/stdout/stderr of the child process (they aren't used anywhere) and
+  // close shouldn't be called twice on the same file descriptor so there's
+  // nothing to really do if an error happens
+  pipe_close(&child_stdin);
+  pipe_close(&child_stdout);
+  pipe_close(&child_stderr);
+
   if (error) { return error; }
 
-  return error;
+  return PROCESS_LIB_SUCCESS;
 }
 
 PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,
@@ -212,13 +213,6 @@ PROCESS_LIB_ERROR process_free(struct process *process)
   error = pipe_close(&process->parent_stdout);
   if (!result) { result = error; }
   error = pipe_close(&process->parent_stderr);
-  if (!result) { result = error; }
-
-  error = pipe_close(&process->child_stdin);
-  if (!result) { result = error; }
-  error = pipe_close(&process->child_stdout);
-  if (!result) { result = error; }
-  error = pipe_close(&process->child_stderr);
   if (!result) { result = error; }
 
   return result;

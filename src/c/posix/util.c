@@ -11,10 +11,10 @@
 #ifdef __APPLE__
 #include <spawn.h>
 
-static PROCESS_LIB_ERROR
-process_spawn_setup(posix_spawnattr_t *attributes,
-                    posix_spawn_file_actions_t *actions, int stdin_pipe,
-                    int stdout_pipe, int stderr_pipe);
+static PROCESS_LIB_ERROR posix_spawn_setup(posix_spawnattr_t *attributes,
+                                           posix_spawn_file_actions_t *actions,
+                                           int stdin_pipe, int stdout_pipe,
+                                           int stderr_pipe);
 
 static PROCESS_LIB_ERROR fork_posix_spawn(const char *argv[],
                                           const char *working_directory,
@@ -22,9 +22,10 @@ static PROCESS_LIB_ERROR fork_posix_spawn(const char *argv[],
                                           posix_spawn_file_actions_t *actions,
                                           pid_t *pid, int *spawn_error);
 
-PROCESS_LIB_ERROR process_spawn(const char *argv[],
-                                const char *working_directory, int stdin_pipe,
-                                int stdout_pipe, int stderr_pipe, pid_t *pid)
+PROCESS_LIB_ERROR fork_exec_redirect(const char *argv[],
+                                     const char *working_directory,
+                                     int stdin_pipe, int stdout_pipe,
+                                     int stderr_pipe, pid_t *pid)
 {
   PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
 
@@ -69,10 +70,10 @@ PROCESS_LIB_ERROR process_spawn(const char *argv[],
 
 short flags = POSIX_SPAWN_SETPGROUP | POSIX_SPAWN_CLOEXEC_DEFAULT;
 
-static PROCESS_LIB_ERROR
-process_spawn_setup(posix_spawnattr_t *attributes,
-                    posix_spawn_file_actions_t *actions, int stdin_pipe,
-                    int stdout_pipe, int stderr_pipe)
+static PROCESS_LIB_ERROR posix_spawn_setup(posix_spawnattr_t *attributes,
+                                           posix_spawn_file_actions_t *actions,
+                                           int stdin_pipe, int stdout_pipe,
+                                           int stderr_pipe)
 {
   int error = 0;
 
@@ -108,6 +109,7 @@ static PROCESS_LIB_ERROR fork_posix_spawn(const char *argv[],
   error = pipe_init(&error_pipe_read, &error_pipe_write);
   if (error) { return error; }
 
+  errno = 0;
   pid_t chdir_pid = fork();
   if (chdir_pid == -1) {
     pipe_close(&error_pipe_read);
@@ -121,6 +123,8 @@ static PROCESS_LIB_ERROR fork_posix_spawn(const char *argv[],
   }
 
   if (chdir_pid == 0) {
+    errno = 0;
+
     if (chdir(working_directory) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
@@ -146,9 +150,10 @@ static PROCESS_LIB_ERROR fork_posix_spawn(const char *argv[],
   return PROCESS_LIB_SUCCESS;
 }
 #else
-PROCESS_LIB_ERROR process_spawn(const char *argv[],
-                                const char *working_directory, int stdin_pipe,
-                                int stdout_pipe, int stderr_pipe, pid_t *pid)
+PROCESS_LIB_ERROR fork_exec_redirect(const char *argv[],
+                                     const char *working_directory,
+                                     int stdin_pipe, int stdout_pipe,
+                                     int stderr_pipe, pid_t *pid)
 {
   PROCESS_LIB_ERROR error;
 
