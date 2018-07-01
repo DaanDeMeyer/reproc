@@ -128,7 +128,12 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   free(command_line_wstring);
   free(working_directory_wstring);
 
-  if (!result) { return PROCESS_LIB_UNKNOWN_ERROR; }
+  if (!result) {
+    switch (GetLastError()) {
+    case ERROR_FILE_NOT_FOUND: return PROCESS_LIB_FILE_NOT_FOUND;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
 
   // We don't need the handle to the primary thread of the child process
   error = handle_close(&process->info.hThread);
