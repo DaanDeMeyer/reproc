@@ -42,10 +42,22 @@ target_include_directories(process PUBLIC include/c)
 
 if(WIN32)
   target_include_directories(process PRIVATE src/c/windows)
-  target_sources(process PRIVATE src/c/windows/process.c src/c/windows/util.c)
+  target_sources(process PRIVATE
+    src/c/windows/process.c
+    src/c/windows/util.c
+  )
 elseif(UNIX)
   target_include_directories(process PRIVATE src/c/posix)
-  target_sources(process PRIVATE src/c/posix/process.c src/c/posix/util.c)
+  target_sources(process PRIVATE
+    src/c/posix/process.c
+    src/c/posix/pipe.c
+    src/c/posix/wait.c
+  )
+  if(APPLE)
+    target_sources(process PRIVATE src/c/posix/fork_exec_redirect_darwin.c)
+  else()
+    target_sources(process PRIVATE src/c/posix/fork_exec_redirect_posix.c)
+  endif()
 endif()
 
 if(MSVC)
@@ -55,14 +67,12 @@ if(MSVC)
     VC_EXTRALEAN
     NOMINMAX
   )
-elseif(APPLE)
-  target_compile_definitions(process PRIVATE
-    _DARWIN_C_SOURCE
-  )
-else()
-  target_compile_definitions(process PRIVATE
-    _GNU_SOURCE
-  )
+elseif(UNIX)
+  if(APPLE)
+    target_compile_definitions(process PRIVATE _DARWIN_C_SOURCE)
+  else()
+    target_compile_definitions(process PRIVATE _GNU_SOURCE)
+  endif()
 endif()
 
 ### C++ Wrapper ###
@@ -108,6 +118,9 @@ if(PROCESS_LIB_BUILD_TESTS)
 
   target_compile_definitions(tests PRIVATE
     DOCTEST_CONFIG_TREAT_CHAR_STAR_AS_STRING
+    # Pass paths as compile time parameters so tests can be run from any
+    # directory without hardcoding the path in the tests which differs for each
+    # user.
     ECHO_PATH="$<TARGET_FILE:echo>"
     INFINITE_PATH="$<TARGET_FILE:infinite>"
   )

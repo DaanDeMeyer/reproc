@@ -1,5 +1,8 @@
 #include "process.h"
-#include "util.h"
+
+#include "fork_exec_redirect.h"
+#include "pipe.h"
+#include "wait.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -70,8 +73,8 @@ PROCESS_LIB_ERROR process_start(struct process *process, const char *argv[],
   error = pipe_init(&process->parent_stderr, &child_stderr);
   if (error) { return error; }
 
-  error = fork_exec_redirect(argv, working_directory, child_stdin, child_stdout,
-                        child_stderr, &process->pid);
+  error = fork_exec_redirect(argc, argv, working_directory, child_stdin,
+                             child_stdout, child_stderr, &process->pid);
 
   // We ignore these pipe close errors since they've already been copied to the
   // stdin/stdout/stderr of the child process (they aren't used anywhere) and
