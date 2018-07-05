@@ -9,7 +9,7 @@ int main(void)
   int argc = 2;
   const char *argv[3] = {"cmake", "--help", nullptr};
 
-  error = process.start(argv, argc, nullptr);
+  error = process.start(argc, argv, nullptr);
   if (error) { return 1; }
 
   char buffer[1024];

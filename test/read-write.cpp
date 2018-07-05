@@ -27,7 +27,7 @@ TEST_CASE("read-write")
     int argc = 2;
     const char *argv[3] = { ECHO_PATH, "stdout", 0 };
 
-    error = process_start(process, argv, argc, NULL);
+    error = process_start(process, argc, argv, NULL);
     REQUIRE(!error);
 
     error = process_write(process, msg, (unsigned int) strlen(msg), &actual);
@@ -53,7 +53,7 @@ TEST_CASE("read-write")
     int argc = 2;
     const char *argv[3] = { ECHO_PATH, "stderr", 0 };
 
-    error = process_start(process, argv, argc, NULL);
+    error = process_start(process, argc, argv, NULL);
     REQUIRE(!error);
 
     error = process_write(process, msg, (unsigned int) strlen(msg), &actual);

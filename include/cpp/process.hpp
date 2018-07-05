@@ -36,7 +36,7 @@ public:
   Process &operator=(Process &&other) noexcept;
 
   /*! /see process_start */
-  Process::Error start(const char *argv[], int argc,
+  Process::Error start(int argc, const char *argv[],
                        const char *working_directory);
 
   /*!

@@ -124,8 +124,9 @@ Possible errors:
 - PROCESS_LIB_SYMLINK_LOOP
 - PROCESS_LIB_FILE_NOT_FOUND
 */
-PROCESS_LIB_ERROR process_start(process_type *process, const char *argv[],
-                                int argc, const char *working_directory);
+PROCESS_LIB_ERROR process_start(process_type *process, int argc,
+                                const char *argv[],
+                                const char *working_directory);
 
 /*!
 Writes up to \p to_write bytes from \p buffer to the standard input (stdin) of

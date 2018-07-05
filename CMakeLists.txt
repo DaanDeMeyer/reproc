@@ -38,6 +38,8 @@ set_target_properties(process PROPERTIES
   C_EXTENSIONS OFF
 )
 
+target_link_libraries(process PRIVATE common-warnings)
+
 target_include_directories(process PUBLIC include/c)
 
 if(WIN32)

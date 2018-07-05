@@ -31,11 +31,11 @@ Process &Process::operator=(Process &&other) noexcept
   return *this;
 }
 
-Process::Error Process::start(const char *argv[], int argc,
+Process::Error Process::start(int argc, const char *argv[],
                               const char *working_directory)
 {
   return static_cast<Error>(
-      process_start(process, argv, argc, working_directory));
+      process_start(process, argc, argv, working_directory));
 }
 
 Process::Error Process::start(const std::vector<std::string> &args,
@@ -43,14 +43,14 @@ Process::Error Process::start(const std::vector<std::string> &args,
 {
   const char **argv = new const char *[args.size() + 1];
 
-  for (int i = 0; i < args.size(); i++) {
+  for (std::size_t i = 0; i < args.size(); i++) {
     argv[i] = args[i].c_str();
   }
   argv[args.size()] = nullptr;
 
   int argc = static_cast<int>(args.size());
 
-  Error error = start(argv, argc,
+  Error error = start(argc, argv,
                       working_directory ? working_directory->c_str() : nullptr);
   delete[] argv;
 

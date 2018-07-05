@@ -23,7 +23,7 @@ int main(void)
   // process_start takes argv, argc and the working directory of the child
   // process. If the working directory is NULL the working directory of the
   // parent process is used.
-  error = process_start(process, argv, argc, NULL);
+  error = process_start(process, argc, argv, NULL);
   if (error) { return 1; }
 
   char buffer[1024];

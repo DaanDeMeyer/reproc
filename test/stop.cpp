@@ -13,7 +13,7 @@ TEST_CASE("stop")
   PROCESS_LIB_ERROR error = process_init(process);
   REQUIRE(!error);
 
-  error = process_start(process, argv, argc, 0);
+  error = process_start(process, argc, argv, 0);
   REQUIRE(!error);
 
   // Wait 50ms to avoid terminating the process on Windows before it is
