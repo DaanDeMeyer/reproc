@@ -70,8 +70,8 @@ unsigned int process_size();
 /*!
 Initializes the members of process_type.
 
-Every call to process_init should be followed with a call to \see process_free
-after the child process has exited.
+Every call to process_init should be followed with a call to \see
+process_destroy after the child process has exited.
 
 \param[out] process_address Address of a process pointer. Cannot be NULL. Any
 already allocated memory to the process pointer will be leaked.
@@ -299,7 +299,7 @@ Possible errors:
 - PROCESS_LIB_INTERRUPTED
 - PROCESS_LIB_IO_ERROR
 */
-PROCESS_LIB_ERROR process_free(process_type *process);
+PROCESS_LIB_ERROR process_destroy(process_type *process);
 
 /*!
 Returns the last system error code.

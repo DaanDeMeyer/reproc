@@ -14,7 +14,7 @@ Process::Process()
 Process::~Process()
 {
   if (process) {
-    process_free(process);
+    process_destroy(process);
     free(process);
   }
 }

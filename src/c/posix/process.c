@@ -203,7 +203,7 @@ PROCESS_LIB_ERROR process_exit_status(struct process *process, int *exit_status)
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR process_free(struct process *process)
+PROCESS_LIB_ERROR process_destroy(struct process *process)
 {
   assert(process);
 

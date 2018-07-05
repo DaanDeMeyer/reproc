@@ -58,7 +58,7 @@ int main(void)
   if (error) { return 1; }
 
   // Free all resources stored in process
-  error = process_free(process);
+  error = process_destroy(process);
   if (error) { return 1; }
 
   // Free the process memory itself

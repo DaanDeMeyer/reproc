@@ -80,7 +80,7 @@ TEST_CASE("read-write")
   REQUIRE(!error);
   REQUIRE((exit_status == 0));
 
-  error = process_free(process);
+  error = process_destroy(process);
   REQUIRE(!error);
 
   free(process);
