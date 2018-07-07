@@ -7,7 +7,6 @@ class Process
 {
 public:
   static const unsigned int INFINITE;
-  static const unsigned int PATH_MAX;
 
   // Error is a class instead of enum so we can assign its values to the values
   // of PROCESS_LIB_ERROR in the .cpp file which isn't possible with an enum.
