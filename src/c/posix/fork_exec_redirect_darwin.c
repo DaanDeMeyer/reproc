@@ -5,6 +5,7 @@
 #include "fork_exec_redirect.h"
 
 #include "pipe.h"
+#include "wait.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -69,16 +70,16 @@ static PROCESS_LIB_ERROR fork_posix_spawn(int argc, const char *argv[],
 
   PROCESS_LIB_ERROR error;
 
-  int error_pipe_read = 0;
-  int error_pipe_write = 0;
-  error = pipe_init(&error_pipe_read, &error_pipe_write);
+  int pid_pipe_read = 0;
+  int pid_pipe_write = 0;
+  error = pipe_init(&pid_pipe_read, &pid_pipe_write);
   if (error) { return error; }
 
   errno = 0;
   pid_t chdir_pid = fork();
   if (chdir_pid == -1) {
-    pipe_close(&error_pipe_read);
-    pipe_close(&error_pipe_write);
+    pipe_close(&pid_pipe_read);
+    pipe_close(&pid_pipe_write);
 
     switch (errno) {
     case EAGAIN: return PROCESS_LIB_PROCESS_LIMIT_REACHED;
@@ -90,27 +91,36 @@ static PROCESS_LIB_ERROR fork_posix_spawn(int argc, const char *argv[],
   if (chdir_pid == 0) {
     errno = 0;
 
-    if (chdir(working_directory) == -1) {
-      write(error_pipe_write, &errno, sizeof(errno));
-      _exit(errno);
-    }
+    if (chdir(working_directory) == -1) { _exit(errno); }
 
     // TODO check envp
     errno = posix_spawnp(pid, argv[0], actions, attributes, (char **) argv,
                          environ);
-    write(error_pipe_write, &errno, sizeof(errno));
+    if (errno != 0) { _exit(errno); }
+
+    write(pid_pipe_write, pid, sizeof(*pid));
+
+    // _exit cleans up the pipes so we don't close them manually
     _exit(errno);
   }
 
-  // Close write end on parent side so read will read 0 if it is closed on the
-  // child side as well
-  pipe_close(&error_pipe_write);
-  ssize_t bytes_read = read(error_pipe_read, &spawn_error, sizeof(spawn_error));
-  pipe_close(&error_pipe_read);
+  // Only fork needs write endpoints of pipes
+  pipe_close(&pid_pipe_write);
 
-  if (waitpid(chdir_pid, NULL, 0) == -1) { return PROCESS_LIB_UNKNOWN_ERROR; }
+  error = wait_infinite(chdir_pid, spawn_error);
+  if (error) {
+    pipe_close(&pid_pipe_read);
+    return error;
+  }
 
-  if (bytes_read == -1) { return PROCESS_LIB_UNKNOWN_ERROR; }
+  if (spawn_error != 0) {
+    pipe_close(&pid_pipe_read);
+    return PROCESS_LIB_SUCCESS;
+  }
+
+  error = pipe_read(pid_pipe_read, pid, sizeof(*pid), NULL);
+  pipe_close(&pid_pipe_read);
+  if (error) { return error; }
 
   return PROCESS_LIB_SUCCESS;
 }

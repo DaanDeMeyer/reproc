@@ -106,14 +106,21 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
   // child side as well
   pipe_close(&error_pipe_write);
 
-  ssize_t bytes_read = read(error_pipe_read, &errno, sizeof(errno));
-
+  int exec_error = 0;
+  error = pipe_read(error_pipe_read, &exec_error, sizeof(exec_error), NULL);
   pipe_close(&error_pipe_read);
+
+  // PROCESS_LIB_STREAM_CLOSED indicates the execve was succesful (and
+  // FD_CLOEXEC kicked in and closed the error_pipe_write fd in the child
+  // process)
+  if (error != PROCESS_LIB_SUCCESS && error != PROCESS_LIB_STREAM_CLOSED) {
+    return error;
+  }
 
   // If read does not return 0 an error will have occurred in the child process
   // before or during execve (or an error with read itself (less likely))
-  if (bytes_read != 0) {
-    switch (errno) {
+  if (exec_error != 0) {
+    switch (exec_error) {
     case EACCES: return PROCESS_LIB_PERMISSION_DENIED;
     case EPERM: return PROCESS_LIB_PERMISSION_DENIED;
     case EIO: return PROCESS_LIB_IO_ERROR;
