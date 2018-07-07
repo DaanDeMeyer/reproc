@@ -12,6 +12,7 @@ PROCESS_LIB_ERROR wait_no_hang(pid_t pid, int *exit_status)
 
   int status = 0;
   errno = 0;
+  // Adding WNOHANG makes waitpid only check and return immediately
   pid_t wait_result = waitpid(pid, &status, WNOHANG);
 
   if (wait_result == 0) { return PROCESS_LIB_WAIT_TIMEOUT; }

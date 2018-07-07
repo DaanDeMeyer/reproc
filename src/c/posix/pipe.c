@@ -73,6 +73,8 @@ PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, unsigned int to_read,
   ssize_t bytes_read = read(pipe, buffer, to_read);
   *actual = 0; // changed to bytes_read if read was succesful
 
+  // read is different from write in that it returns 0 to indicate the other end
+  // of the pipe was closed instead of setting errno to EPIPE
   if (bytes_read == 0) { return PROCESS_LIB_STREAM_CLOSED; }
   if (bytes_read == -1) {
     switch (errno) {

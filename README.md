@@ -164,8 +164,8 @@ unknown errors and add them to process-lib.
   waiting a few milliseconds using `process_wait` before terminating the
   process.
 
-- (Windows/OSX) file descriptors/handles made by process-lib can unintentionally
-  leak to child processes not created by process-lib.
+- (Windows/Darwin) file descriptors/handles made by process-lib can
+  unintentionally leak to child processes not created by process-lib.
 
 ## Platform Support
 
@@ -177,7 +177,8 @@ that platforms not on this list might not work either. If you encounter an issue
 with a platform not on this list, please open an issue.
 
 - Linux < 2.6: `pipe2` is only available from Linux 2.6 onwards
-- OSX < 10.8: `POSIX_SPAWN_CLOEXEC_DEFAULT` causes kernel panics on OSX 10.7
+- Darwin < 10.8: `POSIX_SPAWN_CLOEXEC_DEFAULT` causes kernel panics on Darwin
+  10.7
 - Windows < Vista: `STARTUPINFOEXW` is only available from Vista onwards
 - FreeBSD < 10: `pipe2` is only available from FreeBSD 10 onwards
 - NetBSD < 6: `pipe2` is only available from NetBSD 6 onwards
@@ -341,17 +342,18 @@ To get around this race condition on Linux process-lib uses the `pipe2` function
 which takes the `O_CLOEXEC` flag as an argument. This ensures the file
 descriptors of the created pipe are not inherited by child processes.
 
-Unfortunately, `pipe2` is not available on OSX. Instead, process-lib deals with
-the problem in two ways:
+Unfortunately, `pipe2` is not available on Darwin. Instead, process-lib deals
+with the problem in two ways:
 
-- We fall back to `pipe` with `fcntl` on OSX. This lowers the chance of
+- We fall back to `pipe` with `fcntl` on Darwin. This lowers the chance of
   process-lib's pipes being inherited by other child processes (but does not
   guarantee it because of the race condition).
 - Instead of manually calling fork and execve, we rely on the `posix_spawn`
-  function. OSX systems define an extra flag named `POSIX_SPAWN_CLOEXEC_DEFAULT`
-  that can be passed to `posix_spawn`. This flag ensures that all open file
-  descriptors are closed by default when `posix_spawn` is called, preventing
-  them from leaking to process-lib's child processes.
+  function. Darwin systems define an extra flag named
+  `POSIX_SPAWN_CLOEXEC_DEFAULT` that can be passed to `posix_spawn`. This flag
+  ensures that all open file descriptors are closed by default when
+  `posix_spawn` is called, preventing them from leaking to process-lib's child
+  processes.
 
 While this makes it impossible for process-lib's child processes to inherit
 unintended file descriptors, it does not (completely) prevent process-lib's file
@@ -372,11 +374,29 @@ try to mitigate this in two ways:
 
 - We call `SetHandleInformation` after `CreatePipe` for the handles that should
   not be inherited by any process to lower the chance of them accidentally being
-  inherited (just like with `fnctl` on OSX.
+  inherited (just like with `fnctl` on Darwin.
 - Windows Vista added the `STARTUPINFOEXW` structure in which we can put a list
   of handles that should be inherited. Only these handles are inherited by the
-  child process. This again (just like OSX `posix_spawn`) only stops
+  child process. This again (just like Darwin `posix_spawn`) only stops
   process-lib's processes from inheriting unintended handles. Other code in your
   application that calls `CreateProcess` without passing a `STARTUPINFOEXW`
   struct containing the handles it should inherit can still unintentionally
   inherit handles meant for a process-lib child process.
+
+### (Darwin) Changing working directory of child process when using posix_spawn
+
+As detailed in the previous section, process-lib uses `posix_spawn` on Darwin to
+avoid leaking file descriptors. One part missing in the `posix_spawn` API is the
+ability to change the child process' working directory. One way to get around
+this is by changing the working directory of the parent process before spawning
+the child process. This works since the child process inherits the working
+directory of the child process by default. However, this can lead to a race
+condition if other threads are running that depend on the working directory of
+the process not changing. If code that expects the parent process' working
+directory to be in a specific directory is executed in another thread while the
+parent process' working directory is temporarily changed while spawning a child
+process errors can occur. To solve this we fork another child process that
+changes its working directory to the working directory of the child process and
+then spawns the child process. By doing this we have no race condition since the
+working directory of the parent process isn't changed but are still able to
+change the working directory of the child process when using `posix_spawn`.
