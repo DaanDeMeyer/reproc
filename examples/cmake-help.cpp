@@ -3,7 +3,7 @@
 
 int main(void)
 {
-  Process::Error error;
+  Process::Error error = Process::SUCCESS;
   Process process;
 
   int argc = 2;

@@ -6,24 +6,47 @@
 class Process
 {
 public:
-  static const unsigned int INFINITE = 0xFFFFFFFF;
+  static const unsigned int INFINITE;
+  static const unsigned int PATH_MAX;
 
-  enum Error {
-    SUCCESS = 0,
-    UNKNOWN_ERROR = 1,
-    WAIT_TIMEOUT = 2,
-    STREAM_CLOSED = 3,
-    STILL_RUNNING = 4,
-    MEMORY_ERROR = 5,
-    PIPE_LIMIT_REACHED = 6,
-    INTERRUPTED = 7,
-    IO_ERROR = 8,
-    PROCESS_LIMIT_REACHED = 9,
-    INVALID_UNICODE = 10,
-    PERMISSION_DENIED = 11,
-    SYMLINK_LOOP = 12,
-    FILE_NOT_FOUND = 13
+  // Error is a class instead of enum so we can assign its values to the values
+  // of PROCESS_LIB_ERROR in the .cpp file which isn't possible with an enum.
+  // Only the no-arg constructor is available which defaults to Process::SUCCESS
+  class Error
+  {
+  public:
+    Error();
+
+    operator bool() const;
+
+  private:
+    Error(int value);
+    int value_;
+
+    // Make Process friend so we can instantiate Error constants inside Process
+    // but outside of Error
+    friend class Process;
+    // Make friend so we can access value for comparison. Not equal doesn't need
+    // to be friend since it can be implemented with the equality operator
+    friend inline bool operator==(const Process::Error &lhs,
+                                  const Process::Error &rhs);
   };
+
+  static const Error SUCCESS;
+  static const Error UNKNOWN_ERROR;
+  static const Error WAIT_TIMEOUT;
+  static const Error STREAM_CLOSED;
+  static const Error STILL_RUNNING;
+  static const Error MEMORY_ERROR;
+  static const Error PIPE_LIMIT_REACHED;
+  static const Error INTERRUPTED;
+  static const Error IO_ERROR;
+  static const Error PROCESS_LIMIT_REACHED;
+  static const Error INVALID_UNICODE;
+  static const Error PERMISSION_DENIED;
+  static const Error SYMLINK_LOOP;
+  static const Error FILE_NOT_FOUND;
+  static const Error NAME_TOO_LONG;
 
   Process();
   ~Process();
@@ -80,3 +103,6 @@ public:
 private:
   struct process *process;
 };
+
+inline bool operator==(const Process::Error &lhs, const Process::Error &rhs);
+inline bool operator!=(const Process::Error &lhs, const Process::Error &rhs);

@@ -4,11 +4,13 @@
 
 /*! Used to indicate that a function that takes a timeout value should wait
 indefinitely. */
-static const unsigned int PROCESS_LIB_INFINITE = 0xFFFFFFFF;
+extern const unsigned int PROCESS_LIB_INFINITE;
 
 /*! Used to store child process information between multiple library calls */
 typedef struct process process_type;
 
+/* When editing make sure to change the corresponding enum in process.hpp as
+well */
 typedef enum {
   /*!
   Indicates a library call was successful. Because it evaluates to zero it can
@@ -19,43 +21,45 @@ typedef enum {
   if (error) { return error; } // Only executes if library call is not a success
   \endcode
   */
-  PROCESS_LIB_SUCCESS = 0,
+  PROCESS_LIB_SUCCESS,
   /*! Unlike POSIX, Windows does not include information about exactly which
   errors can occur in its documentation. If we don't know which error occurs we
   return PROCESS_LIB_UNKNOWN_ERROR when an error occurs on Windows. All
   functions can return this error. */
-  PROCESS_LIB_UNKNOWN_ERROR = 1,
+  PROCESS_LIB_UNKNOWN_ERROR,
   /*! Returned if a timeout value passed to a function expired. */
-  PROCESS_LIB_WAIT_TIMEOUT = 2,
+  PROCESS_LIB_WAIT_TIMEOUT,
   /*! The child process closed one of its streams (and in case of stdout/stderr
   all of the data from that stream has been read). */
-  PROCESS_LIB_STREAM_CLOSED = 3,
+  PROCESS_LIB_STREAM_CLOSED,
   /*! \see process_exit_status was called while the child process was still
   running. */
-  PROCESS_LIB_STILL_RUNNING = 4,
+  PROCESS_LIB_STILL_RUNNING,
   /*! A memory allocation in the library code failed (Windows only) or the
   underlying system does not have enough memory to execute a system call. */
-  PROCESS_LIB_MEMORY_ERROR = 5,
+  PROCESS_LIB_MEMORY_ERROR,
   /*! The current process is not allowed to create any more pipes. */
-  PROCESS_LIB_PIPE_LIMIT_REACHED = 6,
+  PROCESS_LIB_PIPE_LIMIT_REACHED,
   /*! A waiting system call (read, write, close, ...) was interrupted by the
   system. */
-  PROCESS_LIB_INTERRUPTED = 7,
+  PROCESS_LIB_INTERRUPTED,
   /*! (POSIX) Something wen wrong during I/O. The Linux docs do not go in depth
   on when exactly this error occurs. */
-  PROCESS_LIB_IO_ERROR = 8,
+  PROCESS_LIB_IO_ERROR,
   /*! Returned if the current process is not allowed to spawn any more child
   processes. */
-  PROCESS_LIB_PROCESS_LIMIT_REACHED = 9,
+  PROCESS_LIB_PROCESS_LIMIT_REACHED,
   /*! (Windows) Returned if any of the UTF-8 strings passed to the library do
   not contain valid unicode. */
-  PROCESS_LIB_INVALID_UNICODE = 10,
+  PROCESS_LIB_INVALID_UNICODE,
   /*! The current process does not have permission to execute the program */
-  PROCESS_LIB_PERMISSION_DENIED = 11,
+  PROCESS_LIB_PERMISSION_DENIED,
   /*! Too many symlinks were encountered while looking for the program */
-  PROCESS_LIB_SYMLINK_LOOP = 12,
+  PROCESS_LIB_SYMLINK_LOOP,
   /*! The program was not found */
-  PROCESS_LIB_FILE_NOT_FOUND = 13
+  PROCESS_LIB_FILE_NOT_FOUND,
+  /*! The give name was too long (most system have path length limits) */
+  PROCESS_LIB_NAME_TOO_LONG
 } PROCESS_LIB_ERROR;
 
 #ifdef __cplusplus
@@ -283,8 +287,8 @@ PROCESS_LIB_ERROR process_exit_status(process_type *process, int *exit_status);
 /*!
 Releases all resources associated with the process.
 
-This function does not stop the child process. Call process_terminate or
-process_kill first if you want to stop the child process.
+This function does not stop the child process. Call \see process_terminate or
+\see process_kill first if you want to stop the child process.
 
 All resources will be freed regardless if any error occurs or not. This function
 should not be called again if an error occurs.

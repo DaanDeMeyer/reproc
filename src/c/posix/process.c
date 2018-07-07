@@ -9,6 +9,8 @@
 #include <signal.h>
 #include <unistd.h>
 
+const unsigned int PROCESS_LIB_INFINITE = 0xFFFFFFFF;
+
 struct process {
   pid_t pid;
   int parent_stdin;

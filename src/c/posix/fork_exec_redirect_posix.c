@@ -111,7 +111,7 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
   pipe_close(&error_pipe_read);
 
   // If read does not return 0 an error will have occurred in the child process
-  // before execve (or an error with read itself (less likely))
+  // before or during execve (or an error with read itself (less likely))
   if (bytes_read != 0) {
     switch (errno) {
     case EACCES: return PROCESS_LIB_PERMISSION_DENIED;
@@ -121,6 +121,7 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
     case ENOMEM: return PROCESS_LIB_MEMORY_ERROR;
     case ENOENT: return PROCESS_LIB_FILE_NOT_FOUND;
     case EINTR: return PROCESS_LIB_INTERRUPTED;
+    case ENAMETOOLONG: return PROCESS_LIB_NAME_TOO_LONG;
     }
   }
 

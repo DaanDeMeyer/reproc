@@ -168,6 +168,7 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
     case ENOMEM: return PROCESS_LIB_MEMORY_ERROR;
     case ENOENT: return PROCESS_LIB_FILE_NOT_FOUND;
     case EINTR: return PROCESS_LIB_INTERRUPTED;
+    case ENAMETOOLONG: return PROCESS_LIB_NAME_TOO_LONG;
     }
   }
 

@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <windows.h>
 
+const unsigned int PROCESS_LIB_INFINITE = 0xFFFFFFFF;
+
 struct process {
   PROCESS_INFORMATION info;
   HANDLE parent_stdin;
