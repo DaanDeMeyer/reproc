@@ -167,11 +167,14 @@ unknown errors and add them to process-lib.
 - (Windows/OSX) file descriptors/handles made by process-lib can unintentionally
   leak to child processes not created by process-lib.
 
-## Unsupported Platforms
+## Platform Support
 
-This list contains the platform version that we know process-lib won't work on.
-Note that platforms not on this list might not work either. If you encounter an
-issue with a platform not on this list, please open an issue.
+The best way to figure out if process-lib works on your platform is to clone
+process-lib, compile it and run the tests.
+
+This list contains the platform version that process-lib won't work on. Note
+that platforms not on this list might not work either. If you encounter an issue
+with a platform not on this list, please open an issue.
 
 - Linux < 2.6: `pipe2` is only available from Linux 2.6 onwards
 - OSX < 10.8: `POSIX_SPAWN_CLOEXEC_DEFAULT` causes kernel panics on OSX 10.7
@@ -334,9 +337,9 @@ condition since any process created in another thread after calling `pipe` but
 before calling `fcntl` will still inherit the file descriptors created by
 `pipe`.
 
-To get around this race condition on Linux and the BSD's process-lib uses the
-`pipe2` function which takes the `O_CLOEXEC` flag as an argument. This ensures
-the file descriptors of the created pipe are not inherited by child processes.
+To get around this race condition on Linux process-lib uses the `pipe2` function
+which takes the `O_CLOEXEC` flag as an argument. This ensures the file
+descriptors of the created pipe are not inherited by child processes.
 
 Unfortunately, `pipe2` is not available on OSX. Instead, process-lib deals with
 the problem in two ways:
