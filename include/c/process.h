@@ -2,6 +2,10 @@
 
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*! Used to indicate that a function that takes a timeout value should wait
 indefinitely. */
 extern const unsigned int PROCESS_LIB_INFINITE;
@@ -61,10 +65,6 @@ typedef enum {
   /*! The give name was too long (most system have path length limits) */
   PROCESS_LIB_NAME_TOO_LONG
 } PROCESS_LIB_ERROR;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*!
 Returns the size of process_type on the current platform so it can be allocated.
