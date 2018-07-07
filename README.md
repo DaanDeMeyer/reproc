@@ -12,13 +12,14 @@
 - [Documentation](#documentation)
 - [Error Handling](#error-handling)
 - [Gotcha's](#gotchas)
-- [Unsupported Platforms](#unsupported-platforms)
+- [Platform Support](#platform-support)
 - [Design](#design)
   - [Opaque pointer](#opaque-pointer)
   - [Memory allocation](#memory-allocation)
   - [(POSIX) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
   - [(POSIX) Check if execve call was succesful](#posix-check-if-execve-call-was-succesful)
   - [Avoiding leaking of file descriptors and handles](#avoiding-leaking-of-file-descriptors-and-handles)
+  - [(Darwin) Changing working directory of child process when using posix_spawn](#darwin-changing-working-directory-of-child-process-when-using-posixspawn)
 
 ## Installation
 
