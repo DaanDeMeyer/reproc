@@ -1,6 +1,8 @@
 #include "process.h"
 
-#include "util.h"
+#include "handle.h"
+#include "pipe.h"
+#include "string_utils.h"
 
 #include <assert.h>
 #include <stdlib.h>
