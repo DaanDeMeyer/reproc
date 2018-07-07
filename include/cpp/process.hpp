@@ -17,6 +17,7 @@ public:
   public:
     Error();
 
+    // Error is true if it isn't Process::SUCCESS
     operator bool() const;
 
   private:
