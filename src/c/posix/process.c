@@ -197,6 +197,7 @@ PROCESS_LIB_ERROR process_kill(struct process *process,
 PROCESS_LIB_ERROR process_exit_status(struct process *process, int *exit_status)
 {
   assert(process);
+  assert(exit_status);
 
   if (process->exit_status == -1) { return PROCESS_LIB_STILL_RUNNING; }
 
