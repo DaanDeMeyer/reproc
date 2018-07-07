@@ -26,8 +26,6 @@ int main(void)
 
   if (error != Process::STREAM_CLOSED) { return 1; }
 
-  std::cout << std::endl;
-
   error = process.wait(Process::INFINITE);
   if (error) { return 1; }
 

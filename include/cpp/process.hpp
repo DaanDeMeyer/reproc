@@ -27,10 +27,11 @@ public:
     // Make Process friend so we can instantiate Error constants inside Process
     // but outside of Error
     friend class Process;
-    // Make friend so we can access value for comparison. Not equal doesn't need
-    // to be friend since it can be implemented with the equality operator
-    friend inline bool operator==(const Process::Error &lhs,
-                                  const Process::Error &rhs);
+
+    friend bool operator==(const Process::Error &lhs,
+                           const Process::Error &rhs);
+    friend bool operator!=(const Process::Error &lhs,
+                           const Process::Error &rhs);
   };
 
   static const Error SUCCESS;
@@ -105,5 +106,5 @@ private:
   struct process *process;
 };
 
-inline bool operator==(const Process::Error &lhs, const Process::Error &rhs);
-inline bool operator!=(const Process::Error &lhs, const Process::Error &rhs);
+bool operator==(const Process::Error &lhs, const Process::Error &rhs);
+bool operator!=(const Process::Error &lhs, const Process::Error &rhs);

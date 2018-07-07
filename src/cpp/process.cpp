@@ -11,15 +11,6 @@ Process::Error::Error(int value) : value_(value) {}
 
 Process::Error::operator bool() const { return *this != Process::SUCCESS; }
 
-inline bool operator==(const Process::Error &lhs, const Process::Error &rhs)
-{
-  return lhs.value_ == rhs.value_;
-}
-inline bool operator!=(const Process::Error &lhs, const Process::Error &rhs)
-{
-  return !(lhs == rhs);
-}
-
 // clang-format off
 const Process::Error Process::SUCCESS = PROCESS_LIB_SUCCESS;
 const Process::Error Process::UNKNOWN_ERROR = PROCESS_LIB_UNKNOWN_ERROR;
@@ -41,7 +32,7 @@ const Process::Error Process::NAME_TOO_LONG = PROCESS_LIB_NAME_TOO_LONG;
 Process::Process()
 {
   process = static_cast<process_type *>(malloc(process_size()));
-  if (process) { throw std::bad_alloc(); }
+  if (!process) { throw std::bad_alloc(); }
   process_init(process);
 }
 
@@ -131,3 +122,12 @@ Process::Error Process::exit_status(int *exit_status)
 }
 
 unsigned int Process::system_error() { return process_system_error(); }
+
+bool operator==(const Process::Error &lhs, const Process::Error &rhs)
+{
+  return lhs.value_ == rhs.value_;
+}
+bool operator!=(const Process::Error &lhs, const Process::Error &rhs)
+{
+  return lhs.value_ != rhs.value_;
+}
