@@ -19,39 +19,39 @@ addons:
 matrix:
   fast_finish: true
   include:
-    - os: linux
-      env: CXX=g++-5
-      addons:
-        apt:
-          sources: *sources
-          packages:
-            - g++-5
+    # - os: linux
+    #   env: CXX=g++-5
+    #   addons:
+    #     apt:
+    #       sources: *sources
+    #       packages:
+    #         - g++-5
 
-    - os: linux
-      env: CXX=g++-8
-      addons:
-        apt:
-          sources: *sources
-          packages:
-            - g++-8
+    # - os: linux
+    #   env: CXX=g++-8
+    #   addons:
+    #     apt:
+    #       sources: *sources
+    #       packages:
+    #         - g++-8
 
-    - os: linux
-      env: CXX=clang++-3.6
-      addons:
-        apt:
-          sources: *sources
-          packages:
-            - clang-3.6
-            - g++-5
+    # - os: linux
+    #   env: CXX=clang++-3.6
+    #   addons:
+    #     apt:
+    #       sources: *sources
+    #       packages:
+    #         - clang-3.6
+    #         - g++-5
 
-    - os: linux
-      env: CXX=clang++-6.0
-      addons:
-        apt:
-          sources: *sources
-          packages:
-            - clang-6.0
-            - g++-5
+    # - os: linux
+    #   env: CXX=clang++-6.0
+    #   addons:
+    #     apt:
+    #       sources: *sources
+    #       packages:
+    #         - clang-6.0
+    #         - g++-5
 
     - os: osx
       osx_image: xcode9.2
