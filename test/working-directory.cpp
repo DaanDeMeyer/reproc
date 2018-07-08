@@ -8,8 +8,10 @@ TEST_CASE("working-directory")
   REQUIRE(process);
 
   PROCESS_LIB_ERROR error;
+  int system_error;
   char *system_error_string;
   CAPTURE(error);
+  CAPTURE(system_error);
   CAPTURE(system_error_string);
 
   error = process_init(process);
@@ -20,6 +22,7 @@ TEST_CASE("working-directory")
   const char *working_directory = NOOP_DIR;
 
   error = process_start(process, argc, argv, working_directory);
+  system_error = process_system_error();
   process_system_error_string(&system_error_string);
   REQUIRE(!error);
 
