@@ -195,6 +195,7 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
     case EMFILE: return PROCESS_LIB_PIPE_LIMIT_REACHED;
     case EINTR: return PROCESS_LIB_INTERRUPTED;
     case ENAMETOOLONG: return PROCESS_LIB_NAME_TOO_LONG;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
     }
   }
 
