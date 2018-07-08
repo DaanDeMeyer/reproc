@@ -6,6 +6,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <stdio.h>
+
 PROCESS_LIB_ERROR wait_no_hang(pid_t pid, int *exit_status)
 {
   assert(pid);
@@ -33,6 +35,8 @@ PROCESS_LIB_ERROR wait_infinite(pid_t pid, int *exit_status)
 {
   assert(pid);
   assert(exit_status);
+
+  fprintf(stderr, "Test\n");
 
   int status = 0;
   errno = 0;
