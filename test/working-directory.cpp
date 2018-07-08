@@ -8,11 +8,7 @@ TEST_CASE("working-directory")
   REQUIRE(process);
 
   PROCESS_LIB_ERROR error;
-  int system_error;
-  char *system_error_string;
   CAPTURE(error);
-  CAPTURE(system_error);
-  CAPTURE(system_error_string);
 
   error = process_init(process);
   REQUIRE(!error);
@@ -25,8 +21,6 @@ TEST_CASE("working-directory")
   REQUIRE(!error);
 
   error = process_wait(process, PROCESS_LIB_INFINITE);
-  system_error = process_system_error();
-  process_system_error_string(&system_error_string);
   REQUIRE(!error);
 
   int exit_status;

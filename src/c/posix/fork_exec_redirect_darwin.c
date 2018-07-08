@@ -14,8 +14,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include <stdio.h>
-
 extern char **environ;
 
 short flags = POSIX_SPAWN_SETPGROUP | POSIX_SPAWN_CLOEXEC_DEFAULT;
@@ -221,8 +219,6 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
     default: return PROCESS_LIB_UNKNOWN_ERROR;
     }
   }
-
-  fprintf(stderr, "pid: %i\n", *pid);
 
   return PROCESS_LIB_SUCCESS;
 }
