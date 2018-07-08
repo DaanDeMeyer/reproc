@@ -108,13 +108,18 @@ if(PROCESS_LIB_BUILD_TESTS)
   add_executable(infinite test/res/infinite.cpp)
   target_link_libraries(infinite PRIVATE common-warnings)
 
-  set_property(TARGET echo infinite PROPERTY RUNTIME_OUTPUT_DIRECTORY test/res)
+  add_executable(noop test/res/noop.cpp)
+  target_link_libraries(noop PRIVATE common-warnings)
+
+  set_property(TARGET echo infinite noop
+    PROPERTY RUNTIME_OUTPUT_DIRECTORY test/res
+  )
 
   ### Tests ###
 
   add_executable(tests "")
 
-  add_dependencies(tests echo infinite)
+  add_dependencies(tests echo infinite noop)
   set_property(TARGET tests PROPERTY RUNTIME_OUTPUT_DIRECTORY test)
 
   target_link_libraries(tests PRIVATE common-warnings process)
@@ -127,12 +132,15 @@ if(PROCESS_LIB_BUILD_TESTS)
     # user.
     ECHO_PATH="$<TARGET_FILE:echo>"
     INFINITE_PATH="$<TARGET_FILE:infinite>"
+    NOOP_PATH="$<TARGET_FILE:noop>"
+    NOOP_DIR="$<TARGET_FILE_DIR:noop>"
   )
 
   target_sources(tests PRIVATE
     test/impl.cpp
     test/read-write.cpp
     test/stop.cpp
+    test/working-directory.cpp
   )
 endif()
 
