@@ -234,4 +234,7 @@ PROCESS_LIB_ERROR process_system_error_string(char **error_string)
   return PROCESS_LIB_SUCCESS;
 }
 
-void process_system_error_string_free(char *error_string) { (void) 0; }
+void process_system_error_string_free(char *error_string)
+{
+  (void) error_string;
+}
