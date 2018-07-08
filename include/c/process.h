@@ -24,14 +24,16 @@ typedef enum {
   PROCESS_LIB_ERROR error = process_read(...);
   if (error) { return error; } // Only executes if library call is not a success
   \endcode
+
+  All library function return this value if no error occured.
   */
   PROCESS_LIB_SUCCESS,
   /*! Unlike POSIX, Windows does not include information about exactly which
-  errors can occur in its documentation. If we don't know which error occurs we
-  return PROCESS_LIB_UNKNOWN_ERROR when an error occurs on Windows. All
-  functions can return this error. */
+  errors can occur in its documentation. If an error occurs that is not known
+  process-lib returns PROCESS_LIB_UNKNOWN_ERROR. All functions can return this
+  error. */
   PROCESS_LIB_UNKNOWN_ERROR,
-  /*! Returned if a timeout value passed to a function expired. */
+  /*! A timeout value passed to a function expired. */
   PROCESS_LIB_WAIT_TIMEOUT,
   /*! The child process closed one of its streams (and in case of stdout/stderr
   all of the data from that stream has been read). */
@@ -40,9 +42,9 @@ typedef enum {
   running. */
   PROCESS_LIB_STILL_RUNNING,
   /*! A memory allocation in the library code failed (Windows only) or the
-  underlying system does not have enough memory to execute a system call. */
+  underlying system did not have enough memory to execute a system call. */
   PROCESS_LIB_MEMORY_ERROR,
-  /*! The current process is not allowed to create any more pipes. */
+  /*! The current or child process was not allowed to create any more pipes. */
   PROCESS_LIB_PIPE_LIMIT_REACHED,
   /*! A waiting system call (read, write, close, ...) was interrupted by the
   system. */
@@ -50,17 +52,16 @@ typedef enum {
   /*! (POSIX) Something wen wrong during I/O. The Linux docs do not go in depth
   on when exactly this error occurs. */
   PROCESS_LIB_IO_ERROR,
-  /*! Returned if the current process is not allowed to spawn any more child
-  processes. */
+  /*! Thhe current process was not allowed to spawn any more child processes. */
   PROCESS_LIB_PROCESS_LIMIT_REACHED,
-  /*! (Windows) Returned if any of the UTF-8 strings passed to the library do
-  not contain valid unicode. */
+  /*! (Windows) One of the UTF-8 strings passed to the library did not contain
+  valid unicode. */
   PROCESS_LIB_INVALID_UNICODE,
   /*! The current process does not have permission to execute the program */
   PROCESS_LIB_PERMISSION_DENIED,
   /*! Too many symlinks were encountered while looking for the program */
   PROCESS_LIB_SYMLINK_LOOP,
-  /*! The program was not found */
+  /*! The program or working directory was not found */
   PROCESS_LIB_FILE_NOT_FOUND,
   /*! The give name was too long (most system have path length limits) */
   PROCESS_LIB_NAME_TOO_LONG
