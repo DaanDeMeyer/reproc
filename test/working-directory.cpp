@@ -22,11 +22,11 @@ TEST_CASE("working-directory")
   const char *working_directory = NOOP_DIR;
 
   error = process_start(process, argc, argv, working_directory);
-  system_error = process_system_error();
-  process_system_error_string(&system_error_string);
   REQUIRE(!error);
 
   error = process_wait(process, PROCESS_LIB_INFINITE);
+  system_error = process_system_error();
+  process_system_error_string(&system_error_string);
   REQUIRE(!error);
 
   int exit_status;
