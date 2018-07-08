@@ -1,19 +1,29 @@
+#include <cstdlib>
 #include <doctest.h>
-#include <process.hpp>
+#include <process.h>
 
 TEST_CASE("working-directory")
 {
-  Process process;
+  process_type *process = (process_type *) malloc(process_size());
+  REQUIRE(process);
+
+  PROCESS_LIB_ERROR error;
+
+  error = process_init(process);
+  REQUIRE(!error);
 
   int argc = 1;
   const char *argv[2] = { NOOP_PATH, NULL };
   const char *working_directory = NOOP_DIR;
 
-  Process::Error error;
-
-  error = process.start(argc, argv, working_directory);
+  error = process_start(process, argc, argv, working_directory);
   REQUIRE(!error);
 
-  error = process.wait(Process::INFINITE);
+  error = process_wait(process, PROCESS_LIB_INFINITE);
   REQUIRE(!error);
+
+  error = process_destroy(process);
+  REQUIRE(!error);
+
+  free(process);
 }
