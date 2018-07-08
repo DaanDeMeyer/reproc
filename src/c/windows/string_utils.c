@@ -101,7 +101,7 @@ PROCESS_LIB_ERROR wstring_to_string(const wchar_t *wstring, char **result)
                                     string, string_length, NULL, NULL);
   if (written == 0) {
     free(string);
-    switch(GetLastError()) {
+    switch (GetLastError()) {
     case ERROR_NO_UNICODE_TRANSLATION: return PROCESS_LIB_INVALID_UNICODE;
     default: return PROCESS_LIB_UNKNOWN_ERROR;
     }

@@ -120,14 +120,13 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
     return error;
   }
 
-  STARTUPINFOEXW startup_info = {
-    .StartupInfo = { .cb = sizeof(startup_info),
-                     .dwFlags = STARTF_USESTDHANDLES,
-                     .hStdInput = process->child_stdin,
-                     .hStdOutput = process->child_stdout,
-                     .hStdError = process->child_stderr },
-    .lpAttributeList = attribute_list
-  };
+  STARTUPINFOEXW startup_info =
+      { .StartupInfo = { .cb = sizeof(startup_info),
+                         .dwFlags = STARTF_USESTDHANDLES,
+                         .hStdInput = process->child_stdin,
+                         .hStdOutput = process->child_stdout,
+                         .hStdError = process->child_stderr },
+        .lpAttributeList = attribute_list };
 
   // Child processes inherit error mode of their parents. To avoid child
   // processes creating error dialogs we set our error mode to not create error
@@ -324,18 +323,28 @@ PROCESS_LIB_ERROR process_destroy(struct process *process)
 
 unsigned int process_system_error(void) { return GetLastError(); }
 
-char *process_system_error_string(void)
+PROCESS_LIB_ERROR process_system_error_string(char **error_string)
 {
+  PROCESS_LIB_ERROR error;
+
   wchar_t *message_wstring = NULL;
-  FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-                     FORMAT_MESSAGE_IGNORE_INSERTS,
-                 NULL, GetLastError(),
-                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                 (LPWSTR) &message_wstring, 0, NULL);
+  int result = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                                  FORMAT_MESSAGE_FROM_SYSTEM |
+                                  FORMAT_MESSAGE_IGNORE_INSERTS,
+                              NULL, GetLastError(),
+                              MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                              (LPWSTR) &message_wstring, 0, NULL);
 
-  char *message_string;
-  wstring_to_string(message_wstring, &message_string);
+  if (!result) { return PROCESS_LIB_UNKNOWN_ERROR; }
+
+  error = wstring_to_string(message_wstring, error_string);
   free(message_wstring);
+  if (error) { return error; }
 
-  return message_string;
+  return PROCESS_LIB_SUCCESS;
+}
+
+void process_system_error_string_free(char *error_string)
+{
+  free(error_string);
 }

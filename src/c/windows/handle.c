@@ -48,7 +48,7 @@ handle_inherit_list_create(HANDLE *handles, int amount,
   SetLastError(0);
   if (!UpdateProcThreadAttribute(attribute_list, 0,
                                  PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,
-                                 3 * sizeof(HANDLE), NULL, NULL)) {
+                                 amount * sizeof(HANDLE), NULL, NULL)) {
     free(attribute_list);
     return PROCESS_LIB_UNKNOWN_ERROR;
   }

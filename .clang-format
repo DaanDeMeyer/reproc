@@ -8,4 +8,5 @@ AllowShortIfStatementsOnASingleLine: true
 SpaceAfterCStyleCast: true
 AllowShortCaseLabelsOnASingleLine: true
 PenaltyBreakAssignment: 100
+PenaltyBreakBeforeFirstCallParameter: 100
 Cpp11BracedListStyle: false

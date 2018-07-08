@@ -7,9 +7,8 @@
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
-#include <unistd.h>
 #include <string.h>
-#include <stdlib.h>
+#include <unistd.h>
 
 const unsigned int PROCESS_LIB_INFINITE = 0xFFFFFFFF;
 
@@ -229,11 +228,10 @@ PROCESS_LIB_ERROR process_destroy(struct process *process)
 
 unsigned int process_system_error(void) { return (unsigned int) errno; }
 
-PROCESS_LIB_ERROR process_system_error_string(char *buffer, unsigned int size)
+PROCESS_LIB_ERROR process_system_error_string(char **error_string)
 {
-  if (strerror_r(errno, buffer, size) != 0) {
-    return PROCESS_LIB_UNKNOWN_ERROR;
-  }
-
+  *error_string = strerror(errno);
   return PROCESS_LIB_SUCCESS;
 }
+
+void process_system_error_string_free(char *error_string) { (void) 0; }
