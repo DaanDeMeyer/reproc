@@ -4,6 +4,7 @@ project(process-lib LANGUAGES C)
 option(PROCESS_LIB_BUILD_TESTS "Build tests" OFF)
 option(PROCESS_LIB_BUILD_EXAMPLES "Build examples" OFF)
 option(PROCESS_LIB_BUILD_CPP_WRAPPER "Build C++ wrapper" OFF)
+option(PROCESS_LIB_CI "Add -Werror or equivalent" OFF)
 
 ### Common Warnings ###
 
@@ -13,6 +14,7 @@ if(MSVC)
   target_compile_options(common-warnings INTERFACE
     $<BUILD_INTERFACE:
       /W3
+      $<$<BOOL:${PROCESS_LIB_CI}>:/WX>
     >
   )
 else()
@@ -22,6 +24,7 @@ else()
       -Wextra
       -pedantic-errors
       -Wshadow
+      $<$<BOOL:${PROCESS_LIB_CI}>:-Werror>
     >
   )
 endif()
