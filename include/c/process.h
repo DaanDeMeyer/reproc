@@ -322,7 +322,7 @@ functions.
 unsigned int process_system_error(void);
 
 /*!
-Returns the corresponding string for the last system error code.
+Returns the corresponding string (UTF-8 encoded) for the last system error code.
 
 The string should be freed using \see process_system_error_string_free.
 
