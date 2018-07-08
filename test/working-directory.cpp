@@ -8,6 +8,7 @@ TEST_CASE("working-directory")
   REQUIRE(process);
 
   PROCESS_LIB_ERROR error;
+  CAPTURE(error);
 
   error = process_init(process);
   REQUIRE(!error);
@@ -21,6 +22,11 @@ TEST_CASE("working-directory")
 
   error = process_wait(process, PROCESS_LIB_INFINITE);
   REQUIRE(!error);
+
+  int exit_status;
+  error = process_exit_status(process, &exit_status);
+  REQUIRE(!error);
+  REQUIRE((exit_status == 0));
 
   error = process_destroy(process);
   REQUIRE(!error);

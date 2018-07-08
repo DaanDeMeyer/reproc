@@ -16,9 +16,11 @@ TEST_CASE("read-write")
   process_type *process = (process_type *) malloc(process_size());
   REQUIRE(process);
 
-  PROCESS_LIB_ERROR error = process_init(process);
+  PROCESS_LIB_ERROR error;
+  CAPTURE(error);
+
+  error = process_init(process);
   REQUIRE(!error);
-  REQUIRE(process);
 
   SUBCASE("stdout")
   {

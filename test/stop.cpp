@@ -10,7 +10,10 @@ TEST_CASE("stop")
   process_type *process = (process_type *) malloc(process_size());
   REQUIRE(process);
 
-  PROCESS_LIB_ERROR error = process_init(process);
+  PROCESS_LIB_ERROR error;
+  CAPTURE(error);
+
+  error = process_init(process);
   REQUIRE(!error);
 
   error = process_start(process, argc, argv, 0);
