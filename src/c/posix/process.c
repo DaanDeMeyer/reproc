@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <unistd.h>
+#include <string.h>
 
 const unsigned int PROCESS_LIB_INFINITE = 0xFFFFFFFF;
 
@@ -226,3 +227,8 @@ PROCESS_LIB_ERROR process_destroy(struct process *process)
 }
 
 unsigned int process_system_error(void) { return (unsigned int) errno; }
+
+const char *process_system_error_string(void)
+{
+  return strerror(errno);
+}
