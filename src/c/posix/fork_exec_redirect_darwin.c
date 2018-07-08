@@ -9,10 +9,10 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <signal.h>
 #include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <signal.h>
 
 extern char **environ;
 
@@ -149,9 +149,7 @@ static PROCESS_LIB_ERROR fork_posix_spawn(int argc, const char *argv[],
 
   error = pipe_read(error_pipe_read, spawn_error, sizeof(*spawn_error), NULL);
   pipe_close(&error_pipe_read);
-  if (error) {
-    return error;
-  }
+  if (error) { return error; }
 
   *pid = chdir_pid;
 
