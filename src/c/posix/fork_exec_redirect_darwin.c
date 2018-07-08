@@ -54,6 +54,20 @@ static PROCESS_LIB_ERROR posix_spawn_setup(posix_spawnattr_t *attributes,
   return PROCESS_LIB_SUCCESS;
 }
 
+int child_pid = 0;
+
+void termination_handler(int signum)
+{
+  (void) signum;
+  PROCESS_LIB_ERROR error;
+  int exit_status;
+  error = wait_no_hang(child_pid, &exit_status);
+  if (!error) { _exit(exit_status); }
+  kill(child_pid, SIGTERM);
+  wait_infinite(child_pid, &exit_status);
+  _exit(exit_status);
+}
+
 static PROCESS_LIB_ERROR fork_posix_spawn(int argc, const char *argv[],
                                           const char *working_directory,
                                           posix_spawnattr_t *attributes,
@@ -78,16 +92,16 @@ static PROCESS_LIB_ERROR fork_posix_spawn(int argc, const char *argv[],
   // Set up pipe for retrieving the child process pid from the forked process.
   // We don't need an error pipe since we can just wait for the forked process
   // to exit and read its exit status.
-  int pid_pipe_read = 0;
-  int pid_pipe_write = 0;
-  error = pipe_init(&pid_pipe_read, &pid_pipe_write);
+  int error_pipe_read = 0;
+  int error_pipe_write = 0;
+  error = pipe_init(&error_pipe_read, &error_pipe_write);
   if (error) { return error; }
 
   errno = 0;
   pid_t chdir_pid = fork();
   if (chdir_pid == -1) {
-    pipe_close(&pid_pipe_read);
-    pipe_close(&pid_pipe_write);
+    pipe_close(&error_pipe_read);
+    pipe_close(&error_pipe_write);
 
     switch (errno) {
     case EAGAIN: return PROCESS_LIB_PROCESS_LIMIT_REACHED;
@@ -99,42 +113,48 @@ static PROCESS_LIB_ERROR fork_posix_spawn(int argc, const char *argv[],
   if (chdir_pid == 0) {
     errno = 0;
 
-    // Change the working directory of the fork before calling posix_spawn. The
-    // process spawned by posix_spawn will inherit this working directory
-    if (chdir(working_directory) == -1) { _exit(errno); }
+    // Change the working directory of the fork before calling posix_spawn.
+    // The process spawned by posix_spawn will inherit this working
+    // directory
+    if (chdir(working_directory) == -1) {
+      write(error_pipe_write, &errno, sizeof(errno));
+      _exit(errno);
+    }
 
-    errno = posix_spawnp(pid, argv[0], actions, attributes, (char **) argv,
-                         environ);
-    if (errno != 0) { _exit(errno); }
+    errno = posix_spawnp(&child_pid, argv[0], actions, attributes,
+                         (char **) argv, environ);
+    if (errno != 0) {
+      write(error_pipe_write, &errno, sizeof(errno));
+      _exit(errno);
+    }
 
-    // If no error ocurred we write the pid of the process spawned with
-    // posix_spawn to the pipe so we can retrieve it in the parent process
-    write(pid_pipe_write, pid, sizeof(*pid));
+    // Write 0 on success
+    write(error_pipe_write, &errno, sizeof(errno));
+    pipe_close(&error_pipe_write);
+
+    struct sigaction action;
+    action.sa_handler = termination_handler;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+    sigaction(SIGTERM, &action, NULL);
+
+    int exit_status;
+    wait_infinite(child_pid, &exit_status);
 
     // _exit cleans up the pipes so we don't close them manually
-    _exit(errno);
+    _exit(exit_status);
   }
 
   // Only fork needs write endpoints of pipes
-  pipe_close(&pid_pipe_write);
+  pipe_close(&error_pipe_write);
 
-  // Only job of chdir fork is to change working directory and spawn the child
-  // process so it will exit almost instantaneously
-  error = wait_infinite(chdir_pid, spawn_error);
+  error = pipe_read(error_pipe_read, spawn_error, sizeof(*spawn_error), NULL);
+  pipe_close(&error_pipe_read);
   if (error) {
-    pipe_close(&pid_pipe_read);
     return error;
   }
 
-  if (*spawn_error != 0) {
-    pipe_close(&pid_pipe_read);
-    return PROCESS_LIB_SUCCESS;
-  }
-
-  // Read the pid from the forked chdir process into the pid out variable
-  error = pipe_read(pid_pipe_read, pid, sizeof(*pid), NULL);
-  pipe_close(&pid_pipe_read);
-  if (error) { return error; }
+  *pid = chdir_pid;
 
   return PROCESS_LIB_SUCCESS;
 }
