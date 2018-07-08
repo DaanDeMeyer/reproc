@@ -323,3 +323,19 @@ PROCESS_LIB_ERROR process_destroy(struct process *process)
 }
 
 unsigned int process_system_error(void) { return GetLastError(); }
+
+char *process_system_error_string(void)
+{
+  wchar_t *message_wstring = NULL;
+  FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                     FORMAT_MESSAGE_IGNORE_INSERTS,
+                 NULL, GetLastError(),
+                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                 (LPWSTR) &message_wstring, 0, NULL);
+
+  char *message_string;
+  wstring_to_string(message_wstring, &message_string);
+  free(message_wstring);
+
+  return message_string;
+}

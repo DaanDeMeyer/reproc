@@ -50,7 +50,8 @@ PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result)
   assert(result);
 
   SetLastError(0);
-  int wstring_length = MultiByteToWideChar(CP_UTF8, 0, string, -1, NULL, 0);
+  int wstring_length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
+                                           string, -1, NULL, 0);
   if (wstring_length == 0) {
     switch (GetLastError()) {
     case ERROR_NO_UNICODE_TRANSLATION: return PROCESS_LIB_INVALID_UNICODE;
@@ -73,6 +74,40 @@ PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result)
   }
 
   *result = wstring;
+
+  return PROCESS_LIB_SUCCESS;
+}
+
+PROCESS_LIB_ERROR wstring_to_string(const wchar_t *wstring, char **result)
+{
+  assert(wstring);
+  assert(result);
+
+  SetLastError(0);
+  int string_length = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS,
+                                          wstring, -1, NULL, 0, NULL, NULL);
+  if (string_length == 0) {
+    switch (GetLastError()) {
+    case ERROR_NO_UNICODE_TRANSLATION: return PROCESS_LIB_INVALID_UNICODE;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
+
+  char *string = malloc(sizeof(char) * string_length);
+  if (!string) { return PROCESS_LIB_MEMORY_ERROR; }
+
+  SetLastError(0);
+  int written = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstring, -1,
+                                    string, string_length, NULL, NULL);
+  if (written == 0) {
+    free(string);
+    switch(GetLastError()) {
+    case ERROR_NO_UNICODE_TRANSLATION: return PROCESS_LIB_INVALID_UNICODE;
+    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    }
+  }
+
+  *result = string;
 
   return PROCESS_LIB_SUCCESS;
 }

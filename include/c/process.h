@@ -317,7 +317,7 @@ functions.
 */
 unsigned int process_system_error(void);
 
-const char *process_system_error_string(void);
+char *process_system_error_string(void);
 
 #ifdef __cplusplus
 }

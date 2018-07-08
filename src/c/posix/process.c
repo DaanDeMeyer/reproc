@@ -228,7 +228,7 @@ PROCESS_LIB_ERROR process_destroy(struct process *process)
 
 unsigned int process_system_error(void) { return (unsigned int) errno; }
 
-const char *process_system_error_string(void)
+char *process_system_error_string(void)
 {
   return strerror(errno);
 }

@@ -9,3 +9,5 @@ PROCESS_LIB_ERROR string_join(const char **string_array, int array_length,
                               char **result);
 
 PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result);
+
+PROCESS_LIB_ERROR wstring_to_string(const wchar_t *wstring, char **result);
