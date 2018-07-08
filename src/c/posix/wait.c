@@ -41,6 +41,7 @@ PROCESS_LIB_ERROR wait_infinite(pid_t pid, int *exit_status)
   int status = 0;
   errno = 0;
   if (waitpid(pid, &status, 0) == -1) {
+    fprintf(stderr, "errno: %i\n", errno);
     switch (errno) {
     case EINTR: return PROCESS_LIB_INTERRUPTED;
     default: return PROCESS_LIB_UNKNOWN_ERROR;
