@@ -124,7 +124,7 @@ static PROCESS_LIB_ERROR fork_posix_spawn(int argc, const char *argv[],
     return error;
   }
 
-  if (spawn_error != 0) {
+  if (*spawn_error != 0) {
     pipe_close(&pid_pipe_read);
     return PROCESS_LIB_SUCCESS;
   }
