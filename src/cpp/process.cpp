@@ -123,6 +123,14 @@ Process::Error Process::exit_status(int *exit_status)
 
 unsigned int Process::system_error() { return process_system_error(); }
 
+Process::Error Process::system_error_string(char **error_string) {
+  return process_system_error_string(error_string);
+}
+
+void Process::system_error_string_free(char *error_string) {
+  return process_system_error_string_free(error_string);
+}
+
 bool operator==(const Process::Error &lhs, const Process::Error &rhs)
 {
   return lhs.value_ == rhs.value_;

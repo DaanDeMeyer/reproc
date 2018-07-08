@@ -99,7 +99,11 @@ public:
   Process::Error exit_status(int *exit_status);
 
   /*! /see process_system_error */
-  unsigned int system_error();
+  static unsigned int system_error();
+
+  static Process::Error system_error_string(char **error_string);
+
+  static void system_error_string_free(char *error_string);
 
 private:
   struct process *process;
