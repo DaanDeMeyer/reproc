@@ -62,4 +62,4 @@ script:
     -DPROCESS_LIB_BUILD_EXAMPLES=ON -DPROCESS_LIB_BUILD_CPP_WRAPPER=ON
     -DPROCESS_LIB_CI=ON .
   - cmake --build . -- -j 3
-  - ./test/tests
+  - ./test/tests --tc=working-directory
