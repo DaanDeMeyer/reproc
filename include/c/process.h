@@ -234,9 +234,11 @@ to exit.
 
 \return PROCESS_LIB_ERROR
 
-Possible errors when milliseconds is 0 or PROCESS_LIB_INFINITE:
-- PROCESS_LIB_WAIT_TIMEOUT
+Possible errors when \p milliseconds is PROCESS_LIB_INFINITE:
 - PROCESS_LIB_INTERRUPTED
+
+Additional errors when milliseconds is 0 or PROCESS_LIB_INFINITE:
+- PROCESS_LIB_WAIT_TIMEOUT
 
 Additional errors when milliseconds is not 0 or PROCESS_LIB_INFINITE:
 - (POSIX) PROCESS_LIB_PROCESS_LIMIT_REACHED
@@ -314,10 +316,38 @@ function returns the value of errno. The value is not stored so other functions
 that modify the results of GetLastError or errno should not be called if you
 want to retrieve the last system error that occurred in one of process-lib's
 functions.
+
+\return unsigned int The last system error code
 */
 unsigned int process_system_error(void);
 
+/*!
+Returns the corresponding string for the last system error code.
+
+The string should be freed using \see process_system_error_string_free.
+
+\param [out] error_string Address of the pointer that should store the error
+string. The function will allocate memory to the pointer if needed (only on
+Windows).
+
+\return PROCESS_LIB_ERROR
+
+Possible errors:
+- PROCESS_LIB_MEMORY_ERROR
+- PROCESS_LIB_INVALID_UNICODE
+*/
 PROCESS_LIB_ERROR process_system_error_string(char **error_string);
+
+/*!
+Frees the error string obtained with /see process_system_error_string.
+
+This function does nothing on POSIX since no memory allocation is required to
+obtain the error string.
+
+\param [in] error_string pointer to the error string obtained with /see
+process_system_error_string
+*/
+void process_system_error_string_free(char *error_string);
 
 #ifdef __cplusplus
 }
