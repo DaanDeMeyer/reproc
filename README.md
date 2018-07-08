@@ -19,7 +19,7 @@
   - [(POSIX) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
   - [(POSIX) Check if execve call was succesful](#posix-check-if-execve-call-was-succesful)
   - [Avoiding leaking of file descriptors and handles](#avoiding-leaking-of-file-descriptors-and-handles)
-  - [(Darwin) Changing working directory of child process when using posix_spawn](#darwin-changing-working-directory-of-child-process-when-using-posixspawn)
+  - [(Darwin) Changing working directory of child process when using posix_spawn](#darwin-changing-working-directory-of-child-process-when-using-posix_spawn)
 
 ## Installation
 
@@ -167,6 +167,13 @@ unknown errors and add them to process-lib.
 
 - (Windows/Darwin) file descriptors/handles made by process-lib can
   unintentionally leak to child processes not created by process-lib.
+
+- (Darwin) Calling `process_kill` on a child process spawned with a different
+  working directory than the parent process will not kill the child process.
+  `process_terminate` will work as expected. The reason behind this is explained
+  [here](#darwin-changing-working-directory-of-child-process-when-using-posixspawn).
+  Always prefer `process_terminate` to `process_kill` when stopping child
+  processes.
 
 ## Platform Support
 
@@ -400,4 +407,14 @@ process errors can occur. To solve this we fork another child process that
 changes its working directory to the working directory of the child process and
 then spawns the child process. By doing this we have no race condition since the
 working directory of the parent process isn't changed but are still able to
-change the working directory of the child process when using `posix_spawn`.
+change the working directory of the child process when using `posix_spawn`. The
+problem with this approach is that we can't directly wait on the (grand) child
+process from the parent process because child processes of child processes do
+not count as child processes of the parent process. To solve this, we have the
+intermediate fork used to change the working directory wait for the child
+process to exit and then exit itself with the exit code of the child process. We
+also add a SIGTERM signal handler that sends SIGTERM to the child process and
+then waits for the child process to exit. This allows us to indirectly wait for
+and signal the child process via the intermediate process. One disadvantage of
+this is that sending SIGKILL to the intermediate process will only stop the
+intermediate process and not the child process itself.
