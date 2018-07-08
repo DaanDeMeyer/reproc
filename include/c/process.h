@@ -317,7 +317,7 @@ functions.
 */
 unsigned int process_system_error(void);
 
-char *process_system_error_string(void);
+PROCESS_LIB_ERROR process_system_error_string(char *buffer, unsigned int size);
 
 #ifdef __cplusplus
 }
