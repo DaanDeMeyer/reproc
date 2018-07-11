@@ -84,7 +84,7 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   }
 
   // Make sure process_start is only called once for each process_init call
-  assert(process->info.hProcess != NULL);
+  assert(process->info.hProcess == NULL);
 
   PROCESS_LIB_ERROR error;
 
@@ -144,7 +144,8 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   // Free allocated memory before returning possible error
   free(command_line_wstring);
   free(working_directory_wstring);
-  free(attribute_list);
+  DeleteProcThreadAttributeList(attribute_list);
+  free(attribute_list); // Is this necessary? Windows docs are unclear
 
   if (!result) {
     switch (GetLastError()) {
