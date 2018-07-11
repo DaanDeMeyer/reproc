@@ -24,6 +24,10 @@ PROCESS_LIB_ERROR
 handle_inherit_list_create(HANDLE *handles, int amount,
                            LPPROC_THREAD_ATTRIBUTE_LIST *result)
 {
+  assert(handles);
+  assert(amount >= 0);
+  assert(result);
+
   SIZE_T attribute_list_size = 0;
   SetLastError(0);
   if (!InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size) &&
