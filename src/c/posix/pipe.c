@@ -15,12 +15,12 @@ PROCESS_LIB_ERROR pipe_init(int *read, int *write)
   errno = 0;
   // See chapter in Design section in the readme about preventing file
   // descriptor leaks for a detailed explanation
-#ifdef __APPLE__
+#if defined(HAS_PIPE2)
+  int result = pipe2(pipefd, O_CLOEXEC);
+#else
   int result = pipe(pipefd);
   fcntl(pipefd[0], F_SETFD, FD_CLOEXEC);
   fcntl(pipefd[1], F_SETFD, FD_CLOEXEC);
-#else
-  int result = pipe2(pipefd, O_CLOEXEC);
 #endif
 
   if (result == -1) {
@@ -40,7 +40,6 @@ PROCESS_LIB_ERROR pipe_init(int *read, int *write)
 PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer,
                              unsigned int to_write, unsigned int *actual)
 {
-  assert(pipe);
   assert(buffer);
 
   errno = 0;
@@ -63,7 +62,6 @@ PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer,
 PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, unsigned int to_read,
                             unsigned int *actual)
 {
-  assert(pipe);
   assert(buffer);
 
   errno = 0;
@@ -85,7 +83,7 @@ PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, unsigned int to_read,
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR pipe_close(int *pipe_address)
+void pipe_close(int *pipe_address)
 {
   assert(pipe_address);
 
@@ -93,20 +91,10 @@ PROCESS_LIB_ERROR pipe_close(int *pipe_address)
 
   // Do nothing and return success on null pipe (0) so callers don't have to
   // check each time if a pipe has been closed already
-  if (!pipe) { return PROCESS_LIB_SUCCESS; }
+  if (!pipe) { return; }
 
   errno = 0;
-  int result = close(pipe);
+  close(pipe);
   // Close should not be repeated on error so always set pipe to 0 after close
   *pipe_address = 0;
-
-  if (result == -1) {
-    switch (errno) {
-    case EINTR: return PROCESS_LIB_INTERRUPTED;
-    case EIO: return PROCESS_LIB_IO_ERROR;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
-    }
-  }
-
-  return PROCESS_LIB_SUCCESS;
 }

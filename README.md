@@ -18,8 +18,7 @@
   - [Memory allocation](#memory-allocation)
   - [(POSIX) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
   - [(POSIX) Check if execve call was succesful](#posix-check-if-execve-call-was-succesful)
-  - [Avoiding leaking of file descriptors and handles](#avoiding-leaking-of-file-descriptors-and-handles)
-  - [(Darwin) Changing working directory of child process when using posix_spawn](#darwin-changing-working-directory-of-child-process-when-using-posix_spawn)
+  - [Avoiding resource leaks in multithreaded applications](#avoiding-resource-leaks-in-multithreaded-applications)
 
 ## Installation
 
@@ -27,7 +26,7 @@
 
 The easiest way to use process-lib is with the CMake build system. If you're
 using CMake 3.11 or later you can use the
-[FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) api
+[FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) API
 to use process-lib in your project.
 
 ```cmake
@@ -107,7 +106,7 @@ set(PROCESS_LIB_BUILD_CPP_WRAPPER ON CACHE BOOL FORCE)
 See [examples/cmake-help.c](examples/cmake-help.c) for an example that uses
 process-lib to print the cmake CLI --help output.
 [examples/cmake-help.cpp](examples/cmake-help.cpp) does the same but with the
-C++ api.
+C++ API.
 
 ## Documentation
 
@@ -137,8 +136,8 @@ unknown errors and add them to process-lib.
   signal handler.
 
 - When using `process_kill` the child process does not receive a chance to
-  perform cleanup which could result in leaking of resources. Chief among these
-  leaks is that the child process will not be able to stop its own child
+  perform cleanup which could result in resources being leaked. Chief among
+  these leaks is that the child process will not be able to stop its own child
   processes. Always let a child process exit normally or try to stop it with
   `process_terminate` before switching to `process_kill`.
 
@@ -165,15 +164,16 @@ unknown errors and add them to process-lib.
   waiting a few milliseconds using `process_wait` before terminating the
   process.
 
-- (Windows/Darwin) file descriptors/handles made by process-lib can
-  unintentionally leak to child processes not created by process-lib.
+- File descriptors/handles made by process-lib can unintentionally leak to child
+  processes not created by process-lib if child processes are created
+  concurrently in multiple threads. This is not the case on systems that support
+  the `pipe2` system call (available from Linux 2.6 onwards).
 
-- (Darwin) Calling `process_kill` on a child process spawned with a different
-  working directory than the parent process will not kill the child process.
-  `process_terminate` will work as expected. The reason behind this is explained
-  [here](#darwin-changing-working-directory-of-child-process-when-using-posixspawn).
-  Always prefer `process_terminate` to `process_kill` when stopping child
-  processes.
+- (POSIX) On POSIX, file descriptors above the file descriptor resource limit
+  (obtained with `sysconf(_SC_OPEN_MAX)`) are leaked into child processes
+  created by process-lib. File descriptors above the resource limit can occur if
+  the resource limit is lowered manually to a value below existing file
+  descriptors (created before lowering the limit).
 
 ## Platform Support
 
@@ -184,13 +184,7 @@ This list contains the platform version that process-lib won't work on. Note
 that platforms not on this list might not work either. If you encounter an issue
 with a platform not on this list, please open an issue.
 
-- Linux < 2.6: `pipe2` is only available from Linux 2.6 onwards
-- Darwin < 10.8: `POSIX_SPAWN_CLOEXEC_DEFAULT` causes kernel panics on Darwin
-  10.7
 - Windows < Vista: `STARTUPINFOEXW` is only available from Vista onwards
-- FreeBSD < 10: `pipe2` is only available from FreeBSD 10 onwards
-- NetBSD < 6: `pipe2` is only available from NetBSD 6 onwards
-- OpenBSD < 5.7: `pipe2` is only available from OpenBSD 5.7 onwards
 
 ## Design
 
@@ -273,17 +267,16 @@ dynamic memory allocation is only done on Windows:
 - When converting the array of program arguments to a single string as required
   by the
   [CreateProcess](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms682425(v=vs.85).aspx>)
-  function and when converting utf-8 strings to utf-16 (Windows native
-  encoding).
-- When converting utf-8 strings to utf-16 (Windows only supports utf-16) for
-  unicode.
+  function.
+- When converting UTF-8 strings to UTF-16 (Windows Unicode functions take UTF-16
+  strings as arguments).
 
-I have not found a way to avoid allocating memory while keeping a cross-platform
-api for POSIX and Windows. (Windows `CreateProcessW` requires a single utf-16
-string of arguments delimited by spaces while POSIX `execvp` requires an array
-of utf-8 string arguments). Since process-lib's api takes process arguments as
-an array of utf-8 strings we have to allocate memory to convert the array into a
-single utf-16 string as required by Windows.
+I have not found a way to avoid allocating memory while keeping a uniform
+cross-platform API for both POSIX and Windows. (Windows `CreateProcessW`
+requires a single UTF-16 string of arguments delimited by spaces while POSIX
+`execvp` requires an array of UTF-8 string arguments). Since process-lib's API
+takes child process arguments as an array of UTF-8 strings we have to allocate
+memory to convert the array into a single UTF-16 string as required by Windows.
 
 process-lib uses the standard `malloc` and `free` functions to allocate and free
 memory. However, providing support for custom allocators should be
@@ -334,40 +327,28 @@ indicates an error occured before or during exec.
 This solution was inspired by [this](https://stackoverflow.com/a/1586277) Stack
 Overflow answer.
 
-### Avoiding leaking of file descriptors and handles
+### Avoiding resource leaks in multithreaded applications
 
-On POSIX systems, file descriptors are inherited by default by child processes
-when calling [execve](http://man7.org/linux/man-pages/man2/execve.2.html). To
-prevent leaking unintended file descriptors to child processes, POSIX provides a
+On POSIX systems, file descriptors are inherited by child processes when calling
+[execve](http://man7.org/linux/man-pages/man2/execve.2.html). To prevent
+unintended leaking of file descriptors to child processes, POSIX provides a
 function `fcntl` which can be used to set the `FD_CLOEXEC` flag on the file
-descriptors returned by `pipe` which causes them to get closed when execve (or
+descriptors returned by `pipe` which causes them to get closed when `execve` (or
 one of its variants) is called. However, using `fcntl` introduces a race
-condition since any process created in another thread after calling `pipe` but
+condition since any process created in another thread after `pipe` is called but
 before calling `fcntl` will still inherit the file descriptors created by
 `pipe`.
 
-To get around this race condition on Linux process-lib uses the `pipe2` function
-which takes the `O_CLOEXEC` flag as an argument. This ensures the file
-descriptors of the created pipe are not inherited by child processes.
+To get around this race condition process-lib uses the `pipe2` function (when it
+is available) which takes the `O_CLOEXEC` flag as an argument. This ensures the
+file descriptors of the created pipe are closed when `execve` is called.
 
-Unfortunately, `pipe2` is not available on Darwin. Instead, process-lib deals
-with the problem in two ways:
-
-- We fall back to `pipe` with `fcntl` on Darwin. This lowers the chance of
-  process-lib's pipes being inherited by other child processes (but does not
-  guarantee it because of the race condition).
-- Instead of manually calling fork and execve, we rely on the `posix_spawn`
-  function. Darwin systems define an extra flag named
-  `POSIX_SPAWN_CLOEXEC_DEFAULT` that can be passed to `posix_spawn`. This flag
-  ensures that all open file descriptors are closed by default when
-  `posix_spawn` is called, preventing them from leaking to process-lib's child
-  processes.
-
-While this makes it impossible for process-lib's child processes to inherit
-unintended file descriptors, it does not (completely) prevent process-lib's file
-descriptors from leaking to child processes made outside of process-lib. This
-will only be guaranteed if every child process in the application is spawned
-using `posix_spawn` with the `POSIX_SPAWN_CLOEXEC_DEFAULT` flag set.
+Darwin supports an extra flag for the `posix_spawn` API (wrapper around
+`fork/exec`) `POSIX_SPAWN_CLOEXEC_DEFAULT` that instructs `posix_spawn` to close
+all open file descriptors in the child process. However, `posix_spawn` doesn't
+support changing the working directory of the child process. A solution to this
+was implemented in process-lib but it was deemed to complex and brittle so it
+was removed.
 
 On Windows the same race condition occurs. The `CreatePipe` function receives a
 flag as part of its arguments that specifies if the returned handles can be
@@ -390,31 +371,3 @@ try to mitigate this in two ways:
   application that calls `CreateProcess` without passing a `STARTUPINFOEXW`
   struct containing the handles it should inherit can still unintentionally
   inherit handles meant for a process-lib child process.
-
-### (Darwin) Changing working directory of child process when using posix_spawn
-
-As detailed in the previous section, process-lib uses `posix_spawn` on Darwin to
-avoid leaking file descriptors. One part missing in the `posix_spawn` API is the
-ability to change the child process' working directory. One way to get around
-this is by changing the working directory of the parent process before spawning
-the child process. This works since the child process inherits the working
-directory of the child process by default. However, this can lead to a race
-condition if other threads are running that depend on the working directory of
-the process not changing. If code that expects the parent process' working
-directory to be in a specific directory is executed in another thread while the
-parent process' working directory is temporarily changed while spawning a child
-process errors can occur. To solve this we fork another child process that
-changes its working directory to the working directory of the child process and
-then spawns the child process. By doing this we have no race condition since the
-working directory of the parent process isn't changed but are still able to
-change the working directory of the child process when using `posix_spawn`. The
-problem with this approach is that we can't directly wait on the (grand) child
-process from the parent process because child processes of child processes do
-not count as child processes of the parent process. To solve this, we have the
-intermediate fork used to change the working directory wait for the child
-process to exit and then exit itself with the exit code of the child process. We
-also add a SIGTERM signal handler that sends SIGTERM to the child process and
-then waits for the child process to exit. This allows us to indirectly wait for
-and signal the child process via the intermediate process. One disadvantage of
-this is that sending SIGKILL to the intermediate process will only stop the
-intermediate process and not the child process itself.

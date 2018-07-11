@@ -59,12 +59,8 @@ elseif(UNIX)
     src/c/posix/process.c
     src/c/posix/pipe.c
     src/c/posix/wait.c
+    src/c/posix/fork_exec_redirect.c
   )
-  if(APPLE)
-    target_sources(process PRIVATE src/c/posix/fork_exec_redirect_darwin.c)
-  else()
-    target_sources(process PRIVATE src/c/posix/fork_exec_redirect_posix.c)
-  endif()
 endif()
 
 if(MSVC)
@@ -75,11 +71,15 @@ if(MSVC)
     NOMINMAX
   )
 elseif(UNIX)
-  if(APPLE)
-    target_compile_definitions(process PRIVATE _DARWIN_C_SOURCE)
-  else()
-    target_compile_definitions(process PRIVATE _GNU_SOURCE)
-  endif()
+  include(CheckSymbolExists)
+  list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+  check_symbol_exists(pipe2 unistd.h PROCESS_LIB_PIPE2_FOUND)
+  list(REMOVE_AT CMAKE_REQUIRED_DEFINITIONS -1)
+
+  target_compile_definitions(process PRIVATE
+    _GNU_SOURCE
+    $<$<BOOL:${PROCESS_LIB_PIPE2_FOUND}>:HAS_PIPE2>
+  )
 endif()
 
 ### C++ Wrapper ###

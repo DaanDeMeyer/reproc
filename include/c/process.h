@@ -52,7 +52,7 @@ typedef enum {
   /*! (POSIX) Something wen wrong during I/O. The Linux docs do not go in depth
   on when exactly this error occurs. */
   PROCESS_LIB_IO_ERROR,
-  /*! Thhe current process was not allowed to spawn any more child processes. */
+  /*! The current process was not allowed to spawn any more child processes. */
   PROCESS_LIB_PROCESS_LIMIT_REACHED,
   /*! (Windows) One of the UTF-8 strings passed to the library did not contain
   valid unicode. */
@@ -316,6 +316,11 @@ function returns the value of errno. The value is not stored so other functions
 that modify the results of GetLastError or errno should not be called if you
 want to retrieve the last system error that occurred in one of process-lib's
 functions.
+
+On POSIX, if an error occurs after fork but before exec it is communicated to
+the parent process which sets errno to the errno of the child process to make it
+possible to also retrieve errors that happen after forking with this function
+(for example in chdir or execve).
 
 \return unsigned int The last system error code
 */

@@ -10,4 +10,4 @@ PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer,
 PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, unsigned int to_read,
                             unsigned int *actual);
 
-PROCESS_LIB_ERROR pipe_close(int *pipe_address);
+void pipe_close(int *pipe_address);

@@ -19,9 +19,9 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
     assert(argv[i]);
   }
 
-  assert(stdin_pipe);
-  assert(stdout_pipe);
-  assert(stderr_pipe);
+  assert(stdin_pipe >= 0);
+  assert(stdout_pipe >= 0);
+  assert(stderr_pipe >= 0);
   assert(pid);
 
   PROCESS_LIB_ERROR error;
@@ -88,9 +88,18 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
       _exit(errno);
     }
 
-    // Pipes are created with FD_CLOEXEC which results in them getting
-    // automatically closed on exec so we don't need to close them manually in
-    // the child process
+    int max_fd = (int) sysconf(_SC_OPEN_MAX);
+    for (int i = 3; i < max_fd; i++) {
+      // We might still need the error pipe if execve fails so we don't close
+      // it. The error pipe is created with FD_CLOEXEC which results in it being
+      // closed automatically on exec which means we don't have to manually
+      // close it for the case that exec succeeds
+      if (i == error_pipe_write) { continue; }
+      close(i);
+    }
+    // Ignore file descriptor close errors since we try them all and close sets
+    // errno when an invalid file descriptor is passed
+    errno = 0;
 
     // Replace forked child with process we want to run
     // Safe cast (execvp doesn't actually change the contents of argv)
@@ -110,7 +119,7 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
   error = pipe_read(error_pipe_read, &exec_error, sizeof(exec_error), NULL);
   pipe_close(&error_pipe_read);
 
-  // PROCESS_LIB_STREAM_CLOSED indicates the execve was succesful (and
+  // PROCESS_LIB_STREAM_CLOSED indicates the execve was succesful (because
   // FD_CLOEXEC kicked in and closed the error_pipe_write fd in the child
   // process)
   if (error != PROCESS_LIB_SUCCESS && error != PROCESS_LIB_STREAM_CLOSED) {
@@ -120,6 +129,9 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
   // If read does not return 0 an error will have occurred in the child process
   // before or during execve (or an error with read itself (less likely))
   if (exec_error != 0) {
+    // Allow retrieving child process errors with process_system_error
+    errno = exec_error;
+
     switch (exec_error) {
     case EACCES: return PROCESS_LIB_PERMISSION_DENIED;
     case EPERM: return PROCESS_LIB_PERMISSION_DENIED;
