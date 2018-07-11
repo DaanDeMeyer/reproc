@@ -229,6 +229,11 @@ PROCESS_LIB_ERROR process_destroy(struct process *process)
   pipe_close(&process->parent_stdout);
   pipe_close(&process->parent_stderr);
 
+  // Child pipes might not have been closed if error occurred in process_start
+  pipe_close(&process->child_stdin);
+  pipe_close(&process->child_stdout);
+  pipe_close(&process->child_stderr);
+
   return PROCESS_LIB_SUCCESS;
 }
 
