@@ -153,17 +153,13 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   }
 
   // We don't need the handle to the primary thread of the child process
-  error = handle_close(&process->info.hThread);
-  if (error) { return error; }
+  handle_close(&process->info.hThread);
 
-  // The child process handles are copied to the child process. We close them in
-  // the parent so their resources are freed once the child process exits
-  error = handle_close(&process->child_stdin);
-  if (error) { return error; }
-  error = handle_close(&process->child_stdout);
-  if (error) { return error; }
-  error = handle_close(&process->child_stderr);
-  if (error) { return error; }
+  // The child process pipe endpoint handles are copied to the child process. We
+  // don't need them anymore in the parent process so we close them.
+  handle_close(&process->child_stdin);
+  handle_close(&process->child_stdout);
+  handle_close(&process->child_stderr);
 
   return error;
 }
@@ -184,7 +180,9 @@ PROCESS_LIB_ERROR process_close_stdin(struct process *process)
   assert(process);
   assert(process->parent_stdin);
 
-  return handle_close(&process->parent_stdin);
+  handle_close(&process->parent_stdin);
+
+  return PROCESS_LIB_SUCCESS;
 }
 
 PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
@@ -294,31 +292,18 @@ PROCESS_LIB_ERROR process_destroy(struct process *process)
 {
   assert(process);
 
-  // All resources are closed regardless of errors but only the first error
-  // is returned
-  PROCESS_LIB_ERROR result = PROCESS_LIB_SUCCESS;
-  PROCESS_LIB_ERROR error;
+  handle_close(&process->info.hThread);
+  handle_close(&process->info.hProcess);
 
-  error = handle_close(&process->info.hThread);
-  if (!result) { result = error; }
-  error = handle_close(&process->info.hProcess);
-  if (!result) { result = error; }
+  handle_close(&process->parent_stdin);
+  handle_close(&process->parent_stdout);
+  handle_close(&process->parent_stderr);
 
-  error = handle_close(&process->parent_stdin);
-  if (!result) { result = error; }
-  error = handle_close(&process->parent_stdout);
-  if (!result) { result = error; }
-  error = handle_close(&process->parent_stderr);
-  if (!result) { result = error; }
+  handle_close(&process->child_stdin);
+  handle_close(&process->child_stdout);
+  handle_close(&process->child_stderr);
 
-  error = handle_close(&process->child_stdin);
-  if (!result) { result = error; }
-  error = handle_close(&process->child_stdout);
-  if (!result) { result = error; }
-  error = handle_close(&process->child_stderr);
-  if (!result) { result = error; }
-
-  return result;
+  return PROCESS_LIB_SUCCESS;
 }
 
 unsigned int process_system_error(void) { return GetLastError(); }

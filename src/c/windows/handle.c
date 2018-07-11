@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-PROCESS_LIB_ERROR handle_close(HANDLE *handle_address)
+void handle_close(HANDLE *handle_address)
 {
   assert(handle_address);
 
@@ -11,17 +11,13 @@ PROCESS_LIB_ERROR handle_close(HANDLE *handle_address)
 
   // Do nothing and return success on null handle so callers don't have to check
   // each time if a handle has been closed already
-  if (!handle) { return PROCESS_LIB_SUCCESS; }
+  if (!handle) { return; }
 
   SetLastError(0);
-  DWORD result = CloseHandle(handle);
+  CloseHandle(handle);
   // CloseHandle should not be repeated on error so always set handle to NULL
   // after CloseHandle
   *handle_address = NULL;
-
-  if (!result) { return PROCESS_LIB_UNKNOWN_ERROR; }
-
-  return PROCESS_LIB_SUCCESS;
 }
 
 PROCESS_LIB_ERROR
