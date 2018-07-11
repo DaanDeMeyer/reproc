@@ -8,48 +8,30 @@ class Process
 public:
   static const unsigned int INFINITE;
 
-  // Error is a class instead of enum so we can assign its values to the values
-  // of PROCESS_LIB_ERROR in the .cpp file which isn't possible with an enum.
-  // Only the no-arg constructor is available which defaults to Process::SUCCESS
-  class Error
-  {
-  public:
-    Error();
-
-    // Error is true if it isn't Process::SUCCESS
-    operator bool() const;
-
-  private:
-    Error(int value);
-    int value_;
-
-    // Make Process friend so we can instantiate Error constants inside Process
-    // but outside of Error
-    friend class Process;
-
-    friend bool operator==(const Process::Error &lhs,
-                           const Process::Error &rhs);
-    friend bool operator!=(const Process::Error &lhs,
-                           const Process::Error &rhs);
+  /*! /see PROCESS_LIB_ERROR */
+  /* When editing make sure to change the corresponding enum in process.h as
+   * well */
+  enum Error {
+    SUCCESS,
+    UNKNOWN_ERROR,
+    WAIT_TIMEOUT,
+    STREAM_CLOSED,
+    STILL_RUNNING,
+    MEMORY_ERROR,
+    PIPE_LIMIT_REACHED,
+    INTERRUPTED,
+    IO_ERROR,
+    PROCESS_LIMIT_REACHED,
+    INVALID_UNICODE,
+    PERMISSION_DENIED,
+    SYMLINK_LOOP,
+    FILE_NOT_FOUND,
+    NAME_TOO_LONG
   };
 
-  static const Error SUCCESS;
-  static const Error UNKNOWN_ERROR;
-  static const Error WAIT_TIMEOUT;
-  static const Error STREAM_CLOSED;
-  static const Error STILL_RUNNING;
-  static const Error MEMORY_ERROR;
-  static const Error PIPE_LIMIT_REACHED;
-  static const Error INTERRUPTED;
-  static const Error IO_ERROR;
-  static const Error PROCESS_LIMIT_REACHED;
-  static const Error INVALID_UNICODE;
-  static const Error PERMISSION_DENIED;
-  static const Error SYMLINK_LOOP;
-  static const Error FILE_NOT_FOUND;
-  static const Error NAME_TOO_LONG;
-
+  /*! /see process_init */
   Process();
+  /*! /see process_destroy */
   ~Process();
 
   /* Enforce unique ownership */
@@ -108,6 +90,3 @@ public:
 private:
   struct process *process;
 };
-
-bool operator==(const Process::Error &lhs, const Process::Error &rhs);
-bool operator!=(const Process::Error &lhs, const Process::Error &rhs);
