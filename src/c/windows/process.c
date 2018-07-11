@@ -39,6 +39,28 @@ PROCESS_LIB_ERROR process_init(struct process *process)
   process->child_stdout = NULL;
   process->child_stderr = NULL;
 
+  PROCESS_LIB_ERROR error;
+
+  // While we already make sure the child process only inherits the child pipe
+  // handles using STARTUPINFOEXW (see further in this function) we still
+  // disable inheritance of the parent pipe handles to lower the chance of other
+  // CreateProcess calls (outside of this library) unintentionally inheriting
+  // these handles.
+  error = pipe_init(&process->child_stdin, &process->parent_stdin);
+  if (error) { return error; }
+  error = pipe_disable_inherit(process->parent_stdin);
+  if (error) { return error; }
+
+  error = pipe_init(&process->parent_stdout, &process->child_stdout);
+  if (error) { return error; }
+  error = pipe_disable_inherit(process->parent_stdout);
+  if (error) { return error; }
+
+  error = pipe_init(&process->parent_stderr, &process->child_stderr);
+  if (error) { return error; }
+  error = pipe_disable_inherit(process->parent_stderr);
+  if (error) { return error; }
+
   return PROCESS_LIB_SUCCESS;
 }
 
@@ -62,30 +84,9 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   }
 
   // Make sure process_start is only called once for each process_init call
-  assert(!process->info.hProcess);
-  assert(!process->info.dwProcessId);
+  assert(process->info.hProcess != NULL);
 
   PROCESS_LIB_ERROR error;
-
-  // While we already make sure the child process only inherits the child pipe
-  // handles using STARTUPINFOEXW (see further in this function) we still
-  // disable inheritance of the parent pipe handles to lower the chance of other
-  // CreateProcess calls (outside of this library) unintentionally inheriting
-  // these handles.
-  error = pipe_init(&process->child_stdin, &process->parent_stdin);
-  if (error) { return error; }
-  error = pipe_disable_inherit(process->parent_stdin);
-  if (error) { return error; }
-
-  error = pipe_init(&process->parent_stdout, &process->child_stdout);
-  if (error) { return error; }
-  error = pipe_disable_inherit(process->parent_stdout);
-  if (error) { return error; }
-
-  error = pipe_init(&process->parent_stderr, &process->child_stderr);
-  if (error) { return error; }
-  error = pipe_disable_inherit(process->parent_stderr);
-  if (error) { return error; }
 
   // Join argv to whitespace delimited string as required by CreateProcess
   char *command_line_string = NULL;
