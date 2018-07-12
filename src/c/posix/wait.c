@@ -1,5 +1,7 @@
 #include "wait.h"
 
+#include "constants.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
@@ -10,7 +12,7 @@ PROCESS_LIB_ERROR wait_no_hang(pid_t pid, int *exit_status)
 {
   assert(exit_status);
 
-  int status = 0;
+  int status = EXIT_STATUS_NULL;
   errno = 0;
   // Adding WNOHANG makes waitpid only check and return immediately
   pid_t wait_result = waitpid(pid, &status, WNOHANG);
@@ -32,7 +34,7 @@ PROCESS_LIB_ERROR wait_infinite(pid_t pid, int *exit_status)
 {
   assert(exit_status);
 
-  int status = 0;
+  int status = EXIT_STATUS_NULL;
   errno = 0;
   if (waitpid(pid, &status, 0) == -1) {
     switch (errno) {
@@ -93,7 +95,7 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
   // which in this case will be the process we want to wait for and the timeout
   // process. waitpid will return the process id of whichever process exits
   // first
-  int status = 0;
+  int status = EXIT_STATUS_NULL;
   errno = 0;
   pid_t exit_pid = waitpid(-pid, &status, 0);
 

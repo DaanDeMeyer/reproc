@@ -56,10 +56,11 @@ if(WIN32)
 elseif(UNIX)
   target_include_directories(process PRIVATE src/c/posix)
   target_sources(process PRIVATE
-    src/c/posix/process.c
-    src/c/posix/pipe.c
-    src/c/posix/wait.c
+    src/c/posix/constants.c
     src/c/posix/fork_exec_redirect.c
+    src/c/posix/pipe.c
+    src/c/posix/process.c
+    src/c/posix/wait.c
   )
 endif()
 

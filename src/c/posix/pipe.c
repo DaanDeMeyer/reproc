@@ -1,5 +1,7 @@
 #include "pipe.h"
 
+#include "constants.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -96,5 +98,5 @@ void pipe_close(int *pipe_address)
   errno = 0;
   close(pipe);
   // Close should not be repeated on error so always set pipe to 0 after close
-  *pipe_address = 0;
+  *pipe_address = PIPE_NULL;
 }

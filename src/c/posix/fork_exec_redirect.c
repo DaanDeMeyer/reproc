@@ -1,5 +1,6 @@
 #include "fork_exec_redirect.h"
 
+#include "constants.h"
 #include "pipe.h"
 
 #include <assert.h>
@@ -29,8 +30,8 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
   // We create an error pipe to receive pre-exec and exec errors from the child
   // process. See this answer https://stackoverflow.com/a/1586277 for more
   // information
-  int error_pipe_read = 0;
-  int error_pipe_write = 0;
+  int error_pipe_read = PIPE_NULL;
+  int error_pipe_write = PIPE_NULL;
   error = pipe_init(&error_pipe_read, &error_pipe_write);
   if (error) { return error; }
 

@@ -1,5 +1,6 @@
 #include "process.h"
 
+#include "constants.h"
 #include "fork_exec_redirect.h"
 #include "pipe.h"
 #include "wait.h"
@@ -13,20 +14,11 @@
 
 const unsigned int PROCESS_LIB_INFINITE = 0xFFFFFFFF;
 
-static const pid_t PID_NULL = 0;
-static const int PIPE_NULL = -1;
-// Exit codes on unix are (should be) in range [0,256) so INT_MIN shoudl be a
-// safe null value.
-static const int EXIT_STATUS_NULL = INT_MIN;
-
 struct process {
   pid_t pid;
   int parent_stdin;
   int parent_stdout;
   int parent_stderr;
-  int child_stdin;
-  int child_stdout;
-  int child_stderr;
   int exit_status;
 };
 
@@ -40,29 +32,15 @@ PROCESS_LIB_ERROR process_init(struct process *process)
 {
   assert(process);
 
-  // process id 0 is reserved by the system so we can use it as a null value
   process->pid = PID_NULL;
-  // File descriptor 0 won't be assigned by pipe() call (its reserved for stdin)
-  // so we use it as a null value
+
   process->parent_stdin = PIPE_NULL;
   process->parent_stdout = PIPE_NULL;
   process->parent_stderr = PIPE_NULL;
-  process->child_stdin = PIPE_NULL;
-  process->child_stdout = PIPE_NULL;
-  process->child_stderr = PIPE_NULL;
-
   // We save the exit status because after calling waitpid multiple times on a
   // process that has already exited is unsafe since after the first time the
   // system can reuse the process id for another process.
   process->exit_status = EXIT_STATUS_NULL;
-
-  PROCESS_LIB_ERROR error;
-  error = pipe_init(&process->child_stdin, &process->parent_stdin);
-  if (error) { return error; }
-  error = pipe_init(&process->parent_stdout, &process->child_stdout);
-  if (error) { return error; }
-  error = pipe_init(&process->parent_stderr, &process->child_stderr);
-  if (error) { return error; }
 
   return PROCESS_LIB_SUCCESS;
 }
@@ -85,22 +63,30 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   // (process_init sets process->pid to PID_NULL)
   assert(process->pid == PID_NULL);
 
-  PROCESS_LIB_ERROR error = fork_exec_redirect(argc, argv, working_directory,
-                                               process->child_stdin,
-                                               process->child_stdout,
-                                               process->child_stderr,
-                                               &process->pid);
+  int child_stdin = PIPE_NULL;
+  int child_stdout = PIPE_NULL;
+  int child_stderr = PIPE_NULL;
 
-  // (On success) The child pipe endpoints have been copied to the the
-  // stdin/stdout/stderr streams of the child process. We don't need the anymore
-  // in the parent process so we close them.
-  pipe_close(&process->child_stdin);
-  pipe_close(&process->child_stdout);
-  pipe_close(&process->child_stderr);
+  PROCESS_LIB_ERROR error;
+  error = pipe_init(&child_stdin, &process->parent_stdin);
+  if (error) { goto end; }
+  error = pipe_init(&process->parent_stdout, &child_stdout);
+  if (error) { goto end; }
+  error = pipe_init(&process->parent_stderr, &child_stderr);
+  if (error) { goto end; }
 
-  if (error) { return error; }
+  error = fork_exec_redirect(argc, argv, working_directory, child_stdin,
+                             child_stdout, child_stderr, &process->pid);
 
-  return PROCESS_LIB_SUCCESS;
+end:
+  // An error has ocurred or the child pipe endpoints have been copied to the
+  // the stdin/stdout/stderr streams of the child process. Either way they can
+  // be safely closed in the parent process
+  pipe_close(&child_stdin);
+  pipe_close(&child_stdout);
+  pipe_close(&child_stderr);
+
+  return error;
 }
 
 PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,
@@ -228,11 +214,6 @@ PROCESS_LIB_ERROR process_destroy(struct process *process)
   pipe_close(&process->parent_stdin);
   pipe_close(&process->parent_stdout);
   pipe_close(&process->parent_stderr);
-
-  // Child pipes might not have been closed if error occurred in process_start
-  pipe_close(&process->child_stdin);
-  pipe_close(&process->child_stdout);
-  pipe_close(&process->child_stderr);
 
   return PROCESS_LIB_SUCCESS;
 }
