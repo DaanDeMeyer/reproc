@@ -48,9 +48,10 @@ target_include_directories(process PUBLIC include/c)
 if(WIN32)
   target_include_directories(process PRIVATE src/c/windows)
   target_sources(process PRIVATE
-    src/c/windows/process.c
     src/c/windows/handle.c
     src/c/windows/pipe.c
+    src/c/windows/process_utils.c
+    src/c/windows/process.c
     src/c/windows/string_utils.c
   )
 elseif(UNIX)

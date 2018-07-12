@@ -69,16 +69,16 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
 
   PROCESS_LIB_ERROR error;
   error = pipe_init(&child_stdin, &process->parent_stdin);
-  if (error) { goto end; }
+  if (error) { goto cleanup; }
   error = pipe_init(&process->parent_stdout, &child_stdout);
-  if (error) { goto end; }
+  if (error) { goto cleanup; }
   error = pipe_init(&process->parent_stderr, &child_stderr);
-  if (error) { goto end; }
+  if (error) { goto cleanup; }
 
   error = fork_exec_redirect(argc, argv, working_directory, child_stdin,
                              child_stdout, child_stderr, &process->pid);
 
-end:
+cleanup:
   // An error has ocurred or the child pipe endpoints have been copied to the
   // the stdin/stdout/stderr streams of the child process. Either way they can
   // be safely closed in the parent process
@@ -86,7 +86,12 @@ end:
   pipe_close(&child_stdout);
   pipe_close(&child_stderr);
 
-  return error;
+  if (error) {
+    process_destroy(process);
+    return error;
+  }
+
+  return PROCESS_LIB_SUCCESS;
 }
 
 PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,

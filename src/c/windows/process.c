@@ -2,6 +2,7 @@
 
 #include "handle.h"
 #include "pipe.h"
+#include "process_utils.h"
 #include "string_utils.h"
 
 #include <assert.h>
@@ -36,11 +37,6 @@ PROCESS_LIB_ERROR process_init(struct process *process)
   return PROCESS_LIB_SUCCESS;
 }
 
-// Create each process in a new process group so we don't send CTRL-BREAK
-// signals to more than one child process in process_terminate.
-static const DWORD CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP |
-                                    EXTENDED_STARTUPINFO_PRESENT;
-
 PROCESS_LIB_ERROR process_start(struct process *process, int argc,
                                 const char *argv[],
                                 const char *working_directory)
@@ -62,6 +58,10 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   HANDLE child_stdout = NULL;
   HANDLE child_stderr = NULL;
 
+  char *command_line_string = NULL;
+  wchar_t *command_line_wstring = NULL;
+  wchar_t *working_directory_wstring = NULL;
+
   PROCESS_LIB_ERROR error;
 
   // While we already make sure the child process only inherits the child pipe
@@ -70,96 +70,58 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   // CreateProcess calls (outside of this library) unintentionally inheriting
   // these handles.
   error = pipe_init(&child_stdin, &process->parent_stdin);
-  if (error) { return error; }
+  if (error) { goto cleanup; }
   error = pipe_disable_inherit(process->parent_stdin);
-  if (error) { return error; }
+  if (error) { goto cleanup; }
 
   error = pipe_init(&process->parent_stdout, &child_stdout);
-  if (error) { return error; }
+  if (error) { goto cleanup; }
   error = pipe_disable_inherit(process->parent_stdout);
-  if (error) { return error; }
+  if (error) { goto cleanup; }
 
   error = pipe_init(&process->parent_stderr, &child_stderr);
-  if (error) { return error; }
+  if (error) { goto cleanup; }
   error = pipe_disable_inherit(process->parent_stderr);
-  if (error) { return error; }
+  if (error) { goto cleanup; }
 
   // Join argv to whitespace delimited string as required by CreateProcess
-  char *command_line_string = NULL;
   error = string_join(argv, argc, &command_line_string);
-  if (error) { return error; }
+  if (error) { goto cleanup; }
 
-  // Convert utf-8 to utf-16 as required by CreateProcessW
-  wchar_t *command_line_wstring = NULL;
+  // Convert UTF-8 to UTF-16 as required by CreateProcessW
   error = string_to_wstring(command_line_string, &command_line_wstring);
   free(command_line_string); // Not needed anymore
-  if (error) { return error; }
+  if (error) { goto cleanup; }
 
   // Do the same for the working directory string if one was provided
-  wchar_t *working_directory_wstring = NULL;
   error = working_directory
               ? string_to_wstring(working_directory, &working_directory_wstring)
               : PROCESS_LIB_SUCCESS;
-  if (error) {
-    free(command_line_wstring);
-    return error;
-  }
+  if (error) { goto cleanup; }
 
-  // To ensure no handles other than those necessary are inherited we use the
-  // approach detailed in https://stackoverflow.com/a/2345126
-  HANDLE to_inherit[3] = { process->child_stdin, process->child_stdout,
-                           process->child_stderr };
-  LPPROC_THREAD_ATTRIBUTE_LIST attribute_list;
-  error = handle_inherit_list_create(to_inherit, 3, &attribute_list);
-  if (error) {
-    free(command_line_wstring);
-    free(working_directory_wstring);
-    return error;
-  }
+  error = process_create(command_line_wstring, working_directory_wstring,
+                         child_stdin, child_stdout, child_stderr,
+                         &process->info);
 
-  STARTUPINFOEXW startup_info =
-      { .StartupInfo = { .cb = sizeof(startup_info),
-                         .dwFlags = STARTF_USESTDHANDLES,
-                         .hStdInput = process->child_stdin,
-                         .hStdOutput = process->child_stdout,
-                         .hStdError = process->child_stderr },
-        .lpAttributeList = attribute_list };
-
-  // Child processes inherit error mode of their parents. To avoid child
-  // processes creating error dialogs we set our error mode to not create error
-  // dialogs temporarily.
-  DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
-
-  SetLastError(0);
-  BOOL result = CreateProcessW(NULL, command_line_wstring, NULL, NULL, TRUE,
-                               CREATION_FLAGS, NULL, working_directory_wstring,
-                               &startup_info.StartupInfo, &process->info);
-
-  SetErrorMode(previous_error_mode);
-
-  // Free allocated memory before returning possible error
-  free(command_line_wstring);
-  free(working_directory_wstring);
-  DeleteProcThreadAttributeList(attribute_list);
-  free(attribute_list); // Is this necessary? Windows docs are unclear
-
-  if (!result) {
-    switch (GetLastError()) {
-    case ERROR_FILE_NOT_FOUND: return PROCESS_LIB_FILE_NOT_FOUND;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
-    }
-  }
-
-  // We don't need the handle to the primary thread of the child process
-  handle_close(&process->info.hThread);
-
+cleanup:
   // The child process pipe endpoint handles are copied to the child process. We
   // don't need them anymore in the parent process so we close them.
   handle_close(&child_stdin);
   handle_close(&child_stdout);
   handle_close(&child_stderr);
+  // Free allocated memory before returning possible error
+  free(command_line_wstring);
+  free(working_directory_wstring);
 
-  return error;
+  // We don't need the handle to the primary thread of the child process
+  handle_close(&process->info.hThread);
+
+  if (error) {
+    process_destroy(process);
+    return error;
+  }
+
+  return PROCESS_LIB_SUCCESS;
 }
 
 PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,
