@@ -73,15 +73,21 @@ Returns the size of process_type on the current platform so it can be allocated.
 unsigned int process_size();
 
 /*!
-Initializes the members of process_type.
+Initializes the members of \p process.
 
-Every call to process_init should be followed with a call to \see
-process_destroy after the child process has exited.
+Call order:
+- \see process_init
+- \see process_start
+- ... (read/write/terminate/...)
+- \see process_destroy
+- \see process_init (If you want to reuse \p process to run another process)
+- ...
 
-\param[out] process_address Address of a process pointer. Cannot be NULL. Any
-already allocated memory to the process pointer will be leaked.
+\param[in,out] process Cannot be NULL.
 
 \return PROCESS_LIB_ERROR
+
+Possible errors:
 */
 PROCESS_LIB_ERROR process_init(process_type *process);
 
@@ -89,17 +95,24 @@ PROCESS_LIB_ERROR process_init(process_type *process);
 Starts the process specified by argv in the given working directory and
 redirects its standard output streams.
 
-This function should be called after process_init. After this function completes
-(without error) the child process actually starts running and can be seen in the
-Task Manager (Windows) or top (Linux).
+This function should be called after \see process_init. If this function
+returns without error the child process actually starts running and can be
+seen in the Task Manager (Windows) or top (Linux).
 
-\param[in,out] process Cannot be NULL.
+Every successful call to this function should be followed by a call to \see
+process_destroy after the process has exited. If an error occurs the function
+cleans up all allocated resources itself so you should call process_init again
+if you want to retry.
+
+\param[in,out] process Cannot be NULL. Must have been initialized with \see
+process_init.
 
 \param[in] argv An array of UTF-8 encoded, null terminated strings specifying
-the program to execute along with its arguments.
+the program to execute along with its arguments. Must at least contain one
+element. Cannot be NULL.
 
-- The first element in the array indicates the program to run. This can be an
-absolute path, a path relative to the working_directory (also passed as
+- The first element in the array indicates the executable to run. This can be an
+absolute path, a path relative to the working directory (also passed as
 argument) or the name of an executable located in the PATH. Cannot be NULL.
 - The following elements indicate the whitespace delimited arguments passed to
 the executable. None of these elements can be NULL.
@@ -108,13 +121,13 @@ the executable. None of these elements can be NULL.
 Example: ["cmake", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", NULL]
 
 \param[in] argc Specifies the amount of elements in argv. Should NOT include the
-NULL value at the end of the array.
+NULL value at the end of the array. Must be bigger than or equal to 1.
 
 Example: if argv is ["cmake", "--help", NULL] then argc is 2.
 
-\param[in] working_directory Specified the working directory for the child
-process. If working_directory is NULL, the child process runs in the same
-directory as the current process.
+\param[in] working_directory Indicates the working directory for the child
+process. If it is NULL, the child process runs in the same directory as the
+current process.
 
 \return PROCESS_LIB_ERROR
 
@@ -217,8 +230,7 @@ Possible errors:
 PROCESS_LIB_ERROR process_read(process_type *process, void *buffer,
                                unsigned int to_read, unsigned int *actual);
 
-/*! \see process_read for the standard error stream of the child process.
- */
+/*! \see process_read for the standard error stream of the child process. */
 PROCESS_LIB_ERROR process_read_stderr(process_type *process, void *buffer,
                                       unsigned int to_read,
                                       unsigned int *actual);
@@ -227,8 +239,8 @@ PROCESS_LIB_ERROR process_read_stderr(process_type *process, void *buffer,
 Waits the specified amount of time for the process to exit.
 
 \param[in,out] process Cannot be NULL.
-\param[in] milliseconds Maximum amount of milliseconds to wait. If 0 the
-function will only check if the process is still running without waiting. If
+\param[in] milliseconds Amount of milliseconds to wait. If it is 0 the function
+will only check if the process is still running without waiting. If it is
 PROCESS_LIB_INFINITE the function will wait indefinitely for the child process
 to exit.
 
@@ -275,6 +287,9 @@ After sending the signal the function waits for the specified amount of
 milliseconds for the child process to exit. If the child process has already
 exited no signal is sent.
 
+This function should only be used as a last resort. Always try to stop a process
+with \see process_terminate before resorting to this function.
+
 \param[in,out] process Cannot be NULL.
 \param[in] milliseconds See \see process_wait
 
@@ -291,20 +306,14 @@ PROCESS_LIB_ERROR process_exit_status(process_type *process, int *exit_status);
 Releases all resources associated with the process.
 
 This function does not stop the child process. Call \see process_terminate or
-\see process_kill first if you want to stop the child process.
+\see process_kill first if you want to stop the child process or wait for it to
+exit on its own with \see process_wait.
 
-All resources will be freed regardless if any error occurs or not. This function
-should not be called again if an error occurs.
-
-\param[in,out] process_address Address of a process_type pointer. Cannot be NULL
-and has to point to a process_Type pointer initialized with \see process_start.
-The process pointer is set to NULL after it is freed.
+\param[in,out] process Cannot be NULL
 
 \return PROCESS_LIB_ERROR
 
 Possible errors:
-- PROCESS_LIB_INTERRUPTED
-- PROCESS_LIB_IO_ERROR
 */
 PROCESS_LIB_ERROR process_destroy(process_type *process);
 
@@ -318,9 +327,9 @@ want to retrieve the last system error that occurred in one of process-lib's
 functions.
 
 On POSIX, if an error occurs after fork but before exec it is communicated to
-the parent process which sets errno to the errno of the child process to make it
-possible to also retrieve errors that happen after forking with this function
-(for example in chdir or execve).
+the parent process which sets its own errno value to the errno value of the
+child process. This makes it possible to also retrieve errors that happen after
+forking with this function (for example in chdir or execve).
 
 \return unsigned int The last system error code
 */
@@ -349,7 +358,7 @@ Frees the error string obtained with /see process_system_error_string.
 This function does nothing on POSIX since no memory allocation is required to
 obtain the error string.
 
-\param [in] error_string pointer to the error string obtained with /see
+\param [in] error_string Pointer to the error string obtained with /see
 process_system_error_string
 */
 void process_system_error_string_free(char *error_string);
