@@ -269,7 +269,7 @@ for the specified amount of milliseconds for the child process to exit. If the
 process has already exited no signal is sent.
 
 \param[in,out] process Cannot be NULL.
-\param[in] milliseconds See \see process_wait
+\param[in] milliseconds See \see process_wait.
 
 \return PROCESS_LIB_ERROR
 
@@ -291,7 +291,7 @@ This function should only be used as a last resort. Always try to stop a process
 with \see process_terminate before resorting to this function.
 
 \param[in,out] process Cannot be NULL.
-\param[in] milliseconds See \see process_wait
+\param[in] milliseconds See \see process_wait.
 
 \return PROCESS_LIB_ERROR
 
@@ -300,6 +300,17 @@ Possible errors: See \see process_wait
 PROCESS_LIB_ERROR process_kill(process_type *process,
                                unsigned int milliseconds);
 
+/*!
+Returns the exit status of the child process
+
+\param[in,out] process Cannot be NULL.
+\param[out] exit_status Exit status of the process
+
+\return PROCESS_LIB_ERROR
+
+Possible errors:
+- PROCESS_LIB_STILL_RUNNING
+*/
 PROCESS_LIB_ERROR process_exit_status(process_type *process, int *exit_status);
 
 /*!
