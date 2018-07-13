@@ -1,13 +1,48 @@
 #include "process_utils.h"
 
-#include "handle.h"
+#include <stdlib.h>
 
 #include <assert.h>
 
-// Create each process in a new process group so we don't send CTRL-BREAK
-// signals to more than one child process in process_terminate.
-static const DWORD CREATION_FLAGS = CREATE_NEW_PROCESS_GROUP |
-                                    EXTENDED_STARTUPINFO_PRESENT;
+#if defined(HAS_ATTRIBUTE_LIST)
+PROCESS_LIB_ERROR
+static handle_inherit_list_create(HANDLE *handles, int amount,
+                                  LPPROC_THREAD_ATTRIBUTE_LIST *result)
+{
+  assert(handles);
+  assert(amount >= 0);
+  assert(result);
+
+  SIZE_T attribute_list_size = 0;
+  SetLastError(0);
+  if (!InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size) &&
+      GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+    return PROCESS_LIB_UNKNOWN_ERROR;
+  }
+
+  LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = malloc(attribute_list_size);
+  if (!attribute_list) { return PROCESS_LIB_MEMORY_ERROR; }
+
+  SetLastError(0);
+  if (!InitializeProcThreadAttributeList(attribute_list, 1, 0,
+                                         &attribute_list_size)) {
+    free(attribute_list);
+    return PROCESS_LIB_UNKNOWN_ERROR;
+  }
+
+  SetLastError(0);
+  if (!UpdateProcThreadAttribute(attribute_list, 0,
+                                 PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,
+                                 amount * sizeof(HANDLE), NULL, NULL)) {
+    DeleteProcThreadAttributeList(attribute_list);
+    return PROCESS_LIB_UNKNOWN_ERROR;
+  }
+
+  *result = attribute_list;
+
+  return PROCESS_LIB_SUCCESS;
+}
+#endif
 
 PROCESS_LIB_ERROR process_create(wchar_t *command_line,
                                  wchar_t *working_directory, HANDLE child_stdin,
@@ -20,6 +55,11 @@ PROCESS_LIB_ERROR process_create(wchar_t *command_line,
   assert(child_stderr);
   assert(info);
 
+  // Create each process in a new process group so we don't send CTRL-BREAK
+  // signals to more than one child process in process_terminate.
+  DWORD creation_flags = CREATE_NEW_PROCESS_GROUP;
+
+#if defined(HAS_ATTRIBUTE_LIST)
   PROCESS_LIB_ERROR error;
 
   // To ensure no handles other than those necessary are inherited we use the
@@ -31,13 +71,26 @@ PROCESS_LIB_ERROR process_create(wchar_t *command_line,
                                      &attribute_list);
   if (error) { return error; }
 
-  STARTUPINFOEXW startup_info = { .StartupInfo = { .cb = sizeof(startup_info),
-                                                   .dwFlags =
-                                                       STARTF_USESTDHANDLES,
-                                                   .hStdInput = child_stdin,
-                                                   .hStdOutput = child_stdout,
-                                                   .hStdError = child_stderr },
-                                  .lpAttributeList = attribute_list };
+  creation_flags |= EXTENDED_STARTUPINFO_PRESENT;
+
+  STARTUPINFOEXW extended_startup_info =
+      { .StartupInfo = { .cb = sizeof(extended_startup_info),
+                         .dwFlags = STARTF_USESTDHANDLES,
+                         .hStdInput = child_stdin,
+                         .hStdOutput = child_stdout,
+                         .hStdError = child_stderr },
+        .lpAttributeList = attribute_list };
+
+  LPSTARTUPINFOW startup_info_address = &extended_startup_info.StartupInfo;
+#else
+  STARTUPINFOW startup_info = { .cb = sizeof(startup_info),
+                                .dwFlags = STARTF_USESTDHANDLES,
+                                .hStdInput = child_stdin,
+                                .hStdOutput = child_stdout,
+                                .hStdError = child_stderr }
+
+  LPSTARTUPINFOW startup_info_address = &startup_info;
+#endif
 
   // Child processes inherit error mode of their parents. To avoid child
   // processes creating error dialogs we set our error mode to not create error
@@ -46,12 +99,14 @@ PROCESS_LIB_ERROR process_create(wchar_t *command_line,
 
   SetLastError(0);
   BOOL result = CreateProcessW(NULL, command_line, NULL, NULL, TRUE,
-                               CREATION_FLAGS, NULL, working_directory,
-                               &startup_info.StartupInfo, info);
+                               creation_flags, NULL, working_directory,
+                               startup_info_address, info);
 
   SetErrorMode(previous_error_mode);
 
+#if defined(HAS_ATTRIBUTE_LIST)
   DeleteProcThreadAttributeList(attribute_list);
+#endif
 
   if (!result) {
     switch (GetLastError()) {

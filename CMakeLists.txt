@@ -66,11 +66,15 @@ elseif(UNIX)
 endif()
 
 if(MSVC)
+  include(CheckSymbolExists)
+  check_symbol_exists(InitializeProcThreadAttributeList windows.h
+                      PROCESS_LIB_ATTRIBUTE_LIST_FOUND)
   target_compile_definitions(process PRIVATE
     _CRT_SECURE_NO_WARNINGS
     WIN32_LEAN_AND_MEAN
     VC_EXTRALEAN
     NOMINMAX
+    $<$<BOOL:${PROCESS_LIB_ATTRIBUTE_LIST_FOUND}>:HAS_ATTRIBUTE_LIST>
   )
 elseif(UNIX)
   include(CheckSymbolExists)
