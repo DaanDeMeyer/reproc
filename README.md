@@ -77,7 +77,7 @@ overwrite the process-lib directory with the contents of an updated zip/tar from
 Github.
 
 After unzipping the source code to third-party/process-lib you can then add the
-directory with add_subdirectory in CMake.
+directory with `add_subdirectory` in CMake.
 
 ```cmake
 add_subdirectory(third-party/process-lib)
