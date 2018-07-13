@@ -12,13 +12,12 @@
 - [Documentation](#documentation)
 - [Error Handling](#error-handling)
 - [Gotcha's](#gotchas)
-- [Platform Support](#platform-support)
 - [Design](#design)
   - [Opaque pointer](#opaque-pointer)
   - [Memory allocation](#memory-allocation)
   - [(POSIX) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
   - [(POSIX) Check if execve call was succesful](#posix-check-if-execve-call-was-succesful)
-  - [Avoiding resource leaks in multithreaded applications](#avoiding-resource-leaks-in-multithreaded-applications)
+  - [Avoiding resource leaks](#avoiding-resource-leaks)
 
 ## Installation
 
@@ -147,44 +146,45 @@ unknown errors and add them to process-lib.
   process after it exits, the child process becomes a
   [zombie process](https://en.wikipedia.org/wiki/Zombie_process).
 
-- (Windows) `process_kill` is not guaranteed to kill a process on Windows. For
-  more information, read the Remarks section in the documentation of the
+- (Windows) `process_kill` is not guaranteed to kill a child process on Windows.
+  For more information, read the Remarks section in the documentation of the
   [TerminateProcess](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms686714(v=vs.85).aspx>)
-  function that process-lib uses to kill processes on Windows.
+  function that process-lib uses to kill child processes on Windows.
 
 - (Windows) Immediately terminating a process after starting it on Windows might
-  result in an error window with error 0xc0000142 popping up. This indicates the
-  process was terminated before it was fully initialized. I was not able to find
-  a Windows function that allows waiting until a console process is fully
+  result in an error window with error code `0xc0000142` popping up. The error
+  code indicates that the process was terminated before it was fully
   initialized. This problem shouldn't pop up with normal use of the library
   since most of the time you'll want to read/write to the process or wait until
   it exits normally.
 
   If someone runs into this problem, I mitigated it in process-lib's tests by
-  waiting a few milliseconds using `process_wait` before terminating the
+  waiting a few milliseconds using `process_wait` before terminating the child
   process.
 
-- File descriptors/handles made by process-lib can unintentionally leak to child
-  processes not created by process-lib if child processes are created
-  concurrently in multiple threads. This is not the case on systems that support
-  the `pipe2` system call (available from Linux 2.6 onwards).
+- File descriptors/handles created by process-lib can leak to child processes
+  not spawned by process-lib if the application is multithreaded. This is not
+  the case on systems that support the `pipe2` system call (Linux 2.6+ and newer
+  BSD's). See [Avoiding resource leaks](#avoiding-resource-leaks) for more
+  information.
 
 - (POSIX) On POSIX, file descriptors above the file descriptor resource limit
-  (obtained with `sysconf(_SC_OPEN_MAX)`) are leaked into child processes
-  created by process-lib. File descriptors above the resource limit can occur if
-  the resource limit is lowered manually to a value below existing file
-  descriptors (created before lowering the limit).
+  (obtained with `sysconf(_SC_OPEN_MAX)`) and without the `FD_CLOEXEC` flag set
+  are leaked into child processes created by process-lib.
 
-## Platform Support
+  Note that in multithreaded applications immediately setting the `FD_CLOEXEC`
+  with `fcntl` after creating a file descriptor can still not be sufficient to
+  avoid leaks. See [Avoiding resource leaks](#avoiding-resource-leaks) for more
+  information.
 
-The best way to figure out if process-lib works on your platform is to clone
-process-lib, compile it and run the tests.
+- (Windows < Vista) File descriptors that are not marked not inheritable with
+  `SetHandleInformation` will leak into process-lib child processes.
 
-This list contains the platform version that process-lib won't work on. Note
-that platforms not on this list might not work either. If you encounter an issue
-with a platform not on this list, please open an issue.
-
-- Windows < Vista: `STARTUPINFOEXW` is only available from Vista onwards
+  Note that the same `FD_CLOEXEC` caveat as mentioned above applies. In
+  multithreaded applications there is a split moment after calling `CreatePipe`
+  but before calling `SetHandleInformation` that a handle can still be inherited
+  by process-lib child processes. See
+  [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
 
 ## Design
 
@@ -327,28 +327,53 @@ indicates an error occured before or during exec.
 This solution was inspired by [this](https://stackoverflow.com/a/1586277) Stack
 Overflow answer.
 
-### Avoiding resource leaks in multithreaded applications
+### Avoiding resource leaks
 
-On POSIX systems, file descriptors are inherited by child processes when calling
-[execve](http://man7.org/linux/man-pages/man2/execve.2.html). To prevent
-unintended leaking of file descriptors to child processes, POSIX provides a
-function `fcntl` which can be used to set the `FD_CLOEXEC` flag on the file
-descriptors returned by `pipe` which causes them to get closed when `execve` (or
-one of its variants) is called. However, using `fcntl` introduces a race
-condition since any process created in another thread after `pipe` is called but
-before calling `fcntl` will still inherit the file descriptors created by
-`pipe`.
+On POSIX systems, by default file descriptors are inherited by child processes
+when calling `execve`. To prevent unintended leaking of file descriptors to
+child processes, POSIX provides a function `fcntl` which can be used to set the
+`FD_CLOEXEC` flag on file descriptors which instructs the underlying system to
+close them when `execve` (or one of its variants) is called. However, using
+`fcntl` introduces a race condition since any process created in another thread
+after a file descriptor is created (for example using `pipe`) but before `fcntl`
+is called to set `FD_CLOEXEC` on the file descriptor will still inherit that
+file descriptor.
 
 To get around this race condition process-lib uses the `pipe2` function (when it
 is available) which takes the `O_CLOEXEC` flag as an argument. This ensures the
-file descriptors of the created pipe are closed when `execve` is called.
+file descriptors of the created pipe are closed when `execve` is called. Similar
+system calls that take the `O_CLOEXEC` flag exist for other system calls that
+create file descriptors. If `pipe2` is not available (for example on Darwin)
+process-lib falls back to calling `fcntl` to set `FD_CLOEXEC` immediately after
+creating a pipe.
 
-Darwin supports an extra flag for the `posix_spawn` API (wrapper around
-`fork/exec`) `POSIX_SPAWN_CLOEXEC_DEFAULT` that instructs `posix_spawn` to close
-all open file descriptors in the child process. However, `posix_spawn` doesn't
-support changing the working directory of the child process. A solution to this
-was implemented in process-lib but it was deemed to complex and brittle so it
-was removed.
+Darwin does not support the `FD_CLOEXEC` flag on any of its system calls but
+instead provides an extra flag for the `posix_spawn` API (a wrapper around
+`fork/exec`) named
+[POSIX_SPAWN_CLOEXEC_DEFAULT](https://www.unix.com/man-page/osx/3/posix_spawnattr_setflags/)
+that instructs `posix_spawn` to close all open file descriptors in the child
+process created by `posix_spawn`. However, `posix_spawn` doesn't support
+changing the working directory of the child process. A solution to get around
+this was implemented in process-lib but it was deemed too complex and brittle so
+it was removed.
+
+While using `pipe2` prevents file descriptors created by process-lib from
+leaking into other child processes, file descriptors created outside of
+process-lib without the `FD_CLOEXEC` flag set will still leak into process-lib
+child processes. To mostly get around this after forking and redirecting the
+standard streams (stdin, stdout, stderr) of the child process we close all file
+descriptors (except the standard streams) up to `_SC_OPEN_MAX` (obtained with
+`sysconf`) in the child process. `_SC_OPEN_MAX` describes the maximum number of
+files that a process can have open at any time. As a result, trying to close
+every file descriptor up to this number closes all file descriptors of the child
+process which includes file descriptors that were leaked into the child process.
+However, an application can manually lower the resource limit at any time (for
+example with `setrlimit(RLIMIT_NOFILE)`), which can lead to open file
+descriptors with a value above the new resource limit if they were created
+before the resource limit was lowered. These file descriptors will not be closed
+in the child process since only the file descriptors up to the latest resource
+limit are closed. Of course, this only happens if the application manually
+lowers the resource limit.
 
 On Windows the same race condition occurs. The `CreatePipe` function receives a
 flag as part of its arguments that specifies if the returned handles can be
@@ -357,17 +382,21 @@ flag indicating whether it should inherit handles or not. Inheritance for
 endpoints of a single pipe can be configured after the `CreatePipe` call using
 the function `SetHandleInformation`. The race condition occurs after calling
 `CreatePipe` (allowing inheritance) but before calling `SetHandleInformation` in
-one thread and calling `CreateProcess` (with inheriting pipes) in another
-thread. This would unintentionally leak handles into a child process. We again
-try to mitigate this in two ways:
+one thread and calling `CreateProcess` (configured to inherit pipes) in another
+thread. This would unintentionally leak handles into a child process. We try to
+mitigate this in two ways:
 
 - We call `SetHandleInformation` after `CreatePipe` for the handles that should
   not be inherited by any process to lower the chance of them accidentally being
-  inherited (just like with `fnctl` on Darwin.
+  inherited (just like with `fnctl` if `µipe2` is not available). This only
+  works for half of the endpoints created (the ones intended to be used by the
+  parent process) since the endpoints intended to be used by the child actually
+  need to be inherited by their corresponding child process.
 - Windows Vista added the `STARTUPINFOEXW` structure in which we can put a list
   of handles that should be inherited. Only these handles are inherited by the
   child process. This again (just like Darwin `posix_spawn`) only stops
-  process-lib's processes from inheriting unintended handles. Other code in your
+  process-lib's processes from inheriting unintended handles. Other code in an
   application that calls `CreateProcess` without passing a `STARTUPINFOEXW`
   struct containing the handles it should inherit can still unintentionally
-  inherit handles meant for a process-lib child process.
+  inherit handles meant for a process-lib child process. process-lib uses the
+  `STARTUPINFOEXW` struct if it is available.
