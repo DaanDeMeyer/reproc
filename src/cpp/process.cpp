@@ -15,6 +15,7 @@ Process::Process()
 
 Process::~Process()
 {
+  // Check for null because the object could have been moved
   if (process) {
     process_destroy(process);
     free(process);
@@ -42,13 +43,15 @@ Process::Error Process::start(int argc, const char *argv[],
 Process::Error Process::start(const std::vector<std::string> &args,
                               const std::string *working_directory)
 {
+  // Turn args into array of C strings
   const char **argv = new const char *[args.size() + 1];
-
   for (std::size_t i = 0; i < args.size(); i++) {
     argv[i] = args[i].c_str();
   }
   argv[args.size()] = nullptr;
 
+  // We don't expect so many args that the int will not be sufficient to count
+  // them
   int argc = static_cast<int>(args.size());
 
   Error error = start(argc, argv,

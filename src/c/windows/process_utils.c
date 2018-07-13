@@ -13,6 +13,7 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
   assert(amount >= 0);
   assert(result);
 
+  // Get the required size for the attribute list
   SIZE_T attribute_list_size = 0;
   SetLastError(0);
   if (!InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size) &&
@@ -30,6 +31,7 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
     return PROCESS_LIB_UNKNOWN_ERROR;
   }
 
+  // Add the handles to be inherited to the attribute list
   SetLastError(0);
   if (!UpdateProcThreadAttribute(attribute_list, 0,
                                  PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,

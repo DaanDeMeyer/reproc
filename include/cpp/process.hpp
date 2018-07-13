@@ -29,7 +29,8 @@ public:
     NAME_TOO_LONG
   };
 
-  /*! /see process_init */
+  /*! /see process_init. Throws std::bad_alloc if allocating memory for the
+  process struct of the underlying C library fails */
   Process();
   /*! /see process_destroy */
   ~Process();
@@ -37,7 +38,6 @@ public:
   /* Enforce unique ownership */
   Process(const Process &) = delete;
   Process(Process &&other) noexcept;
-
   Process &operator=(const Process &) = delete;
   Process &operator=(Process &&other) noexcept;
 
@@ -46,10 +46,10 @@ public:
                        const char *working_directory);
 
   /*!
-  Overload for convenient usage from C++.
+  Overload of start for convenient usage from C++.
 
-  args has the same restrictions as argv in /see process_start except that the
-  last element does not have to be null.
+  \param args Has the same restrictions as argv in /see process_start except
+  that it should not end with NULL (which is added in this function).
   */
   Process::Error start(const std::vector<std::string> &args,
                        const std::string *working_directory);
@@ -83,8 +83,10 @@ public:
   /*! /see process_system_error */
   static unsigned int system_error();
 
+  /*! /see process_system_error_string */
   static Process::Error system_error_string(char **error_string);
 
+  /*! /see process_system_error_string_free */
   static void system_error_string_free(char *error_string);
 
 private:

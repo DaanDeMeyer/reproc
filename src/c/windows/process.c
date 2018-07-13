@@ -54,6 +54,8 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   // Make sure process_start is only called once for each process_init call
   assert(process->info.hProcess == NULL);
 
+  // Predeclare every variable so we can use goto
+
   HANDLE child_stdin = NULL;
   HANDLE child_stdout = NULL;
   HANDLE child_stderr = NULL;
@@ -65,8 +67,8 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   PROCESS_LIB_ERROR error;
 
   // While we already make sure the child process only inherits the child pipe
-  // handles using STARTUPINFOEXW (see further in this function) we still
-  // disable inheritance of the parent pipe handles to lower the chance of other
+  // handles using STARTUPINFOEXW (see process_utils.c) we still disable
+  // inheritance of the parent pipe handles to lower the chance of other
   // CreateProcess calls (outside of this library) unintentionally inheriting
   // these handles.
   error = pipe_init(&child_stdin, &process->parent_stdin);
@@ -216,8 +218,8 @@ PROCESS_LIB_ERROR process_kill(struct process *process,
   // Check if child process has already exited before sending signal
   PROCESS_LIB_ERROR error = process_wait(process, 0);
 
-  // Return if wait succeeds (which means process has already exited) or if
-  // an error other than a wait timeout occurs during waiting
+  // Return if wait succeeds (which means process has already exited) or if an
+  // error other than a wait timeout occurs during waiting
   if (error != PROCESS_LIB_WAIT_TIMEOUT) { return error; }
 
   SetLastError(0);

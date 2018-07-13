@@ -16,10 +16,11 @@ PROCESS_LIB_ERROR string_join(const char **string_array, int array_length,
     assert(string_array[i]);
   }
 
-  size_t string_length = 1; // Null terminator
+  // Determine length of resulting string first
+  size_t string_length = 1; // Count NULL terminator
   for (int i = 0; i < array_length; i++) {
     string_length += strlen(string_array[i]);
-    if (i < array_length - 1) { string_length++; } // whitespace
+    if (i < array_length - 1) { string_length++; } // Count whitespace
   }
 
   char *string = malloc(sizeof(char) * string_length);
@@ -31,6 +32,7 @@ PROCESS_LIB_ERROR string_join(const char **string_array, int array_length,
     strcpy(current, string_array[i]);
     current += part_length;
 
+    // We add a space after every part string except for the last one
     if (i < array_length - 1) {
       *current = ' ';
       current += 1;
@@ -49,6 +51,8 @@ PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result)
   assert(string);
   assert(result);
 
+  // Determine wstring length (MultiByteToWideChar returns required size if last
+  // two arguments are NULL and 0)
   SetLastError(0);
   int wstring_length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
                                            string, -1, NULL, 0);
@@ -62,6 +66,8 @@ PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result)
   wchar_t *wstring = malloc(sizeof(wchar_t) * wstring_length);
   if (!wstring) { return PROCESS_LIB_MEMORY_ERROR; }
 
+  // Now that we pass our allocated string and its length MultiByteToWideChar
+  // will actually perform the conversion.
   SetLastError(0);
   int written = MultiByteToWideChar(CP_UTF8, 0, string, -1, wstring,
                                     wstring_length);
@@ -80,6 +86,7 @@ PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result)
 
 PROCESS_LIB_ERROR wstring_to_string(const wchar_t *wstring, char **result)
 {
+  // Same logic as string_to_wstring but in the opposite direction
   assert(wstring);
   assert(result);
 
