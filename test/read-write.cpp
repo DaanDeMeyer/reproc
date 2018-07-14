@@ -20,11 +20,14 @@ TEST_CASE("read-write")
   REQUIRE(!error);
 
   std::array<char, 1000> buffer{};
+  // -1 to leave space for null terminator
+  auto buffer_length = static_cast<unsigned int>(buffer.size() - 1);
   unsigned int actual = 0;
 
   SUBCASE("stdout")
   {
     std::string message = "This is stdout";
+    auto message_length = static_cast<unsigned int>(message.length());
 
     int argc = 2;
     const char *argv[3] = { ECHO_PATH, "stdout", nullptr };
@@ -32,7 +35,7 @@ TEST_CASE("read-write")
     error = process_start(process, argc, argv, NOOP_DIR);
     REQUIRE(!error);
 
-    error = process_write(process, message.data(), message.length(), &actual);
+    error = process_write(process, message.data(), message_length, &actual);
     REQUIRE(!error);
 
     error = process_close_stdin(process);
@@ -41,7 +44,7 @@ TEST_CASE("read-write")
     std::stringstream ss;
 
     while (true) {
-      error = process_read(process, buffer.data(), buffer.size() - 1, &actual);
+      error = process_read(process, buffer.data(), buffer_length, &actual);
       if (error) { break; }
 
       buffer[actual] = '\0';
@@ -54,6 +57,7 @@ TEST_CASE("read-write")
   SUBCASE("stderr")
   {
     std::string message = "This is stderr";
+    auto message_length = static_cast<unsigned int>(message.length());
 
     int argc = 2;
     const char *argv[3] = { ECHO_PATH, "stderr", nullptr };
@@ -61,7 +65,7 @@ TEST_CASE("read-write")
     error = process_start(process, argc, argv, NOOP_DIR);
     REQUIRE(!error);
 
-    error = process_write(process, message.data(), message.length(), &actual);
+    error = process_write(process, message.data(), message_length, &actual);
     REQUIRE(!error);
 
     error = process_close_stdin(process);
@@ -70,7 +74,7 @@ TEST_CASE("read-write")
     std::stringstream ss;
 
     while (true) {
-      error = process_read_stderr(process, buffer.data(), buffer.size() - 1,
+      error = process_read_stderr(process, buffer.data(), message_length,
                                   &actual);
       if (error) { break; }
 

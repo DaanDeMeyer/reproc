@@ -14,10 +14,11 @@ int main()
   if (error) { return 1; }
 
   std::array<char, 1024> buffer{};
+  auto buffer_length = static_cast<unsigned int>(buffer.size() - 1);
   unsigned int actual = 0;
 
   while (true) {
-    error = process.read(buffer.data(), buffer.size() - 1, &actual);
+    error = process.read(buffer.data(), buffer_length, &actual);
     if (error) { break; }
 
     buffer[actual] = '\0';
