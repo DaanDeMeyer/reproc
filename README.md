@@ -1,9 +1,10 @@
 # process-lib <!-- omit in toc -->
 
 [![Build Status](https://travis-ci.com/DaanDeMeyer/process-lib.svg?branch=master)](https://travis-ci.com/DaanDeMeyer/process-lib)
-[![Build status](https://ci.appveyor.com/api/projects/status/nssmvol3nj683akq?svg=true)](https://ci.appveyor.com/project/DaanDeMeyer/process-lib) 
+[![Build status](https://ci.appveyor.com/api/projects/status/nssmvol3nj683akq?svg=true)](https://ci.appveyor.com/project/DaanDeMeyer/process-lib)
 [![Join the chat at https://gitter.im/process-lib/Lobby](https://badges.gitter.im/process-lib/Lobby.svg)](https://gitter.im/process-lib/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+- [Questions](#questions)
 - [Installation](#installation)
   - [FetchContent](#fetchcontent)
   - [Git Submodule](#git-submodule)
@@ -19,6 +20,13 @@
   - [(POSIX) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
   - [(POSIX) Check if execve call was succesful](#posix-check-if-execve-call-was-succesful)
   - [Avoiding resource leaks](#avoiding-resource-leaks)
+
+## Questions
+
+If you have any questions after reading the readme and the documentation in
+[process.h](include/c/process.h)/[process.hpp](include/cpp/process.hpp) you can
+either make an issue or ask the question directly in
+[gitter](https://gitter.im/process-lib/Lobby).
 
 ## Installation
 
@@ -104,7 +112,7 @@ set(PROCESS_LIB_BUILD_CPP_WRAPPER ON CACHE BOOL FORCE)
 ## Usage
 
 See [examples/cmake-help.c](examples/cmake-help.c) for an example that uses
-process-lib to print the cmake CLI --help output.
+process-lib to print the CMake CLI --help output.
 [examples/cmake-help.cpp](examples/cmake-help.cpp) does the same but with the
 C++ API.
 
