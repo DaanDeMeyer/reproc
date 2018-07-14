@@ -1,6 +1,6 @@
-#include "process.hpp"
+#include "process-lib/process.hpp"
 
-#include <process.h>
+#include <process-lib/process.h>
 
 #include <cstdlib>
 #include <new>

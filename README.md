@@ -24,8 +24,8 @@
 ## Questions
 
 If you have any questions after reading the readme and the documentation in
-[process.h](include/c/process.h)/[process.hpp](include/cpp/process.hpp) you can
-either make an issue or ask the question directly in
+[process.h](include/c/process-lib/process.h)/[process.hpp](include/cpp/process-lib/process.hpp)
+you can either make an issue or ask the question directly in
 [gitter](https://gitter.im/process-lib/Lobby).
 
 ## Installation
@@ -52,49 +52,79 @@ if(NOT PROCESS_LIB_POPULATED)
   add_subdirectory(${PROCESS_LIB_SOURCE_DIR} ${PROCESS_LIB_BINARY_DIR})
 endif()
 
-target_link_libraries(executable process)
+add_executable(myapp myapp.c)
+target_link_libraries(myapp process-lib::process-lib)
 ```
 
-### Git Submodule
+### Git submodule/vendor
 
 If you can't use CMake 3.11 or higher, you can add process-lib as a git
 submodule instead:
 
 ```bash
+# In your application source directory
 mkdir third-party
 cd third-party
 git submodule add https://github.com/DaanDeMeyer/process-lib.git
-# Optionally checkout a specific commit
+# Optionally checkout a specific commit. This is usually a commit that
+# corresponds to a Github release.
 cd process-lib
 git checkout 41f90d0
+cd ../..
+# Commit the result
+git add third-party
+git commit -m "Added process-lib as a Git submodule"
 ```
-
-Commit the result and you can call `add_subdirectory` with the process-lib
-directory:
-
-```cmake
-add_subdirectory(third-party/process-lib)
-
-target_link_libraries(executable process)
-```
-
-### Vendor
 
 If you're not using git you can download a zip/tar of the source code from
 Github and manually put the code in a third-party directory. To update you
-overwrite the process-lib directory with the contents of an updated zip/tar from
-Github.
+overwrite the directory with the contents of an updated zip/tar from Github.
 
-After unzipping the source code to third-party/process-lib you can then add the
-directory with `add_subdirectory` in CMake.
+You can now call `add_subdirectory` in the root CMakeLists.txt file of your
+application:
 
 ```cmake
 add_subdirectory(third-party/process-lib)
-
-target_link_libraries(executable process)
+add_executable(myapp myapp.c)
+target_link_libraries(myapp process-lib::process-lib)
 ```
 
-### CMake Options
+### Install
+
+process-lib can be installed and later found via the CMake `find_package`
+command. An example of how this works:
+
+```bash
+git clone https://github.com/DaanDeMeyer/process-lib.git
+cd process-lib
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
+cmake --build . --target install # Might need root for this
+```
+
+In the root CMakeLists.txt file of your application:
+
+```cmake
+find_package(process-lib REQUIRED)
+add_executable(myapp myapp.c)
+target_link_libraries(myapp process-lib::process-lib)
+```
+
+The install prefix specified when installing process-lib might not be in the
+default search path of CMake. If this is the case you can tell CMake where to
+search for process-lib as follows:
+
+```bash
+cmake -DCMAKE_PREFIX_PATH=<process-lib-install-dir> ..
+```
+
+Installing is the way to go if you want to use process-lib with other build
+systems than CMake. After installing you can use your build systems preferred
+way of finding libraries to find process-lib. Refer to your build system's
+documentation for more info.
+
+### CMake options
 
 process-lib supports the following CMake options:
 
@@ -111,6 +141,8 @@ set(PROCESS_LIB_BUILD_CPP_WRAPPER ON CACHE BOOL FORCE)
 
 ## Usage
 
+After installing
+
 See [examples/cmake-help.c](examples/cmake-help.c) for an example that uses
 process-lib to print the CMake CLI --help output.
 [examples/cmake-help.cpp](examples/cmake-help.cpp) does the same but with the
@@ -118,11 +150,12 @@ C++ API.
 
 ## Documentation
 
-API documentation can be found in [process.h](include/c/process.h).
+API documentation can be found in [process.h](include/c/process-lib/process.h).
 Documentation for the C++ wrapper can be found in
-[process.hpp](include/cpp/process.hpp) (which mostly refers to process.h).
+[process.hpp](include/cpp/process-lib/process.hpp) (which mostly refers to
+process.h).
 
-## Error Handling
+## Error handling
 
 There are lots of things that can go wrong when working with child processes.
 process-lib tries to unify the different platform errors as much as possible but
@@ -167,9 +200,8 @@ unknown errors and add them to process-lib.
   since most of the time you'll want to read/write to the process or wait until
   it exits normally.
 
-  If someone runs into this problem, I mitigated it in process-lib's tests by
-  waiting a few milliseconds using `process_wait` before terminating the child
-  process.
+  If someone runs into this problem, process-lib's tests mitigate it by waiting
+  a few milliseconds using `process_wait` before terminating the child process.
 
 - File descriptors/handles created by process-lib can leak to child processes
   not spawned by process-lib if the application is multithreaded. This is not

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "process.h"
+#include "process-lib/process.h"
 
 PROCESS_LIB_ERROR pipe_init(int *read, int *write);
 
