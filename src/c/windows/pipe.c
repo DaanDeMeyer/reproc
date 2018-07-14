@@ -3,11 +3,10 @@
 #include <assert.h>
 
 // Ensures pipe is inherited by child process
-static SECURITY_ATTRIBUTES security_attributes = {
-  .nLength = sizeof(SECURITY_ATTRIBUTES),
-  .bInheritHandle = TRUE,
-  .lpSecurityDescriptor = NULL
-};
+static SECURITY_ATTRIBUTES security_attributes =
+    { .nLength = sizeof(SECURITY_ATTRIBUTES),
+      .bInheritHandle = TRUE,
+      .lpSecurityDescriptor = NULL };
 
 PROCESS_LIB_ERROR pipe_init(HANDLE *read, HANDLE *write)
 {
@@ -51,10 +50,12 @@ PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer,
     }
   }
 
+  if (*actual != to_write) { return PROCESS_LIB_PARTIAL_WRITE; }
+
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, unsigned int to_read,
+PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, unsigned int size,
                             unsigned int *actual)
 {
   assert(pipe);
@@ -63,7 +64,7 @@ PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, unsigned int to_read,
 
   SetLastError(0);
   // Cast is valid since DWORD = unsigned int on Windows
-  if (!ReadFile(pipe, buffer, to_read, (LPDWORD) actual, NULL)) {
+  if (!ReadFile(pipe, buffer, size, (LPDWORD) actual, NULL)) {
     switch (GetLastError()) {
     case ERROR_OPERATION_ABORTED: return PROCESS_LIB_INTERRUPTED;
     case ERROR_BROKEN_PIPE: return PROCESS_LIB_STREAM_CLOSED;

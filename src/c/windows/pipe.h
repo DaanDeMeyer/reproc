@@ -11,5 +11,5 @@ PROCESS_LIB_ERROR pipe_disable_inherit(HANDLE pipe);
 PROCESS_LIB_ERROR pipe_write(HANDLE pipe, const void *buffer,
                              unsigned int to_write, unsigned int *actual);
 
-PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, unsigned int to_read,
+PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, unsigned int size,
                             unsigned int *actual);

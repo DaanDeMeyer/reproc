@@ -1,10 +1,10 @@
 #include "process_utils.h"
 
-#include <stdlib.h>
-
 #include <assert.h>
 
 #if defined(HAS_ATTRIBUTE_LIST)
+#include <stdlib.h>
+
 PROCESS_LIB_ERROR
 static handle_inherit_list_create(HANDLE *handles, int amount,
                                   LPPROC_THREAD_ATTRIBUTE_LIST *result)

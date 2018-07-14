@@ -63,8 +63,10 @@ typedef enum {
   PROCESS_LIB_SYMLINK_LOOP,
   /*! The program or working directory was not found */
   PROCESS_LIB_FILE_NOT_FOUND,
-  /*! The give name was too long (most system have path length limits) */
-  PROCESS_LIB_NAME_TOO_LONG
+  /*! The given name was too long (most system have path length limits) */
+  PROCESS_LIB_NAME_TOO_LONG,
+  /*! Only part of the buffer was written to the stdin of the child prcess */
+  PROCESS_LIB_PARTIAL_WRITE
 } PROCESS_LIB_ERROR;
 
 /*!
@@ -166,6 +168,7 @@ Possible errors:
 - PROCESS_LIB_STREAM_CLOSED
 - PROCESS_LIB_INTERRUPTED
 - PROCESS_LIB_IO_ERROR
+- PROCESS_LIB_PARTIAL_WRITE
 */
 PROCESS_LIB_ERROR process_write(process_type *process, const void *buffer,
                                 unsigned int to_write, unsigned int *actual);
@@ -189,8 +192,8 @@ Possible errors:
 PROCESS_LIB_ERROR process_close_stdin(process_type *process);
 
 /*!
-Reads up to \p to_read bytes from the child process' standard output and
-stores them in \p buffer. \p actual is set to the amount of bytes actually read.
+Reads up to \p size bytes from the child process' standard output and stores
+them in \p buffer. \p actual is set to the amount of bytes actually read.
 
 Assuming no other errors occur this function keeps returning PROCESS_LIB_SUCCESS
 until the child process closes its standard output stream (happens automatically
@@ -217,7 +220,7 @@ function completes.
 \param[in,out] process Cannot be NULL.
 \param[out] buffer Pointer to memory block where bytes read from stdout should
 be stored.
-\param[in] to_read Maximum number of bytes to read from stdout.
+\param[in] size Maximum number of bytes to read from stdout.
 \param[out] actual Actual amount of bytes read from stdout.
 
 \return PROCESS_LIB_ERROR
@@ -228,12 +231,11 @@ Possible errors:
 - PROCESS_LIB_IO_ERROR
 */
 PROCESS_LIB_ERROR process_read(process_type *process, void *buffer,
-                               unsigned int to_read, unsigned int *actual);
+                               unsigned int size, unsigned int *actual);
 
 /*! \see process_read for the standard error stream of the child process. */
 PROCESS_LIB_ERROR process_read_stderr(process_type *process, void *buffer,
-                                      unsigned int to_read,
-                                      unsigned int *actual);
+                                      unsigned int size, unsigned int *actual);
 
 /*!
 Waits the specified amount of time for the process to exit.

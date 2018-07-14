@@ -1,4 +1,5 @@
 #include <process.h>
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +19,7 @@ int main(void)
   // process_start takes argc and argv as passed to the main function. Note that
   // argc does not include the final NULL element of the array.
   int argc = 2;
-  const char *argv[3] = {"cmake", "--help", NULL};
+  const char *argv[3] = { "cmake", "--help", NULL };
 
   // process_start takes argv, argc and the working directory of the child
   // process. If the working directory is NULL the working directory of the

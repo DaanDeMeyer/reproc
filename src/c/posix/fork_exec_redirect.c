@@ -117,7 +117,8 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
   pipe_close(&error_pipe_write);
 
   int exec_error = 0;
-  error = pipe_read(error_pipe_read, &exec_error, sizeof(exec_error), NULL);
+  unsigned int actual = 0;
+  error = pipe_read(error_pipe_read, &exec_error, sizeof(exec_error), &actual);
   pipe_close(&error_pipe_read);
 
   // PROCESS_LIB_STREAM_CLOSED indicates the execve was succesful (because
@@ -125,6 +126,13 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
   // process)
   if (error != PROCESS_LIB_SUCCESS && error != PROCESS_LIB_STREAM_CLOSED) {
     return error;
+  }
+
+  // If an error was written to the error pipe check that a full integer was
+  // actually written. We don't expect a partial write to happen but if it ever
+  // happens this should make it easier to discover
+  if (error != PROCESS_LIB_STREAM_CLOSED && actual != sizeof(exec_error)) {
+    return PROCESS_LIB_UNKNOWN_ERROR;
   }
 
   // If read does not return 0 an error will have occurred in the child process

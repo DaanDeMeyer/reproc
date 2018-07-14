@@ -132,10 +132,9 @@ if(PROCESS_LIB_BUILD_TESTS)
   set_property(TARGET tests PROPERTY RUNTIME_OUTPUT_DIRECTORY test)
 
   target_link_libraries(tests PRIVATE common-warnings process)
-  target_include_directories(tests PRIVATE third-party/doctest/doctest)
+  target_include_directories(tests SYSTEM PRIVATE third-party/doctest)
 
   target_compile_definitions(tests PRIVATE
-    DOCTEST_CONFIG_TREAT_CHAR_STAR_AS_STRING
     # Pass paths as compile time parameters so tests can be run from any
     # directory without hardcoding the path in the tests which differs for each
     # user.

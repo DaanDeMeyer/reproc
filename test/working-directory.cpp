@@ -1,10 +1,11 @@
-#include <cstdlib>
 #include <doctest.h>
 #include <process.h>
 
+#include <cstdlib>
+
 TEST_CASE("working-directory")
 {
-  process_type *process = (process_type *) malloc(process_size());
+  auto process = static_cast<process_type *>(malloc(process_size()));
   REQUIRE(process);
 
   PROCESS_LIB_ERROR error;
@@ -14,7 +15,7 @@ TEST_CASE("working-directory")
   REQUIRE(!error);
 
   int argc = 1;
-  const char *argv[2] = { NOOP_PATH, NULL };
+  const char *argv[2] = { NOOP_PATH, nullptr };
   const char *working_directory = NOOP_DIR;
 
   error = process_start(process, argc, argv, working_directory);

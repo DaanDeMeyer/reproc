@@ -1,7 +1,6 @@
 #include "handle.h"
 
 #include <assert.h>
-#include <stdlib.h>
 
 void handle_close(HANDLE *handle_address)
 {
@@ -19,5 +18,3 @@ void handle_close(HANDLE *handle_address)
   // after CloseHandle
   *handle_address = NULL;
 }
-
-

@@ -1,27 +1,27 @@
 #include <process.hpp>
+
+#include <array>
 #include <iostream>
 
-int main(void)
+int main()
 {
   Process::Error error = Process::SUCCESS;
   Process process;
 
-  int argc = 2;
-  const char *argv[3] = {"cmake", "--help", nullptr};
+  std::vector<std::string> args = { "cmake", "--help" };
 
-  error = process.start(argc, argv, nullptr);
+  error = process.start(args, nullptr);
   if (error) { return 1; }
 
-  char buffer[1024];
-  unsigned int buffer_size = 1024;
-  unsigned int actual;
+  std::array<char, 1024> buffer{};
+  unsigned int actual = 0;
 
   while (true) {
-    error = process.read(buffer, buffer_size - 1, &actual);
+    error = process.read(buffer.data(), buffer.size() - 1, &actual);
     if (error) { break; }
 
     buffer[actual] = '\0';
-    std::cout << buffer;
+    std::cout << buffer.data();
   }
 
   if (error != Process::STREAM_CLOSED) { return 1; }

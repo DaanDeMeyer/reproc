@@ -148,26 +148,25 @@ PROCESS_LIB_ERROR process_close_stdin(struct process *process)
 }
 
 PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
-                               unsigned int to_read, unsigned int *actual)
+                               unsigned int size, unsigned int *actual)
 {
   assert(process);
   assert(process->parent_stdout);
   assert(buffer);
   assert(actual);
 
-  return pipe_read(process->parent_stdout, buffer, to_read, actual);
+  return pipe_read(process->parent_stdout, buffer, size, actual);
 }
 
 PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
-                                      unsigned int to_read,
-                                      unsigned int *actual)
+                                      unsigned int size, unsigned int *actual)
 {
   assert(process);
   assert(process->parent_stderr);
   assert(buffer);
   assert(actual);
 
-  return pipe_read(process->parent_stderr, buffer, to_read, actual);
+  return pipe_read(process->parent_stderr, buffer, size, actual);
 }
 
 PROCESS_LIB_ERROR process_wait(struct process *process,

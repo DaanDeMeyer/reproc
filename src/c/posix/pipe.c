@@ -43,6 +43,7 @@ PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer,
                              unsigned int to_write, unsigned int *actual)
 {
   assert(buffer);
+  assert(actual);
 
   errno = 0;
   ssize_t bytes_written = write(pipe, buffer, to_write);
@@ -56,18 +57,21 @@ PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer,
     }
   }
 
-  if (actual) { *actual = (unsigned int) bytes_written; }
+  *actual = (unsigned int) bytes_written;
+
+  if (*actual != to_write) { return PROCESS_LIB_PARTIAL_WRITE; }
 
   return PROCESS_LIB_SUCCESS;
 }
 
-PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, unsigned int to_read,
+PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
                             unsigned int *actual)
 {
   assert(buffer);
+  assert(actual);
 
   errno = 0;
-  ssize_t bytes_read = read(pipe, buffer, to_read);
+  ssize_t bytes_read = read(pipe, buffer, size);
 
   // read is different from write in that it returns 0 to indicate the other end
   // of the pipe was closed instead of setting errno to EPIPE
@@ -80,7 +84,7 @@ PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, unsigned int to_read,
     }
   }
 
-  if (actual) { *actual = (unsigned int) bytes_read; }
+  *actual = (unsigned int) bytes_read;
 
   return PROCESS_LIB_SUCCESS;
 }

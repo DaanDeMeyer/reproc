@@ -1,7 +1,7 @@
 #pragma once
 
-#include <sys/types.h>
 #include <limits.h>
+#include <sys/types.h>
 
 extern const pid_t PID_NULL;
 extern const int PIPE_NULL;

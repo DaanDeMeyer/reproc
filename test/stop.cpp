@@ -1,13 +1,14 @@
-#include <cstdlib>
 #include <doctest.h>
 #include <process.h>
 
+#include <cstdlib>
+
 TEST_CASE("stop")
 {
-  const char *argv[2] = { INFINITE_PATH, 0 };
+  const char *argv[2] = { INFINITE_PATH, nullptr };
   int argc = 1;
 
-  process_type *process = (process_type *) malloc(process_size());
+  auto process = static_cast<process_type *>(malloc(process_size()));
   REQUIRE(process);
 
   PROCESS_LIB_ERROR error;
@@ -16,7 +17,7 @@ TEST_CASE("stop")
   error = process_init(process);
   REQUIRE(!error);
 
-  error = process_start(process, argc, argv, 0);
+  error = process_start(process, argc, argv, nullptr);
   REQUIRE(!error);
 
   // Wait 50ms to avoid terminating the process on Windows before it is
