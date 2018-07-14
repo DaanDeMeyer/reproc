@@ -241,9 +241,8 @@ Disadvantages:
   Because including process.h does not give the compiler access to the full
   definition of the process struct it is unable to allocate its implementation
   on the stack since it doesn't know its size. Allocating on the stack is still
-  possible but requires functions such as
-  [alloca](https://linux.die.net/man/3/alloca) which is harder compared to just
-  writing
+  possible but requires functions such as `alloca` which is harder compared to
+  just writing
 
   ```c
   process_type process;
