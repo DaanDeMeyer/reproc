@@ -11,7 +11,7 @@ option(PROCESS_LIB_CI "Add -Werror or equivalent" OFF)
 if(MSVC)
   set(PROCESS_LIB_WARNINGS
     /W3
-    $<$<BOOL:${PROCESS_LIB_CI}>:/WX
+    $<$<BOOL:${PROCESS_LIB_CI}>:/WX>
   )
 else()
   set(PROCESS_LIB_WARNINGS
