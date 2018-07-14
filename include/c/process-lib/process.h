@@ -51,7 +51,7 @@ typedef enum {
   PROCESS_LIB_INTERRUPTED,
   /*! The current process was not allowed to spawn any more child processes. */
   PROCESS_LIB_PROCESS_LIMIT_REACHED,
-  /*! (Windows) One of the UTF-8 strings passed to the library did not contain
+  /*! One of the UTF-8 strings passed to the library did not contain
   valid unicode. */
   PROCESS_LIB_INVALID_UNICODE,
   /*! The current process does not have permission to execute the program */
@@ -247,8 +247,8 @@ Additional errors when milliseconds is 0 or PROCESS_LIB_INFINITE:
 - PROCESS_LIB_WAIT_TIMEOUT
 
 Additional errors when milliseconds is not 0 or PROCESS_LIB_INFINITE:
-- (POSIX) PROCESS_LIB_PROCESS_LIMIT_REACHED
-- (POSIX) PROCESS_LIB_MEMORY_ERROR
+- PROCESS_LIB_PROCESS_LIMIT_REACHED
+- PROCESS_LIB_MEMORY_ERROR
 */
 PROCESS_LIB_ERROR process_wait(process_type *process,
                                unsigned int milliseconds);
