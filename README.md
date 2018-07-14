@@ -1,7 +1,8 @@
 # process-lib <!-- omit in toc -->
 
 [![Build Status](https://travis-ci.com/DaanDeMeyer/process-lib.svg?branch=master)](https://travis-ci.com/DaanDeMeyer/process-lib)
-[![Build status](https://ci.appveyor.com/api/projects/status/nssmvol3nj683akq?svg=true)](https://ci.appveyor.com/project/DaanDeMeyer/process-lib) [![Join the chat at https://gitter.im/process-lib/Lobby](https://badges.gitter.im/process-lib/Lobby.svg)](https://gitter.im/process-lib/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build status](https://ci.appveyor.com/api/projects/status/nssmvol3nj683akq?svg=true)](https://ci.appveyor.com/project/DaanDeMeyer/process-lib) 
+[![Join the chat at https://gitter.im/process-lib/Lobby](https://badges.gitter.im/process-lib/Lobby.svg)](https://gitter.im/process-lib/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 - [Installation](#installation)
   - [FetchContent](#fetchcontent)
