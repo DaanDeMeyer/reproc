@@ -51,7 +51,7 @@ target_link_libraries(executable process)
 If you can't use CMake 3.11 or higher, you can add process-lib as a git
 submodule instead:
 
-```sh
+```bash
 mkdir third-party
 cd third-party
 git submodule add https://github.com/DaanDeMeyer/process-lib.git
@@ -148,8 +148,8 @@ unknown errors and add them to process-lib.
 
 - (Windows) `process_kill` is not guaranteed to kill a child process on Windows.
   For more information, read the Remarks section in the documentation of the
-  [TerminateProcess](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms686714(v=vs.85).aspx>)
-  function that process-lib uses to kill child processes on Windows.
+  `TerminateProcess` function that process-lib uses to kill child processes on
+  Windows.
 
 - (Windows) Immediately terminating a process after starting it on Windows might
   result in an error window with error code `0xc0000142` popping up. The error
