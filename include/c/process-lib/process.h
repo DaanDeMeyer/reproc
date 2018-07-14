@@ -49,9 +49,6 @@ typedef enum {
   /*! A waiting system call (read, write, close, ...) was interrupted by the
   system. */
   PROCESS_LIB_INTERRUPTED,
-  /*! (POSIX) Something wen wrong during I/O. The Linux docs do not go in depth
-  on when exactly this error occurs. */
-  PROCESS_LIB_IO_ERROR,
   /*! The current process was not allowed to spawn any more child processes. */
   PROCESS_LIB_PROCESS_LIMIT_REACHED,
   /*! (Windows) One of the UTF-8 strings passed to the library did not contain
@@ -138,7 +135,6 @@ Possible errors:
 - PROCESS_LIB_PROCESS_LIMIT_REACHED
 - PROCESS_LIB_MEMORY_ERROR
 - PROCESS_LIB_INTERRUPTED
-- PROCESS_LIB_IO_ERROR
 - PROCESS_LIB_INVALID_UNICODE
 - PROCESS_LIB_PERMISSION_DENIED
 - PROCESS_LIB_SYMLINK_LOOP
@@ -167,7 +163,6 @@ requested.
 Possible errors:
 - PROCESS_LIB_STREAM_CLOSED
 - PROCESS_LIB_INTERRUPTED
-- PROCESS_LIB_IO_ERROR
 - PROCESS_LIB_PARTIAL_WRITE
 */
 PROCESS_LIB_ERROR process_write(process_type *process, const void *buffer,
@@ -186,8 +181,6 @@ the standard input stream can be closed using this function.
 
 Possible errors:
 - PROCESS_LIB_INTERRUPTED
-- PROCESS_LIB_IO_ERROR
-- PROCESS_LIB_UNKNOWN_ERROR
 */
 PROCESS_LIB_ERROR process_close_stdin(process_type *process);
 
@@ -228,7 +221,6 @@ be stored.
 Possible errors:
 - PROCESS_LIB_STREAM_CLOSED
 - PROCESS_LIB_INTERRUPTED
-- PROCESS_LIB_IO_ERROR
 */
 PROCESS_LIB_ERROR process_read(process_type *process, void *buffer,
                                unsigned int size, unsigned int *actual);

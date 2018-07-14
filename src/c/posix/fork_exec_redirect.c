@@ -144,7 +144,6 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
     switch (exec_error) {
     case EACCES: return PROCESS_LIB_PERMISSION_DENIED;
     case EPERM: return PROCESS_LIB_PERMISSION_DENIED;
-    case EIO: return PROCESS_LIB_IO_ERROR;
     case ELOOP: return PROCESS_LIB_SYMLINK_LOOP;
     case ENOMEM: return PROCESS_LIB_MEMORY_ERROR;
     case ENOENT: return PROCESS_LIB_FILE_NOT_FOUND;

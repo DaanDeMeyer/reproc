@@ -52,7 +52,6 @@ PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer,
     switch (errno) {
     case EPIPE: return PROCESS_LIB_STREAM_CLOSED;
     case EINTR: return PROCESS_LIB_INTERRUPTED;
-    case EIO: return PROCESS_LIB_IO_ERROR;
     default: return PROCESS_LIB_UNKNOWN_ERROR;
     }
   }
@@ -79,7 +78,6 @@ PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
   if (bytes_read == -1) {
     switch (errno) {
     case EINTR: return PROCESS_LIB_INTERRUPTED;
-    case EIO: return PROCESS_LIB_IO_ERROR;
     default: return PROCESS_LIB_UNKNOWN_ERROR;
     }
   }
