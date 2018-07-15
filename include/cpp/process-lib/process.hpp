@@ -97,7 +97,7 @@ public:
   /*! \see process_system_error */
   static unsigned int system_error();
 
-  static const char *error_to_string(Process::Error error);
+  static std::string error_to_string(Process::Error error);
 
 private:
   struct process *process;

@@ -159,7 +159,11 @@ Process::Error Process::exit_status(int *exit_status)
 
 unsigned int Process::system_error() { return process_system_error(); }
 
-const char *Process::error_to_string(Process::Error error)
+std::string Process::error_to_string(Process::Error error)
 {
+  if (error == Process::UNKNOWN_ERROR) {
+    return "process-lib => unknown error. system error = " +
+           std::to_string(system_error());
+  }
   return process_error_to_string(static_cast<PROCESS_LIB_ERROR>(error));
 }
