@@ -169,6 +169,7 @@ if(PROCESS_LIB_BUILD_TESTS)
   add_dependencies(tests echo infinite noop)
   process_lib_set_cxx_standard(tests 11)
   set_target_properties(tests PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY test
     CXX_CLANG_TIDY "${PROCESS_LIB_CLANG_TIDY}"
   )
   target_link_libraries(tests PRIVATE process-lib)
