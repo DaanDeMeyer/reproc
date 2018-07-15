@@ -34,6 +34,7 @@ if (PROCESS_LIB_RUN_CLANG_TIDY)
   if(PROCESS_LIB_CLANG_TIDY)
     message(STATUS "clang-tidy found")
   else()
+    unset(PROCESS_LIB_CLANG_TIDY)
     message(WARNING "clang-tidy not found")
   endif()
 
