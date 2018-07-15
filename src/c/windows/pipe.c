@@ -66,7 +66,7 @@ PROCESS_LIB_ERROR pipe_read(HANDLE pipe, void *buffer, unsigned int size,
   SetLastError(0);
   // Cast is valid since DWORD = unsigned int on Windows
   // ReadFile always sets bytes_read to 0 so we don't do it ourselves
-  if (!ReadFile(pipe, buffer, size, bytes_read, NULL)) {
+  if (!ReadFile(pipe, buffer, size, (LPDWORD) bytes_read, NULL)) {
     switch (GetLastError()) {
     case ERROR_OPERATION_ABORTED: return PROCESS_LIB_INTERRUPTED;
     case ERROR_BROKEN_PIPE: return PROCESS_LIB_STREAM_CLOSED;
