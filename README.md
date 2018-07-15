@@ -124,7 +124,7 @@ systems than CMake. After installing you can use your build systems preferred
 way of finding libraries to find process-lib. Refer to your build system's
 documentation for more info.
 
-### CMake options
+### CMake user options
 
 process-lib supports the following CMake options:
 
@@ -440,3 +440,27 @@ mitigate this in two ways:
   struct containing the handles it should inherit can still unintentionally
   inherit handles meant for a process-lib child process. process-lib uses the
   `STARTUPINFOEXW` struct if it is available.
+
+## Contributing
+
+When making a pull request:
+
+- Format your changes with `clang-format` and run `clang-tidy` locally if
+  possible since it will run in CI as well.
+- Make sure all tests still pass. The tests are located at `build/test/tests`
+  after building.
+- When adding a new feature, make sure to implement it for POSIX and Windows.
+- When adding a new feature, add a new test for it or modify an existing one to
+  test the new feature.
+- Make sure to update the relevant documentation if needed or write new
+  documentation.
+
+If you don't have access to every platform, make a pull request and CI will
+compile and run the tests on the platforms you don't have access to.
+
+### CMake developer options
+
+When working on process-lib developers can also enable the
+`PROCESS_LIB_RUN_CLANG_TIDY` option to run `clang-tidy` as part of the build.
+This requires `clang-tidy` to be in CMake's search path (PATH is included in
+CMake's search path).
