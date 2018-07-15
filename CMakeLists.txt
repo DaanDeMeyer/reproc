@@ -82,7 +82,7 @@ target_compile_options(process-lib PRIVATE ${PROCESS_LIB_WARNINGS})
 # want to use the install location of the headers (e.g. /usr/include) as the
 # include directory
 target_include_directories(process-lib PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/c>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/c>
 )
 
 if(WIN32)
@@ -141,7 +141,7 @@ if(PROCESS_LIB_BUILD_CPP_WRAPPER)
     CXX_CLANG_TIDY "${PROCESS_LIB_CLANG_TIDY}"
   )
   target_include_directories(process-lib PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/cpp>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/cpp>
   )
   target_sources(process-lib PRIVATE src/cpp/process.cpp)
 endif()
