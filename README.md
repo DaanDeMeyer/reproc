@@ -12,7 +12,7 @@
   - [CMake user options](#cmake-user-options)
 - [Usage](#usage)
 - [Documentation](#documentation)
-- [Error handling](#error-handling)
+- [Unknown errors](#unknown-errors)
 - [Gotcha's](#gotchas)
 - [Design](#design)
   - [Opaque pointer](#opaque-pointer)
@@ -157,18 +157,18 @@ Documentation for the C++ wrapper can be found in
 [process.hpp](include/cpp/process-lib/process.hpp) (which mostly refers to
 process.h).
 
-## Error handling
+## Unknown errors
 
 There are lots of things that can go wrong when working with child processes.
 process-lib tries to unify the different platform errors as much as possible but
 this is an ongoing effort. In particular, the Windows Win32 documentation mostly
 does not specify what errors a function can throw. As a result, when an error
 occurs on Windows process-lib will usually return `PROCESS_LIB_UNKNOWN_ERROR`.
-However, process-lib also provides the function `process_system_error` which
-gives the user the actual system error. Use this function to retrieve the actual
-system error and file an issue with the system error and the process-lib
-function that returned it. This way we can incrementally find all remaining
-unknown errors and add them to process-lib.
+To get more information process-lib provides a function `process_system_error`
+which gives the user the actual system error. Use this function to retrieve the
+actual system error and file an issue with the system error and the process-lib
+function that returned it. This way we can incrementally identify unknown errors
+and add them to process-lib.
 
 ## Gotcha's
 
