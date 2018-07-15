@@ -4,7 +4,40 @@ project(process-lib VERSION 0.0.1 LANGUAGES C)
 option(PROCESS_LIB_BUILD_TESTS "Build tests" OFF)
 option(PROCESS_LIB_BUILD_EXAMPLES "Build examples" OFF)
 option(PROCESS_LIB_BUILD_CPP_WRAPPER "Build C++ wrapper" OFF)
-option(PROCESS_LIB_CI "Add -Werror or equivalent" OFF)
+option(PROCESS_LIB_CI "Add -Werror or equivalent to compiler and clang-tidy" OFF)
+option(PROCESS_LIB_RUN_CLANG_TIDY "Run clang-tidy as part of the build \
+(requires clang-tidy to be in the PATH)" OFF)
+
+### Helpers ###
+
+function(process_lib_set_c_standard TARGET VERSION)
+  set_target_properties(${TARGET} PROPERTIES
+    C_STANDARD ${VERSION}
+    C_STANDARD_REQUIRED ON
+    C_EXTENSIONS OFF
+  )
+endfunction()
+
+function(process_lib_set_cxx_standard TARGET VERSION)
+  set_target_properties(${TARGET} PROPERTIES
+    CXX_STANDARD ${VERSION}
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+  )
+endfunction()
+
+### clang-tidy ###
+
+if (PROCESS_LIB_RUN_CLANG_TIDY)
+  cmake_minimum_required(VERSION 3.6)
+  find_program(PROCESS_LIB_CLANG_TIDY clang-tidy)
+  if(NOT PROCESS_LIB_CLANG_TIDY)
+    message(WARNING "clang-tidy not found")
+  endif()
+  if(PROCESS_LIB_CI)
+    set(PROCESS_LIB_CLANG_TIDY ${PROCESS_LIB_CLANG_TIDY} -warnings-as-errors=*)
+  endif()
+endif()
 
 ### Common Warnings ###
 
@@ -23,32 +56,18 @@ else()
   )
 endif()
 
-function(process_lib_set_c_standard TARGET VERSION)
-  set_target_properties(${TARGET} PROPERTIES
-    C_STANDARD ${VERSION}
-    C_STANDARD_REQUIRED ON
-    C_EXTENSIONS OFF
-  )
-endfunction()
-
-function(process_lib_set_cxx_standard TARGET VERSION)
-  set_target_properties(${TARGET} PROPERTIES
-    CXX_STANDARD ${VERSION}
-    CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS OFF
-  )
-endfunction()
-
 ### Library ###
 
 add_library(process-lib "")
 add_library(process-lib::process-lib ALIAS process-lib)
 
-# Make sure we get libprocess.so (Unix) and process.lib (Windows)
-set_property(TARGET process-lib PROPERTY OUTPUT_NAME process)
 set_target_properties(process-lib PROPERTIES
+  # Make sure we get libprocess.so (Unix) and process.lib (Windows)
+  OUTPUT_NAME process
   ARCHIVE_OUTPUT_DIRECTORY lib
   LIBRARY_OUTPUT_DIRECTORY lib
+  # Might not be set so surround with quotes so we always have a value
+  C_CLANG_TIDY "${PROCESS_LIB_CLANG_TIDY}"
 )
 process_lib_set_c_standard(process-lib 99)
 
@@ -113,6 +132,9 @@ if(PROCESS_LIB_BUILD_CPP_WRAPPER)
   enable_language(CXX)
 
   process_lib_set_cxx_standard(process-lib 11)
+  set_target_properties(process-lib PROPERTIES
+    CXX_CLANG_TIDY "${PROCESS_LIB_CLANG_TIDY}"
+  )
   target_include_directories(process-lib PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/cpp>
   )
@@ -136,18 +158,19 @@ if(PROCESS_LIB_BUILD_TESTS)
   add_executable(noop test/res/noop.cpp)
   target_compile_options(noop PRIVATE ${PROCESS_LIB_WARNINGS})
 
-  set_property(TARGET echo infinite noop
-    PROPERTY RUNTIME_OUTPUT_DIRECTORY test/res
+  set_target_properties(echo infinite noop PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY test/res
+    CXX_CLANG_TIDY "${PROCESS_LIB_CLANG_TIDY}"
   )
 
   ### Tests ###
 
   add_executable(tests "")
-
   add_dependencies(tests echo infinite noop)
-  set_property(TARGET tests PROPERTY RUNTIME_OUTPUT_DIRECTORY test)
-
   process_lib_set_cxx_standard(tests 11)
+  set_target_properties(tests PROPERTIES
+    CXX_CLANG_TIDY "${PROCESS_LIB_CLANG_TIDY}"
+  )
   target_link_libraries(tests PRIVATE process-lib)
   target_include_directories(tests SYSTEM PRIVATE third-party/doctest)
   target_compile_options(tests PRIVATE ${PROCESS_LIB_WARNINGS})
@@ -179,13 +202,21 @@ if(PROCESS_LIB_BUILD_EXAMPLES)
   target_link_libraries(cmake-help-c PRIVATE process-lib)
   target_compile_options(cmake-help-c PRIVATE ${PROCESS_LIB_WARNINGS})
 
+  set_target_properties(cmake-help-c PROPERTIES
+    C_CLANG_TIDY "${PROCESS_LIB_CLANG_TIDY}"
+  )
+
   add_executable(cmake-help-cpp examples/cmake-help.cpp)
   process_lib_set_cxx_standard(cmake-help-cpp 11)
   target_link_libraries(cmake-help-cpp process-lib)
   target_compile_options(cmake-help-cpp PRIVATE ${PROCESS_LIB_WARNINGS})
 
-  set_property(TARGET cmake-help-c cmake-help-cpp
-    PROPERTY RUNTIME_OUTPUT_DIRECTORY examples
+  set_target_properties(cmake-help-cpp PROPERTIES
+    CXX_CLANG_TIDY "${PROCESS_LIB_CLANG_TIDY}"
+  )
+
+  set_target_properties(cmake-help-c cmake-help-cpp PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY examples
   )
 endif()
 

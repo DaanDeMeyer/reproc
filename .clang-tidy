@@ -18,7 +18,7 @@ Checks:
 -readability-non-const-parameter,
 -cert-err58-cpp
 '
-HeaderFilterRegex: '.*'
+HeaderFilterRegex: '^((?!doctest).)*$'
 AnalyzeTemporaryDtors: false
 ...
 
