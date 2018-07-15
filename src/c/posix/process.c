@@ -65,7 +65,8 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   int child_stdout = PIPE_NULL;
   int child_stderr = PIPE_NULL;
 
-  PROCESS_LIB_ERROR error;
+  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
+
   error = pipe_init(&child_stdin, &process->parent_stdin);
   if (error) { goto cleanup; }
   error = pipe_init(&process->parent_stdout, &child_stdout);
@@ -93,14 +94,15 @@ cleanup:
 }
 
 PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,
-                                unsigned int to_write, unsigned int *actual)
+                                unsigned int to_write,
+                                unsigned int *bytes_written)
 {
   assert(process);
   assert(process->parent_stdin != PIPE_NULL);
   assert(buffer);
-  assert(actual);
+  assert(bytes_written);
 
-  return pipe_write(process->parent_stdin, buffer, to_write, actual);
+  return pipe_write(process->parent_stdin, buffer, to_write, bytes_written);
 }
 
 PROCESS_LIB_ERROR process_close_stdin(struct process *process)
@@ -114,25 +116,26 @@ PROCESS_LIB_ERROR process_close_stdin(struct process *process)
 }
 
 PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
-                               unsigned int size, unsigned int *actual)
+                               unsigned int size, unsigned int *bytes_read)
 {
   assert(process);
   assert(process->parent_stdout != PIPE_NULL);
   assert(buffer);
-  assert(actual);
+  assert(bytes_read);
 
-  return pipe_read(process->parent_stdout, buffer, size, actual);
+  return pipe_read(process->parent_stdout, buffer, size, bytes_read);
 }
 
 PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
-                                      unsigned int size, unsigned int *actual)
+                                      unsigned int size,
+                                      unsigned int *bytes_read)
 {
   assert(process);
   assert(process->parent_stderr != PIPE_NULL);
   assert(buffer);
-  assert(actual);
+  assert(bytes_read);
 
-  return pipe_read(process->parent_stderr, buffer, size, actual);
+  return pipe_read(process->parent_stderr, buffer, size, bytes_read);
 }
 
 PROCESS_LIB_ERROR process_wait(struct process *process,

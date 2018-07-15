@@ -64,7 +64,7 @@ PROCESS_LIB_ERROR process_start(struct process *process, int argc,
   wchar_t *command_line_wstring = NULL;
   wchar_t *working_directory_wstring = NULL;
 
-  PROCESS_LIB_ERROR error;
+  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
 
   // While we already make sure the child process only inherits the child pipe
   // handles using STARTUPINFOEXW (see process_utils.c) we still disable
@@ -127,14 +127,15 @@ cleanup:
 }
 
 PROCESS_LIB_ERROR process_write(struct process *process, const void *buffer,
-                                unsigned int to_write, unsigned int *actual)
+                                unsigned int to_write,
+                                unsigned int *bytes_written)
 {
   assert(process);
   assert(process->parent_stdin);
   assert(buffer);
-  assert(actual);
+  assert(bytes_written);
 
-  return pipe_write(process->parent_stdin, buffer, to_write, actual);
+  return pipe_write(process->parent_stdin, buffer, to_write, bytes_written);
 }
 
 PROCESS_LIB_ERROR process_close_stdin(struct process *process)
@@ -148,25 +149,26 @@ PROCESS_LIB_ERROR process_close_stdin(struct process *process)
 }
 
 PROCESS_LIB_ERROR process_read(struct process *process, void *buffer,
-                               unsigned int size, unsigned int *actual)
+                               unsigned int size, unsigned int *bytes_read)
 {
   assert(process);
   assert(process->parent_stdout);
   assert(buffer);
-  assert(actual);
+  assert(bytes_read);
 
-  return pipe_read(process->parent_stdout, buffer, size, actual);
+  return pipe_read(process->parent_stdout, buffer, size, bytes_read);
 }
 
 PROCESS_LIB_ERROR process_read_stderr(struct process *process, void *buffer,
-                                      unsigned int size, unsigned int *actual)
+                                      unsigned int size,
+                                      unsigned int *bytes_read)
 {
   assert(process);
   assert(process->parent_stderr);
   assert(buffer);
-  assert(actual);
+  assert(bytes_read);
 
-  return pipe_read(process->parent_stderr, buffer, size, actual);
+  return pipe_read(process->parent_stderr, buffer, size, bytes_read);
 }
 
 PROCESS_LIB_ERROR process_wait(struct process *process,
@@ -267,7 +269,7 @@ unsigned int process_system_error(void) { return GetLastError(); }
 
 PROCESS_LIB_ERROR process_system_error_string(char **error_string)
 {
-  PROCESS_LIB_ERROR error;
+  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
 
   wchar_t *message_wstring = NULL;
   int result = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER |

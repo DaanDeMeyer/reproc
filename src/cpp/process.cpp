@@ -2,8 +2,40 @@
 
 #include <process-lib/process.h>
 
+#include <array>
 #include <cstdlib>
+#include <functional>
 #include <new>
+#include <ostream>
+
+namespace
+{
+
+using read_f =
+    std::function<Process::Error(void *, unsigned int, unsigned int *)>;
+
+Process::Error read_all(std::ostream &out, const read_f &read_some)
+{
+  std::array<char, 1024> buffer{};
+  auto buffer_size = static_cast<unsigned int>(buffer.size() - 1);
+
+  Process::Error error = Process::SUCCESS;
+
+  while (true) {
+    unsigned int bytes_read = 0;
+    error = read_some(buffer.data(), buffer_size, &bytes_read);
+    if (error) { break; }
+
+    buffer[bytes_read] = '\0';
+    out << buffer.data();
+  }
+
+  if (error != Process::STREAM_CLOSED) { return error; }
+
+  return Process::SUCCESS;
+}
+
+} // namespace
 
 const unsigned int Process::INFINITE = PROCESS_LIB_INFINITE;
 
@@ -69,24 +101,40 @@ Process::Error Process::close_stdin()
 }
 
 Process::Error Process::write(const void *buffer, unsigned int to_write,
-                              unsigned int *actual)
+                              unsigned int *bytes_written)
 {
   return static_cast<Process::Error>(
-      process_write(process, buffer, to_write, actual));
+      process_write(process, buffer, to_write, bytes_written));
 }
 
-Process::Error Process::read(void *buffer, unsigned int to_read,
-                             unsigned int *actual)
+Process::Error Process::read(void *buffer, unsigned int size,
+                             unsigned int *bytes_read)
 {
   return static_cast<Process::Error>(
-      process_read(process, buffer, to_read, actual));
+      process_read(process, buffer, size, bytes_read));
 }
 
-Process::Error Process::read_stderr(void *buffer, unsigned int to_read,
-                                    unsigned int *actual)
+Process::Error Process::read_stderr(void *buffer, unsigned int size,
+                                    unsigned int *bytes_read)
 {
   return static_cast<Process::Error>(
-      process_read_stderr(process, buffer, to_read, actual));
+      process_read_stderr(process, buffer, size, bytes_read));
+}
+
+Process::Error Process::read_all(std::ostream &out)
+{
+  auto read_some = std::bind(&Process::read, this, std::placeholders::_1,
+                             std::placeholders::_2, std::placeholders::_3);
+
+  return ::read_all(out, read_some);
+}
+
+Process::Error Process::read_all_stderr(std::ostream &out)
+{
+  auto read_some = std::bind(&Process::read_stderr, this, std::placeholders::_1,
+                             std::placeholders::_2, std::placeholders::_3);
+
+  return ::read_all(out, read_some);
 }
 
 Process::Error Process::wait(unsigned int milliseconds)

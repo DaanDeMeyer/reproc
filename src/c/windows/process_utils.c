@@ -62,12 +62,12 @@ PROCESS_LIB_ERROR process_create(wchar_t *command_line,
   DWORD creation_flags = CREATE_NEW_PROCESS_GROUP;
 
 #if defined(HAS_ATTRIBUTE_LIST)
-  PROCESS_LIB_ERROR error;
+  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
 
   // To ensure no handles other than those necessary are inherited we use the
   // approach detailed in https://stackoverflow.com/a/2345126
   HANDLE to_inherit[3] = { child_stdin, child_stdout, child_stderr };
-  LPPROC_THREAD_ATTRIBUTE_LIST attribute_list;
+  LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
   error = handle_inherit_list_create(to_inherit,
                                      sizeof(to_inherit) / sizeof(to_inherit[0]),
                                      &attribute_list);

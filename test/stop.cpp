@@ -11,7 +11,7 @@ TEST_CASE("stop")
   auto process = static_cast<process_type *>(malloc(process_size()));
   REQUIRE(process);
 
-  PROCESS_LIB_ERROR error;
+  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
   CAPTURE(error);
 
   error = process_init(process);

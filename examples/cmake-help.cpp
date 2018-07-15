@@ -1,38 +1,35 @@
 #include <process-lib/process.hpp>
 
-#include <array>
 #include <iostream>
+#include <sstream>
 
 int main()
 {
-  Process::Error error = Process::SUCCESS;
   Process process;
-
   std::vector<std::string> args = { "cmake", "--help" };
 
+  Process::Error error = Process::SUCCESS;
+
   error = process.start(args, nullptr);
-  if (error) { return 1; }
+  if (error) { return error; }
 
-  std::array<char, 1024> buffer{};
-  auto buffer_length = static_cast<unsigned int>(buffer.size() - 1);
-  unsigned int actual = 0;
+  std::ostringstream output{};
 
-  while (true) {
-    error = process.read(buffer.data(), buffer_length, &actual);
-    if (error) { break; }
+  // The C++ wrapper has a convenient method for reading all output of a child
+  // process to an output stream. We could directly pass std::cout here as well
+  // but we use std::ostringstream since usually you will want the output of a
+  // child process as a string.
+  error = process.read_all(output);
+  if (error) { return error; }
 
-    buffer[actual] = '\0';
-    std::cout << buffer.data();
-  }
-
-  if (error != Process::STREAM_CLOSED) { return 1; }
+  std::cout << output.str() << std::flush;
 
   error = process.wait(Process::INFINITE);
-  if (error) { return 1; }
+  if (error) { return error; }
 
   int exit_status;
   error = process.exit_status(&exit_status);
-  if (error) { return 1; }
+  if (error) { return error; }
 
   return exit_status;
 }

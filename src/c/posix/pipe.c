@@ -40,15 +40,17 @@ PROCESS_LIB_ERROR pipe_init(int *read, int *write)
 }
 
 PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer,
-                             unsigned int to_write, unsigned int *actual)
+                             unsigned int to_write, unsigned int *bytes_written)
 {
   assert(buffer);
-  assert(actual);
+  assert(bytes_written);
+
+  *bytes_written = 0;
 
   errno = 0;
-  ssize_t bytes_written = write(pipe, buffer, to_write);
+  ssize_t error = write(pipe, buffer, to_write);
 
-  if (bytes_written == -1) {
+  if (error == -1) {
     switch (errno) {
     case EPIPE: return PROCESS_LIB_STREAM_CLOSED;
     case EINTR: return PROCESS_LIB_INTERRUPTED;
@@ -56,33 +58,41 @@ PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer,
     }
   }
 
-  *actual = (unsigned int) bytes_written;
+  // If error is not -1 it is actually the amount of bytes written
+  // Safe cast since we can't really have written more bytes than to_write which
+  // is an unsigned int
+  *bytes_written = (unsigned int) error;
 
-  if (*actual != to_write) { return PROCESS_LIB_PARTIAL_WRITE; }
+  if (*bytes_written != to_write) { return PROCESS_LIB_PARTIAL_WRITE; }
 
   return PROCESS_LIB_SUCCESS;
 }
 
 PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
-                            unsigned int *actual)
+                            unsigned int *bytes_read)
 {
   assert(buffer);
-  assert(actual);
+  assert(bytes_read);
+
+  *bytes_read = 0;
 
   errno = 0;
-  ssize_t bytes_read = read(pipe, buffer, size);
+  ssize_t error = read(pipe, buffer, size);
 
   // read is different from write in that it returns 0 to indicate the other end
   // of the pipe was closed instead of setting errno to EPIPE
-  if (bytes_read == 0) { return PROCESS_LIB_STREAM_CLOSED; }
-  if (bytes_read == -1) {
+  if (error == 0) { return PROCESS_LIB_STREAM_CLOSED; }
+  if (error == -1) {
     switch (errno) {
     case EINTR: return PROCESS_LIB_INTERRUPTED;
     default: return PROCESS_LIB_UNKNOWN_ERROR;
     }
   }
 
-  *actual = (unsigned int) bytes_read;
+  // If error is not -1 or 0 it is actually the amount of bytes read
+  // Safe cast since size is an unsigned int and read will not read more bytes
+  // than the buffer size
+  *bytes_read = (unsigned int) error;
 
   return PROCESS_LIB_SUCCESS;
 }

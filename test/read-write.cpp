@@ -13,16 +13,15 @@ TEST_CASE("read-write")
   auto process = static_cast<process_type *>(malloc(process_size()));
   REQUIRE(process);
 
-  PROCESS_LIB_ERROR error;
+  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
   CAPTURE(error);
 
   error = process_init(process);
   REQUIRE(!error);
 
-  std::array<char, 1000> buffer{};
+  std::array<char, 1024> buffer{};
   // -1 to leave space for null terminator
-  auto buffer_length = static_cast<unsigned int>(buffer.size() - 1);
-  unsigned int actual = 0;
+  auto buffer_size = static_cast<unsigned int>(buffer.size() - 1);
 
   SUBCASE("stdout")
   {
@@ -35,19 +34,23 @@ TEST_CASE("read-write")
     error = process_start(process, argc, argv, NOOP_DIR);
     REQUIRE(!error);
 
-    error = process_write(process, message.data(), message_length, &actual);
+    unsigned int bytes_written = 0;
+    error = process_write(process, message.data(), message_length,
+                          &bytes_written);
     REQUIRE(!error);
 
     error = process_close_stdin(process);
     REQUIRE(!error);
 
-    std::stringstream ss;
+    std::stringstream ss{};
 
     while (true) {
-      error = process_read(process, buffer.data(), buffer_length, &actual);
+      unsigned int bytes_read = 0;
+      error = process_read(process, buffer.data(), buffer_size,
+                           &bytes_read);
       if (error) { break; }
 
-      buffer[actual] = '\0';
+      buffer[bytes_read] = '\0';
       ss << buffer.data();
     }
 
@@ -65,7 +68,9 @@ TEST_CASE("read-write")
     error = process_start(process, argc, argv, NOOP_DIR);
     REQUIRE(!error);
 
-    error = process_write(process, message.data(), message_length, &actual);
+    unsigned int bytes_written = 0;
+    error = process_write(process, message.data(), message_length,
+                          &bytes_written);
     REQUIRE(!error);
 
     error = process_close_stdin(process);
@@ -74,11 +79,12 @@ TEST_CASE("read-write")
     std::stringstream ss;
 
     while (true) {
-      error = process_read_stderr(process, buffer.data(), message_length,
-                                  &actual);
+      unsigned int bytes_read = 0;
+      error = process_read_stderr(process, buffer.data(), buffer_size,
+                                  &bytes_read);
       if (error) { break; }
 
-      buffer[actual] = '\0';
+      buffer[bytes_read] = '\0';
       ss << buffer.data();
     }
 
@@ -88,7 +94,7 @@ TEST_CASE("read-write")
   error = process_wait(process, PROCESS_LIB_INFINITE);
   REQUIRE(!error);
 
-  int exit_status;
+  int exit_status = 0;
   error = process_exit_status(process, &exit_status);
   REQUIRE(!error);
   REQUIRE((exit_status == 0));

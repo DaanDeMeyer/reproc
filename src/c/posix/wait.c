@@ -19,10 +19,8 @@ PROCESS_LIB_ERROR wait_no_hang(pid_t pid, int *exit_status)
 
   if (wait_result == 0) { return PROCESS_LIB_WAIT_TIMEOUT; }
   if (wait_result == -1) {
-    switch (errno) {
-    case EINTR: return PROCESS_LIB_INTERRUPTED;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
-    }
+    // Ignore EINTR, it shouldn't happen when using WNOHANG
+    return PROCESS_LIB_UNKNOWN_ERROR;
   }
 
   *exit_status = parse_exit_status(status);

@@ -134,7 +134,6 @@ Possible errors:
 - PROCESS_LIB_PIPE_LIMIT_REACHED
 - PROCESS_LIB_PROCESS_LIMIT_REACHED
 - PROCESS_LIB_MEMORY_ERROR
-- PROCESS_LIB_INTERRUPTED
 - PROCESS_LIB_INVALID_UNICODE
 - PROCESS_LIB_PERMISSION_DENIED
 - PROCESS_LIB_SYMLINK_LOOP
@@ -146,7 +145,7 @@ PROCESS_LIB_ERROR process_start(process_type *process, int argc,
 
 /*!
 Writes up to \p to_write bytes from \p buffer to the standard input (stdin) of
-the child process and stores the amount of bytes written in \p actual.
+the child process and stores the amount of bytes written in \p bytes_written.
 
 For pipes, the write system call on both Windows and POSIX platforms will block
 until the requested amount of bytes have been written to the pipe so this
@@ -156,7 +155,8 @@ requested.
 \param[in,out] process Cannot be NULL.
 \param[in] buffer Pointer to memory block from which bytes should be written.
 \param[in] to_write Maximum amount of bytes to write.
-\param[out] actual Actual amount of bytes written. Set to 0 if an error occurs.
+\param[out] bytes_written Amount of bytes written. Set to zero if an error
+occurs. Cannot be NULL.
 
 \return PROCESS_LIB_ERROR
 
@@ -166,7 +166,8 @@ Possible errors:
 - PROCESS_LIB_PARTIAL_WRITE
 */
 PROCESS_LIB_ERROR process_write(process_type *process, const void *buffer,
-                                unsigned int to_write, unsigned int *actual);
+                                unsigned int to_write,
+                                unsigned int *bytes_written);
 
 /*!
 Closes the standard input stream endpoint of the parent process.
@@ -186,7 +187,7 @@ PROCESS_LIB_ERROR process_close_stdin(process_type *process);
 
 /*!
 Reads up to \p size bytes from the child process' standard output and stores
-them in \p buffer. \p actual is set to the amount of bytes actually read.
+them in \p buffer. \p bytes_read is set to the amount of bytes read.
 
 Assuming no other errors occur this function keeps returning PROCESS_LIB_SUCCESS
 until the child process closes its standard output stream (happens automatically
@@ -198,10 +199,10 @@ stdout:
 std::stringstream ss;
 
 while (true) {
-  error = process_read(process, buffer, buffer_size - 1, &actual);
+  error = process_read(process, buffer, buffer_size - 1, &bytes_read);
   if (error) { break; }
 
-  buffer[actual] = '\0';
+  buffer[bytes_read] = '\0';
   ss << buffer;
 }
 \endcode
@@ -214,7 +215,8 @@ function completes.
 \param[out] buffer Pointer to memory block where bytes read from stdout should
 be stored.
 \param[in] size Maximum number of bytes to read from stdout.
-\param[out] actual Actual amount of bytes read from stdout.
+\param[out] bytes_read Amount of bytes read from stdout. Set to zero if an error
+occurs. Cannot be NULL.
 
 \return PROCESS_LIB_ERROR
 
@@ -223,11 +225,12 @@ Possible errors:
 - PROCESS_LIB_INTERRUPTED
 */
 PROCESS_LIB_ERROR process_read(process_type *process, void *buffer,
-                               unsigned int size, unsigned int *actual);
+                               unsigned int size, unsigned int *bytes_read);
 
 /*! \see process_read for the standard error stream of the child process. */
 PROCESS_LIB_ERROR process_read_stderr(process_type *process, void *buffer,
-                                      unsigned int size, unsigned int *actual);
+                                      unsigned int size,
+                                      unsigned int *bytes_read);
 
 /*!
 Waits the specified amount of time for the process to exit.
@@ -243,10 +246,11 @@ to exit.
 Possible errors when \p milliseconds is PROCESS_LIB_INFINITE:
 - PROCESS_LIB_INTERRUPTED
 
-Additional errors when milliseconds is 0 or PROCESS_LIB_INFINITE:
+Possible errors when milliseconds is 0:
 - PROCESS_LIB_WAIT_TIMEOUT
 
-Additional errors when milliseconds is not 0 or PROCESS_LIB_INFINITE:
+Possible errors when milliseconds is not 0 or PROCESS_LIB_INFINITE:
+- PROCESS_LIB_INTERRUPTED
 - PROCESS_LIB_PROCESS_LIMIT_REACHED
 - PROCESS_LIB_MEMORY_ERROR
 */
@@ -298,7 +302,7 @@ PROCESS_LIB_ERROR process_kill(process_type *process,
 Returns the exit status of the child process
 
 \param[in,out] process Cannot be NULL.
-\param[out] exit_status Exit status of the process
+\param[out] exit_status Exit status of the process. Cannot be NULL.
 
 \return PROCESS_LIB_ERROR
 
@@ -347,7 +351,7 @@ The string should be freed using \see process_system_error_string_free.
 
 \param [out] error_string Address of the pointer that should store the error
 string. The function will allocate memory to the pointer if needed (only on
-Windows).
+Windows). Cannot be NULL.
 
 \return PROCESS_LIB_ERROR
 
@@ -358,12 +362,12 @@ Possible errors:
 PROCESS_LIB_ERROR process_system_error_string(char **error_string);
 
 /*!
-Frees the error string obtained with /see process_system_error_string.
+Frees the error string obtained with \see process_system_error_string.
 
 This function does nothing on POSIX since no memory allocation is required to
 obtain the error string.
 
-\param [in] error_string Pointer to the error string obtained with /see
+\param [in] error_string Pointer to the error string obtained with \see
 process_system_error_string
 */
 void process_system_error_string_free(char *error_string);

@@ -25,7 +25,7 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
   assert(stderr_pipe >= 0);
   assert(pid);
 
-  PROCESS_LIB_ERROR error;
+  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
 
   // We create an error pipe to receive pre-exec and exec errors from the child
   // process. See this answer https://stackoverflow.com/a/1586277 for more
@@ -117,21 +117,28 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
   pipe_close(&error_pipe_write);
 
   int exec_error = 0;
-  unsigned int actual = 0;
-  error = pipe_read(error_pipe_read, &exec_error, sizeof(exec_error), &actual);
+  unsigned int bytes_read = 0;
+  error = pipe_read(error_pipe_read, &exec_error, sizeof(exec_error),
+                    &bytes_read);
   pipe_close(&error_pipe_read);
 
+  switch (error) {
+  case PROCESS_LIB_SUCCESS: break;
   // PROCESS_LIB_STREAM_CLOSED indicates the execve was succesful (because
   // FD_CLOEXEC kicked in and closed the error_pipe_write fd in the child
   // process)
-  if (error != PROCESS_LIB_SUCCESS && error != PROCESS_LIB_STREAM_CLOSED) {
-    return error;
+  case PROCESS_LIB_STREAM_CLOSED: break;
+  // Conjecture: The chance of PROCESS_LIB_INTERRUPTED occurring here is really
+  // low so we return PROCESS_LIB_UNKNOWN_ERROR to reduce the error signature of
+  // the function.
+  case PROCESS_LIB_INTERRUPTED: return PROCESS_LIB_UNKNOWN_ERROR;
+  default: return error;
   }
 
   // If an error was written to the error pipe check that a full integer was
   // actually written. We don't expect a partial write to happen but if it ever
-  // happens this should make it easier to discover
-  if (error != PROCESS_LIB_STREAM_CLOSED && actual != sizeof(exec_error)) {
+  // happens this should make it easier to discover.
+  if (error == PROCESS_LIB_SUCCESS && bytes_read != sizeof(exec_error)) {
     return PROCESS_LIB_UNKNOWN_ERROR;
   }
 
@@ -149,7 +156,6 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
     case ENOENT: return PROCESS_LIB_FILE_NOT_FOUND;
     case ENOTDIR: return PROCESS_LIB_FILE_NOT_FOUND;
     case EMFILE: return PROCESS_LIB_PIPE_LIMIT_REACHED;
-    case EINTR: return PROCESS_LIB_INTERRUPTED;
     case ENAMETOOLONG: return PROCESS_LIB_NAME_TOO_LONG;
     default: return PROCESS_LIB_UNKNOWN_ERROR;
     }
