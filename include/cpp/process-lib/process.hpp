@@ -97,11 +97,7 @@ public:
   /*! \see process_system_error */
   static unsigned int system_error();
 
-  /*! \see process_system_error_string */
-  static Process::Error system_error_string(char **error_string);
-
-  /*! \see process_system_error_string_free */
-  static void system_error_string_free(char *error_string);
+  static const char *error_to_string(Process::Error error);
 
 private:
   struct process *process;

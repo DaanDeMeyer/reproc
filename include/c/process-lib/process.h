@@ -344,33 +344,7 @@ forking with this function (for example in chdir or execve).
 */
 unsigned int process_system_error(void);
 
-/*!
-Returns the corresponding string (UTF-8 encoded) for the last system error code.
-
-The string should be freed using \see process_system_error_string_free.
-
-\param [out] error_string Address of the pointer that should store the error
-string. The function will allocate memory to the pointer if needed (only on
-Windows). Cannot be NULL.
-
-\return PROCESS_LIB_ERROR
-
-Possible errors:
-- PROCESS_LIB_MEMORY_ERROR
-- PROCESS_LIB_INVALID_UNICODE
-*/
-PROCESS_LIB_ERROR process_system_error_string(char **error_string);
-
-/*!
-Frees the error string obtained with \see process_system_error_string.
-
-This function does nothing on POSIX since no memory allocation is required to
-obtain the error string.
-
-\param [in] error_string Pointer to the error string obtained with \see
-process_system_error_string
-*/
-void process_system_error_string_free(char *error_string);
+const char *process_error_to_string(PROCESS_LIB_ERROR error);
 
 #ifdef __cplusplus
 }

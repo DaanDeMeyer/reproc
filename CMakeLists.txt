@@ -85,6 +85,8 @@ target_include_directories(process-lib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/c>
 )
 
+target_sources(process-lib PRIVATE src/c/common.c)
+
 if(WIN32)
   target_include_directories(process-lib PRIVATE src/c/windows)
   target_sources(process-lib PRIVATE
