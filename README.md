@@ -7,12 +7,12 @@
 - [Questions](#questions)
 - [Installation](#installation)
   - [FetchContent](#fetchcontent)
-  - [Git Submodule](#git-submodule)
-  - [Vendor](#vendor)
-  - [CMake Options](#cmake-options)
+  - [Git submodule/vendor](#git-submodulevendor)
+  - [Install](#install)
+  - [CMake user options](#cmake-user-options)
 - [Usage](#usage)
 - [Documentation](#documentation)
-- [Error Handling](#error-handling)
+- [Error handling](#error-handling)
 - [Gotcha's](#gotchas)
 - [Design](#design)
   - [Opaque pointer](#opaque-pointer)
@@ -20,6 +20,8 @@
   - [(POSIX) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
   - [(POSIX) Check if execve call was succesful](#posix-check-if-execve-call-was-succesful)
   - [Avoiding resource leaks](#avoiding-resource-leaks)
+- [Contributing](#contributing)
+  - [CMake developer options](#cmake-developer-options)
 
 ## Questions
 
