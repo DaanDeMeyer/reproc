@@ -11,10 +11,7 @@
 namespace
 {
 
-using read_f =
-    std::function<Process::Error(void *, unsigned int, unsigned int *)>;
-
-Process::Error read_all(std::ostream &out, const read_f &read_some)
+template <class Read> Process::Error read_all(std::ostream &out, Read &&read)
 {
   std::array<char, 1024> buffer{};
   auto buffer_size = static_cast<unsigned int>(buffer.size() - 1);
@@ -23,7 +20,7 @@ Process::Error read_all(std::ostream &out, const read_f &read_some)
 
   while (true) {
     unsigned int bytes_read = 0;
-    error = read_some(buffer.data(), buffer_size, &bytes_read);
+    error = read(buffer.data(), buffer_size, &bytes_read);
     if (error) { break; }
 
     buffer[bytes_read] = '\0';
@@ -123,18 +120,18 @@ Process::Error Process::read_stderr(void *buffer, unsigned int size,
 
 Process::Error Process::read_all(std::ostream &out)
 {
-  auto read_some = std::bind(&Process::read, this, std::placeholders::_1,
-                             std::placeholders::_2, std::placeholders::_3);
-
-  return ::read_all(out, read_some);
+  return ::read_all(out, [this](void *buffer, unsigned int size,
+                                unsigned int *bytes_read) {
+    return read(buffer, size, bytes_read);
+  });
 }
 
 Process::Error Process::read_all_stderr(std::ostream &out)
 {
-  auto read_some = std::bind(&Process::read_stderr, this, std::placeholders::_1,
-                             std::placeholders::_2, std::placeholders::_3);
-
-  return ::read_all(out, read_some);
+  return ::read_all(out, [this](void *buffer, unsigned int size,
+                                unsigned int *bytes_read) {
+    return read_stderr(buffer, size, bytes_read);
+  });
 }
 
 Process::Error Process::wait(unsigned int milliseconds)
