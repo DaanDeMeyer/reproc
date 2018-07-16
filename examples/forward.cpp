@@ -13,8 +13,9 @@ executing it with process-lib give the same output
 */
 int main(int argc, char *argv[])
 {
-  Process process;
+  using process_lib::Process;
 
+  Process process;
   Process::Error error = Process::SUCCESS;
 
   error = process.start(argc - 1, (const char **) argv + 1, nullptr);

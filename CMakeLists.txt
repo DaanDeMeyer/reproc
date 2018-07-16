@@ -42,6 +42,8 @@ if (PROCESS_LIB_RUN_CLANG_TIDY)
     set(PROCESS_LIB_CLANG_TIDY "")
     message(WARNING "clang-tidy not found")
   endif()
+else()
+  set(PROCESS_LIB_CLANG_TIDY "")
 endif()
 
 ### Common Warnings ###

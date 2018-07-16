@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 
+namespace process_lib
+{
+
 class Process
 {
 public:
@@ -70,17 +73,54 @@ public:
   Process::Error read_stderr(void *buffer, unsigned int size,
                              unsigned int *bytes_read);
 
+  Process::Error read_all(std::ostream &out);
+  Process::Error read_all_stderr(std::ostream &out);
+  Process::Error read_all(std::string &out);
+  Process::Error read_all_stderr(std::string &out);
+
   /*!
   Calls \see read until the child process stdout is closed or an error occurs.
 
-  \param[out] out Stream that receives all output from stdout.
+  Takes a Write function with the following signature:
+
+  \code{.cpp}
+  void write(const char *buffer, unsigned int size);
+  \endcode
+
+  The Write function receives the buffer after each read so it can append it to
+  the final result.
+
+  Example usage (don't actually use this, use /see read_all instead):
+
+  \code{.cpp}
+  std::string output;
+  process.read_all([&output](const char *buffer, unsigned int size) {
+    output.append(buffer, size);
+  });
+  \endcode
 
   \return Process::Error \see process_read except for STREAM_CLOSED
   */
-  Process::Error read_all(std::ostream &out);
+  template <class Write>
+  Process::Error read_all_generic(Write &&write)
+  {
+    return read_all(
+        [this](void *buffer, unsigned int size, unsigned int *bytes_read) {
+          return read(buffer, size, bytes_read);
+        },
+        std::forward<Write>(write));
+  }
 
-  /*! \see read_all for stderr */
-  Process::Error read_all_stderr(std::ostream &out);
+  /*! \see read_all_generic for stderr */
+  template <class Write>
+  Process::Error read_all_stderr_generic(Write &&write)
+  {
+    return read_all(
+        [this](void *buffer, unsigned int size, unsigned int *bytes_read) {
+          return read_stderr(buffer, size, bytes_read);
+        },
+        std::forward<Write>(write));
+  }
 
   /*! \see process_wait */
   Process::Error wait(unsigned int milliseconds);
@@ -101,4 +141,27 @@ public:
 
 private:
   struct process *process;
+
+  static constexpr unsigned int BUFFER_SIZE = 1024;
+
+  template <class Read, class Write>
+  Process::Error read_all(Read &&read, Write &&write)
+  {
+    char buffer[BUFFER_SIZE];
+    Process::Error error = Process::SUCCESS;
+
+    while (true) {
+      unsigned int bytes_read = 0;
+      error = read(buffer, BUFFER_SIZE, &bytes_read);
+      if (error) { break; }
+
+      write(buffer, bytes_read);
+    }
+
+    if (error != Process::STREAM_CLOSED) { return error; }
+
+    return Process::SUCCESS;
+  }
 };
+
+} // namespace process_lib

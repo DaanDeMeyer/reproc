@@ -1,38 +1,14 @@
 #include "process-lib/process.hpp"
 
-#include <process-lib/process.h>
-
 #include <array>
 #include <cstdlib>
-#include <functional>
 #include <new>
 #include <ostream>
 
-namespace
+namespace process_lib
 {
 
-template <class Read> Process::Error read_all(std::ostream &out, Read &&read)
-{
-  std::array<char, 1024> buffer{};
-  auto buffer_size = static_cast<unsigned int>(buffer.size() - 1);
-
-  Process::Error error = Process::SUCCESS;
-
-  while (true) {
-    unsigned int bytes_read = 0;
-    error = read(buffer.data(), buffer_size, &bytes_read);
-    if (error) { break; }
-
-    buffer[bytes_read] = '\0';
-    out << buffer.data();
-  }
-
-  if (error != Process::STREAM_CLOSED) { return error; }
-
-  return Process::SUCCESS;
-}
-
-} // namespace
+#include <process-lib/process.h>
 
 const unsigned int Process::INFINITE = PROCESS_LIB_INFINITE;
 
@@ -120,17 +96,29 @@ Process::Error Process::read_stderr(void *buffer, unsigned int size,
 
 Process::Error Process::read_all(std::ostream &out)
 {
-  return ::read_all(out, [this](void *buffer, unsigned int size,
-                                unsigned int *bytes_read) {
-    return read(buffer, size, bytes_read);
+  return read_all_generic([&out](const char *buffer, unsigned int size) {
+    out.write(buffer, size);
   });
 }
 
 Process::Error Process::read_all_stderr(std::ostream &out)
 {
-  return ::read_all(out, [this](void *buffer, unsigned int size,
-                                unsigned int *bytes_read) {
-    return read_stderr(buffer, size, bytes_read);
+  return read_all_stderr_generic([&out](const char *buffer, unsigned int size) {
+    out.write(buffer, size);
+  });
+}
+
+Process::Error Process::read_all(std::string &out)
+{
+  return read_all_generic([&out](const char *buffer, unsigned int size) {
+    out.append(buffer, size);
+  });
+}
+
+Process::Error Process::read_all_stderr(std::string &out)
+{
+  return read_all_stderr_generic([&out](const char *buffer, unsigned int size) {
+    out.append(buffer, size);
   });
 }
 
@@ -164,3 +152,5 @@ std::string Process::error_to_string(Process::Error error)
   }
   return process_error_to_string(static_cast<PROCESS_LIB_ERROR>(error));
 }
+
+} // namespace process_lib
