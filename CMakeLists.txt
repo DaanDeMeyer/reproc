@@ -223,7 +223,16 @@ if(PROCESS_LIB_BUILD_EXAMPLES)
     CXX_CLANG_TIDY "${PROCESS_LIB_CLANG_TIDY}"
   )
 
-  set_target_properties(cmake-help-c cmake-help-cpp PROPERTIES
+  add_executable(forward examples/forward.cpp)
+  process_lib_set_cxx_standard(forward 11)
+  target_link_libraries(forward process-lib)
+  target_compile_options(forward PRIVATE ${PROCESS_LIB_WARNINGS})
+
+  set_target_properties(cmake-help-cpp PROPERTIES
+    CXX_CLANG_TIDY "${PROCESS_LIB_CLANG_TIDY}"
+  )
+
+  set_target_properties(cmake-help-c cmake-help-cpp forward PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY examples
   )
 endif()
