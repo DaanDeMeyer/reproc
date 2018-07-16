@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/*! Uses the process-lib C API to print CMake's help page */
 int main(void)
 {
   // User is responsible for allocating memory for process_type

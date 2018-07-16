@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 
+/*! Uses the process-lib C++ API to print CMake's help page */
 int main()
 {
   Process process;
