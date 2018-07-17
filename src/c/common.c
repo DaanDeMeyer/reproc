@@ -1,25 +1,25 @@
-#include "process-lib/process.h"
+#include "reproc/reproc.h"
 
-const char *process_error_to_string(PROCESS_LIB_ERROR error)
+const char *reproc_error_to_string(REPROC_ERROR error)
 {
   switch (error) {
-  case PROCESS_LIB_SUCCESS: return "process-lib => success";
-  case PROCESS_LIB_UNKNOWN_ERROR: return "process-lib => unknown error";
-  case PROCESS_LIB_WAIT_TIMEOUT: return "process-lib => wait timeout";
-  case PROCESS_LIB_STREAM_CLOSED: return "process-lib => stream closed";
-  case PROCESS_LIB_STILL_RUNNING: return "process-lib: still running";
-  case PROCESS_LIB_MEMORY_ERROR: return "process-lib => memory error";
-  case PROCESS_LIB_PIPE_LIMIT_REACHED: return "process-lib => pipe limit reached";
-  case PROCESS_LIB_INTERRUPTED: return "process-lib => interrupted";
-  case PROCESS_LIB_PROCESS_LIMIT_REACHED:
-    return "process-lib => process limit reached";
-  case PROCESS_LIB_INVALID_UNICODE: return "process-lib => invalid unicode";
-  case PROCESS_LIB_PERMISSION_DENIED: return "process-lib => permission denied";
-  case PROCESS_LIB_SYMLINK_LOOP: return "process-lib => symlink loop";
-  case PROCESS_LIB_FILE_NOT_FOUND: return "process-lib => file not found";
-  case PROCESS_LIB_NAME_TOO_LONG: return "process-lib => name too long";
-  case PROCESS_LIB_PARTIAL_WRITE: return "process-lib => partial write";
+  case REPROC_SUCCESS: return "reproc => success";
+  case REPROC_UNKNOWN_ERROR: return "reproc => unknown error";
+  case REPROC_WAIT_TIMEOUT: return "reproc => wait timeout";
+  case REPROC_STREAM_CLOSED: return "reproc => stream closed";
+  case REPROC_STILL_RUNNING: return "reproc: still running";
+  case REPROC_MEMORY_ERROR: return "reproc => memory error";
+  case REPROC_PIPE_LIMIT_REACHED: return "reproc => pipe limit reached";
+  case REPROC_INTERRUPTED: return "reproc => interrupted";
+  case REPROC_PROCESS_LIMIT_REACHED:
+    return "reproc => process limit reached";
+  case REPROC_INVALID_UNICODE: return "reproc => invalid unicode";
+  case REPROC_PERMISSION_DENIED: return "reproc => permission denied";
+  case REPROC_SYMLINK_LOOP: return "reproc => symlink loop";
+  case REPROC_FILE_NOT_FOUND: return "reproc => file not found";
+  case REPROC_NAME_TOO_LONG: return "reproc => name too long";
+  case REPROC_PARTIAL_WRITE: return "reproc => partial write";
   }
 
-  return "process-lib => error has no string";
+  return "reproc => error has no string";
 }

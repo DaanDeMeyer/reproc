@@ -5,7 +5,7 @@
 #if defined(HAS_ATTRIBUTE_LIST)
 #include <stdlib.h>
 
-PROCESS_LIB_ERROR
+REPROC_ERROR
 static handle_inherit_list_create(HANDLE *handles, int amount,
                                   LPPROC_THREAD_ATTRIBUTE_LIST *result)
 {
@@ -18,17 +18,17 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
   SetLastError(0);
   if (!InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size) &&
       GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-    return PROCESS_LIB_UNKNOWN_ERROR;
+    return REPROC_UNKNOWN_ERROR;
   }
 
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = malloc(attribute_list_size);
-  if (!attribute_list) { return PROCESS_LIB_MEMORY_ERROR; }
+  if (!attribute_list) { return REPROC_MEMORY_ERROR; }
 
   SetLastError(0);
   if (!InitializeProcThreadAttributeList(attribute_list, 1, 0,
                                          &attribute_list_size)) {
     free(attribute_list);
-    return PROCESS_LIB_UNKNOWN_ERROR;
+    return REPROC_UNKNOWN_ERROR;
   }
 
   // Add the handles to be inherited to the attribute list
@@ -37,16 +37,16 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
                                  PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,
                                  amount * sizeof(HANDLE), NULL, NULL)) {
     DeleteProcThreadAttributeList(attribute_list);
-    return PROCESS_LIB_UNKNOWN_ERROR;
+    return REPROC_UNKNOWN_ERROR;
   }
 
   *result = attribute_list;
 
-  return PROCESS_LIB_SUCCESS;
+  return REPROC_SUCCESS;
 }
 #endif
 
-PROCESS_LIB_ERROR process_create(wchar_t *command_line,
+REPROC_ERROR process_create(wchar_t *command_line,
                                  wchar_t *working_directory, HANDLE child_stdin,
                                  HANDLE child_stdout, HANDLE child_stderr,
                                  PROCESS_INFORMATION *info)
@@ -58,11 +58,11 @@ PROCESS_LIB_ERROR process_create(wchar_t *command_line,
   assert(info);
 
   // Create each process in a new process group so we don't send CTRL-BREAK
-  // signals to more than one child process in process_terminate.
+  // signals to more than one child process in reproc_terminate.
   DWORD creation_flags = CREATE_NEW_PROCESS_GROUP;
 
 #if defined(HAS_ATTRIBUTE_LIST)
-  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
+  REPROC_ERROR error = REPROC_SUCCESS;
 
   // To ensure no handles other than those necessary are inherited we use the
   // approach detailed in https://stackoverflow.com/a/2345126
@@ -112,10 +112,10 @@ PROCESS_LIB_ERROR process_create(wchar_t *command_line,
 
   if (!result) {
     switch (GetLastError()) {
-    case ERROR_FILE_NOT_FOUND: return PROCESS_LIB_FILE_NOT_FOUND;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case ERROR_FILE_NOT_FOUND: return REPROC_FILE_NOT_FOUND;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
-  return PROCESS_LIB_SUCCESS;
+  return REPROC_SUCCESS;
 }

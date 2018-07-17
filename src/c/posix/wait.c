@@ -8,7 +8,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-PROCESS_LIB_ERROR wait_no_hang(pid_t pid, int *exit_status)
+REPROC_ERROR wait_no_hang(pid_t pid, int *exit_status)
 {
   assert(exit_status);
 
@@ -17,18 +17,18 @@ PROCESS_LIB_ERROR wait_no_hang(pid_t pid, int *exit_status)
   // Adding WNOHANG makes waitpid only check and return immediately
   pid_t wait_result = waitpid(pid, &status, WNOHANG);
 
-  if (wait_result == 0) { return PROCESS_LIB_WAIT_TIMEOUT; }
+  if (wait_result == 0) { return REPROC_WAIT_TIMEOUT; }
   if (wait_result == -1) {
     // Ignore EINTR, it shouldn't happen when using WNOHANG
-    return PROCESS_LIB_UNKNOWN_ERROR;
+    return REPROC_UNKNOWN_ERROR;
   }
 
   *exit_status = parse_exit_status(status);
 
-  return PROCESS_LIB_SUCCESS;
+  return REPROC_SUCCESS;
 }
 
-PROCESS_LIB_ERROR wait_infinite(pid_t pid, int *exit_status)
+REPROC_ERROR wait_infinite(pid_t pid, int *exit_status)
 {
   assert(exit_status);
 
@@ -36,18 +36,18 @@ PROCESS_LIB_ERROR wait_infinite(pid_t pid, int *exit_status)
   errno = 0;
   if (waitpid(pid, &status, 0) == -1) {
     switch (errno) {
-    case EINTR: return PROCESS_LIB_INTERRUPTED;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case EINTR: return REPROC_INTERRUPTED;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
   *exit_status = parse_exit_status(status);
 
-  return PROCESS_LIB_SUCCESS;
+  return REPROC_SUCCESS;
 }
 
 // See Design section in README.md for an explanation of how this works
-PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
+REPROC_ERROR wait_timeout(pid_t pid, int *exit_status,
                                unsigned int milliseconds)
 {
   assert(exit_status);
@@ -58,9 +58,9 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
 
   if (timeout_pid == -1) {
     switch (errno) {
-    case EAGAIN: return PROCESS_LIB_PROCESS_LIMIT_REACHED;
-    case ENOMEM: return PROCESS_LIB_MEMORY_ERROR;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case EAGAIN: return REPROC_PROCESS_LIMIT_REACHED;
+    case ENOMEM: return REPROC_MEMORY_ERROR;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
@@ -86,10 +86,10 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
   errno = 0;
   if (setpgid(timeout_pid, pid) == -1) {
     // EACCES should not occur since we don't call execve in the timeout process
-    return PROCESS_LIB_UNKNOWN_ERROR;
+    return REPROC_UNKNOWN_ERROR;
   };
 
-  // -process->pid waits for all processes in the process->pid process group
+  // -reproc->pid waits for all processes in the reproc->pid process group
   // which in this case will be the process we want to wait for and the timeout
   // process. waitpid will return the process id of whichever process exits
   // first
@@ -98,18 +98,18 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
   pid_t exit_pid = waitpid(-pid, &status, 0);
 
   // If the timeout process exits first the timeout will have been exceeded
-  if (exit_pid == timeout_pid) { return PROCESS_LIB_WAIT_TIMEOUT; }
+  if (exit_pid == timeout_pid) { return REPROC_WAIT_TIMEOUT; }
 
   // If the child process exits first we make sure the timeout process is
   // cleaned up correctly by sending a SIGTERM signal and waiting for it
   errno = 0;
-  if (kill(timeout_pid, SIGTERM) == -1) { return PROCESS_LIB_UNKNOWN_ERROR; }
+  if (kill(timeout_pid, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
 
   errno = 0;
   if (waitpid(timeout_pid, NULL, 0) == -1) {
     switch (errno) {
-    case EINTR: return PROCESS_LIB_INTERRUPTED;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case EINTR: return REPROC_INTERRUPTED;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
@@ -117,14 +117,14 @@ PROCESS_LIB_ERROR wait_timeout(pid_t pid, int *exit_status,
   // while waiting for the timeout process/child process
   if (exit_pid == -1) {
     switch (errno) {
-    case EINTR: return PROCESS_LIB_INTERRUPTED;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case EINTR: return REPROC_INTERRUPTED;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
   *exit_status = parse_exit_status(status);
 
-  return PROCESS_LIB_SUCCESS;
+  return REPROC_SUCCESS;
 }
 
 int parse_exit_status(int status)

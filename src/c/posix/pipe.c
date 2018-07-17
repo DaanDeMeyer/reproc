@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-PROCESS_LIB_ERROR pipe_init(int *read, int *write)
+REPROC_ERROR pipe_init(int *read, int *write)
 {
   assert(read);
   assert(write);
@@ -27,8 +27,8 @@ PROCESS_LIB_ERROR pipe_init(int *read, int *write)
 
   if (result == -1) {
     switch (errno) {
-    case ENFILE: return PROCESS_LIB_PIPE_LIMIT_REACHED;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case ENFILE: return REPROC_PIPE_LIMIT_REACHED;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
@@ -36,10 +36,10 @@ PROCESS_LIB_ERROR pipe_init(int *read, int *write)
   *read = pipefd[0];
   *write = pipefd[1];
 
-  return PROCESS_LIB_SUCCESS;
+  return REPROC_SUCCESS;
 }
 
-PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer,
+REPROC_ERROR pipe_write(int pipe, const void *buffer,
                              unsigned int to_write, unsigned int *bytes_written)
 {
   assert(buffer);
@@ -52,9 +52,9 @@ PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer,
 
   if (error == -1) {
     switch (errno) {
-    case EPIPE: return PROCESS_LIB_STREAM_CLOSED;
-    case EINTR: return PROCESS_LIB_INTERRUPTED;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case EPIPE: return REPROC_STREAM_CLOSED;
+    case EINTR: return REPROC_INTERRUPTED;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
@@ -63,12 +63,12 @@ PROCESS_LIB_ERROR pipe_write(int pipe, const void *buffer,
   // is an unsigned int
   *bytes_written = (unsigned int) error;
 
-  if (*bytes_written != to_write) { return PROCESS_LIB_PARTIAL_WRITE; }
+  if (*bytes_written != to_write) { return REPROC_PARTIAL_WRITE; }
 
-  return PROCESS_LIB_SUCCESS;
+  return REPROC_SUCCESS;
 }
 
-PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
+REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
                             unsigned int *bytes_read)
 {
   assert(buffer);
@@ -81,11 +81,11 @@ PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
 
   // read is different from write in that it returns 0 to indicate the other end
   // of the pipe was closed instead of setting errno to EPIPE
-  if (error == 0) { return PROCESS_LIB_STREAM_CLOSED; }
+  if (error == 0) { return REPROC_STREAM_CLOSED; }
   if (error == -1) {
     switch (errno) {
-    case EINTR: return PROCESS_LIB_INTERRUPTED;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case EINTR: return REPROC_INTERRUPTED;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
@@ -94,7 +94,7 @@ PROCESS_LIB_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
   // than the buffer size
   *bytes_read = (unsigned int) error;
 
-  return PROCESS_LIB_SUCCESS;
+  return REPROC_SUCCESS;
 }
 
 void pipe_close(int *pipe_address)

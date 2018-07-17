@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
+REPROC_ERROR fork_exec_redirect(int argc, const char *argv[],
                                      const char *working_directory,
                                      int stdin_pipe, int stdout_pipe,
                                      int stderr_pipe, pid_t *pid)
@@ -25,7 +25,7 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
   assert(stderr_pipe >= 0);
   assert(pid);
 
-  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
+  REPROC_ERROR error = REPROC_SUCCESS;
 
   // We create an error pipe to receive pre-exec and exec errors from the child
   // process. See this answer https://stackoverflow.com/a/1586277 for more
@@ -43,9 +43,9 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
     pipe_close(&error_pipe_write);
 
     switch (errno) {
-    case EAGAIN: return PROCESS_LIB_PROCESS_LIMIT_REACHED;
-    case ENOMEM: return PROCESS_LIB_MEMORY_ERROR;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case EAGAIN: return REPROC_PROCESS_LIMIT_REACHED;
+    case ENOMEM: return REPROC_MEMORY_ERROR;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
@@ -57,7 +57,7 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
     errno = 0;
 
     // We put the child process in its own process group which is needed by
-    // process_wait. Normally there might be a race condition if the parent
+    // reproc_wait. Normally there might be a race condition if the parent
     // process waits for the child process before the child process puts itself
     // in its own process group (with setpgid) but this is avoided because we
     // always read from the error pipe in the parent process after forking. When
@@ -123,43 +123,43 @@ PROCESS_LIB_ERROR fork_exec_redirect(int argc, const char *argv[],
   pipe_close(&error_pipe_read);
 
   switch (error) {
-  case PROCESS_LIB_SUCCESS: break;
-  // PROCESS_LIB_STREAM_CLOSED indicates the execve was succesful (because
+  case REPROC_SUCCESS: break;
+  // REPROC_STREAM_CLOSED indicates the execve was succesful (because
   // FD_CLOEXEC kicked in and closed the error_pipe_write fd in the child
   // process)
-  case PROCESS_LIB_STREAM_CLOSED: break;
-  // Conjecture: The chance of PROCESS_LIB_INTERRUPTED occurring here is really
-  // low so we return PROCESS_LIB_UNKNOWN_ERROR to reduce the error signature of
+  case REPROC_STREAM_CLOSED: break;
+  // Conjecture: The chance of REPROC_INTERRUPTED occurring here is really
+  // low so we return REPROC_UNKNOWN_ERROR to reduce the error signature of
   // the function.
-  case PROCESS_LIB_INTERRUPTED: return PROCESS_LIB_UNKNOWN_ERROR;
+  case REPROC_INTERRUPTED: return REPROC_UNKNOWN_ERROR;
   default: return error;
   }
 
   // If an error was written to the error pipe check that a full integer was
   // actually written. We don't expect a partial write to happen but if it ever
   // happens this should make it easier to discover.
-  if (error == PROCESS_LIB_SUCCESS && bytes_read != sizeof(exec_error)) {
-    return PROCESS_LIB_UNKNOWN_ERROR;
+  if (error == REPROC_SUCCESS && bytes_read != sizeof(exec_error)) {
+    return REPROC_UNKNOWN_ERROR;
   }
 
   // If read does not return 0 an error will have occurred in the child process
   // before or during execve (or an error with read itself (less likely))
   if (exec_error != 0) {
-    // Allow retrieving child process errors with process_system_error
+    // Allow retrieving child process errors with reproc_system_error
     errno = exec_error;
 
     switch (exec_error) {
-    case EACCES: return PROCESS_LIB_PERMISSION_DENIED;
-    case EPERM: return PROCESS_LIB_PERMISSION_DENIED;
-    case ELOOP: return PROCESS_LIB_SYMLINK_LOOP;
-    case ENOMEM: return PROCESS_LIB_MEMORY_ERROR;
-    case ENOENT: return PROCESS_LIB_FILE_NOT_FOUND;
-    case ENOTDIR: return PROCESS_LIB_FILE_NOT_FOUND;
-    case EMFILE: return PROCESS_LIB_PIPE_LIMIT_REACHED;
-    case ENAMETOOLONG: return PROCESS_LIB_NAME_TOO_LONG;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case EACCES: return REPROC_PERMISSION_DENIED;
+    case EPERM: return REPROC_PERMISSION_DENIED;
+    case ELOOP: return REPROC_SYMLINK_LOOP;
+    case ENOMEM: return REPROC_MEMORY_ERROR;
+    case ENOENT: return REPROC_FILE_NOT_FOUND;
+    case ENOTDIR: return REPROC_FILE_NOT_FOUND;
+    case EMFILE: return REPROC_PIPE_LIMIT_REACHED;
+    case ENAMETOOLONG: return REPROC_NAME_TOO_LONG;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
-  return PROCESS_LIB_SUCCESS;
+  return REPROC_SUCCESS;
 }

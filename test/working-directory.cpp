@@ -1,36 +1,36 @@
 #include <doctest.h>
-#include <process-lib/process.h>
+#include <reproc/reproc.h>
 
 #include <cstdlib>
 
 TEST_CASE("working-directory")
 {
-  auto process = static_cast<process_type *>(malloc(process_size()));
-  REQUIRE(process);
+  auto reproc = static_cast<reproc_type *>(malloc(reproc_size()));
+  REQUIRE(reproc);
 
-  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
+  REPROC_ERROR error = REPROC_SUCCESS;
   CAPTURE(error);
 
-  error = process_init(process);
+  error = reproc_init(reproc);
   REQUIRE(!error);
 
   int argc = 1;
   const char *argv[2] = { NOOP_PATH, nullptr };
   const char *working_directory = NOOP_DIR;
 
-  error = process_start(process, argc, argv, working_directory);
+  error = reproc_start(reproc, argc, argv, working_directory);
   REQUIRE(!error);
 
-  error = process_wait(process, PROCESS_LIB_INFINITE);
+  error = reproc_wait(reproc, REPROC_INFINITE);
   REQUIRE(!error);
 
   int exit_status = 0;
-  error = process_exit_status(process, &exit_status);
+  error = reproc_exit_status(reproc, &exit_status);
   REQUIRE(!error);
   REQUIRE((exit_status == 0));
 
-  error = process_destroy(process);
+  error = reproc_destroy(reproc);
   REQUIRE(!error);
 
-  free(process);
+  free(reproc);
 }

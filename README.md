@@ -1,8 +1,8 @@
-# process-lib <!-- omit in toc -->
+# Reproc <!-- omit in toc -->
 
-[![Build Status](https://travis-ci.com/DaanDeMeyer/process-lib.svg?branch=master)](https://travis-ci.com/DaanDeMeyer/process-lib)
-[![Build status](https://ci.appveyor.com/api/projects/status/nssmvol3nj683akq?svg=true)](https://ci.appveyor.com/project/DaanDeMeyer/process-lib)
-[![Join the chat at https://gitter.im/process-lib/Lobby](https://badges.gitter.im/process-lib/Lobby.svg)](https://gitter.im/process-lib/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status](https://travis-ci.com/DaanDeMeyer/reproc.svg?branch=master)](https://travis-ci.com/DaanDeMeyer/reproc)
+[![Build status](https://ci.appveyor.com/api/projects/status/nssmvol3nj683akq?svg=true)](https://ci.appveyor.com/project/DaanDeMeyer/reproc)
+[![Join the chat at https://gitter.im/reproc/Lobby](https://badges.gitter.im/reproc/Lobby.svg)](https://gitter.im/reproc/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 - [Questions](#questions)
 - [Installation](#installation)
@@ -26,56 +26,56 @@
 ## Questions
 
 If you have any questions after reading the readme and the documentation in
-[process.h](include/c/process-lib/process.h)/[process.hpp](include/cpp/process-lib/process.hpp)
+[reproc.h](include/c/reproc/reproc.h)/[reproc.hpp](include/cpp/reproc/reproc.hpp)
 you can either make an issue or ask the question directly in
-[gitter](https://gitter.im/process-lib/Lobby).
+[gitter](https://gitter.im/reproc/Lobby).
 
 ## Installation
 
 ### FetchContent
 
-The easiest way to use process-lib is with the CMake build system. If you're
+The easiest way to use reproc is with the CMake build system. If you're
 using CMake 3.11 or later you can use the
 [FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) API
-to use process-lib in your project.
+to use reproc in your project.
 
 ```cmake
 include(FetchContent)
 
 FetchContent_Declare(
-  PROCESS_LIB
-  GIT_REPOSITORY https://github.com/DaanDeMeyer/process-lib.git
+  REPROC
+  GIT_REPOSITORY https://github.com/DaanDeMeyer/reproc.git
   GIT_TAG        origin/master
 )
 
-FetchContent_GetProperties(PROCESS_LIB)
-if(NOT PROCESS_LIB_POPULATED)
-  FetchContent_Populate(PROCESS_LIB)
-  add_subdirectory(${PROCESS_LIB_SOURCE_DIR} ${PROCESS_LIB_BINARY_DIR})
+FetchContent_GetProperties(REPROC)
+if(NOT REPROC_POPULATED)
+  FetchContent_Populate(REPROC)
+  add_subdirectory(${REPROC_SOURCE_DIR} ${REPROC_BINARY_DIR})
 endif()
 
 add_executable(myapp myapp.c)
-target_link_libraries(myapp process-lib::process-lib)
+target_link_libraries(myapp reproc::reproc)
 ```
 
 ### Git submodule/vendor
 
-If you can't use CMake 3.11 or higher, you can add process-lib as a git
+If you can't use CMake 3.11 or higher, you can add reproc as a git
 submodule instead:
 
 ```bash
 # In your application source directory
 mkdir third-party
 cd third-party
-git submodule add https://github.com/DaanDeMeyer/process-lib.git
+git submodule add https://github.com/DaanDeMeyer/reproc.git
 # Optionally checkout a specific commit. This is usually a commit that
 # corresponds to a Github release.
-cd process-lib
+cd reproc
 git checkout 41f90d0
 cd ../..
 # Commit the result
 git add third-party
-git commit -m "Added process-lib as a Git submodule"
+git commit -m "Added reproc as a Git submodule"
 ```
 
 If you're not using git you can download a zip/tar of the source code from
@@ -86,19 +86,19 @@ You can now call `add_subdirectory` in the root CMakeLists.txt file of your
 application:
 
 ```cmake
-add_subdirectory(third-party/process-lib)
+add_subdirectory(third-party/reproc)
 add_executable(myapp myapp.c)
-target_link_libraries(myapp process-lib::process-lib)
+target_link_libraries(myapp reproc::reproc)
 ```
 
 ### Install
 
-process-lib can be installed and later found via the CMake `find_package`
+reproc can be installed and later found via the CMake `find_package`
 command. An example of how this works:
 
 ```bash
-git clone https://github.com/DaanDeMeyer/process-lib.git
-cd process-lib
+git clone https://github.com/DaanDeMeyer/reproc.git
+cd reproc
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
@@ -108,37 +108,37 @@ cmake --build . --target install # Might need root for this
 In the root CMakeLists.txt file of your application:
 
 ```cmake
-find_package(process-lib REQUIRED)
+find_package(reproc REQUIRED)
 add_executable(myapp myapp.c)
-target_link_libraries(myapp process-lib::process-lib)
+target_link_libraries(myapp reproc::reproc)
 ```
 
-The install prefix specified when installing process-lib might not be in the
+The install prefix specified when installing reproc might not be in the
 default search path of CMake. If this is the case you can tell CMake where to
-search for process-lib as follows:
+search for reproc as follows:
 
 ```bash
-cmake -DCMAKE_PREFIX_PATH=<process-lib-install-dir> ..
+cmake -DCMAKE_PREFIX_PATH=<reproc-install-dir> ..
 ```
 
-Installing is the way to go if you want to use process-lib with other build
+Installing is the way to go if you want to use reproc with other build
 systems than CMake. After installing you can use your build systems preferred
-way of finding libraries to find process-lib. Refer to your build system's
+way of finding libraries to find reproc. Refer to your build system's
 documentation for more info.
 
 ### CMake user options
 
-process-lib supports the following CMake options:
+reproc supports the following CMake options:
 
-- `PROCESS_LIB_BUILD_CPP_WRAPPER (ON|OFF)`: Build the C++ wrapper (default:
+- `REPROC_BUILD_CPP_WRAPPER (ON|OFF)`: Build the C++ wrapper (default:
   `OFF`)
-- `PROCESS_LIB_BUILD_TESTS (ON|OFF)`: Build tests (default: `OFF`)
-- `PROCESS_LIB_BUILD_EXAMPLES (ON|OFF)`: Build examples (default: `OFF`)
+- `REPROC_BUILD_TESTS (ON|OFF)`: Build tests (default: `OFF`)
+- `REPROC_BUILD_EXAMPLES (ON|OFF)`: Build examples (default: `OFF`)
 
 Options can be configured before calling `add_subdirectory` as follows:
 
 ```cmake
-set(PROCESS_LIB_BUILD_CPP_WRAPPER ON CACHE BOOL FORCE)
+set(REPROC_BUILD_CPP_WRAPPER ON CACHE BOOL FORCE)
 ```
 
 ## Usage
@@ -146,53 +146,53 @@ set(PROCESS_LIB_BUILD_CPP_WRAPPER ON CACHE BOOL FORCE)
 After installing
 
 See [examples/cmake-help.c](examples/cmake-help.c) for an example that uses
-process-lib to print the CMake CLI --help output.
+reproc to print the CMake CLI --help output.
 [examples/cmake-help.cpp](examples/cmake-help.cpp) does the same but with the
 C++ API.
 
 ## Documentation
 
-API documentation can be found in [process.h](include/c/process-lib/process.h).
+API documentation can be found in [reproc.h](include/c/reproc/reproc.h).
 Documentation for the C++ wrapper can be found in
-[process.hpp](include/cpp/process-lib/process.hpp) (which mostly refers to
-process.h).
+[reproc.hpp](include/cpp/reproc/reproc.hpp) (which mostly refers to
+reproc.h).
 
 ## Unknown errors
 
 There are lots of things that can go wrong when working with child processes.
-process-lib tries to unify the different platform errors as much as possible but
+reproc tries to unify the different platform errors as much as possible but
 this is an ongoing effort. In particular, the Windows Win32 documentation mostly
 does not specify what errors a function can throw. As a result, when an error
-occurs on Windows process-lib will usually return `PROCESS_LIB_UNKNOWN_ERROR`.
-To get more information process-lib provides a function `process_system_error`
+occurs on Windows reproc will usually return `REPROC_UNKNOWN_ERROR`.
+To get more information reproc provides a function `process_system_error`
 which gives the user the actual system error. Use this function to retrieve the
-actual system error and file an issue with the system error and the process-lib
+actual system error and file an issue with the system error and the reproc
 function that returned it. This way we can incrementally identify unknown errors
-and add them to process-lib.
+and add them to reproc.
 
 ## Gotcha's
 
-- While `process_terminate` allows the child process to perform cleanup it is up
-  to the child process to correctly clean up after itself. process-lib only
+- While `reproc_terminate` allows the child process to perform cleanup it is up
+  to the child process to correctly clean up after itself. reproc only
   sends a termination signal to the child process itself. The child process is
   responsible for cleaning up its own child processes and other resources in its
   signal handler.
 
-- When using `process_kill` the child process does not receive a chance to
+- When using `reproc_kill` the child process does not receive a chance to
   perform cleanup which could result in resources being leaked. Chief among
   these leaks is that the child process will not be able to stop its own child
   processes. Always let a child process exit normally or try to stop it with
-  `process_terminate` before switching to `process_kill`.
+  `reproc_terminate` before switching to `reproc_kill`.
 
 - (POSIX) On POSIX a parent process is required to wait on a child process
-  (using `process_wait`) after it has exited before all resources related to
+  (using `reproc_wait`) after it has exited before all resources related to
   that process can be freed by the kernel. If the parent doesn't wait on a child
   process after it exits, the child process becomes a
   [zombie process](https://en.wikipedia.org/wiki/Zombie_process).
 
-- (Windows) `process_kill` is not guaranteed to kill a child process on Windows.
+- (Windows) `reproc_kill` is not guaranteed to kill a child process on Windows.
   For more information, read the Remarks section in the documentation of the
-  `TerminateProcess` function that process-lib uses to kill child processes on
+  `TerminateProcess` function that reproc uses to kill child processes on
   Windows.
 
 - (Windows) Immediately terminating a process after starting it on Windows might
@@ -202,18 +202,18 @@ and add them to process-lib.
   since most of the time you'll want to read/write to the process or wait until
   it exits normally.
 
-  If someone runs into this problem, process-lib's tests mitigate it by waiting
-  a few milliseconds using `process_wait` before terminating the child process.
+  If someone runs into this problem, reproc's tests mitigate it by waiting
+  a few milliseconds using `reproc_wait` before terminating the child process.
 
-- File descriptors/handles created by process-lib can leak to child processes
-  not spawned by process-lib if the application is multithreaded. This is not
+- File descriptors/handles created by reproc can leak to child processes
+  not spawned by reproc if the application is multithreaded. This is not
   the case on systems that support the `pipe2` system call (Linux 2.6+ and newer
   BSD's). See [Avoiding resource leaks](#avoiding-resource-leaks) for more
   information.
 
 - (POSIX) On POSIX, file descriptors above the file descriptor resource limit
   (obtained with `sysconf(_SC_OPEN_MAX)`) and without the `FD_CLOEXEC` flag set
-  are leaked into child processes created by process-lib.
+  are leaked into child processes created by reproc.
 
   Note that in multithreaded applications immediately setting the `FD_CLOEXEC`
   with `fcntl` after creating a file descriptor can still not be sufficient to
@@ -221,23 +221,23 @@ and add them to process-lib.
   information.
 
 - (Windows < Vista) File descriptors that are not marked not inheritable with
-  `SetHandleInformation` will leak into process-lib child processes.
+  `SetHandleInformation` will leak into reproc child processes.
 
   Note that the same `FD_CLOEXEC` caveat as mentioned above applies. In
   multithreaded applications there is a split moment after calling `CreatePipe`
   but before calling `SetHandleInformation` that a handle can still be inherited
-  by process-lib child processes. See
+  by reproc child processes. See
   [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
 
 ## Design
 
-process-lib is designed to be a minimal wrapper around the platform-specific
+reproc is designed to be a minimal wrapper around the platform-specific
 API's for starting a process, interacting with its standard streams and finally
 terminating it.
 
 ### Opaque pointer
 
-process-lib uses a process struct to store information between calls to library
+reproc uses a process struct to store information between calls to library
 functions. This struct is forward-declared in process.h with each
 platform-specific implementation hidden in the source files for that platform.
 
@@ -245,34 +245,34 @@ This struct is typedefed to process_type and exposed to the user as an opaque
 pointer (process_type \*).
 
 ```c
-typedef struct process process_type;
+typedef struct reproc reproc_type;
 ```
 
-The process.h header only contains a forward-declaration of the process struct.
+The reproc.h header only contains a forward-declaration of the reproc struct.
 We provide an implementation in the source files of each supported platform
 where we store platform-specific members such as pipe handles, process id's,
 ....
 
 To enable the user to allocate memory for the opaque pointer we provide the
-`process_size` function that returns the required size for the opaque pointer on
+`reproc_size` function that returns the required size for the opaque pointer on
 each platform. This function can be used as follows:
 
 ```c
-process_type *process = malloc(process_size());
+reproc_type *reproc = malloc(reproc_size());
 ```
 
 Advantages:
 
-- Fewer includes required in process.h
+- Fewer includes required in reproc.h
 
-  Because we only have a forward declaration of the process struct in process.h
+  Because we only have a forward declaration of the reproc struct in reproc.h
   we don't need any platform-specific includes (such as windows.h) in the header
   file to define the data types of all the members that the struct contains.
 
 - No leaking of implementation details
 
-  Including the process.h header only gives the user access to the forward
-  declaration of the process struct and not its implementation which means its
+  Including the reproc.h header only gives the user access to the forward
+  declaration of the reproc struct and not its implementation which means its
   impossible to access the internals of the struct outside of the library. This
   allows us to change its implementation between versions without having to
   worry about breaking user code.
@@ -281,28 +281,28 @@ Disadvantages:
 
 - No simple allocation on the stack
 
-  Because including process.h does not give the compiler access to the full
-  definition of the process struct it is unable to allocate its implementation
+  Because including reproc.h does not give the compiler access to the full
+  definition of the reproc struct it is unable to allocate its implementation
   on the stack since it doesn't know its size. Allocating on the stack is still
   possible but requires functions such as `alloca` which is harder compared to
   just writing
 
   ```c
-  process_type process;
+  reproc_type reproc;
   ```
 
 - Not possible to allocate on the heap without help from the library
 
-  Because the compiler doesn't know the size of the process struct the user
-  can't easily allocate the process struct on the heap because it can't figure
+  Because the compiler doesn't know the size of the reproc struct the user
+  can't easily allocate the reproc struct on the heap because it can't figure
   out its size with sizeof.
 
   We already mentioned that we solve this problem by providing the
-  `process_size` function that returns the size of the process struct.
+  `reproc_size` function that returns the size of the reproc struct.
 
 ### Memory allocation
 
-process-lib aims to do as few dynamic memory allocations as possible in its own
+reproc aims to do as few dynamic memory allocations as possible in its own
 code (not counting allocations that happen in system calls). As of this moment,
 dynamic memory allocation is only done on Windows:
 
@@ -316,11 +316,11 @@ dynamic memory allocation is only done on Windows:
 I have not found a way to avoid allocating memory while keeping a uniform
 cross-platform API for both POSIX and Windows. (Windows `CreateProcessW`
 requires a single UTF-16 string of arguments delimited by spaces while POSIX
-`execvp` requires an array of UTF-8 string arguments). Since process-lib's API
+`execvp` requires an array of UTF-8 string arguments). Since reproc's API
 takes child process arguments as an array of UTF-8 strings we have to allocate
 memory to convert the array into a single UTF-16 string as required by Windows.
 
-process-lib uses the standard `malloc` and `free` functions to allocate and free
+reproc uses the standard `malloc` and `free` functions to allocate and free
 memory. However, providing support for custom allocators should be
 straightforward. If you need them, please open an issue.
 
@@ -335,13 +335,13 @@ support specifying a timeout value.
 
 To support waiting with a timeout value on POSIX, each process is put in its own
 process group with the same id as the process id with a call to `setpgid` after
-forking the process. When calling the `process_wait` function, a timeout process
+forking the process. When calling the `reproc_wait` function, a timeout process
 is forked which we put in the same process group as the process we want to wait
 for with the same `setpgid` function and puts itself to sleep for the requested
 amount of time (timeout value) before exiting. We then call the `waitpid`
 function in the main process but instead of passing the process id of the
 process we want to wait for we pass the negative value of the process id
-`-process->pid`. Passing a negative value for the process id to `waitpid`
+`-reproc->pid`. Passing a negative value for the process id to `waitpid`
 instructs it to wait for all processes in the process group of the absolute
 value of the passed negative value. In our case it will wait for both the
 timeout process we started and the process we actually want to wait for. If
@@ -355,10 +355,10 @@ Overflow answer.
 
 ### (POSIX) Check if execve call was succesful
 
-process-lib uses a fork-exec model to start new child processes on POSIX
-systems. A problem that occured is that process-lib needs to differentiate
+reproc uses a fork-exec model to start new child processes on POSIX
+systems. A problem that occured is that reproc needs to differentiate
 between errors that happened before the exec call (which are errors from
-process-lib) and errors after the exec call (which are errors from the child
+reproc) and errors after the exec call (which are errors from the child
 process itself). To do this we create an extra pipe in the parent procces with
 the `FD_CLOEXEC` flag set and write any errors before and from exec to that
 pipe. If we then read from the error pipe after forking the `read` call will
@@ -381,12 +381,12 @@ after a file descriptor is created (for example using `pipe`) but before `fcntl`
 is called to set `FD_CLOEXEC` on the file descriptor will still inherit that
 file descriptor.
 
-To get around this race condition process-lib uses the `pipe2` function (when it
+To get around this race condition reproc uses the `pipe2` function (when it
 is available) which takes the `O_CLOEXEC` flag as an argument. This ensures the
 file descriptors of the created pipe are closed when `execve` is called. Similar
 system calls that take the `O_CLOEXEC` flag exist for other system calls that
 create file descriptors. If `pipe2` is not available (for example on Darwin)
-process-lib falls back to calling `fcntl` to set `FD_CLOEXEC` immediately after
+reproc falls back to calling `fcntl` to set `FD_CLOEXEC` immediately after
 creating a pipe.
 
 Darwin does not support the `FD_CLOEXEC` flag on any of its system calls but
@@ -396,12 +396,12 @@ instead provides an extra flag for the `posix_spawn` API (a wrapper around
 that instructs `posix_spawn` to close all open file descriptors in the child
 process created by `posix_spawn`. However, `posix_spawn` doesn't support
 changing the working directory of the child process. A solution to get around
-this was implemented in process-lib but it was deemed too complex and brittle so
+this was implemented in reproc but it was deemed too complex and brittle so
 it was removed.
 
-While using `pipe2` prevents file descriptors created by process-lib from
+While using `pipe2` prevents file descriptors created by reproc from
 leaking into other child processes, file descriptors created outside of
-process-lib without the `FD_CLOEXEC` flag set will still leak into process-lib
+reproc without the `FD_CLOEXEC` flag set will still leak into reproc
 child processes. To mostly get around this after forking and redirecting the
 standard streams (stdin, stdout, stderr) of the child process we close all file
 descriptors (except the standard streams) up to `_SC_OPEN_MAX` (obtained with
@@ -437,10 +437,10 @@ mitigate this in two ways:
 - Windows Vista added the `STARTUPINFOEXW` structure in which we can put a list
   of handles that should be inherited. Only these handles are inherited by the
   child process. This again (just like Darwin `posix_spawn`) only stops
-  process-lib's processes from inheriting unintended handles. Other code in an
+  reproc's processes from inheriting unintended handles. Other code in an
   application that calls `CreateProcess` without passing a `STARTUPINFOEXW`
   struct containing the handles it should inherit can still unintentionally
-  inherit handles meant for a process-lib child process. process-lib uses the
+  inherit handles meant for a reproc child process. reproc uses the
   `STARTUPINFOEXW` struct if it is available.
 
 ## Contributing
@@ -462,7 +462,7 @@ compile and run the tests on the platforms you don't have access to.
 
 ### CMake developer options
 
-When working on process-lib developers can also enable the
-`PROCESS_LIB_RUN_CLANG_TIDY` option to run `clang-tidy` as part of the build.
+When working on reproc developers can also enable the
+`REPROC_RUN_CLANG_TIDY` option to run `clang-tidy` as part of the build.
 This requires `clang-tidy` to be in CMake's search path (PATH is included in
 CMake's search path).

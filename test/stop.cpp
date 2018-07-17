@@ -1,5 +1,5 @@
 #include <doctest.h>
-#include <process-lib/process.h>
+#include <reproc/reproc.h>
 
 #include <cstdlib>
 
@@ -8,37 +8,37 @@ TEST_CASE("stop")
   const char *argv[2] = { INFINITE_PATH, nullptr };
   int argc = 1;
 
-  auto process = static_cast<process_type *>(malloc(process_size()));
-  REQUIRE(process);
+  auto reproc = static_cast<reproc_type *>(malloc(reproc_size()));
+  REQUIRE(reproc);
 
-  PROCESS_LIB_ERROR error = PROCESS_LIB_SUCCESS;
+  REPROC_ERROR error = REPROC_SUCCESS;
   CAPTURE(error);
 
-  error = process_init(process);
+  error = reproc_init(reproc);
   REQUIRE(!error);
 
-  error = process_start(process, argc, argv, nullptr);
+  error = reproc_start(reproc, argc, argv, nullptr);
   REQUIRE(!error);
 
-  // Wait 50ms to avoid terminating the process on Windows before it is
+  // Wait 50ms to avoid terminating the child process on Windows before it is
   // initialized (which would result in an error window appearing)
-  error = process_wait(process, 50);
-  REQUIRE((error == PROCESS_LIB_WAIT_TIMEOUT));
+  error = reproc_wait(reproc, 50);
+  REQUIRE((error == REPROC_WAIT_TIMEOUT));
 
   SUBCASE("terminate")
   {
-    error = process_terminate(process, 50);
+    error = reproc_terminate(reproc, 50);
     REQUIRE(!error);
   }
 
   SUBCASE("kill")
   {
-    error = process_kill(process, 50);
+    error = reproc_kill(reproc, 50);
     REQUIRE(!error);
   }
 
-  error = process_destroy(process);
+  error = reproc_destroy(reproc);
   REQUIRE(!error);
 
-  free(process);
+  free(reproc);
 }

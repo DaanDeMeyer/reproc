@@ -5,7 +5,7 @@
 #include <string.h>
 #include <windows.h>
 
-PROCESS_LIB_ERROR string_join(const char **string_array, int array_length,
+REPROC_ERROR string_join(const char **string_array, int array_length,
                               char **result)
 {
   assert(string_array);
@@ -24,7 +24,7 @@ PROCESS_LIB_ERROR string_join(const char **string_array, int array_length,
   }
 
   char *string = malloc(sizeof(char) * string_length);
-  if (string == NULL) { return PROCESS_LIB_MEMORY_ERROR; }
+  if (string == NULL) { return REPROC_MEMORY_ERROR; }
 
   char *current = string; // Keeps track of where we are in the result string
   for (int i = 0; i < array_length; i++) {
@@ -43,10 +43,10 @@ PROCESS_LIB_ERROR string_join(const char **string_array, int array_length,
 
   *result = string;
 
-  return PROCESS_LIB_SUCCESS;
+  return REPROC_SUCCESS;
 }
 
-PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result)
+REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
 {
   assert(string);
   assert(result);
@@ -58,13 +58,13 @@ PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result)
                                            string, -1, NULL, 0);
   if (wstring_length == 0) {
     switch (GetLastError()) {
-    case ERROR_NO_UNICODE_TRANSLATION: return PROCESS_LIB_INVALID_UNICODE;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case ERROR_NO_UNICODE_TRANSLATION: return REPROC_INVALID_UNICODE;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
   wchar_t *wstring = malloc(sizeof(wchar_t) * wstring_length);
-  if (!wstring) { return PROCESS_LIB_MEMORY_ERROR; }
+  if (!wstring) { return REPROC_MEMORY_ERROR; }
 
   // Now that we pass our allocated string and its length MultiByteToWideChar
   // will actually perform the conversion.
@@ -74,17 +74,17 @@ PROCESS_LIB_ERROR string_to_wstring(const char *string, wchar_t **result)
   if (written == 0) {
     free(wstring);
     switch (GetLastError()) {
-    case ERROR_NO_UNICODE_TRANSLATION: return PROCESS_LIB_INVALID_UNICODE;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case ERROR_NO_UNICODE_TRANSLATION: return REPROC_INVALID_UNICODE;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
   *result = wstring;
 
-  return PROCESS_LIB_SUCCESS;
+  return REPROC_SUCCESS;
 }
 
-PROCESS_LIB_ERROR wstring_to_string(const wchar_t *wstring, char **result)
+REPROC_ERROR wstring_to_string(const wchar_t *wstring, char **result)
 {
   // Same logic as string_to_wstring but in the opposite direction
   assert(wstring);
@@ -95,13 +95,13 @@ PROCESS_LIB_ERROR wstring_to_string(const wchar_t *wstring, char **result)
                                           wstring, -1, NULL, 0, NULL, NULL);
   if (string_length == 0) {
     switch (GetLastError()) {
-    case ERROR_NO_UNICODE_TRANSLATION: return PROCESS_LIB_INVALID_UNICODE;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case ERROR_NO_UNICODE_TRANSLATION: return REPROC_INVALID_UNICODE;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
   char *string = malloc(sizeof(char) * string_length);
-  if (!string) { return PROCESS_LIB_MEMORY_ERROR; }
+  if (!string) { return REPROC_MEMORY_ERROR; }
 
   SetLastError(0);
   int written = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstring, -1,
@@ -109,12 +109,12 @@ PROCESS_LIB_ERROR wstring_to_string(const wchar_t *wstring, char **result)
   if (written == 0) {
     free(string);
     switch (GetLastError()) {
-    case ERROR_NO_UNICODE_TRANSLATION: return PROCESS_LIB_INVALID_UNICODE;
-    default: return PROCESS_LIB_UNKNOWN_ERROR;
+    case ERROR_NO_UNICODE_TRANSLATION: return REPROC_INVALID_UNICODE;
+    default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
   *result = string;
 
-  return PROCESS_LIB_SUCCESS;
+  return REPROC_SUCCESS;
 }
