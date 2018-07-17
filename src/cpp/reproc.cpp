@@ -38,14 +38,14 @@ Reproc &Reproc::operator=(Reproc &&other) noexcept
 }
 
 Reproc::Error Reproc::start(int argc, const char *argv[],
-                              const char *working_directory)
+                            const char *working_directory)
 {
   return static_cast<Reproc::Error>(
       reproc_start(reproc, argc, argv, working_directory));
 }
 
 Reproc::Error Reproc::start(const std::vector<std::string> &args,
-                              const std::string *working_directory)
+                            const std::string *working_directory)
 {
   // Turn args into array of C strings
   auto argv = new const char *[args.size() + 1];
@@ -71,21 +71,21 @@ Reproc::Error Reproc::close_stdin()
 }
 
 Reproc::Error Reproc::write(const void *buffer, unsigned int to_write,
-                              unsigned int *bytes_written)
+                            unsigned int *bytes_written)
 {
   return static_cast<Reproc::Error>(
       reproc_write(reproc, buffer, to_write, bytes_written));
 }
 
 Reproc::Error Reproc::read(void *buffer, unsigned int size,
-                             unsigned int *bytes_read)
+                           unsigned int *bytes_read)
 {
   return static_cast<Reproc::Error>(
       reproc_read(reproc, buffer, size, bytes_read));
 }
 
 Reproc::Error Reproc::read_stderr(void *buffer, unsigned int size,
-                                    unsigned int *bytes_read)
+                                  unsigned int *bytes_read)
 {
   return static_cast<Reproc::Error>(
       reproc_read_stderr(reproc, buffer, size, bytes_read));

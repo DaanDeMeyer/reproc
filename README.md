@@ -34,8 +34,8 @@ you can either make an issue or ask the question directly in
 
 ### FetchContent
 
-The easiest way to use reproc is with the CMake build system. If you're
-using CMake 3.11 or later you can use the
+The easiest way to use reproc is with the CMake build system. If you're using
+CMake 3.11 or later you can use the
 [FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) API
 to use reproc in your project.
 
@@ -60,8 +60,8 @@ target_link_libraries(myapp reproc::reproc)
 
 ### Git submodule/vendor
 
-If you can't use CMake 3.11 or higher, you can add reproc as a git
-submodule instead:
+If you can't use CMake 3.11 or higher, you can add reproc as a git submodule
+instead:
 
 ```bash
 # In your application source directory
@@ -93,8 +93,8 @@ target_link_libraries(myapp reproc::reproc)
 
 ### Install
 
-reproc can be installed and later found via the CMake `find_package`
-command. An example of how this works:
+reproc can be installed and later found via the CMake `find_package` command. An
+example of how this works:
 
 ```bash
 git clone https://github.com/DaanDeMeyer/reproc.git
@@ -113,25 +113,24 @@ add_executable(myapp myapp.c)
 target_link_libraries(myapp reproc::reproc)
 ```
 
-The install prefix specified when installing reproc might not be in the
-default search path of CMake. If this is the case you can tell CMake where to
-search for reproc as follows:
+The install prefix specified when installing reproc might not be in the default
+search path of CMake. If this is the case you can tell CMake where to search for
+reproc as follows:
 
 ```bash
 cmake -DCMAKE_PREFIX_PATH=<reproc-install-dir> ..
 ```
 
-Installing is the way to go if you want to use reproc with other build
-systems than CMake. After installing you can use your build systems preferred
-way of finding libraries to find reproc. Refer to your build system's
-documentation for more info.
+Installing is the way to go if you want to use reproc with other build systems
+than CMake. After installing you can use your build systems preferred way of
+finding libraries to find reproc. Refer to your build system's documentation for
+more info.
 
 ### CMake user options
 
 reproc supports the following CMake options:
 
-- `REPROC_BUILD_CPP_WRAPPER (ON|OFF)`: Build the C++ wrapper (default:
-  `OFF`)
+- `REPROC_BUILD_CPP_WRAPPER (ON|OFF)`: Build the C++ wrapper (default: `OFF`)
 - `REPROC_BUILD_TESTS (ON|OFF)`: Build tests (default: `OFF`)
 - `REPROC_BUILD_EXAMPLES (ON|OFF)`: Build examples (default: `OFF`)
 
@@ -154,27 +153,26 @@ C++ API.
 
 API documentation can be found in [reproc.h](include/c/reproc/reproc.h).
 Documentation for the C++ wrapper can be found in
-[reproc.hpp](include/cpp/reproc/reproc.hpp) (which mostly refers to
-reproc.h).
+[reproc.hpp](include/cpp/reproc/reproc.hpp) (which mostly refers to reproc.h).
 
 ## Unknown errors
 
 There are lots of things that can go wrong when working with child processes.
-reproc tries to unify the different platform errors as much as possible but
-this is an ongoing effort. In particular, the Windows Win32 documentation mostly
-does not specify what errors a function can throw. As a result, when an error
-occurs on Windows reproc will usually return `REPROC_UNKNOWN_ERROR`.
-To get more information reproc provides a function `process_system_error`
-which gives the user the actual system error. Use this function to retrieve the
-actual system error and file an issue with the system error and the reproc
-function that returned it. This way we can incrementally identify unknown errors
-and add them to reproc.
+reproc tries to unify the different platform errors as much as possible but this
+is an ongoing effort. In particular, the Windows Win32 documentation mostly does
+not specify what errors a function can throw. As a result, when an error occurs
+on Windows reproc will usually return `REPROC_UNKNOWN_ERROR`. To get more
+information reproc provides a function `process_system_error` which gives the
+user the actual system error. Use this function to retrieve the actual system
+error and file an issue with the system error and the reproc function that
+returned it. This way we can incrementally identify unknown errors and add them
+to reproc.
 
 ## Gotcha's
 
 - While `reproc_terminate` allows the child process to perform cleanup it is up
-  to the child process to correctly clean up after itself. reproc only
-  sends a termination signal to the child process itself. The child process is
+  to the child process to correctly clean up after itself. reproc only sends a
+  termination signal to the child process itself. The child process is
   responsible for cleaning up its own child processes and other resources in its
   signal handler.
 
@@ -185,8 +183,8 @@ and add them to reproc.
   `reproc_terminate` before switching to `reproc_kill`.
 
 - (POSIX) On POSIX a parent process is required to wait on a child process
-  (using `reproc_wait`) after it has exited before all resources related to
-  that process can be freed by the kernel. If the parent doesn't wait on a child
+  (using `reproc_wait`) after it has exited before all resources related to that
+  process can be freed by the kernel. If the parent doesn't wait on a child
   process after it exits, the child process becomes a
   [zombie process](https://en.wikipedia.org/wiki/Zombie_process).
 
@@ -202,14 +200,13 @@ and add them to reproc.
   since most of the time you'll want to read/write to the process or wait until
   it exits normally.
 
-  If someone runs into this problem, reproc's tests mitigate it by waiting
-  a few milliseconds using `reproc_wait` before terminating the child process.
+  If someone runs into this problem, reproc's tests mitigate it by waiting a few
+  milliseconds using `reproc_wait` before terminating the child process.
 
-- File descriptors/handles created by reproc can leak to child processes
-  not spawned by reproc if the application is multithreaded. This is not
-  the case on systems that support the `pipe2` system call (Linux 2.6+ and newer
-  BSD's). See [Avoiding resource leaks](#avoiding-resource-leaks) for more
-  information.
+- File descriptors/handles created by reproc can leak to child processes not
+  spawned by reproc if the application is multithreaded. This is not the case on
+  systems that support the `pipe2` system call (Linux 2.6+ and newer BSD's). See
+  [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
 
 - (POSIX) On POSIX, file descriptors above the file descriptor resource limit
   (obtained with `sysconf(_SC_OPEN_MAX)`) and without the `FD_CLOEXEC` flag set
@@ -231,8 +228,8 @@ and add them to reproc.
 
 ## Design
 
-reproc is designed to be a minimal wrapper around the platform-specific
-API's for starting a process, interacting with its standard streams and finally
+reproc is designed to be a minimal wrapper around the platform-specific API's
+for starting a process, interacting with its standard streams and finally
 terminating it.
 
 ### Opaque pointer
@@ -248,10 +245,9 @@ pointer (process_type \*).
 typedef struct reproc reproc_type;
 ```
 
-The reproc.h header only contains a forward-declaration of the reproc struct.
-We provide an implementation in the source files of each supported platform
-where we store platform-specific members such as pipe handles, process id's,
-....
+The reproc.h header only contains a forward-declaration of the reproc struct. We
+provide an implementation in the source files of each supported platform where
+we store platform-specific members such as pipe handles, process id's, ....
 
 To enable the user to allocate memory for the opaque pointer we provide the
 `reproc_size` function that returns the required size for the opaque pointer on
@@ -265,8 +261,8 @@ Advantages:
 
 - Fewer includes required in reproc.h
 
-  Because we only have a forward declaration of the reproc struct in reproc.h
-  we don't need any platform-specific includes (such as windows.h) in the header
+  Because we only have a forward declaration of the reproc struct in reproc.h we
+  don't need any platform-specific includes (such as windows.h) in the header
   file to define the data types of all the members that the struct contains.
 
 - No leaking of implementation details
@@ -282,8 +278,8 @@ Disadvantages:
 - No simple allocation on the stack
 
   Because including reproc.h does not give the compiler access to the full
-  definition of the reproc struct it is unable to allocate its implementation
-  on the stack since it doesn't know its size. Allocating on the stack is still
+  definition of the reproc struct it is unable to allocate its implementation on
+  the stack since it doesn't know its size. Allocating on the stack is still
   possible but requires functions such as `alloca` which is harder compared to
   just writing
 
@@ -293,17 +289,17 @@ Disadvantages:
 
 - Not possible to allocate on the heap without help from the library
 
-  Because the compiler doesn't know the size of the reproc struct the user
-  can't easily allocate the reproc struct on the heap because it can't figure
-  out its size with sizeof.
+  Because the compiler doesn't know the size of the reproc struct the user can't
+  easily allocate the reproc struct on the heap because it can't figure out its
+  size with sizeof.
 
-  We already mentioned that we solve this problem by providing the
-  `reproc_size` function that returns the size of the reproc struct.
+  We already mentioned that we solve this problem by providing the `reproc_size`
+  function that returns the size of the reproc struct.
 
 ### Memory allocation
 
-reproc aims to do as few dynamic memory allocations as possible in its own
-code (not counting allocations that happen in system calls). As of this moment,
+reproc aims to do as few dynamic memory allocations as possible in its own code
+(not counting allocations that happen in system calls). As of this moment,
 dynamic memory allocation is only done on Windows:
 
 - When converting the array of program arguments to a single string as required
@@ -316,9 +312,9 @@ dynamic memory allocation is only done on Windows:
 I have not found a way to avoid allocating memory while keeping a uniform
 cross-platform API for both POSIX and Windows. (Windows `CreateProcessW`
 requires a single UTF-16 string of arguments delimited by spaces while POSIX
-`execvp` requires an array of UTF-8 string arguments). Since reproc's API
-takes child process arguments as an array of UTF-8 strings we have to allocate
-memory to convert the array into a single UTF-16 string as required by Windows.
+`execvp` requires an array of UTF-8 string arguments). Since reproc's API takes
+child process arguments as an array of UTF-8 strings we have to allocate memory
+to convert the array into a single UTF-16 string as required by Windows.
 
 reproc uses the standard `malloc` and `free` functions to allocate and free
 memory. However, providing support for custom allocators should be
@@ -355,16 +351,16 @@ Overflow answer.
 
 ### (POSIX) Check if execve call was succesful
 
-reproc uses a fork-exec model to start new child processes on POSIX
-systems. A problem that occured is that reproc needs to differentiate
-between errors that happened before the exec call (which are errors from
-reproc) and errors after the exec call (which are errors from the child
-process itself). To do this we create an extra pipe in the parent procces with
-the `FD_CLOEXEC` flag set and write any errors before and from exec to that
-pipe. If we then read from the error pipe after forking the `read` call will
-either read 0 which means exec was called and the write endpoint was closed
-(because of the `FD_CLOEXEC` flag) or it reads a single integer (errno) which
-indicates an error occured before or during exec.
+reproc uses a fork-exec model to start new child processes on POSIX systems. A
+problem that occured is that reproc needs to differentiate between errors that
+happened before the exec call (which are errors from reproc) and errors after
+the exec call (which are errors from the child process itself). To do this we
+create an extra pipe in the parent procces with the `FD_CLOEXEC` flag set and
+write any errors before and from exec to that pipe. If we then read from the
+error pipe after forking the `read` call will either read 0 which means exec was
+called and the write endpoint was closed (because of the `FD_CLOEXEC` flag) or
+it reads a single integer (errno) which indicates an error occured before or
+during exec.
 
 This solution was inspired by [this](https://stackoverflow.com/a/1586277) Stack
 Overflow answer.
@@ -381,8 +377,8 @@ after a file descriptor is created (for example using `pipe`) but before `fcntl`
 is called to set `FD_CLOEXEC` on the file descriptor will still inherit that
 file descriptor.
 
-To get around this race condition reproc uses the `pipe2` function (when it
-is available) which takes the `O_CLOEXEC` flag as an argument. This ensures the
+To get around this race condition reproc uses the `pipe2` function (when it is
+available) which takes the `O_CLOEXEC` flag as an argument. This ensures the
 file descriptors of the created pipe are closed when `execve` is called. Similar
 system calls that take the `O_CLOEXEC` flag exist for other system calls that
 create file descriptors. If `pipe2` is not available (for example on Darwin)
@@ -396,26 +392,26 @@ instead provides an extra flag for the `posix_spawn` API (a wrapper around
 that instructs `posix_spawn` to close all open file descriptors in the child
 process created by `posix_spawn`. However, `posix_spawn` doesn't support
 changing the working directory of the child process. A solution to get around
-this was implemented in reproc but it was deemed too complex and brittle so
-it was removed.
+this was implemented in reproc but it was deemed too complex and brittle so it
+was removed.
 
-While using `pipe2` prevents file descriptors created by reproc from
-leaking into other child processes, file descriptors created outside of
-reproc without the `FD_CLOEXEC` flag set will still leak into reproc
-child processes. To mostly get around this after forking and redirecting the
-standard streams (stdin, stdout, stderr) of the child process we close all file
-descriptors (except the standard streams) up to `_SC_OPEN_MAX` (obtained with
-`sysconf`) in the child process. `_SC_OPEN_MAX` describes the maximum number of
-files that a process can have open at any time. As a result, trying to close
-every file descriptor up to this number closes all file descriptors of the child
-process which includes file descriptors that were leaked into the child process.
-However, an application can manually lower the resource limit at any time (for
-example with `setrlimit(RLIMIT_NOFILE)`), which can lead to open file
-descriptors with a value above the new resource limit if they were created
-before the resource limit was lowered. These file descriptors will not be closed
-in the child process since only the file descriptors up to the latest resource
-limit are closed. Of course, this only happens if the application manually
-lowers the resource limit.
+While using `pipe2` prevents file descriptors created by reproc from leaking
+into other child processes, file descriptors created outside of reproc without
+the `FD_CLOEXEC` flag set will still leak into reproc child processes. To mostly
+get around this after forking and redirecting the standard streams (stdin,
+stdout, stderr) of the child process we close all file descriptors (except the
+standard streams) up to `_SC_OPEN_MAX` (obtained with `sysconf`) in the child
+process. `_SC_OPEN_MAX` describes the maximum number of files that a process can
+have open at any time. As a result, trying to close every file descriptor up to
+this number closes all file descriptors of the child process which includes file
+descriptors that were leaked into the child process. However, an application can
+manually lower the resource limit at any time (for example with
+`setrlimit(RLIMIT_NOFILE)`), which can lead to open file descriptors with a
+value above the new resource limit if they were created before the resource
+limit was lowered. These file descriptors will not be closed in the child
+process since only the file descriptors up to the latest resource limit are
+closed. Of course, this only happens if the application manually lowers the
+resource limit.
 
 On Windows the same race condition occurs. The `CreatePipe` function receives a
 flag as part of its arguments that specifies if the returned handles can be
@@ -436,12 +432,12 @@ mitigate this in two ways:
   need to be inherited by their corresponding child process.
 - Windows Vista added the `STARTUPINFOEXW` structure in which we can put a list
   of handles that should be inherited. Only these handles are inherited by the
-  child process. This again (just like Darwin `posix_spawn`) only stops
-  reproc's processes from inheriting unintended handles. Other code in an
-  application that calls `CreateProcess` without passing a `STARTUPINFOEXW`
-  struct containing the handles it should inherit can still unintentionally
-  inherit handles meant for a reproc child process. reproc uses the
-  `STARTUPINFOEXW` struct if it is available.
+  child process. This again (just like Darwin `posix_spawn`) only stops reproc's
+  processes from inheriting unintended handles. Other code in an application
+  that calls `CreateProcess` without passing a `STARTUPINFOEXW` struct
+  containing the handles it should inherit can still unintentionally inherit
+  handles meant for a reproc child process. reproc uses the `STARTUPINFOEXW`
+  struct if it is available.
 
 ## Contributing
 
@@ -462,7 +458,6 @@ compile and run the tests on the platforms you don't have access to.
 
 ### CMake developer options
 
-When working on reproc developers can also enable the
-`REPROC_RUN_CLANG_TIDY` option to run `clang-tidy` as part of the build.
-This requires `clang-tidy` to be in CMake's search path (PATH is included in
-CMake's search path).
+When working on reproc developers can also enable the `REPROC_RUN_CLANG_TIDY`
+option to run `clang-tidy` as part of the build. This requires `clang-tidy` to
+be in CMake's search path (PATH is included in CMake's search path).

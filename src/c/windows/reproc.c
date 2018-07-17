@@ -37,9 +37,8 @@ REPROC_ERROR reproc_init(struct reproc *reproc)
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_start(struct reproc *reproc, int argc,
-                                const char *argv[],
-                                const char *working_directory)
+REPROC_ERROR reproc_start(struct reproc *reproc, int argc, const char *argv[],
+                          const char *working_directory)
 {
   assert(reproc);
 
@@ -127,8 +126,7 @@ cleanup:
 }
 
 REPROC_ERROR reproc_write(struct reproc *reproc, const void *buffer,
-                                unsigned int to_write,
-                                unsigned int *bytes_written)
+                          unsigned int to_write, unsigned int *bytes_written)
 {
   assert(reproc);
   assert(reproc->parent_stdin);
@@ -148,8 +146,8 @@ REPROC_ERROR reproc_close_stdin(struct reproc *reproc)
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_read(struct reproc *reproc, void *buffer,
-                               unsigned int size, unsigned int *bytes_read)
+REPROC_ERROR reproc_read(struct reproc *reproc, void *buffer, unsigned int size,
+                         unsigned int *bytes_read)
 {
   assert(reproc);
   assert(reproc->parent_stdout);
@@ -160,8 +158,7 @@ REPROC_ERROR reproc_read(struct reproc *reproc, void *buffer,
 }
 
 REPROC_ERROR reproc_read_stderr(struct reproc *reproc, void *buffer,
-                                      unsigned int size,
-                                      unsigned int *bytes_read)
+                                unsigned int size, unsigned int *bytes_read)
 {
   assert(reproc);
   assert(reproc->parent_stderr);
@@ -171,8 +168,7 @@ REPROC_ERROR reproc_read_stderr(struct reproc *reproc, void *buffer,
   return pipe_read(reproc->parent_stderr, buffer, size, bytes_read);
 }
 
-REPROC_ERROR reproc_wait(struct reproc *reproc,
-                               unsigned int milliseconds)
+REPROC_ERROR reproc_wait(struct reproc *reproc, unsigned int milliseconds)
 {
   assert(reproc);
   assert(reproc->info.hProcess);
@@ -185,8 +181,7 @@ REPROC_ERROR reproc_wait(struct reproc *reproc,
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_terminate(struct reproc *reproc,
-                                    unsigned int milliseconds)
+REPROC_ERROR reproc_terminate(struct reproc *reproc, unsigned int milliseconds)
 {
   assert(reproc);
   assert(reproc->info.dwProcessId);
@@ -210,8 +205,7 @@ REPROC_ERROR reproc_terminate(struct reproc *reproc,
   return reproc_wait(reproc, milliseconds);
 }
 
-REPROC_ERROR reproc_kill(struct reproc *reproc,
-                               unsigned int milliseconds)
+REPROC_ERROR reproc_kill(struct reproc *reproc, unsigned int milliseconds)
 {
   assert(reproc);
   assert(reproc->info.hProcess);
@@ -242,9 +236,7 @@ REPROC_ERROR reproc_exit_status(struct reproc *reproc, int *exit_status)
     return REPROC_UNKNOWN_ERROR;
   }
 
-  if (unsigned_exit_status == STILL_ACTIVE) {
-    return REPROC_STILL_RUNNING;
-  }
+  if (unsigned_exit_status == STILL_ACTIVE) { return REPROC_STILL_RUNNING; }
 
   *exit_status = unsigned_exit_status;
 

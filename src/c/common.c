@@ -11,8 +11,7 @@ const char *reproc_error_to_string(REPROC_ERROR error)
   case REPROC_MEMORY_ERROR: return "reproc => memory error";
   case REPROC_PIPE_LIMIT_REACHED: return "reproc => pipe limit reached";
   case REPROC_INTERRUPTED: return "reproc => interrupted";
-  case REPROC_PROCESS_LIMIT_REACHED:
-    return "reproc => process limit reached";
+  case REPROC_PROCESS_LIMIT_REACHED: return "reproc => process limit reached";
   case REPROC_INVALID_UNICODE: return "reproc => invalid unicode";
   case REPROC_PERMISSION_DENIED: return "reproc => permission denied";
   case REPROC_SYMLINK_LOOP: return "reproc => symlink loop";

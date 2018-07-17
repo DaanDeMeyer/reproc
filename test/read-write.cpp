@@ -36,7 +36,7 @@ TEST_CASE("read-write")
 
     unsigned int bytes_written = 0;
     error = reproc_write(reproc, message.data(), message_length,
-                          &bytes_written);
+                         &bytes_written);
     REQUIRE(!error);
 
     error = reproc_close_stdin(reproc);
@@ -46,8 +46,7 @@ TEST_CASE("read-write")
 
     while (true) {
       unsigned int bytes_read = 0;
-      error = reproc_read(reproc, buffer.data(), buffer_size,
-                           &bytes_read);
+      error = reproc_read(reproc, buffer.data(), buffer_size, &bytes_read);
       if (error) { break; }
 
       buffer[bytes_read] = '\0';
@@ -70,7 +69,7 @@ TEST_CASE("read-write")
 
     unsigned int bytes_written = 0;
     error = reproc_write(reproc, message.data(), message_length,
-                          &bytes_written);
+                         &bytes_written);
     REQUIRE(!error);
 
     error = reproc_close_stdin(reproc);
@@ -81,7 +80,7 @@ TEST_CASE("read-write")
     while (true) {
       unsigned int bytes_read = 0;
       error = reproc_read_stderr(reproc, buffer.data(), buffer_size,
-                                  &bytes_read);
+                                 &bytes_read);
       if (error) { break; }
 
       buffer[bytes_read] = '\0';

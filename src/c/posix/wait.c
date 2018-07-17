@@ -48,7 +48,7 @@ REPROC_ERROR wait_infinite(pid_t pid, int *exit_status)
 
 // See Design section in README.md for an explanation of how this works
 REPROC_ERROR wait_timeout(pid_t pid, int *exit_status,
-                               unsigned int milliseconds)
+                          unsigned int milliseconds)
 {
   assert(exit_status);
   assert(milliseconds > 0);

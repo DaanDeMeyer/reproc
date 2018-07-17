@@ -44,7 +44,7 @@ public:
 
   /*! \see reproc_start */
   Reproc::Error start(int argc, const char *argv[],
-                       const char *working_directory);
+                      const char *working_directory);
 
   /*!
   Overload of start for convenient usage from C++.
@@ -53,22 +53,21 @@ public:
   that it should not end with NULL (which is added in this function).
   */
   Reproc::Error start(const std::vector<std::string> &args,
-                       const std::string *working_directory);
+                      const std::string *working_directory);
 
   /*! \see reproc_write */
   Reproc::Error write(const void *buffer, unsigned int to_write,
-                       unsigned int *bytes_written);
+                      unsigned int *bytes_written);
 
   /*! \see reproc_close_stdin */
   Reproc::Error close_stdin();
 
   /*! \see reproc_read */
-  Reproc::Error read(void *buffer, unsigned int size,
-                      unsigned int *bytes_read);
+  Reproc::Error read(void *buffer, unsigned int size, unsigned int *bytes_read);
 
   /*! \see reproc_read_stderr */
   Reproc::Error read_stderr(void *buffer, unsigned int size,
-                             unsigned int *bytes_read);
+                            unsigned int *bytes_read);
 
   Reproc::Error read_all(std::ostream &out);
   Reproc::Error read_all_stderr(std::ostream &out);

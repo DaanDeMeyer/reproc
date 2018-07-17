@@ -6,7 +6,7 @@
 #include <windows.h>
 
 REPROC_ERROR string_join(const char **string_array, int array_length,
-                              char **result)
+                         char **result)
 {
   assert(string_array);
   assert(array_length >= 0);
