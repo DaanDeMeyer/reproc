@@ -17,5 +17,7 @@ before_build:
 build:
   project: reproc.sln
 
+# Enter directory of dll so Windows can find it
 test_script:
-  - .\test\Debug\tests.exe
+  - cd lib\Debug
+  - ..\..\test\Debug\tests.exe

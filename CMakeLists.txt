@@ -69,6 +69,7 @@ add_library(reproc "")
 add_library(reproc::reproc ALIAS reproc)
 
 set_target_properties(reproc PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY lib
   ARCHIVE_OUTPUT_DIRECTORY lib
   LIBRARY_OUTPUT_DIRECTORY lib
   # Might not be set so surround with quotes so we always have a value
