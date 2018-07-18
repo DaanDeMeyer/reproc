@@ -93,28 +93,28 @@ Reproc::Error Reproc::read_stderr(void *buffer, unsigned int size,
 
 Reproc::Error Reproc::read_all(std::ostream &out)
 {
-  return read_all_generic([&out](const char *buffer, unsigned int size) {
+  return read_all([&out](const char *buffer, unsigned int size) {
     out.write(buffer, size);
   });
 }
 
 Reproc::Error Reproc::read_all_stderr(std::ostream &out)
 {
-  return read_all_stderr_generic([&out](const char *buffer, unsigned int size) {
+  return read_all_stderr([&out](const char *buffer, unsigned int size) {
     out.write(buffer, size);
   });
 }
 
 Reproc::Error Reproc::read_all(std::string &out)
 {
-  return read_all_generic([&out](const char *buffer, unsigned int size) {
+  return read_all([&out](const char *buffer, unsigned int size) {
     out.append(buffer, size);
   });
 }
 
 Reproc::Error Reproc::read_all_stderr(std::string &out)
 {
-  return read_all_stderr_generic([&out](const char *buffer, unsigned int size) {
+  return read_all_stderr([&out](const char *buffer, unsigned int size) {
     out.append(buffer, size);
   });
 }

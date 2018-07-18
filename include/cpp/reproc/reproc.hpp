@@ -54,7 +54,7 @@ public:
 
   /*! \see reproc_start */
   Reproc::Error start(int argc, const char *argv[],
-                                    const char *working_directory);
+                      const char *working_directory);
 
   /*!
   Overload of start for convenient usage from C++.
@@ -63,22 +63,21 @@ public:
   that it should not end with NULL (which is added in this function).
   */
   Reproc::Error start(const std::vector<std::string> &args,
-                                    const std::string *working_directory);
+                      const std::string *working_directory);
 
   /*! \see reproc_write */
   Reproc::Error write(const void *buffer, unsigned int to_write,
-                                    unsigned int *bytes_written);
+                      unsigned int *bytes_written);
 
   /*! \see reproc_close_stdin */
   Reproc::Error close_stdin();
 
   /*! \see reproc_read */
-  Reproc::Error read(void *buffer, unsigned int size,
-                                   unsigned int *bytes_read);
+  Reproc::Error read(void *buffer, unsigned int size, unsigned int *bytes_read);
 
   /*! \see reproc_read_stderr */
   Reproc::Error read_stderr(void *buffer, unsigned int size,
-                                          unsigned int *bytes_read);
+                            unsigned int *bytes_read);
 
   Reproc::Error read_all(std::ostream &out);
   Reproc::Error read_all_stderr(std::ostream &out);
@@ -108,7 +107,7 @@ public:
 
   \return Reproc::Error \see reproc_read except for STREAM_CLOSED
   */
-  template <class Write> Reproc::Error read_all_generic(Write &&write)
+  template <class Write> Reproc::Error read_all(Write &&write)
   {
     return read_all(
         [this](void *buffer, unsigned int size, unsigned int *bytes_read) {
@@ -117,8 +116,8 @@ public:
         std::forward<Write>(write));
   }
 
-  /*! \see read_all_generic for stderr */
-  template <class Write> Reproc::Error read_all_stderr_generic(Write &&write)
+  /*! \see read_all for stderr */
+  template <class Write> Reproc::Error read_all_stderr(Write &&write)
   {
     return read_all(
         [this](void *buffer, unsigned int size, unsigned int *bytes_read) {
