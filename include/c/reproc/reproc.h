@@ -2,13 +2,23 @@
 
 #pragma once
 
+#if defined(_WIN32) && defined(REPROC_BUILD_SHARED)
+#if defined(REPROC_BUILDING)
+#define REPROC_EXPORT __declspec(dllexport)
+#else
+#define REPROC_EXPORT __declspec(dllimport)
+#endif
+#else
+#define REPROC_EXPORT
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*! Used to indicate that a function that takes a timeout value should wait
 indefinitely. */
-extern const unsigned int REPROC_INFINITE;
+REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
 
 /*! Used to store child process information between multiple library calls */
 typedef struct reproc reproc_type;
@@ -87,7 +97,7 @@ Call order:
 
 Possible errors:
 */
-REPROC_ERROR reproc_init(reproc_type *reproc);
+REPROC_EXPORT REPROC_ERROR reproc_init(reproc_type *reproc);
 
 /*!
 Starts the process specified by argv in the given working directory and
@@ -138,8 +148,9 @@ Possible errors:
 - REPROC_SYMLINK_LOOP
 - REPROC_FILE_NOT_FOUND
 */
-REPROC_ERROR reproc_start(reproc_type *reproc, int argc, const char *argv[],
-                          const char *working_directory);
+REPROC_EXPORT REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
+                                        const char *argv[],
+                                        const char *working_directory);
 
 /*!
 Writes up to \p to_write bytes from \p buffer to the standard input (stdin) of
@@ -163,8 +174,9 @@ Possible errors:
 - REPROC_INTERRUPTED
 - REPROC_PARTIAL_WRITE
 */
-REPROC_ERROR reproc_write(reproc_type *reproc, const void *buffer,
-                          unsigned int to_write, unsigned int *bytes_written);
+REPROC_EXPORT REPROC_ERROR reproc_write(reproc_type *reproc, const void *buffer,
+                                        unsigned int to_write,
+                                        unsigned int *bytes_written);
 
 /*!
 Closes the standard input stream endpoint of the parent process.
@@ -180,7 +192,7 @@ the standard input stream can be closed using this function.
 Possible errors:
 - REPROC_INTERRUPTED
 */
-REPROC_ERROR reproc_close_stdin(reproc_type *reproc);
+REPROC_EXPORT REPROC_ERROR reproc_close_stdin(reproc_type *reproc);
 
 /*!
 Reads up to \p size bytes from the child process' standard output and stores
@@ -221,12 +233,14 @@ Possible errors:
 - REPROC_STREAM_CLOSED
 - REPROC_INTERRUPTED
 */
-REPROC_ERROR reproc_read(reproc_type *reproc, void *buffer, unsigned int size,
-                         unsigned int *bytes_read);
+REPROC_EXPORT REPROC_ERROR reproc_read(reproc_type *reproc, void *buffer,
+                                       unsigned int size,
+                                       unsigned int *bytes_read);
 
 /*! \see reproc_read for the standard error stream of the child process. */
-REPROC_ERROR reproc_read_stderr(reproc_type *reproc, void *buffer,
-                                unsigned int size, unsigned int *bytes_read);
+REPROC_EXPORT REPROC_ERROR reproc_read_stderr(reproc_type *reproc, void *buffer,
+                                              unsigned int size,
+                                              unsigned int *bytes_read);
 
 /*!
 Waits the specified amount of time for the process to exit.
@@ -250,7 +264,8 @@ Possible errors when milliseconds is not 0 or REPROC_INFINITE:
 - REPROC_PROCESS_LIMIT_REACHED
 - REPROC_MEMORY_ERROR
 */
-REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds);
+REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_type *reproc,
+                                       unsigned int milliseconds);
 
 /*!
 Tries to terminate the child process cleanly (the child process has a chance to
@@ -268,7 +283,8 @@ child process has already exited no signal is sent.
 
 Possible errors: See \see reproc_wait
 */
-REPROC_ERROR reproc_terminate(reproc_type *reproc, unsigned int milliseconds);
+REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_type *reproc,
+                                            unsigned int milliseconds);
 
 /*!
 Kills the child process without allowing for cleanup.
@@ -289,7 +305,8 @@ process with \see reproc_terminate before resorting to this function.
 
 Possible errors: See \see reproc_wait
 */
-REPROC_ERROR reproc_kill(reproc_type *reproc, unsigned int milliseconds);
+REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_type *reproc,
+                                       unsigned int milliseconds);
 
 /*!
 Returns the exit status of the child process
@@ -302,7 +319,8 @@ Returns the exit status of the child process
 Possible errors:
 - REPROC_STILL_RUNNING
 */
-REPROC_ERROR reproc_exit_status(reproc_type *reproc, int *exit_status);
+REPROC_EXPORT REPROC_ERROR reproc_exit_status(reproc_type *reproc,
+                                              int *exit_status);
 
 /*!
 Releases all resources associated with the child process.
@@ -317,7 +335,7 @@ exit on its own with \see reproc_wait.
 
 Possible errors:
 */
-REPROC_ERROR reproc_destroy(reproc_type *reproc);
+REPROC_EXPORT REPROC_ERROR reproc_destroy(reproc_type *reproc);
 
 /*!
 Returns the last system error code.
@@ -335,9 +353,9 @@ forking with this function (for example in chdir or execve).
 
 \return unsigned int The last system error code
 */
-unsigned int reproc_system_error(void);
+REPROC_EXPORT unsigned int reproc_system_error(void);
 
-const char *reproc_error_to_string(REPROC_ERROR error);
+REPROC_EXPORT const char *reproc_error_to_string(REPROC_ERROR error);
 
 #ifdef __cplusplus
 }

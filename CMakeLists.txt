@@ -85,6 +85,12 @@ target_include_directories(reproc PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/c>
 )
 
+# Used to add __declspec(dllexport/dllimport) on Windows
+target_compile_definitions(reproc PUBLIC
+  $<$<BOOL:${BUILD_SHARED_LIBS}>:REPROC_BUILD_SHARED>
+  $<BUILD_INTERFACE:REPROC_BUILDING>
+)
+
 target_sources(reproc PRIVATE src/c/common.c)
 
 if(WIN32)
@@ -264,14 +270,14 @@ install(
 )
 
 install(
-  DIRECTORY include/c/reproc
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  FILES include/c/reproc/reproc.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/reproc
 )
 
 if(REPROC_BUILD_CPP_WRAPPER)
   install(
-    DIRECTORY include/cpp/reproc
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES include/cpp/reproc/reproc.hpp
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/reproc
   )
 endif()
 

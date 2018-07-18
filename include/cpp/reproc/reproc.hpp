@@ -4,6 +4,16 @@
 #include <string>
 #include <vector>
 
+#if defined(_WIN32) && defined(REPROC_BUILD_SHARED)
+#if defined(REPROC_BUILDING)
+#define REPROC_EXPORT __declspec(dllexport)
+#else
+#define REPROC_EXPORT __declspec(dllimport)
+#endif
+#else
+#define REPROC_EXPORT
+#endif
+
 class Reproc
 {
 public:
@@ -32,19 +42,19 @@ public:
 
   /*! \see reproc_init. Throws std::bad_alloc if allocating memory for the
   reproc struct of the underlying C library fails */
-  Reproc();
+  REPROC_EXPORT Reproc();
   /*! \see reproc_destroy */
-  ~Reproc();
+  REPROC_EXPORT ~Reproc();
 
   /* Enforce unique ownership */
-  Reproc(const Reproc &) = delete;
-  Reproc(Reproc &&other) noexcept;
-  Reproc &operator=(const Reproc &) = delete;
-  Reproc &operator=(Reproc &&other) noexcept;
+  REPROC_EXPORT Reproc(const Reproc &) = delete;
+  REPROC_EXPORT Reproc(Reproc &&other) noexcept;
+  REPROC_EXPORT Reproc &operator=(const Reproc &) = delete;
+  REPROC_EXPORT Reproc &operator=(Reproc &&other) noexcept;
 
   /*! \see reproc_start */
-  Reproc::Error start(int argc, const char *argv[],
-                      const char *working_directory);
+  REPROC_EXPORT Reproc::Error start(int argc, const char *argv[],
+                                    const char *working_directory);
 
   /*!
   Overload of start for convenient usage from C++.
@@ -52,27 +62,28 @@ public:
   \param[in] args Has the same restrictions as argv in \see reproc_start except
   that it should not end with NULL (which is added in this function).
   */
-  Reproc::Error start(const std::vector<std::string> &args,
-                      const std::string *working_directory);
+  REPROC_EXPORT Reproc::Error start(const std::vector<std::string> &args,
+                                    const std::string *working_directory);
 
   /*! \see reproc_write */
-  Reproc::Error write(const void *buffer, unsigned int to_write,
-                      unsigned int *bytes_written);
+  REPROC_EXPORT Reproc::Error write(const void *buffer, unsigned int to_write,
+                                    unsigned int *bytes_written);
 
   /*! \see reproc_close_stdin */
-  Reproc::Error close_stdin();
+  REPROC_EXPORT Reproc::Error close_stdin();
 
   /*! \see reproc_read */
-  Reproc::Error read(void *buffer, unsigned int size, unsigned int *bytes_read);
+  REPROC_EXPORT Reproc::Error read(void *buffer, unsigned int size,
+                                   unsigned int *bytes_read);
 
   /*! \see reproc_read_stderr */
-  Reproc::Error read_stderr(void *buffer, unsigned int size,
-                            unsigned int *bytes_read);
+  REPROC_EXPORT Reproc::Error read_stderr(void *buffer, unsigned int size,
+                                          unsigned int *bytes_read);
 
-  Reproc::Error read_all(std::ostream &out);
-  Reproc::Error read_all_stderr(std::ostream &out);
-  Reproc::Error read_all(std::string &out);
-  Reproc::Error read_all_stderr(std::string &out);
+  REPROC_EXPORT Reproc::Error read_all(std::ostream &out);
+  REPROC_EXPORT Reproc::Error read_all_stderr(std::ostream &out);
+  REPROC_EXPORT Reproc::Error read_all(std::string &out);
+  REPROC_EXPORT Reproc::Error read_all_stderr(std::string &out);
 
   /*!
   Calls \see read until the child process stdout is closed or an error occurs.
@@ -117,21 +128,21 @@ public:
   }
 
   /*! \see reproc_wait */
-  Reproc::Error wait(unsigned int milliseconds);
+  REPROC_EXPORT Reproc::Error wait(unsigned int milliseconds);
 
   /*! \see reproc_terminate */
-  Reproc::Error terminate(unsigned int milliseconds);
+  REPROC_EXPORT Reproc::Error terminate(unsigned int milliseconds);
 
   /*! \see reproc_kill */
-  Reproc::Error kill(unsigned int milliseconds);
+  REPROC_EXPORT Reproc::Error kill(unsigned int milliseconds);
 
   /*! \see reproc_exit_status */
-  Reproc::Error exit_status(int *exit_status);
+  REPROC_EXPORT Reproc::Error exit_status(int *exit_status);
 
   /*! \see reproc_system_error */
-  static unsigned int system_error();
+  REPROC_EXPORT static unsigned int system_error();
 
-  static std::string error_to_string(Reproc::Error error);
+  REPROC_EXPORT static std::string error_to_string(Reproc::Error error);
 
 private:
   struct reproc *reproc;
