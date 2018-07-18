@@ -2,7 +2,7 @@
 
 #pragma once
 
-#if defined(_WIN32) && defined(REPROC_BUILD_SHARED)
+#if defined(_WIN32) && defined(REPROC_SHARED)
 #if defined(REPROC_BUILDING)
 #define REPROC_EXPORT __declspec(dllexport)
 #else
@@ -18,7 +18,7 @@ extern "C" {
 
 /*! Used to indicate that a function that takes a timeout value should wait
 indefinitely. */
-REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
+extern REPROC_EXPORT const unsigned int REPROC_INFINITE;
 
 /*! Used to store child process information between multiple library calls */
 typedef struct reproc reproc_type;
@@ -78,7 +78,7 @@ typedef enum {
 /*!
 Returns the size of reproc_type on the current platform so it can be allocated.
 */
-unsigned int reproc_size();
+REPROC_EXPORT unsigned int reproc_size();
 
 /*!
 Initializes the members of \p reproc.

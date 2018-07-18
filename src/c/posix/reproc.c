@@ -10,8 +10,6 @@
 #include <signal.h>
 #include <string.h>
 
-const unsigned int REPROC_INFINITE = 0xFFFFFFFF;
-
 struct reproc {
   pid_t pid;
   int parent_stdin;

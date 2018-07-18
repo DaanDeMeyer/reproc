@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#if defined(_WIN32) && defined(REPROC_BUILD_SHARED)
+#if defined(_WIN32) && defined(REPROC_SHARED)
 #if defined(REPROC_BUILDING)
 #define REPROC_EXPORT __declspec(dllexport)
 #else
@@ -14,7 +14,7 @@
 #define REPROC_EXPORT
 #endif
 
-class Reproc
+class REPROC_EXPORT Reproc
 {
 public:
   static const unsigned int INFINITE;
@@ -42,18 +42,18 @@ public:
 
   /*! \see reproc_init. Throws std::bad_alloc if allocating memory for the
   reproc struct of the underlying C library fails */
-  REPROC_EXPORT Reproc();
+  Reproc();
   /*! \see reproc_destroy */
-  REPROC_EXPORT ~Reproc();
+  ~Reproc();
 
   /* Enforce unique ownership */
-  REPROC_EXPORT Reproc(const Reproc &) = delete;
-  REPROC_EXPORT Reproc(Reproc &&other) noexcept;
-  REPROC_EXPORT Reproc &operator=(const Reproc &) = delete;
-  REPROC_EXPORT Reproc &operator=(Reproc &&other) noexcept;
+  Reproc(const Reproc &) = delete;
+  Reproc(Reproc &&other) noexcept;
+  Reproc &operator=(const Reproc &) = delete;
+  Reproc &operator=(Reproc &&other) noexcept;
 
   /*! \see reproc_start */
-  REPROC_EXPORT Reproc::Error start(int argc, const char *argv[],
+  Reproc::Error start(int argc, const char *argv[],
                                     const char *working_directory);
 
   /*!
@@ -62,28 +62,28 @@ public:
   \param[in] args Has the same restrictions as argv in \see reproc_start except
   that it should not end with NULL (which is added in this function).
   */
-  REPROC_EXPORT Reproc::Error start(const std::vector<std::string> &args,
+  Reproc::Error start(const std::vector<std::string> &args,
                                     const std::string *working_directory);
 
   /*! \see reproc_write */
-  REPROC_EXPORT Reproc::Error write(const void *buffer, unsigned int to_write,
+  Reproc::Error write(const void *buffer, unsigned int to_write,
                                     unsigned int *bytes_written);
 
   /*! \see reproc_close_stdin */
-  REPROC_EXPORT Reproc::Error close_stdin();
+  Reproc::Error close_stdin();
 
   /*! \see reproc_read */
-  REPROC_EXPORT Reproc::Error read(void *buffer, unsigned int size,
+  Reproc::Error read(void *buffer, unsigned int size,
                                    unsigned int *bytes_read);
 
   /*! \see reproc_read_stderr */
-  REPROC_EXPORT Reproc::Error read_stderr(void *buffer, unsigned int size,
+  Reproc::Error read_stderr(void *buffer, unsigned int size,
                                           unsigned int *bytes_read);
 
-  REPROC_EXPORT Reproc::Error read_all(std::ostream &out);
-  REPROC_EXPORT Reproc::Error read_all_stderr(std::ostream &out);
-  REPROC_EXPORT Reproc::Error read_all(std::string &out);
-  REPROC_EXPORT Reproc::Error read_all_stderr(std::string &out);
+  Reproc::Error read_all(std::ostream &out);
+  Reproc::Error read_all_stderr(std::ostream &out);
+  Reproc::Error read_all(std::string &out);
+  Reproc::Error read_all_stderr(std::string &out);
 
   /*!
   Calls \see read until the child process stdout is closed or an error occurs.
@@ -128,21 +128,21 @@ public:
   }
 
   /*! \see reproc_wait */
-  REPROC_EXPORT Reproc::Error wait(unsigned int milliseconds);
+  Reproc::Error wait(unsigned int milliseconds);
 
   /*! \see reproc_terminate */
-  REPROC_EXPORT Reproc::Error terminate(unsigned int milliseconds);
+  Reproc::Error terminate(unsigned int milliseconds);
 
   /*! \see reproc_kill */
-  REPROC_EXPORT Reproc::Error kill(unsigned int milliseconds);
+  Reproc::Error kill(unsigned int milliseconds);
 
   /*! \see reproc_exit_status */
-  REPROC_EXPORT Reproc::Error exit_status(int *exit_status);
+  Reproc::Error exit_status(int *exit_status);
 
   /*! \see reproc_system_error */
-  REPROC_EXPORT static unsigned int system_error();
+  static unsigned int system_error();
 
-  REPROC_EXPORT static std::string error_to_string(Reproc::Error error);
+  static std::string error_to_string(Reproc::Error error);
 
 private:
   struct reproc *reproc;

@@ -9,8 +9,6 @@
 #include <stdlib.h>
 #include <windows.h>
 
-const unsigned int REPROC_INFINITE = 0xFFFFFFFF;
-
 struct reproc {
   PROCESS_INFORMATION info;
   HANDLE parent_stdin;

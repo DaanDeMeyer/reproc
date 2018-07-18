@@ -86,9 +86,9 @@ target_include_directories(reproc PUBLIC
 )
 
 # Used to add __declspec(dllexport/dllimport) on Windows
-target_compile_definitions(reproc PUBLIC
-  $<$<BOOL:${BUILD_SHARED_LIBS}>:REPROC_BUILD_SHARED>
-  $<BUILD_INTERFACE:REPROC_BUILDING>
+target_compile_definitions(reproc
+  PUBLIC $<$<BOOL:${BUILD_SHARED_LIBS}>:REPROC_SHARED>
+  PRIVATE $<BUILD_INTERFACE:REPROC_BUILDING>
 )
 
 target_sources(reproc PRIVATE src/c/common.c)
