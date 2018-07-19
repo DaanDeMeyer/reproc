@@ -20,7 +20,7 @@ matrix:
   fast_finish: true
   include:
     - os: linux
-      env: CXX=g++-5
+      env: CC=g++-5 CXX=g++-5
       addons:
         apt:
           sources: *sources
@@ -28,7 +28,7 @@ matrix:
             - g++-5
 
     - os: linux
-      env: CXX=g++-8
+      env: CC=gcc-8 CXX=g++-8
       addons:
         apt:
           sources: *sources
@@ -36,7 +36,7 @@ matrix:
             - g++-8
 
     - os: linux
-      env: CXX=clang++-3.6
+      env: CC=clang-3.6 CXX=clang++-3.6
       addons:
         apt:
           sources: *sources
@@ -45,7 +45,7 @@ matrix:
             - g++-5
 
     - os: linux
-      env: CXX=clang++-6.0
+      env: CC=clang-6.0 CXX=clang++-6.0
       addons:
         apt:
           sources: *sources
@@ -55,7 +55,7 @@ matrix:
 
     - os: osx
       osx_image: xcode9.2
-      env: CXX=clang++
+      env: CC=clang CXX=clang++
 
 script:
   - cmake -DCMAKE_BUILD_TYPE=Debug -DREPROC_BUILD_TESTS=ON
