@@ -10,10 +10,13 @@
 #include <windows.h>
 
 struct reproc {
-  PROCESS_INFORMATION info;
-  HANDLE parent_stdin;
-  HANDLE parent_stdout;
-  HANDLE parent_stderr;
+  // unsigned long = DWORD
+  unsigned long id;
+  // void * = HANDLE
+  void *handle;
+  void *parent_stdin;
+  void *parent_stdout;
+  void *parent_stderr;
 };
 
 unsigned int reproc_size() { return sizeof(struct reproc); }
@@ -22,11 +25,9 @@ REPROC_ERROR reproc_init(struct reproc *reproc)
 {
   assert(reproc);
 
-  reproc->info.hThread = NULL;
-  reproc->info.hProcess = NULL;
   // process id 0 is reserved by the system so we can use it as a null value
-  reproc->info.dwProcessId = 0;
-  reproc->info.dwThreadId = 0;
+  reproc->id = 0;
+  reproc->handle = NULL;
 
   reproc->parent_stdin = NULL;
   reproc->parent_stdout = NULL;
@@ -49,7 +50,7 @@ REPROC_ERROR reproc_start(struct reproc *reproc, int argc, const char *argv[],
   }
 
   // Make sure reproc_start is only called once for each reproc_init call
-  assert(reproc->info.hProcess == NULL);
+  assert(reproc->handle == NULL);
 
   // Predeclare every variable so we can use goto
 
@@ -100,7 +101,7 @@ REPROC_ERROR reproc_start(struct reproc *reproc, int argc, const char *argv[],
 
   error = process_create(command_line_wstring, working_directory_wstring,
                          child_stdin, child_stdout, child_stderr,
-                         &reproc->info);
+                         &reproc->id, &reproc->handle);
 
 cleanup:
   // The child process pipe endpoint handles are copied to the child process. We
@@ -111,9 +112,6 @@ cleanup:
   // Free allocated memory before returning possible error
   free(command_line_wstring);
   free(working_directory_wstring);
-
-  // We don't need the handle to the primary thread of the child process
-  handle_close(&reproc->info.hThread);
 
   if (error) {
     reproc_destroy(reproc);
@@ -169,10 +167,10 @@ REPROC_ERROR reproc_read_stderr(struct reproc *reproc, void *buffer,
 REPROC_ERROR reproc_wait(struct reproc *reproc, unsigned int milliseconds)
 {
   assert(reproc);
-  assert(reproc->info.hProcess);
+  assert(reproc->handle);
 
   SetLastError(0);
-  DWORD wait_result = WaitForSingleObject(reproc->info.hProcess, milliseconds);
+  DWORD wait_result = WaitForSingleObject(reproc->handle, milliseconds);
   if (wait_result == WAIT_TIMEOUT) { return REPROC_WAIT_TIMEOUT; }
   if (wait_result == WAIT_FAILED) { return REPROC_UNKNOWN_ERROR; }
 
@@ -182,7 +180,7 @@ REPROC_ERROR reproc_wait(struct reproc *reproc, unsigned int milliseconds)
 REPROC_ERROR reproc_terminate(struct reproc *reproc, unsigned int milliseconds)
 {
   assert(reproc);
-  assert(reproc->info.dwProcessId);
+  assert(reproc->handle);
 
   // Check if child process has already exited before sending signal
   REPROC_ERROR error = reproc_wait(reproc, 0);
@@ -196,7 +194,7 @@ REPROC_ERROR reproc_terminate(struct reproc *reproc, unsigned int milliseconds)
   // as the child process id) so we can call GenerateConsoleCtrlEvent on single
   // child processes
   SetLastError(0);
-  if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, reproc->info.dwProcessId)) {
+  if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, reproc->id)) {
     return REPROC_UNKNOWN_ERROR;
   }
 
@@ -206,7 +204,7 @@ REPROC_ERROR reproc_terminate(struct reproc *reproc, unsigned int milliseconds)
 REPROC_ERROR reproc_kill(struct reproc *reproc, unsigned int milliseconds)
 {
   assert(reproc);
-  assert(reproc->info.hProcess);
+  assert(reproc->handle);
 
   // Check if child process has already exited before sending signal
   REPROC_ERROR error = reproc_wait(reproc, 0);
@@ -216,7 +214,7 @@ REPROC_ERROR reproc_kill(struct reproc *reproc, unsigned int milliseconds)
   if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   SetLastError(0);
-  if (!TerminateProcess(reproc->info.hProcess, 1)) {
+  if (!TerminateProcess(reproc->handle, 1)) {
     return REPROC_UNKNOWN_ERROR;
   }
 
@@ -226,11 +224,11 @@ REPROC_ERROR reproc_kill(struct reproc *reproc, unsigned int milliseconds)
 REPROC_ERROR reproc_exit_status(struct reproc *reproc, int *exit_status)
 {
   assert(reproc);
-  assert(reproc->info.hProcess);
+  assert(reproc->handle);
 
   DWORD unsigned_exit_status = 0;
   SetLastError(0);
-  if (!GetExitCodeProcess(reproc->info.hProcess, &unsigned_exit_status)) {
+  if (!GetExitCodeProcess(reproc->handle, &unsigned_exit_status)) {
     return REPROC_UNKNOWN_ERROR;
   }
 
@@ -245,8 +243,7 @@ REPROC_ERROR reproc_destroy(struct reproc *reproc)
 {
   assert(reproc);
 
-  handle_close(&reproc->info.hThread);
-  handle_close(&reproc->info.hProcess);
+  handle_close(&reproc->handle);
 
   handle_close(&reproc->parent_stdin);
   handle_close(&reproc->parent_stdout);

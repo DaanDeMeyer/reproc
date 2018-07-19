@@ -48,13 +48,15 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
 
 REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
                             HANDLE child_stdin, HANDLE child_stdout,
-                            HANDLE child_stderr, PROCESS_INFORMATION *info)
+                            HANDLE child_stderr, unsigned long *pid,
+                            void **handle)
 {
   assert(command_line);
   assert(child_stdin);
   assert(child_stdout);
   assert(child_stderr);
-  assert(info);
+  assert(pid);
+  assert(handle);
 
   // Create each process in a new process group so we don't send CTRL-BREAK
   // signals to more than one child process in reproc_terminate.
@@ -93,6 +95,8 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
   LPSTARTUPINFOW startup_info_address = &startup_info;
 #endif
 
+  PROCESS_INFORMATION info;
+
   // Child processes inherit error mode of their parents. To avoid child
   // processes creating error dialogs we set our error mode to not create error
   // dialogs temporarily.
@@ -101,7 +105,7 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
   SetLastError(0);
   BOOL result = CreateProcessW(NULL, command_line, NULL, NULL, TRUE,
                                creation_flags, NULL, working_directory,
-                               startup_info_address, info);
+                               startup_info_address, &info);
 
   SetErrorMode(previous_error_mode);
 
@@ -109,12 +113,18 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
   DeleteProcThreadAttributeList(attribute_list);
 #endif
 
+  // We don't need the handle to the primary thread of the child process
+  CloseHandle(info.hThread);
+
   if (!result) {
     switch (GetLastError()) {
     case ERROR_FILE_NOT_FOUND: return REPROC_FILE_NOT_FOUND;
     default: return REPROC_UNKNOWN_ERROR;
     }
   }
+
+  *pid = info.dwProcessId;
+  *handle = info.hProcess;
 
   return REPROC_SUCCESS;
 }
