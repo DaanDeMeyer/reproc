@@ -24,6 +24,10 @@ int main()
 
   std::cout << output << std::flush;
 
+  // You can also pass an ostream such as std::cerr directory to read_all
+  error = reproc.read_all_stderr(std::cerr);
+  if (error) { return error; }
+
   error = reproc.wait(Reproc::INFINITE);
   if (error) { return error; }
 

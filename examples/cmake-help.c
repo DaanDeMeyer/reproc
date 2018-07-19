@@ -9,14 +9,14 @@ int main(void)
 {
   // User is responsible for allocating memory for reproc_type
   reproc_type *reproc = malloc(reproc_size());
-  if (!reproc) { return 1; }
+  if (!reproc) { return EXIT_FAILURE; }
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
   // Always call reproc_init after allocating memory for reproc_type to
   // initialize it
   error = reproc_init(reproc);
-  if (error) { return error; }
+  if (error) { return (int )error; }
 
   // reproc_start takes argc and argv as passed to the main function. Note that
   // argc does not include the final NULL element of the array.
@@ -27,7 +27,7 @@ int main(void)
   // process. If the working directory is NULL the working directory of the
   // parent process is used.
   error = reproc_start(reproc, argc, argv, NULL);
-  if (error) { return error; }
+  if (error) { return (int) error; }
 
   char buffer[1024];
   // One less than actual size to always have space left for a null terminator
@@ -48,22 +48,22 @@ int main(void)
 
   // Check that the while loop stopped because the output stream of the child
   // process was closed and not because of another error
-  if (error != REPROC_STREAM_CLOSED) { return error; }
+  if (error != REPROC_STREAM_CLOSED) { return (int) error; }
 
   // Wait for the process to exit. This should always be done since some systems
   // don't clean up system resources allocated to a child process until the
   // parent process waits for it.
   error = reproc_wait(reproc, REPROC_INFINITE);
-  if (error) { return error; }
+  if (error) { return (int) error; }
 
   // Get the exit status (returns error if the child process is still running)
   int exit_status = 0;
   error = reproc_exit_status(reproc, &exit_status);
-  if (error) { return error; }
+  if (error) { return (int) error; }
 
   // Release all remaining resources related to the child process
   error = reproc_destroy(reproc);
-  if (error) { return error; }
+  if (error) { return (int) error; }
 
   // Free the process memory itself
   free(reproc);
