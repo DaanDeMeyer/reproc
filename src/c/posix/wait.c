@@ -8,14 +8,22 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-REPROC_ERROR wait_no_hang(pid_t pid, int *exit_status)
+static int parse_exit_status(int status)
+{
+  if (WIFEXITED(status)) { return WEXITSTATUS(status); }
+
+  assert(WIFSIGNALED(status));
+  return WTERMSIG(status);
+}
+
+REPROC_ERROR wait_no_hang(long long pid, int *exit_status)
 {
   assert(exit_status);
 
   int status = EXIT_STATUS_NULL;
   errno = 0;
   // Adding WNOHANG makes waitpid only check and return immediately
-  pid_t wait_result = waitpid(pid, &status, WNOHANG);
+  pid_t wait_result = waitpid((pid_t) pid, &status, WNOHANG);
 
   if (wait_result == 0) { return REPROC_WAIT_TIMEOUT; }
   if (wait_result == -1) {
@@ -28,13 +36,13 @@ REPROC_ERROR wait_no_hang(pid_t pid, int *exit_status)
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR wait_infinite(pid_t pid, int *exit_status)
+REPROC_ERROR wait_infinite(long long pid, int *exit_status)
 {
   assert(exit_status);
 
   int status = EXIT_STATUS_NULL;
   errno = 0;
-  if (waitpid(pid, &status, 0) == -1) {
+  if (waitpid((pid_t) pid, &status, 0) == -1) {
     switch (errno) {
     case EINTR: return REPROC_INTERRUPTED;
     default: return REPROC_UNKNOWN_ERROR;
@@ -47,7 +55,7 @@ REPROC_ERROR wait_infinite(pid_t pid, int *exit_status)
 }
 
 // See Design section in README.md for an explanation of how this works
-REPROC_ERROR wait_timeout(pid_t pid, int *exit_status,
+REPROC_ERROR wait_timeout(long long pid, int *exit_status,
                           unsigned int milliseconds)
 {
   assert(exit_status);
@@ -69,7 +77,7 @@ REPROC_ERROR wait_timeout(pid_t pid, int *exit_status,
 
   if (timeout_pid == 0) {
     errno = 0;
-    if (setpgid(0, pid) == -1) { _exit(errno); }
+    if (setpgid(0, (pid_t) pid) == -1) { _exit(errno); }
 
     struct timeval tv;
     tv.tv_sec = milliseconds / 1000;           // ms -> s
@@ -84,7 +92,7 @@ REPROC_ERROR wait_timeout(pid_t pid, int *exit_status,
   }
 
   errno = 0;
-  if (setpgid(timeout_pid, pid) == -1) {
+  if (setpgid(timeout_pid, (pid_t) pid) == -1) {
     // EACCES should not occur since we don't call execve in the timeout process
     return REPROC_UNKNOWN_ERROR;
   };
@@ -95,7 +103,7 @@ REPROC_ERROR wait_timeout(pid_t pid, int *exit_status,
   // first
   int status = EXIT_STATUS_NULL;
   errno = 0;
-  pid_t exit_pid = waitpid(-pid, &status, 0);
+  pid_t exit_pid = waitpid((pid_t) -pid, &status, 0);
 
   // If the timeout process exits first the timeout will have been exceeded
   if (exit_pid == timeout_pid) { return REPROC_WAIT_TIMEOUT; }
@@ -127,10 +135,3 @@ REPROC_ERROR wait_timeout(pid_t pid, int *exit_status,
   return REPROC_SUCCESS;
 }
 
-int parse_exit_status(int status)
-{
-  if (WIFEXITED(status)) { return WEXITSTATUS(status); }
-
-  assert(WIFSIGNALED(status));
-  return WTERMSIG(status);
-}

@@ -11,7 +11,10 @@
 #include <string.h>
 
 struct reproc {
-  pid_t pid;
+  // We cast this back to pid_t throughout the library which is safe because
+  // this only stores pid's returned by system calls which returns pid_t
+  // itself and pid_t is always fits within a 64-bit signed integer.
+  long long pid;
   int parent_stdin;
   int parent_stdout;
   int parent_stderr;
@@ -167,7 +170,7 @@ REPROC_ERROR reproc_terminate(struct reproc *reproc, unsigned int milliseconds)
   if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   errno = 0;
-  if (kill(reproc->pid, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
+  if (kill((pid_t) reproc->pid, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
 
   return reproc_wait(reproc, milliseconds);
 }
@@ -185,7 +188,7 @@ REPROC_ERROR reproc_kill(struct reproc *reproc, unsigned int milliseconds)
   if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   errno = 0;
-  if (kill(reproc->pid, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
+  if (kill((pid_t) reproc->pid, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
 
   return reproc_wait(reproc, milliseconds);
 }
