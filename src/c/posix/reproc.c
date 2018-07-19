@@ -14,7 +14,7 @@ struct reproc {
   // We cast this back to pid_t throughout the library which is safe because
   // this only stores pid's returned by system calls which returns pid_t
   // itself and pid_t is always fits within a 64-bit signed integer.
-  long long pid;
+  long long id;
   int parent_stdin;
   int parent_stdout;
   int parent_stderr;
@@ -31,7 +31,7 @@ REPROC_ERROR reproc_init(struct reproc *reproc)
 {
   assert(reproc);
 
-  reproc->pid = PID_NULL;
+  reproc->id = PID_NULL;
 
   reproc->parent_stdin = PIPE_NULL;
   reproc->parent_stdout = PIPE_NULL;
@@ -58,8 +58,8 @@ REPROC_ERROR reproc_start(struct reproc *reproc, int argc, const char *argv[],
   }
 
   // Make sure reproc_start is only called once for each reproc_init call
-  // (reproc_init sets reproc->pid to PID_NULL)
-  assert(reproc->pid == PID_NULL);
+  // (reproc_init sets reproc->id to PID_NULL)
+  assert(reproc->id == PID_NULL);
 
   int child_stdin = PIPE_NULL;
   int child_stdout = PIPE_NULL;
@@ -75,7 +75,7 @@ REPROC_ERROR reproc_start(struct reproc *reproc, int argc, const char *argv[],
   if (error) { goto cleanup; }
 
   error = fork_exec_redirect(argc, argv, working_directory, child_stdin,
-                             child_stdout, child_stderr, &reproc->pid);
+                             child_stdout, child_stderr, &reproc->id);
 
 cleanup:
   // An error has ocurred or the child pipe endpoints have been copied to the
@@ -139,7 +139,7 @@ REPROC_ERROR reproc_read_stderr(struct reproc *reproc, void *buffer,
 REPROC_ERROR reproc_wait(struct reproc *reproc, unsigned int milliseconds)
 {
   assert(reproc);
-  assert(reproc->pid != PID_NULL);
+  assert(reproc->id != PID_NULL);
 
   // Don't wait if child process has already exited. We don't use waitpid for
   // this because if we've already waited once after the process has exited the
@@ -147,20 +147,20 @@ REPROC_ERROR reproc_wait(struct reproc *reproc, unsigned int milliseconds)
   if (reproc->exit_status != EXIT_STATUS_NULL) { return REPROC_SUCCESS; }
 
   if (milliseconds == 0) {
-    return wait_no_hang(reproc->pid, &reproc->exit_status);
+    return wait_no_hang(reproc->id, &reproc->exit_status);
   }
 
   if (milliseconds == REPROC_INFINITE) {
-    return wait_infinite(reproc->pid, &reproc->exit_status);
+    return wait_infinite(reproc->id, &reproc->exit_status);
   }
 
-  return wait_timeout(reproc->pid, &reproc->exit_status, milliseconds);
+  return wait_timeout(reproc->id, &reproc->exit_status, milliseconds);
 }
 
 REPROC_ERROR reproc_terminate(struct reproc *reproc, unsigned int milliseconds)
 {
   assert(reproc);
-  assert(reproc->pid != PID_NULL);
+  assert(reproc->id != PID_NULL);
 
   // Check if child process has already exited before sending signal
   REPROC_ERROR error = reproc_wait(reproc, 0);
@@ -170,7 +170,7 @@ REPROC_ERROR reproc_terminate(struct reproc *reproc, unsigned int milliseconds)
   if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   errno = 0;
-  if (kill((pid_t) reproc->pid, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
+  if (kill((pid_t) reproc->id, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
 
   return reproc_wait(reproc, milliseconds);
 }
@@ -178,7 +178,7 @@ REPROC_ERROR reproc_terminate(struct reproc *reproc, unsigned int milliseconds)
 REPROC_ERROR reproc_kill(struct reproc *reproc, unsigned int milliseconds)
 {
   assert(reproc);
-  assert(reproc->pid != PID_NULL);
+  assert(reproc->id != PID_NULL);
 
   // Check if child process has already exited before sending signal
   REPROC_ERROR error = reproc_wait(reproc, 0);
@@ -188,7 +188,7 @@ REPROC_ERROR reproc_kill(struct reproc *reproc, unsigned int milliseconds)
   if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   errno = 0;
-  if (kill((pid_t) reproc->pid, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
+  if (kill((pid_t) reproc->id, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
 
   return reproc_wait(reproc, milliseconds);
 }
