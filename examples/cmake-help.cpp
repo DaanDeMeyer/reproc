@@ -1,7 +1,6 @@
 #include <reproc/reproc.hpp>
 
 #include <iostream>
-#include <sstream>
 
 /*! Uses the reproc C++ API to print CMake's help page */
 int main()

@@ -16,6 +16,13 @@
 
 class REPROC_EXPORT Reproc
 {
+private:
+  template <bool B, class T = void>
+  using enable_if_t = typename std::enable_if<B, T>::type;
+
+  template <class T>
+  using is_ostream_ref = std::is_convertible<T, std::ostream &>;
+
 public:
   static const unsigned int INFINITE;
 
@@ -105,9 +112,14 @@ public:
   });
   \endcode
 
+  This function does not participate in overload resolution if \p write is a
+  ostream& (This ensures our overloaded version of read_all for ostreams is
+  used).
+
   \return Reproc::Error \see reproc_read except for STREAM_CLOSED
   */
-  template <class Write> Reproc::Error read_all(Write &&write)
+  template <class Write, class = enable_if_t<!is_ostream_ref<Write>::value>>
+  Reproc::Error read_all(Write &&write)
   {
     return read_all(
         [this](void *buffer, unsigned int size, unsigned int *bytes_read) {
@@ -117,7 +129,8 @@ public:
   }
 
   /*! \see read_all for stderr */
-  template <class Write> Reproc::Error read_all_stderr(Write &&write)
+  template <class Write, class = enable_if_t<!is_ostream_ref<Write>::value>>
+  Reproc::Error read_all_stderr(Write &&write)
   {
     return read_all(
         [this](void *buffer, unsigned int size, unsigned int *bytes_read) {

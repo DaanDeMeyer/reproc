@@ -46,7 +46,7 @@ else()
   set(REPROC_CLANG_TIDY "")
 endif()
 
-### Common Warnings ###
+### Common options ###
 
 if(MSVC)
   set(REPROC_WARNINGS
@@ -60,6 +60,8 @@ else()
     -pedantic-errors
     -Wshadow
     $<$<BOOL:${REPROC_CI}>:-Werror>
+    $<$<C_COMPILER_ID:Clang>:-fcolor-diagnostics>
+    $<$<C_COMPILER_ID:GNU>:-fdiagnostics-color>
   )
 endif()
 
