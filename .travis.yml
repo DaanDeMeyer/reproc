@@ -20,7 +20,7 @@ matrix:
   fast_finish: true
   include:
     - os: linux
-      env: CC=g++-5 CXX=g++-5
+      env: CC=gcc-5 CXX=g++-5
       addons:
         apt:
           sources: *sources
