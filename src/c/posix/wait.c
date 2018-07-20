@@ -10,9 +10,13 @@
 
 static int parse_exit_status(int status)
 {
+  // NOLINTNEXTLINE(hicpp-signed-bitwise)
   if (WIFEXITED(status)) { return WEXITSTATUS(status); }
 
+  // NOLINTNEXTLINE(hicpp-signed-bitwise)
   assert(WIFSIGNALED(status));
+
+  // NOLINTNEXTLINE(hicpp-signed-bitwise)
   return WTERMSIG(status);
 }
 

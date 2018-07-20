@@ -58,7 +58,7 @@ REPROC_ERROR reproc_start(struct reproc *reproc, int argc, const char *argv[],
   if (error) { goto cleanup; }
 
   error = fork_exec_redirect(argc, argv, working_directory, child_stdin,
-                             child_stdout, child_stderr, &process->id);
+                             child_stdout, child_stderr, &reproc->id);
 
 cleanup:
   // An error has ocurred or the child pipe endpoints have been copied to the

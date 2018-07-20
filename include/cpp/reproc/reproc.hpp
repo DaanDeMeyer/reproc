@@ -6,6 +6,7 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
+#include <memory>
 
 #if defined(_WIN32) && defined(REPROC_SHARED)
 #if defined(REPROC_BUILDING)
