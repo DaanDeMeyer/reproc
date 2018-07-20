@@ -1,4 +1,5 @@
-#pragma once
+#ifndef REPROC_C_POSIX_PIPE_H
+#define REPROC_C_POSIX_PIPE_H
 
 #include "reproc/reproc.h"
 
@@ -10,4 +11,6 @@ REPROC_ERROR pipe_write(int pipe, const void *buffer, unsigned int to_write,
 REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
                        unsigned int *bytes_read);
 
-void pipe_close(int *pipe_address);
+void pipe_close(int *pipe);
+
+#endif

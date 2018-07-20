@@ -163,7 +163,8 @@ using the provided command line arguments and prints its output.
 
 API documentation can be found in [reproc.h](include/c/reproc/reproc.h).
 Documentation for the C++ wrapper can be found in
-[reproc.hpp](include/cpp/reproc/reproc.hpp) (which mostly refers to reproc.h). The C++ wrapper
+[reproc.hpp](include/cpp/reproc/reproc.hpp) (which mostly refers to reproc.h).
+The C++ wrapper
 
 ## Unknown errors
 
@@ -238,84 +239,24 @@ This way we can identify unknown errors and add them to reproc.
 
 reproc is designed to be a minimal wrapper around the platform-specific API's
 for starting a process, interacting with its standard streams and finally
-terminating it.
-
-### Opaque pointer
-
-reproc uses a process struct to store information between calls to library
-functions. This struct is forward-declared in process.h with each
-platform-specific implementation hidden in the source files for that platform.
-
-This struct is typedefed to process_type and exposed to the user as an opaque
-pointer (process_type \*).
-
-```c
-typedef struct reproc reproc_type; // _t is reserved by POSIX
-```
-
-The reproc.h header only contains a forward-declaration of the reproc struct. We
-provide an implementation in the source files of each supported platform where
-we store platform-specific members such as pipe handles, process id's, ....
-
-To enable the user to allocate memory for the opaque pointer we provide the
-`reproc_size` function that returns the required size for the opaque pointer on
-each platform. This function can be used as follows:
-
-```c
-reproc_type *reproc = malloc(reproc_size());
-```
-
-Advantages:
-
-- Fewer includes required in reproc.h
-
-  Because we only have a forward declaration of the reproc struct in reproc.h we
-  don't need any platform-specific includes (such as windows.h) in the header
-  file to define the data types of all the members that the struct contains.
-
-- No leaking of implementation details
-
-  Including the reproc.h header only gives the user access to the forward
-  declaration of the reproc struct and not its implementation which means its
-  impossible to access the internals of the struct outside of the library. This
-  allows us to change its implementation between versions without having to
-  worry about breaking user code.
-
-Disadvantages:
-
-- No simple allocation on the stack
-
-  Because including reproc.h does not give the compiler access to the full
-  definition of the reproc struct it is unable to allocate its implementation on
-  the stack since it doesn't know its size. Allocating on the stack is still
-  possible but requires functions such as `alloca` which is harder compared to
-  just writing:
-
-  ```c
-  reproc_type reproc;
-  ```
-
-- Not possible to allocate on the heap without help from the library
-
-  Because the compiler doesn't know the size of the reproc struct the user can't
-  easily allocate the reproc struct on the heap because it can't figure out its
-  size with sizeof.
-
-  We already mentioned that we solve this problem by providing the `reproc_size`
-  function that returns the size of the reproc struct at runtime.
+terminating it. In this section we explain some design decisions as well as how
+some parts of reproc work under the hood.
 
 ### Memory allocation
 
+#### C API
+
 reproc aims to do as few dynamic memory allocations as possible in its own code
 (not counting allocations that happen in system calls). As of this moment,
-dynamic memory allocation is only done on Windows:
+dynamic memory allocation in the C library is only done on Windows:
 
 - When converting the array of program arguments to a single string as required
-  by the
-  [CreateProcess](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms682425(v=vs.85).aspx>)
-  function.
+  by the `CreateProcess` function.
 - When converting UTF-8 strings to UTF-16 (Windows Unicode functions take UTF-16
   strings as arguments).
+
+Both these allocations happen in `process_start` and are freed before the
+function returns.
 
 I have not found a way to avoid allocating memory while keeping a uniform
 cross-platform API for both POSIX and Windows. (Windows `CreateProcessW`
@@ -324,9 +265,27 @@ requires a single UTF-16 string of arguments delimited by spaces while POSIX
 child process arguments as an array of UTF-8 strings we have to allocate memory
 to convert the array into a single UTF-16 string on Windows.
 
-reproc uses the standard `malloc` and `free` functions to allocate and free
-memory. However, providing support for custom allocators should be
+The C code of reproc uses the standard `malloc` and `free` functions to allocate
+and free memory. However, providing support for custom allocators should be
 straightforward. If you need them, please open an issue.
+
+#### C++ API
+
+To avoid having to include reproc.h in reproc.hpp we have to forward declare the
+`reproc` struct in the `Reproc` class of the C++ wrapper. This means each
+instance of the `Reproc` class comes with at least one allocation in its
+constructor to allocate memory for the `reproc` struct.
+
+Aside from this, we can divide the methods of the `Reproc` class in two
+categories:
+
+- The methods that directly map to methods of the C api. These don't do any
+  extra processing and thus do not allocate any memory (aside from allocations
+  that happen in the C api).
+
+- Convenience methods that are not available in the C api and are meant to make
+  reproc easier to use from C++ (e.g. `read_all`). These methods work with STL
+  types and do allocate memory.
 
 ### (POSIX) Waiting on child process with timeout
 

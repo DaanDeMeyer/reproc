@@ -1,4 +1,5 @@
-#pragma once
+#ifndef REPROC_C_WINDOWS_PIPE_H
+#define REPROC_C_WINDOWS_PIPE_H
 
 #include "reproc/reproc.h"
 
@@ -13,3 +14,5 @@ REPROC_ERROR pipe_write(HANDLE pipe, const void *buffer, unsigned int to_write,
 
 REPROC_ERROR pipe_read(HANDLE pipe, void *buffer, unsigned int size,
                        unsigned int *bytes_read);
+
+#endif

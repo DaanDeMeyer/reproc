@@ -97,18 +97,16 @@ REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
   return REPROC_SUCCESS;
 }
 
-void pipe_close(int *pipe_address)
+void pipe_close(int *pipe)
 {
-  assert(pipe_address);
-
-  int pipe = *pipe_address;
+  assert(pipe);
 
   // Do nothing and return success on null pipe (0) so callers don't have to
   // check each time if a pipe has been closed already
-  if (!pipe) { return; }
+  if (!*pipe) { return; }
 
   errno = 0;
-  close(pipe);
+  close(*pipe);
   // Close should not be repeated on error so always set pipe to 0 after close
-  *pipe_address = PIPE_NULL;
+  *pipe = PIPE_NULL;
 }

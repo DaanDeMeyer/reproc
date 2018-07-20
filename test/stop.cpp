@@ -1,44 +1,42 @@
 #include <doctest.h>
 #include <reproc/reproc.h>
 
-#include <cstdlib>
+#include <array>
 
+// NOLINTNEXTLINE(cert-err58-cpp)
 TEST_CASE("stop")
 {
-  const char *argv[2] = { INFINITE_PATH, nullptr };
+  std::array<const char *, 2> argv = { INFINITE_PATH, nullptr };
   int argc = 1;
 
-  auto reproc = static_cast<reproc_type *>(malloc(reproc_size()));
-  REQUIRE(reproc);
+  reproc_type reproc;
 
   REPROC_ERROR error = REPROC_SUCCESS;
   CAPTURE(error);
 
-  error = reproc_init(reproc);
+  error = reproc_init(&reproc);
   REQUIRE(!error);
 
-  error = reproc_start(reproc, argc, argv, nullptr);
+  error = reproc_start(&reproc, argc, argv.data(), nullptr);
   REQUIRE(!error);
 
   // Wait 50ms to avoid terminating the child process on Windows before it is
   // initialized (which would result in an error window appearing)
-  error = reproc_wait(reproc, 50);
+  error = reproc_wait(&reproc, 50);
   REQUIRE((error == REPROC_WAIT_TIMEOUT));
 
   SUBCASE("terminate")
   {
-    error = reproc_terminate(reproc, 50);
+    error = reproc_terminate(&reproc, 50);
     REQUIRE(!error);
   }
 
   SUBCASE("kill")
   {
-    error = reproc_kill(reproc, 50);
+    error = reproc_kill(&reproc, 50);
     REQUIRE(!error);
   }
 
-  error = reproc_destroy(reproc);
+  error = reproc_destroy(&reproc);
   REQUIRE(!error);
-
-  free(reproc);
 }

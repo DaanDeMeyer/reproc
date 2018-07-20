@@ -32,27 +32,28 @@ if (REPROC_RUN_CLANG_TIDY)
   cmake_minimum_required(VERSION 3.6)
   find_program(REPROC_CLANG_TIDY clang-tidy)
 
-  if(REPROC_CLANG_TIDY AND REPROC_CI)
-    set(REPROC_CLANG_TIDY ${REPROC_CLANG_TIDY} -warnings-as-errors=*)
-  endif()
-
   if(REPROC_CLANG_TIDY)
     message(STATUS "clang-tidy found")
+    if (REPROC_CI)
+      set(REPROC_CLANG_TIDY ${REPROC_CLANG_TIDY} -warnings-as-errors=*)
+    endif()
   else()
-    set(REPROC_CLANG_TIDY "")
     message(WARNING "clang-tidy not found")
+    # If clang-tidy is not found REPROC_CLANG_TIDY is not set to an empty value
+    # so we have to unset it
+    unset(REPROC_CLANG_TIDY)
   endif()
 else()
-  set(REPROC_CLANG_TIDY "")
+  # find_program puts its results in the CMake cache. When REPROC_RUN_CLANG_TIDY
+  # is set to OFF in a subsequent invocation of CMake we have to unset
+  # REPROC_CLANG_TIDY to override any existing cache value
+  unset(REPROC_CLANG_TIDY)
 endif()
 
 ### Common options ###
 
 if(MSVC)
-  string(REPLACE /W3 /W4 CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-  string(REPLACE /W3 /W4 CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
   set(REPROC_WARNINGS
-    /wd4204
     $<$<BOOL:${REPROC_CI}>:/WX>
   )
 else()
@@ -168,8 +169,11 @@ if(REPROC_BUILD_TESTS)
 
   enable_language(CXX)
 
-  add_executable(echo test/res/echo.cpp)
-  target_compile_options(echo PRIVATE ${REPROC_WARNINGS})
+  add_executable(stdout test/res/stdout.cpp)
+  target_compile_options(stdout PRIVATE ${REPROC_WARNINGS})
+
+  add_executable(stderr test/res/stderr.cpp)
+  target_compile_options(stderr PRIVATE ${REPROC_WARNINGS})
 
   add_executable(infinite test/res/infinite.cpp)
   target_compile_options(infinite PRIVATE ${REPROC_WARNINGS})
@@ -177,7 +181,7 @@ if(REPROC_BUILD_TESTS)
   add_executable(noop test/res/noop.cpp)
   target_compile_options(noop PRIVATE ${REPROC_WARNINGS})
 
-  set_target_properties(echo infinite noop PROPERTIES
+  set_target_properties(stdout stderr infinite noop PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY test/res
     CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
   )
@@ -185,7 +189,7 @@ if(REPROC_BUILD_TESTS)
   ### Tests ###
 
   add_executable(tests "")
-  add_dependencies(tests echo infinite noop)
+  add_dependencies(tests stdout stderr infinite noop)
   reproc_set_cxx_standard(tests 11)
   set_target_properties(tests PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY test
@@ -199,7 +203,8 @@ if(REPROC_BUILD_TESTS)
   # directory without hardcoding the path in the tests which differs for each
   # user.
   target_compile_definitions(tests PRIVATE
-    ECHO_PATH="$<TARGET_FILE:echo>"
+    STDOUT_PATH="$<TARGET_FILE:stdout>"
+    STDERR_PATH="$<TARGET_FILE:stderr>"
     INFINITE_PATH="$<TARGET_FILE:infinite>"
     NOOP_PATH="$<TARGET_FILE:noop>"
     NOOP_DIR="$<TARGET_FILE_DIR:noop>"

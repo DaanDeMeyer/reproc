@@ -10,7 +10,7 @@
 REPROC_ERROR fork_exec_redirect(int argc, const char *argv[],
                                 const char *working_directory, int stdin_pipe,
                                 int stdout_pipe, int stderr_pipe,
-                                long long *pid)
+                                pid_t *pid)
 {
   assert(argc > 0);
   assert(argv);

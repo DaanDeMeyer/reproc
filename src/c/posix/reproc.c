@@ -10,23 +10,6 @@
 #include <signal.h>
 #include <string.h>
 
-struct reproc {
-  // We cast this back to pid_t throughout the library which is safe because
-  // this only stores pid's returned by system calls which returns pid_t
-  // itself and pid_t is always fits within a 64-bit signed integer.
-  long long id;
-  int parent_stdin;
-  int parent_stdout;
-  int parent_stderr;
-  int exit_status;
-};
-
-unsigned int reproc_size()
-{
-  // reproc struct is small so its size should always fit inside unsigned int
-  return (unsigned int) sizeof(struct reproc);
-}
-
 REPROC_ERROR reproc_init(struct reproc *reproc)
 {
   assert(reproc);
@@ -75,7 +58,7 @@ REPROC_ERROR reproc_start(struct reproc *reproc, int argc, const char *argv[],
   if (error) { goto cleanup; }
 
   error = fork_exec_redirect(argc, argv, working_directory, child_stdin,
-                             child_stdout, child_stderr, &reproc->id);
+                             child_stdout, child_stderr, &process->id);
 
 cleanup:
   // An error has ocurred or the child pipe endpoints have been copied to the
@@ -170,7 +153,7 @@ REPROC_ERROR reproc_terminate(struct reproc *reproc, unsigned int milliseconds)
   if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   errno = 0;
-  if (kill((pid_t) reproc->id, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
+  if (kill(reproc->id, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
 
   return reproc_wait(reproc, milliseconds);
 }
@@ -188,7 +171,7 @@ REPROC_ERROR reproc_kill(struct reproc *reproc, unsigned int milliseconds)
   if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   errno = 0;
-  if (kill((pid_t) reproc->id, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
+  if (kill(reproc->id, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
 
   return reproc_wait(reproc, milliseconds);
 }

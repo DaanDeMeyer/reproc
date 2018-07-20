@@ -9,18 +9,6 @@
 #include <stdlib.h>
 #include <windows.h>
 
-struct reproc {
-  // unsigned long = DWORD
-  unsigned long id;
-  // void * = HANDLE
-  void *handle;
-  void *parent_stdin;
-  void *parent_stdout;
-  void *parent_stderr;
-};
-
-unsigned int reproc_size() { return sizeof(struct reproc); }
-
 REPROC_ERROR reproc_init(struct reproc *reproc)
 {
   assert(reproc);

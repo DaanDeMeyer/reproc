@@ -1,4 +1,7 @@
-#pragma once
+/*! \file reproc.hpp */
+
+#ifndef REPROC_HPP
+#define REPROC_HPP
 
 #include <iosfwd>
 #include <string>
@@ -14,9 +17,10 @@
 #define REPROC_EXPORT
 #endif
 
-class REPROC_EXPORT Reproc
-{
+class REPROC_EXPORT Reproc {
 private:
+  // Helpers used to remove the read_all template overload from overload
+  // resolution when an ostream ref is passed as a paramter
   template <bool B, class T = void>
   using enable_if_t = typename std::enable_if<B, T>::type;
 
@@ -28,7 +32,7 @@ public:
 
   /*! \see REPROC_ERROR */
   /* When editing make sure to change the corresponding enum in reproc.h as
-   * well */
+  well */
   enum Error {
     SUCCESS,
     UNKNOWN_ERROR,
@@ -55,9 +59,9 @@ public:
 
   /* Enforce unique ownership */
   Reproc(const Reproc &) = delete;
-  Reproc(Reproc &&other) noexcept;
+  Reproc(Reproc &&other) noexcept = default;
   Reproc &operator=(const Reproc &) = delete;
-  Reproc &operator=(Reproc &&other) noexcept;
+  Reproc &operator=(Reproc &&other) = default;
 
   /*! \see reproc_start */
   Reproc::Error start(int argc, const char *argv[],
@@ -154,10 +158,11 @@ public:
   /*! \see reproc_system_error */
   static unsigned int system_error();
 
+  /*! \see reproc_error_to_string */
   static std::string error_to_string(Reproc::Error error);
 
 private:
-  struct reproc *reproc;
+  std::unique_ptr<struct reproc> reproc;
 
   static constexpr unsigned int BUFFER_SIZE = 1024;
 
@@ -180,3 +185,5 @@ private:
     return Reproc::SUCCESS;
   }
 };
+
+#endif

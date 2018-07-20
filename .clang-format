@@ -2,7 +2,7 @@
 BasedOnStyle: LLVM
 ---
 Language: Cpp
-BreakBeforeBraces: Linux
+BreakBeforeBraces: Stroustrup
 AllowShortBlocksOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 SpaceAfterCStyleCast: true

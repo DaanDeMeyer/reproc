@@ -1,6 +1,7 @@
 /*! \file reproc.h */
 
-#pragma once
+#ifndef REPROC_H
+#define REPROC_H
 
 #if defined(_WIN32) && defined(REPROC_SHARED)
 #if defined(REPROC_BUILDING)
@@ -16,12 +17,32 @@
 extern "C" {
 #endif
 
-/*! Used to indicate that a function that takes a timeout value should wait
-indefinitely. */
-extern REPROC_EXPORT const unsigned int REPROC_INFINITE;
+#if defined(_WIN32)
+struct reproc {
+  // unsigned long = DWORD
+  unsigned long id;
+  // void * = HANDLE
+  void *handle;
+  void *parent_stdin;
+  void *parent_stdout;
+  void *parent_stderr;
+};
+#else
+struct reproc {
+  int id;
+  int parent_stdin;
+  int parent_stdout;
+  int parent_stderr;
+  int exit_status;
+};
+#endif
 
 /*! Used to store child process information between multiple library calls */
 typedef struct reproc reproc_type;
+
+/*! Used to indicate that a function that takes a timeout value should wait
+indefinitely. */
+extern REPROC_EXPORT const unsigned int REPROC_INFINITE;
 
 /* When editing make sure to change the corresponding enum in reproc.hpp as
 well */
@@ -32,8 +53,8 @@ typedef enum {
 
   \code{.c}
   REPROC_ERROR error = reproc_read(...);
-  if (error) { return error; } // Only executes if library call is not a success
-  \endcode
+  if (error) { return error; } // Only executes if library call is not a
+  success \endcode
 
   All library function return this value if no error occured.
   */
@@ -44,8 +65,8 @@ typedef enum {
   REPROC_UNKNOWN_ERROR,
   /*! A timeout value passed to a function expired. */
   REPROC_WAIT_TIMEOUT,
-  /*! The child process closed one of its streams (and in case of stdout/stderr
-  all of the data from that stream has been read). */
+  /*! The child process closed one of its streams (and in case of
+  stdout/stderr all of the data from that stream has been read). */
   REPROC_STREAM_CLOSED,
   /*! \see reproc_exit_status was called while the child process was still
   running. */
@@ -53,12 +74,14 @@ typedef enum {
   /*! A memory allocation in the library code failed (Windows only) or the
   underlying system did not have enough memory to execute a system call. */
   REPROC_MEMORY_ERROR,
-  /*! The current or child process was not allowed to create any more pipes. */
+  /*! The current or child process was not allowed to create any more pipes.
+   */
   REPROC_PIPE_LIMIT_REACHED,
   /*! A waiting system call (read, write, close, ...) was interrupted by the
   system. */
   REPROC_INTERRUPTED,
-  /*! The current process was not allowed to spawn any more child processes. */
+  /*! The current process was not allowed to spawn any more child processes.
+   */
   REPROC_PROCESS_LIMIT_REACHED,
   /*! One of the UTF-8 strings passed to the library did not contain
   valid unicode. */
@@ -74,11 +97,6 @@ typedef enum {
   /*! Only part of the buffer was written to the stdin of the child prcess */
   REPROC_PARTIAL_WRITE
 } REPROC_ERROR;
-
-/*!
-Returns the size of reproc_type on the current platform so it can be allocated.
-*/
-REPROC_EXPORT unsigned int reproc_size();
 
 /*!
 Initializes the members of \p reproc.
@@ -119,8 +137,8 @@ reproc_init.
 the program to execute along with its arguments. Must at least contain one
 element. Cannot be NULL.
 
-- The first element in the array indicates the executable to run. This can be an
-absolute path, a path relative to the working directory (also passed as
+- The first element in the array indicates the executable to run. This can be
+an absolute path, a path relative to the working directory (also passed as
 argument) or the name of an executable located in the PATH. Cannot be NULL.
 - The following elements indicate the whitespace delimited arguments passed to
 the executable. None of these elements can be NULL.
@@ -128,8 +146,8 @@ the executable. None of these elements can be NULL.
 
 Example: ["cmake", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", NULL]
 
-\param[in] argc Specifies the amount of elements in argv. Should NOT include the
-NULL value at the end of the array. Must be bigger than or equal to 1.
+\param[in] argc Specifies the amount of elements in argv. Should NOT include
+the NULL value at the end of the array. Must be bigger than or equal to 1.
 
 Example: if argv is ["cmake", "--help", NULL] then argc is 2.
 
@@ -156,10 +174,10 @@ REPROC_EXPORT REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
 Writes up to \p to_write bytes from \p buffer to the standard input (stdin) of
 the child process and stores the amount of bytes written in \p bytes_written.
 
-For pipes, the write system call on both Windows and POSIX platforms will block
-until the requested amount of bytes have been written to the pipe so this
-function should only rarely succeed without writing the full amount of bytes
-requested.
+For pipes, the write system call on both Windows and POSIX platforms will
+block until the requested amount of bytes have been written to the pipe so
+this function should only rarely succeed without writing the full amount of
+bytes requested.
 
 \param[in,out] reproc Cannot be NULL.
 \param[in] buffer Pointer to memory block from which bytes should be written.
@@ -182,8 +200,8 @@ REPROC_EXPORT REPROC_ERROR reproc_write(reproc_type *reproc, const void *buffer,
 Closes the standard input stream endpoint of the parent process.
 
 This function is necessary when a child process reads from stdin until it is
-closed. After writing all the input to the child process with \see reproc_write
-the standard input stream can be closed using this function.
+closed. After writing all the input to the child process with \see
+reproc_write the standard input stream can be closed using this function.
 
 \param[in,out] reproc Cannot be NULL.
 
@@ -199,10 +217,10 @@ Reads up to \p size bytes from the child process' standard output and stores
 them in \p buffer. \p bytes_read is set to the amount of bytes read.
 
 Assuming no other errors occur this function keeps returning REPROC_SUCCESS
-until the child process closes its standard output stream (happens automatically
-when it exits) and all bytes have been read from the stream. This allows the
-function to be used in the following way to read all data from a child process'
-stdout:
+until the child process closes its standard output stream (happens
+automatically when it exits) and all bytes have been read from the stream.
+This allows the function to be used in the following way to read all data from
+a child process' stdout:
 
 \code{.cpp}
 std::stringstream ss;
@@ -216,16 +234,16 @@ while (true) {
 }
 \endcode
 
-Remember that this function reads bytes and not strings. It is up to the user to
-put a null terminator if he wants to use \p buffer as a string after this
+Remember that this function reads bytes and not strings. It is up to the user
+to put a null terminator if he wants to use \p buffer as a string after this
 function completes.
 
 \param[in,out] reproc Cannot be NULL.
 \param[out] buffer Pointer to memory block where bytes read from stdout should
 be stored.
 \param[in] size Maximum number of bytes to read from stdout.
-\param[out] bytes_read Amount of bytes read from stdout. Set to zero if an error
-occurs. Cannot be NULL.
+\param[out] bytes_read Amount of bytes read from stdout. Set to zero if an
+error occurs. Cannot be NULL.
 
 \return REPROC_ERROR
 
@@ -246,10 +264,10 @@ REPROC_EXPORT REPROC_ERROR reproc_read_stderr(reproc_type *reproc, void *buffer,
 Waits the specified amount of time for the process to exit.
 
 \param[in,out] reproc Cannot be NULL.
-\param[in] milliseconds Amount of milliseconds to wait. If it is 0 the function
-will only check if the process is still running without waiting. If it is
-REPROC_INFINITE the function will wait indefinitely for the child process
-to exit.
+\param[in] milliseconds Amount of milliseconds to wait. If it is 0 the
+function will only check if the process is still running without waiting. If
+it is REPROC_INFINITE the function will wait indefinitely for the child
+process to exit.
 
 \return REPROC_ERROR
 
@@ -268,13 +286,13 @@ REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_type *reproc,
                                        unsigned int milliseconds);
 
 /*!
-Tries to terminate the child process cleanly (the child process has a chance to
-clean up).
+Tries to terminate the child process cleanly (the child process has a chance
+to clean up).
 
-On Windows a CTRL-BREAK signal is sent to the child process. On POSIX a SIGTERM
-signal is sent to the child process. After sending the signal the function waits
-for the specified amount of milliseconds for the child process to exit. If the
-child process has already exited no signal is sent.
+On Windows a CTRL-BREAK signal is sent to the child process. On POSIX a
+SIGTERM signal is sent to the child process. After sending the signal the
+function waits for the specified amount of milliseconds for the child process
+to exit. If the child process has already exited no signal is sent.
 
 \param[in,out] reproc Cannot be NULL.
 \param[in] milliseconds See \see reproc_wait.
@@ -289,8 +307,8 @@ REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_type *reproc,
 /*!
 Kills the child process without allowing for cleanup.
 
-On Windows TerminateProcess is called. On POSIX a SIGKILL signal is sent to the
-child process. if the timeout is exceeded REPROC_WAIT_TIMEOUT is returned.
+On Windows TerminateProcess is called. On POSIX a SIGKILL signal is sent to
+the child process. if the timeout is exceeded REPROC_WAIT_TIMEOUT is returned.
 After sending the signal the function waits for the specified amount of
 milliseconds for the child process to exit. If the child process has already
 exited no signal is sent.
@@ -341,15 +359,15 @@ REPROC_EXPORT REPROC_ERROR reproc_destroy(reproc_type *reproc);
 Returns the last system error code.
 
 On Windows this function returns the result of GetLastError. On POSIX this
-function returns the value of errno. The value is not stored so other functions
-that modify the results of GetLastError or errno should not be called if you
-want to retrieve the last system error that occurred in one of reproc's
-functions.
+function returns the value of errno. The value is not stored so other
+functions that modify the results of GetLastError or errno should not be
+called if you want to retrieve the last system error that occurred in one of
+reproc's functions.
 
 On POSIX, if an error occurs after fork but before exec it is communicated to
 the parent process which sets its own errno value to the errno value of the
-child process. This makes it possible to also retrieve errors that happen after
-forking with this function (for example in chdir or execve).
+child process. This makes it possible to also retrieve errors that happen
+after forking with this function (for example in chdir or execve).
 
 \return unsigned int The last system error code
 */
@@ -359,4 +377,6 @@ REPROC_EXPORT const char *reproc_error_to_string(REPROC_ERROR error);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

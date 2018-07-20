@@ -2,23 +2,11 @@
 Checks:
 '
 *,
--fuchsia-*,
--llvm-header-guard,
--hicpp-signed-bitwise,
--hicpp-no-malloc,
--hicpp-no-array-decay,
+-fuchsia-default-arguments,
 -clang-analyzer-security.insecureAPI.strcpy,
--modernize-use-using,
--cppcoreguidelines-owning-memory,
--cppcoreguidelines-no-malloc,
--cppcoreguidelines-pro-bounds-constant-array-index,
--cppcoreguidelines-pro-bounds-array-to-pointer-decay,
--cppcoreguidelines-pro-bounds-pointer-arithmetic,
 -readability-implicit-bool-conversion,
--readability-non-const-parameter,
--cert-err58-cpp
 '
-HeaderFilterRegex: '^((?!doctest).)*$'
+HeaderFilterRegex: '^(?!doctest\.h$).*$'
 AnalyzeTemporaryDtors: false
 ...
 
