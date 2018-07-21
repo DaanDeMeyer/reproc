@@ -133,7 +133,7 @@ cmake -DCMAKE_PREFIX_PATH=<reproc-install-dir> .. # example: /usr on Linux
 
 reproc supports the following CMake options:
 
-- `REPROC_BUILD_CPP_WRAPPER (ON|OFF)`: Build the C++ wrapper (default: `OFF`)
+- `REPROC_BUILD_CXX_WRAPPER (ON|OFF)`: Build the C++ wrapper (default: `OFF`)
 - `REPROC_BUILD_TESTS (ON|OFF)`: Build tests (default: `OFF`)
 - `REPROC_BUILD_EXAMPLES (ON|OFF)`: Build examples (default: `OFF`)
 - `BUILD_SHARED_LIBS (ON|OFF)`: Build reproc as a static or shared library
@@ -142,22 +142,23 @@ Options can be configured when building reproc or before calling
 `add_subdirectory`:
 
 - When building (in `<reproc-root-dir>/build` subdirectory):
-  `cmake -DREPROC_BUILD_CPP_WRAPPER=ON ..`
+  `cmake -DREPROC_BUILD_CXX_WRAPPER=ON ..`
 
 - When using `add_subdirectory`:
 
   ```cmake
-  set(REPROC_BUILD_CPP_WRAPPER ON CACHE BOOL FORCE)
+  set(REPROC_BUILD_CXX_WRAPPER ON CACHE BOOL FORCE)
   add_subdirectory(third-party/reproc)
   ```
 
 ## Usage
 
-See [examples/cmake-help.c](examples/cmake-help.c) for an example that uses
-reproc to print the CMake CLI --help output.
-[examples/cmake-help.cpp](examples/cmake-help.cpp) does the same but with the
-C++ API. [examples/forward.cpp](examples/forward.cpp) spawns a child process
-using the provided command line arguments and prints its output.
+See [example/git-status.c](example/cmake-help.c) for an example that uses reproc
+to print the output of `git status`.
+[example/cmake-help.cpp](example/cmake-help.cpp) prints the output of
+`cmake --help` using the C++ API. [example/forward.cpp](example/forward.cpp)
+spawns a child process using the provided command line arguments and prints its
+output.
 
 ## Documentation
 
@@ -265,16 +266,16 @@ requires a single UTF-16 string of arguments delimited by spaces while POSIX
 child process arguments as an array of UTF-8 strings we have to allocate memory
 to convert the array into a single UTF-16 string on Windows.
 
-The C code of reproc uses the standard `malloc` and `free` functions to allocate
+The reproc C code uses the standard `malloc` and `free` functions to allocate
 and free memory. However, providing support for custom allocators should be
 straightforward. If you need them, please open an issue.
 
 #### C++ API
 
-To avoid having to include reproc.h in reproc.hpp we have to forward declare the
-`reproc` struct in the `Reproc` class of the C++ wrapper. This means each
-instance of the `Reproc` class comes with at least one allocation in its
-constructor to allocate memory for the `reproc` struct.
+To avoid having to include reproc.h in reproc.hpp (the C++ API header) we have
+to forward declare the `reproc` struct in the `Reproc` class of the C++ wrapper.
+This means each instance of the `Reproc` class comes with at least one
+allocation in its constructor to allocate memory for the `reproc` struct.
 
 Aside from this, we can divide the methods of the `Reproc` class in two
 categories:
@@ -428,3 +429,10 @@ compile and run the tests on the platforms you don't have access to.
 When working on reproc developers can also enable the `REPROC_RUN_CLANG_TIDY`
 option to run `clang-tidy` as part of the build. This requires `clang-tidy` to
 be in CMake's search path (PATH is included in CMake's search path).
+
+If `clang-format` is available in CMake's search path, a `format` target is
+added that can be used to run `clang-format` on all reproc source files.
+
+```bash
+cmake --build build --target format
+```

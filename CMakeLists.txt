@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.1)
 project(reproc VERSION 0.0.1 LANGUAGES C)
 
 option(REPROC_BUILD_TESTS "Build tests" OFF)
-option(REPROC_BUILD_EXAMPLES "Build examples" OFF)
-option(REPROC_BUILD_CPP_WRAPPER "Build C++ wrapper" OFF)
+option(REPROC_BUILD_EXAMPLES "Build examples. Enable REPROC_BUILD_CXX_WRAPPER \
+to build C++ examples." OFF)
+option(REPROC_BUILD_CXX_WRAPPER "Build C++ wrapper" OFF)
 option(REPROC_CI "Add -Werror or equivalent to compiler and clang-tidy" OFF)
 option(REPROC_RUN_CLANG_TIDY "Run clang-tidy as part of the build \
 (requires clang-tidy to be in the PATH)" OFF)
@@ -149,7 +150,7 @@ endif()
 
 ### C++ Wrapper ###
 
-if(REPROC_BUILD_CPP_WRAPPER)
+if(REPROC_BUILD_CXX_WRAPPER)
   enable_language(CXX)
 
   reproc_set_cxx_standard(reproc 11)
@@ -218,6 +219,12 @@ if(REPROC_BUILD_TESTS)
     NOOP_DIR="$<TARGET_FILE_DIR:noop>"
   )
 
+  add_custom_target(
+    test
+    COMMAND $<TARGET_FILE:tests> --force-colors=true
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+
 endif()
 
 ### Examples ###
@@ -225,30 +232,30 @@ endif()
 if(REPROC_BUILD_EXAMPLES)
 
   function(reproc_add_c_example TARGET)
-    add_executable(${TARGET} examples/${TARGET}.c)
+    add_executable(${TARGET} example/${TARGET}.c)
     reproc_set_c_standard(${TARGET} 99)
     target_link_libraries(${TARGET} PRIVATE reproc)
     target_compile_options(${TARGET} PRIVATE ${REPROC_WARNINGS})
     set_target_properties(${TARGET} PROPERTIES
-      RUNTIME_OUTPUT_DIRECTORY examples
+      RUNTIME_OUTPUT_DIRECTORY example
       C_CLANG_TIDY "${REPROC_CLANG_TIDY}"
     )
   endfunction()
 
   function(reproc_add_cxx_example TARGET)
-    add_executable(${TARGET} examples/${TARGET}.cpp)
+    add_executable(${TARGET} example/${TARGET}.cpp)
     reproc_set_cxx_standard(${TARGET} 11)
     target_link_libraries(${TARGET} PRIVATE reproc)
     target_compile_options(${TARGET} PRIVATE ${REPROC_WARNINGS})
     set_target_properties(${TARGET} PROPERTIES
-      RUNTIME_OUTPUT_DIRECTORY examples
+      RUNTIME_OUTPUT_DIRECTORY example
       CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
     )
   endfunction()
 
   reproc_add_c_example(git-status)
 
-  if(REPROC_BUILD_CPP_WRAPPER)
+  if(REPROC_BUILD_CXX_WRAPPER)
     reproc_add_cxx_example(cmake-help)
     reproc_add_cxx_example(forward)
   endif()
@@ -285,7 +292,7 @@ install(
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/reproc
 )
 
-if(REPROC_BUILD_CPP_WRAPPER)
+if(REPROC_BUILD_CXX_WRAPPER)
   install(
     FILES include/cpp/reproc/reproc.hpp
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/reproc
@@ -321,7 +328,7 @@ if(REPROC_CLANG_FORMAT)
     include/*.[h,c,hpp,cpp]
     src/*.[h,c,hpp,cpp]
     test/*.[h,c,hpp,cpp]
-    examples/*.[h,c,hpp,cpp]
+    example/*.[h,c,hpp,cpp]
   )
 
   add_custom_target(
