@@ -59,7 +59,7 @@ matrix:
 
 script:
   - cmake -DCMAKE_BUILD_TYPE=Debug -DREPROC_BUILD_TESTS=ON
-    -DREPROC_BUILD_EXAMPLES=ON -DREPROC_BUILD_CPP_WRAPPER=ON
+    -DREPROC_BUILD_EXAMPLES=ON -DREPROC_BUILD_CXX_WRAPPER=ON
     -DREPROC_CI=ON -DREPROC_RUN_CLANG_TIDY=ON .
   - cmake --build . -- -j 3
   - cmake --build . --target run-tests
