@@ -62,4 +62,4 @@ script:
     -DREPROC_BUILD_EXAMPLES=ON -DREPROC_BUILD_CPP_WRAPPER=ON
     -DREPROC_CI=ON -DREPROC_RUN_CLANG_TIDY=ON .
   - cmake --build . -- -j 3
-  - ./test/tests
+  - cmake --build . --target run-tests

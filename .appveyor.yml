@@ -4,6 +4,7 @@ platform: x64
 configuration: Debug
 
 environment:
+  PATH: $(APPVEYOR_BUILD_FOLDER)\lib\Debug;$(PATH)
   CLICOLOR_FORCE: 1
   matrix:
     - MSYSTEM: MINGW64
@@ -18,6 +19,4 @@ build:
   project: reproc.sln
 
 # Enter directory of dll so Windows can find it
-test_script:
-  - cd lib\Debug
-  - ..\..\test\Debug\tests.exe
+test_script: cmake --build . --target run-tests
