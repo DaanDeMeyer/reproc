@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
   using reproc::Reproc;
 
   Reproc reproc;
-  Reproc::Error error = Reproc::SUCCESS;
+  reproc::error error = reproc::success;
 
   error = reproc.start(argc - 1, argv + 1);
   if (error) { return error; }

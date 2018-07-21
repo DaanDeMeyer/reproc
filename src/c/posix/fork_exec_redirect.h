@@ -1,7 +1,7 @@
 #ifndef REPROC_C_POSIX_FORK_EXEC_REDIRECT_H
 #define REPROC_C_POSIX_FORK_EXEC_REDIRECT_H
 
-#include "reproc/reproc.h"
+#include "reproc/error.h"
 
 #include <sys/types.h>
 

@@ -1,7 +1,7 @@
 #ifndef REPROC_C_WINDOWS_STRING_UTILS_H
 #define REPROC_C_WINDOWS_STRING_UTILS_H
 
-#include "reproc/reproc.h"
+#include "reproc/error.h"
 
 #include <wchar.h>
 

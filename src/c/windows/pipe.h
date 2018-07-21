@@ -1,7 +1,7 @@
 #ifndef REPROC_C_WINDOWS_PIPE_H
 #define REPROC_C_WINDOWS_PIPE_H
 
-#include "reproc/reproc.h"
+#include "reproc/error.h"
 
 #include <windows.h>
 

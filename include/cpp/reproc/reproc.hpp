@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "error.hpp"
+
 #if defined(_WIN32) && defined(REPROC_SHARED)
 #if defined(REPROC_BUILDING)
 #define REPROC_EXPORT __declspec(dllexport)
@@ -34,27 +36,6 @@ private:
 public:
   REPROC_EXPORT static const unsigned int INFINITE;
 
-  /*! \see REPROC_ERROR */
-  /* When editing make sure to change the corresponding enum in reproc.h as
-  well */
-  enum Error {
-    SUCCESS,
-    UNKNOWN_ERROR,
-    WAIT_TIMEOUT,
-    STREAM_CLOSED,
-    STILL_RUNNING,
-    MEMORY_ERROR,
-    PIPE_LIMIT_REACHED,
-    INTERRUPTED,
-    PROCESS_LIMIT_REACHED,
-    INVALID_UNICODE,
-    PERMISSION_DENIED,
-    SYMLINK_LOOP,
-    FILE_NOT_FOUND,
-    NAME_TOO_LONG,
-    PARTIAL_WRITE
-  };
-
   /*! \see reproc_init. Throws std::bad_alloc if allocating memory for the
   reproc struct of the underlying C library fails */
   REPROC_EXPORT Reproc();
@@ -70,7 +51,7 @@ public:
 
   /*! \see reproc_start. /p working_directory additionally defaults to nullptr
    */
-  REPROC_EXPORT Reproc::Error start(int argc, const char *const *argv,
+  REPROC_EXPORT reproc::error start(int argc, const char *const *argv,
                                     const char *working_directory = nullptr);
 
   /*!
@@ -81,30 +62,30 @@ public:
   includes the missing NULL value).
   \param[in] working_directory Optional working directory. Defaults to nullptr.
   */
-  REPROC_EXPORT Reproc::Error
+  REPROC_EXPORT reproc::error
   start(const std::vector<std::string> &args,
         const std::string *working_directory = nullptr);
 
   /*! \see reproc_write */
-  REPROC_EXPORT Reproc::Error write(const void *buffer, unsigned int to_write,
+  REPROC_EXPORT reproc::error write(const void *buffer, unsigned int to_write,
                                     unsigned int *bytes_written);
 
   /*! \see reproc_close_stdin */
-  REPROC_EXPORT Reproc::Error close_stdin();
+  REPROC_EXPORT reproc::error close_stdin();
 
   /*! \see reproc_read */
-  REPROC_EXPORT Reproc::Error read(void *buffer, unsigned int size,
+  REPROC_EXPORT reproc::error read(void *buffer, unsigned int size,
                                    unsigned int *bytes_read);
 
   /*! \see reproc_read_stderr */
-  REPROC_EXPORT Reproc::Error read_stderr(void *buffer, unsigned int size,
+  REPROC_EXPORT reproc::error read_stderr(void *buffer, unsigned int size,
                                           unsigned int *bytes_read);
 
   // Convenience overloads of read_all/read_all_stderr template function
-  REPROC_EXPORT Reproc::Error read_all(std::ostream &output);
-  REPROC_EXPORT Reproc::Error read_all_stderr(std::ostream &output);
-  REPROC_EXPORT Reproc::Error read_all(std::string &output);
-  REPROC_EXPORT Reproc::Error read_all_stderr(std::string &output);
+  REPROC_EXPORT reproc::error read_all(std::ostream &output);
+  REPROC_EXPORT reproc::error read_all_stderr(std::ostream &output);
+  REPROC_EXPORT reproc::error read_all(std::string &output);
+  REPROC_EXPORT reproc::error read_all_stderr(std::string &output);
 
   /*!
   Calls \see read until the child process stdout is closed or an error occurs.
@@ -132,11 +113,11 @@ public:
   ostream ref. This ensures our overloaded version of read_all for ostreams is
   used.
 
-  \return Reproc::Error \see reproc_read except for STREAM_CLOSED
+  \return reproc::error \see reproc_read except for STREAM_CLOSED
   */
   template <typename Write,
             typename = enable_if_t<!is_ostream_ref<Write>::value>>
-  Reproc::Error read_all(Write &&write)
+  reproc::error read_all(Write &&write)
   {
     return read_all(
         [this](void *buffer, unsigned int size, unsigned int *bytes_read) {
@@ -148,7 +129,7 @@ public:
   /*! \see read_all for stderr */
   template <typename Write,
             typename = enable_if_t<!is_ostream_ref<Write>::value>>
-  Reproc::Error read_all_stderr(Write &&write)
+  reproc::error read_all_stderr(Write &&write)
   {
     return read_all(
         [this](void *buffer, unsigned int size, unsigned int *bytes_read) {
@@ -158,23 +139,23 @@ public:
   }
 
   /*! \see reproc_wait */
-  REPROC_EXPORT Reproc::Error wait(unsigned int milliseconds);
+  REPROC_EXPORT reproc::error wait(unsigned int milliseconds);
 
   /*! \see reproc_terminate */
-  REPROC_EXPORT Reproc::Error terminate(unsigned int milliseconds);
+  REPROC_EXPORT reproc::error terminate(unsigned int milliseconds);
 
   /*! \see reproc_kill */
-  REPROC_EXPORT Reproc::Error kill(unsigned int milliseconds);
+  REPROC_EXPORT reproc::error kill(unsigned int milliseconds);
 
   /*! \see reproc_exit_status */
-  REPROC_EXPORT Reproc::Error exit_status(int *exit_status);
+  REPROC_EXPORT reproc::error exit_status(int *exit_status);
 
   /*! \see reproc_system_error */
   REPROC_EXPORT static unsigned int system_error();
 
   /*! \see reproc_error_to_string. This function additionally adds the system
   error to the error string when /p error is Reproc::UNKNOWN_ERROR. */
-  REPROC_EXPORT static std::string error_to_string(Reproc::Error error);
+  REPROC_EXPORT static std::string error_to_string(reproc::error error);
 
 private:
   std::unique_ptr<struct reproc_type> reproc;
@@ -183,10 +164,10 @@ private:
 
   // Read until the stream used by read is closed or an error occurs.
   template <typename Read, typename Write>
-  Reproc::Error read_all(Read &&read, Write &&write)
+  reproc::error read_all(Read &&read, Write &&write)
   {
     char buffer[BUFFER_SIZE];
-    Reproc::Error error = Reproc::SUCCESS;
+    reproc::error error = reproc::success;
 
     while (true) {
       unsigned int bytes_read = 0;
@@ -196,12 +177,12 @@ private:
       write(buffer, bytes_read);
     }
 
-    if (error != Reproc::STREAM_CLOSED) { return error; }
+    if (error != reproc::stream_closed) { return error; }
 
-    return Reproc::SUCCESS;
+    return reproc::success;
   }
 };
 
-}
+} // namespace reproc
 
 #endif

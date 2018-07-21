@@ -16,14 +16,14 @@ Reproc::~Reproc()
   if (reproc) { reproc_destroy(reproc.get()); }
 }
 
-Reproc::Error Reproc::start(int argc, const char *const *argv,
+reproc::error Reproc::start(int argc, const char *const *argv,
                             const char *working_directory)
 {
-  return static_cast<Reproc::Error>(
+  return static_cast<reproc::error>(
       reproc_start(reproc.get(), argc, argv, working_directory));
 }
 
-Reproc::Error Reproc::start(const std::vector<std::string> &args,
+reproc::error Reproc::start(const std::vector<std::string> &args,
                             const std::string *working_directory)
 {
   // Turn args into array of C strings
@@ -37,93 +37,94 @@ Reproc::Error Reproc::start(const std::vector<std::string> &args,
   // We don't expect so many args that an int will insufficient to count them
   auto argc = static_cast<int>(args.size());
 
-  Error error = start(argc, &argv[0] /* std::vector -> C array */,
-                      working_directory ? working_directory->c_str() : nullptr);
+  reproc::error error = start(argc, &argv[0] /* std::vector -> C array */,
+                              working_directory ? working_directory->c_str()
+                                                : nullptr);
 
   return error;
 }
 
-Reproc::Error Reproc::close_stdin()
+reproc::error Reproc::close_stdin()
 {
-  return static_cast<Reproc::Error>(reproc_close_stdin(reproc.get()));
+  return static_cast<reproc::error>(reproc_close_stdin(reproc.get()));
 }
 
-Reproc::Error Reproc::write(const void *buffer, unsigned int to_write,
+reproc::error Reproc::write(const void *buffer, unsigned int to_write,
                             unsigned int *bytes_written)
 {
-  return static_cast<Reproc::Error>(
+  return static_cast<reproc::error>(
       reproc_write(reproc.get(), buffer, to_write, bytes_written));
 }
 
-Reproc::Error Reproc::read(void *buffer, unsigned int size,
+reproc::error Reproc::read(void *buffer, unsigned int size,
                            unsigned int *bytes_read)
 {
-  return static_cast<Reproc::Error>(
+  return static_cast<reproc::error>(
       reproc_read(reproc.get(), buffer, size, bytes_read));
 }
 
-Reproc::Error Reproc::read_stderr(void *buffer, unsigned int size,
+reproc::error Reproc::read_stderr(void *buffer, unsigned int size,
                                   unsigned int *bytes_read)
 {
-  return static_cast<Reproc::Error>(
+  return static_cast<reproc::error>(
       reproc_read_stderr(reproc.get(), buffer, size, bytes_read));
 }
 
-Reproc::Error Reproc::read_all(std::ostream &output)
+reproc::error Reproc::read_all(std::ostream &output)
 {
   return read_all([&output](const char *buffer, unsigned int size) {
     output.write(buffer, size);
   });
 }
 
-Reproc::Error Reproc::read_all_stderr(std::ostream &output)
+reproc::error Reproc::read_all_stderr(std::ostream &output)
 {
   return read_all_stderr([&output](const char *buffer, unsigned int size) {
     output.write(buffer, size);
   });
 }
 
-Reproc::Error Reproc::read_all(std::string &output)
+reproc::error Reproc::read_all(std::string &output)
 {
   return read_all([&output](const char *buffer, unsigned int size) {
     output.append(buffer, size);
   });
 }
 
-Reproc::Error Reproc::read_all_stderr(std::string &output)
+reproc::error Reproc::read_all_stderr(std::string &output)
 {
   return read_all_stderr([&output](const char *buffer, unsigned int size) {
     output.append(buffer, size);
   });
 }
 
-Reproc::Error Reproc::wait(unsigned int milliseconds)
+reproc::error Reproc::wait(unsigned int milliseconds)
 {
-  return static_cast<Reproc::Error>(reproc_wait(reproc.get(), milliseconds));
+  return static_cast<reproc::error>(reproc_wait(reproc.get(), milliseconds));
 }
 
-Reproc::Error Reproc::terminate(unsigned int milliseconds)
+reproc::error Reproc::terminate(unsigned int milliseconds)
 {
-  return static_cast<Reproc::Error>(
+  return static_cast<reproc::error>(
       reproc_terminate(reproc.get(), milliseconds));
 }
 
-Reproc::Error Reproc::kill(unsigned int milliseconds)
+reproc::error Reproc::kill(unsigned int milliseconds)
 {
-  return static_cast<Reproc::Error>(reproc_kill(reproc.get(), milliseconds));
+  return static_cast<reproc::error>(reproc_kill(reproc.get(), milliseconds));
 }
 
-Reproc::Error Reproc::exit_status(int *exit_status)
+reproc::error Reproc::exit_status(int *exit_status)
 {
-  return static_cast<Reproc::Error>(
+  return static_cast<reproc::error>(
       reproc_exit_status(reproc.get(), exit_status));
 }
 
 unsigned int Reproc::system_error() { return reproc_system_error(); }
 
-std::string Reproc::error_to_string(Reproc::Error error)
+std::string Reproc::error_to_string(reproc::error error)
 {
-  if (error == Reproc::UNKNOWN_ERROR) {
+  if (error == reproc::unknown_error) {
     return "reproc => unknown error. system error = " +
            std::to_string(system_error());
   }

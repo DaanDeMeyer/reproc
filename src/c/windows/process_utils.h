@@ -1,9 +1,7 @@
 #ifndef REPROC_C_WINDOWS_PROCESS_UTILS_H
 #define REPROC_C_WINDOWS_PROCESS_UTILS_H
 
-#pragma once
-
-#include "reproc/reproc.h"
+#include "reproc/error.h"
 
 #include <wchar.h>
 #include <windows.h>

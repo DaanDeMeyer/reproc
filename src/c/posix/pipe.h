@@ -1,7 +1,7 @@
 #ifndef REPROC_C_POSIX_PIPE_H
 #define REPROC_C_POSIX_PIPE_H
 
-#include "reproc/reproc.h"
+#include "reproc/error.h"
 
 REPROC_ERROR pipe_init(int *read, int *write);
 

@@ -8,7 +8,7 @@ int main()
   using reproc::Reproc;
 
   Reproc reproc;
-  Reproc::Error error = Reproc::SUCCESS;
+  reproc::error error = reproc::success;
 
   std::vector<std::string> args = { "cmake", "--help" };
 
