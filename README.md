@@ -5,7 +5,7 @@
 [![Join the chat at https://gitter.im/reproc/Lobby](https://badges.gitter.im/reproc/Lobby.svg)](https://gitter.im/reproc/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 - [Questions](#questions)
-- [Installation](#installation)
+- [Getting started](#getting-started)
   - [FetchContent](#fetchcontent)
   - [Git submodule/vendor](#git-submodulevendor)
   - [Install](#install)
@@ -15,13 +15,15 @@
 - [Unknown errors](#unknown-errors)
 - [Gotcha's](#gotchas)
 - [Design](#design)
-  - [Opaque pointer](#opaque-pointer)
   - [Memory allocation](#memory-allocation)
+    - [C API](#c-api)
+    - [C++ API](#c-api)
   - [(POSIX) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
   - [(POSIX) Check if execve call was succesful](#posix-check-if-execve-call-was-succesful)
   - [Avoiding resource leaks](#avoiding-resource-leaks)
+    - [POSIX](#posix)
+    - [Windows](#windows)
 - [Contributing](#contributing)
-  - [CMake developer options](#cmake-developer-options)
 
 ## Questions
 
