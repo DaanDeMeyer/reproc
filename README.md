@@ -428,7 +428,7 @@ When making a pull request:
   search path (PATH is included in CMake's search path).
 
 - Make sure all tests still pass. Tests can be run by executing
-  `cmake --build build --target test` in the root directory of the reproc
+  `cmake --build build --target run-tests` in the root directory of the reproc
   repository.
 
   However, this method does not allow passing arguments to the tests executable.

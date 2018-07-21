@@ -220,7 +220,7 @@ if(REPROC_BUILD_TESTS)
   )
 
   add_custom_target(
-    test
+    run-tests # test is reserved by CMake
     COMMAND $<TARGET_FILE:tests> --force-colors=true
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   )
