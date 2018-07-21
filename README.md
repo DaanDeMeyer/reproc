@@ -164,10 +164,9 @@ output.
 
 ## Documentation
 
-API documentation can be found in [reproc.h](include/c/reproc/reproc.h).
-Documentation for the C++ wrapper can be found in
-[reproc.hpp](include/cpp/reproc/reproc.hpp) (which mostly refers to reproc.h).
-The C++ wrapper
+API documentation can be found in the [header files](include). The two most
+important headers are [reproc.h](include/c/reproc/reproc.h) and
+[reproc.hpp](include/cpp/reproc/reproc.hpp).
 
 ## Unknown errors
 
@@ -247,7 +246,7 @@ some parts of reproc work under the hood.
 
 ### Memory allocation
 
-#### C API
+#### C
 
 reproc aims to do as few dynamic memory allocations as possible in its own code
 (not counting allocations that happen in system calls). As of this moment,
@@ -272,10 +271,10 @@ The reproc C code uses the standard `malloc` and `free` functions to allocate
 and free memory. However, providing support for custom allocators should be
 straightforward. If you need them, please open an issue.
 
-#### C++ API
+#### C++
 
 To avoid having to include reproc.h in reproc.hpp (the C++ API header) we have
-to forward declare the `reproc` struct in the `Reproc` class of the C++ wrapper.
+to forward declare the `reproc` struct in the `Reproc` class of the C++ API.
 This means each instance of the `Reproc` class comes with at least one
 allocation in its constructor to allocate memory for the `reproc` struct.
 
