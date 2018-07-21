@@ -18,7 +18,7 @@
 #define REPROC_EXPORT
 #endif
 
-class REPROC_EXPORT Reproc {
+class Reproc {
 private:
   // Helpers used to remove the read_all template overload from overload
   // resolution when an ostream ref is passed as a paramter
@@ -29,7 +29,7 @@ private:
   using is_ostream_ref = std::is_convertible<T, std::ostream &>;
 
 public:
-  static const unsigned int INFINITE;
+  REPROC_EXPORT static const unsigned int INFINITE;
 
   /*! \see REPROC_ERROR */
   /* When editing make sure to change the corresponding enum in reproc.h as
@@ -54,18 +54,19 @@ public:
 
   /*! \see reproc_init. Throws std::bad_alloc if allocating memory for the
   reproc struct of the underlying C library fails */
-  Reproc();
+  REPROC_EXPORT Reproc();
   /*! \see reproc_destroy */
-  ~Reproc();
+  REPROC_EXPORT ~Reproc();
 
   /* Enforce unique ownership */
   Reproc(const Reproc &) = delete;
-  Reproc(Reproc &&other) noexcept = default;
   Reproc &operator=(const Reproc &) = delete;
-  Reproc &operator=(Reproc &&other) = default;
+
+  REPROC_EXPORT Reproc(Reproc &&other) noexcept = default;
+  REPROC_EXPORT Reproc &operator=(Reproc &&other) = default;
 
   /*! \see reproc_start */
-  Reproc::Error start(int argc, const char *argv[],
+  REPROC_EXPORT Reproc::Error start(int argc, const char *argv[],
                       const char *working_directory);
 
   /*!
@@ -74,27 +75,27 @@ public:
   \param[in] args Has the same restrictions as argv in \see reproc_start except
   that it should not end with NULL (which is added in this function).
   */
-  Reproc::Error start(const std::vector<std::string> &args,
+  REPROC_EXPORT Reproc::Error start(const std::vector<std::string> &args,
                       const std::string *working_directory);
 
   /*! \see reproc_write */
-  Reproc::Error write(const void *buffer, unsigned int to_write,
+  REPROC_EXPORT Reproc::Error write(const void *buffer, unsigned int to_write,
                       unsigned int *bytes_written);
 
   /*! \see reproc_close_stdin */
-  Reproc::Error close_stdin();
+  REPROC_EXPORT Reproc::Error close_stdin();
 
   /*! \see reproc_read */
-  Reproc::Error read(void *buffer, unsigned int size, unsigned int *bytes_read);
+  REPROC_EXPORT Reproc::Error read(void *buffer, unsigned int size, unsigned int *bytes_read);
 
   /*! \see reproc_read_stderr */
-  Reproc::Error read_stderr(void *buffer, unsigned int size,
+  REPROC_EXPORT Reproc::Error read_stderr(void *buffer, unsigned int size,
                             unsigned int *bytes_read);
 
-  Reproc::Error read_all(std::ostream &out);
-  Reproc::Error read_all_stderr(std::ostream &out);
-  Reproc::Error read_all(std::string &out);
-  Reproc::Error read_all_stderr(std::string &out);
+  REPROC_EXPORT Reproc::Error read_all(std::ostream &out);
+  REPROC_EXPORT Reproc::Error read_all_stderr(std::ostream &out);
+  REPROC_EXPORT Reproc::Error read_all(std::string &out);
+  REPROC_EXPORT Reproc::Error read_all_stderr(std::string &out);
 
   /*!
   Calls \see read until the child process stdout is closed or an error occurs.
@@ -145,22 +146,22 @@ public:
   }
 
   /*! \see reproc_wait */
-  Reproc::Error wait(unsigned int milliseconds);
+  REPROC_EXPORT Reproc::Error wait(unsigned int milliseconds);
 
   /*! \see reproc_terminate */
-  Reproc::Error terminate(unsigned int milliseconds);
+  REPROC_EXPORT Reproc::Error terminate(unsigned int milliseconds);
 
   /*! \see reproc_kill */
-  Reproc::Error kill(unsigned int milliseconds);
+  REPROC_EXPORT Reproc::Error kill(unsigned int milliseconds);
 
   /*! \see reproc_exit_status */
-  Reproc::Error exit_status(int *exit_status);
+  REPROC_EXPORT Reproc::Error exit_status(int *exit_status);
 
   /*! \see reproc_system_error */
-  static unsigned int system_error();
+  REPROC_EXPORT static unsigned int system_error();
 
   /*! \see reproc_error_to_string */
-  static std::string error_to_string(Reproc::Error error);
+  REPROC_EXPORT static std::string error_to_string(Reproc::Error error);
 
 private:
   std::unique_ptr<struct reproc> reproc;
