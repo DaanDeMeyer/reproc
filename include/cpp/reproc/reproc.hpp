@@ -23,10 +23,10 @@ private:
   // Helpers used to remove the read_all/read_all_stderr template functions from
   // overload resolution when an ostream ref is passed as a parameter so the
   // ostream & overload of read_all/read_all_stderr is used instead.
-  template <bool B, class T = void>
+  template <bool B, typename T = void>
   using enable_if_t = typename std::enable_if<B, T>::type;
 
-  template <class T>
+  template <typename T>
   using is_ostream_ref = std::is_convertible<T, std::ostream &>;
 
 public:
@@ -67,7 +67,7 @@ public:
   REPROC_EXPORT Reproc &operator=(Reproc &&other) = default;
 
   /*! \see reproc_start. /p working_directory additionally defaults to nullptr
-  */
+   */
   REPROC_EXPORT Reproc::Error start(int argc, const char *const *argv,
                                     const char *working_directory = nullptr);
 
@@ -132,7 +132,8 @@ public:
 
   \return Reproc::Error \see reproc_read except for STREAM_CLOSED
   */
-  template <class Write, class = enable_if_t<!is_ostream_ref<Write>::value>>
+  template <typename Write,
+            typename = enable_if_t<!is_ostream_ref<Write>::value>>
   Reproc::Error read_all(Write &&write)
   {
     return read_all(
@@ -143,7 +144,8 @@ public:
   }
 
   /*! \see read_all for stderr */
-  template <class Write, class = enable_if_t<!is_ostream_ref<Write>::value>>
+  template <typename Write,
+            typename = enable_if_t<!is_ostream_ref<Write>::value>>
   Reproc::Error read_all_stderr(Write &&write)
   {
     return read_all(
@@ -173,12 +175,12 @@ public:
   REPROC_EXPORT static std::string error_to_string(Reproc::Error error);
 
 private:
-  std::unique_ptr<struct reproc> reproc;
+  std::unique_ptr<struct reproc_type> reproc;
 
   static constexpr unsigned int BUFFER_SIZE = 1024;
 
   // Read until the stream used by read is closed or an error occurs.
-  template <class Read, class Write>
+  template <typename Read, typename Write>
   Reproc::Error read_all(Read &&read, Write &&write)
   {
     char buffer[BUFFER_SIZE];

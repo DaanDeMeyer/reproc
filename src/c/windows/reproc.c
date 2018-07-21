@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <windows.h>
 
-REPROC_ERROR reproc_init(struct reproc *reproc)
+REPROC_ERROR reproc_init(reproc_type *reproc)
 {
   assert(reproc);
 
@@ -24,7 +24,7 @@ REPROC_ERROR reproc_init(struct reproc *reproc)
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_start(struct reproc *reproc, int argc,
+REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
                           const char *const *argv,
                           const char *working_directory)
 {
@@ -110,7 +110,7 @@ cleanup:
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_write(struct reproc *reproc, const void *buffer,
+REPROC_ERROR reproc_write(reproc_type *reproc, const void *buffer,
                           unsigned int to_write, unsigned int *bytes_written)
 {
   assert(reproc);
@@ -121,7 +121,7 @@ REPROC_ERROR reproc_write(struct reproc *reproc, const void *buffer,
   return pipe_write(reproc->parent_stdin, buffer, to_write, bytes_written);
 }
 
-REPROC_ERROR reproc_close_stdin(struct reproc *reproc)
+REPROC_ERROR reproc_close_stdin(reproc_type *reproc)
 {
   assert(reproc);
   assert(reproc->parent_stdin);
@@ -131,7 +131,7 @@ REPROC_ERROR reproc_close_stdin(struct reproc *reproc)
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_read(struct reproc *reproc, void *buffer, unsigned int size,
+REPROC_ERROR reproc_read(reproc_type *reproc, void *buffer, unsigned int size,
                          unsigned int *bytes_read)
 {
   assert(reproc);
@@ -142,7 +142,7 @@ REPROC_ERROR reproc_read(struct reproc *reproc, void *buffer, unsigned int size,
   return pipe_read(reproc->parent_stdout, buffer, size, bytes_read);
 }
 
-REPROC_ERROR reproc_read_stderr(struct reproc *reproc, void *buffer,
+REPROC_ERROR reproc_read_stderr(reproc_type *reproc, void *buffer,
                                 unsigned int size, unsigned int *bytes_read)
 {
   assert(reproc);
@@ -153,7 +153,7 @@ REPROC_ERROR reproc_read_stderr(struct reproc *reproc, void *buffer,
   return pipe_read(reproc->parent_stderr, buffer, size, bytes_read);
 }
 
-REPROC_ERROR reproc_wait(struct reproc *reproc, unsigned int milliseconds)
+REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds)
 {
   assert(reproc);
   assert(reproc->handle);
@@ -166,7 +166,7 @@ REPROC_ERROR reproc_wait(struct reproc *reproc, unsigned int milliseconds)
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_terminate(struct reproc *reproc, unsigned int milliseconds)
+REPROC_ERROR reproc_terminate(reproc_type *reproc, unsigned int milliseconds)
 {
   assert(reproc);
   assert(reproc->handle);
@@ -190,7 +190,7 @@ REPROC_ERROR reproc_terminate(struct reproc *reproc, unsigned int milliseconds)
   return reproc_wait(reproc, milliseconds);
 }
 
-REPROC_ERROR reproc_kill(struct reproc *reproc, unsigned int milliseconds)
+REPROC_ERROR reproc_kill(reproc_type *reproc, unsigned int milliseconds)
 {
   assert(reproc);
   assert(reproc->handle);
@@ -208,7 +208,7 @@ REPROC_ERROR reproc_kill(struct reproc *reproc, unsigned int milliseconds)
   return reproc_wait(reproc, milliseconds);
 }
 
-REPROC_ERROR reproc_exit_status(struct reproc *reproc, int *exit_status)
+REPROC_ERROR reproc_exit_status(reproc_type *reproc, int *exit_status)
 {
   assert(reproc);
   assert(reproc->handle);
@@ -226,7 +226,7 @@ REPROC_ERROR reproc_exit_status(struct reproc *reproc, int *exit_status)
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_destroy(struct reproc *reproc)
+REPROC_ERROR reproc_destroy(reproc_type *reproc)
 {
   assert(reproc);
 

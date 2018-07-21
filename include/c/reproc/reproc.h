@@ -18,8 +18,9 @@ extern "C" {
 #endif
 
 // Define struct in header file so it can be allocated on the stack
+// Named reproc_type so we can have reproc namespace in C++
 #if defined(_WIN32)
-struct reproc {
+struct reproc_type {
   // unsigned long = DWORD
   unsigned long id;
   // void * = HANDLE
@@ -29,7 +30,7 @@ struct reproc {
   void *parent_stderr;
 };
 #else
-struct reproc {
+struct reproc_type {
   int id;
   int parent_stdin;
   int parent_stdout;
@@ -39,7 +40,7 @@ struct reproc {
 #endif
 
 /*! Used to store child process information between multiple library calls */
-typedef struct reproc reproc_type; // _t is reserved by POSIX
+typedef struct reproc_type reproc_type; // _t is reserved by POSIX
 
 /*! Used to indicate that a function that takes a timeout value should wait
 indefinitely. */

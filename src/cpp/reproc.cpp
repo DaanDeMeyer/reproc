@@ -6,7 +6,7 @@
 
 const unsigned int Reproc::INFINITE = REPROC_INFINITE;
 
-Reproc::Reproc() : reproc(new struct reproc()) {}
+Reproc::Reproc() : reproc(new struct reproc_type()) {}
 
 Reproc::~Reproc()
 {
