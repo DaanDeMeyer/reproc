@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#define BUFFER_SIZE 1024
+
 /*! Uses the reproc C API to print CMake's help page */
 int main(void)
 {
@@ -25,9 +27,7 @@ int main(void)
   error = reproc_start(&reproc, argc, argv, NULL);
   if (error) { return (int) error; }
 
-  char buffer[1024];
-  // One less than actual size to always have space left for a null terminator
-  unsigned int buffer_size = 1023;
+  char buffer[BUFFER_SIZE];
 
   // Read the entire output of the child process. I've found this pattern to be
   // the most readable when reading the entire output of a child process. The
@@ -35,7 +35,7 @@ int main(void)
   // process closing its output stream is also reported as an error).
   while (true) {
     unsigned int bytes_read = 0;
-    error = reproc_read(&reproc, buffer, buffer_size, &bytes_read);
+    error = reproc_read(&reproc, buffer, BUFFER_SIZE, &bytes_read);
     if (error) { break; }
 
     fprintf(stdout, "%.*s", bytes_read, buffer);
