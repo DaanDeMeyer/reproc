@@ -19,4 +19,4 @@ build:
   project: reproc.sln
 
 # Enter directory of dll so Windows can find it
-test_script: cmake --build . --target run-tests
+test_script: cmake --build . --target reproc-run-tests
