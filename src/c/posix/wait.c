@@ -69,9 +69,7 @@ REPROC_ERROR wait_timeout(pid_t pid, int *exit_status,
 
   // Check if process hasn't already exited before starting timeout fork
   error = wait_no_hang(pid, exit_status);
-  if (error != REPROC_WAIT_TIMEOUT) {
-    return error;
-  }
+  if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   errno = 0;
   pid_t timeout_pid = fork();

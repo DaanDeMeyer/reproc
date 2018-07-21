@@ -2,11 +2,11 @@
 BasedOnStyle: LLVM
 ---
 Language: Cpp
-BreakBeforeBraces: Stroustrup
 AllowShortBlocksOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
-SpaceAfterCStyleCast: true
 AllowShortCaseLabelsOnASingleLine: true
+BreakBeforeBraces: Stroustrup
+Cpp11BracedListStyle: false
 PenaltyBreakAssignment: 100
 PenaltyBreakBeforeFirstCallParameter: 100
-Cpp11BracedListStyle: false
+SpaceAfterCStyleCast: true
