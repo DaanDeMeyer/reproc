@@ -4,16 +4,7 @@
 #define REPROC_H
 
 #include "error.h"
-
-#if defined(_WIN32) && defined(REPROC_SHARED)
-#if defined(REPROC_BUILDING)
-#define REPROC_EXPORT __declspec(dllexport)
-#else
-#define REPROC_EXPORT __declspec(dllimport)
-#endif
-#else
-#define REPROC_EXPORT
-#endif
+#include "export.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,9 +35,11 @@ struct reproc_type {
 /*! Used to store child process information between multiple library calls */
 typedef struct reproc_type reproc_type; // _t is reserved by POSIX
 
+typedef enum { REPROC_STDIN, REPROC_STDOUT, REPROC_STDERR } REPROC_STREAM;
+
 /*! Used to indicate that a function that takes a timeout value should wait
 indefinitely. */
-extern REPROC_EXPORT const unsigned int REPROC_INFINITE;
+REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
 
 /*!
 Initializes the members of \p reproc.
@@ -147,7 +140,7 @@ REPROC_EXPORT REPROC_ERROR reproc_write(reproc_type *reproc, const void *buffer,
                                         unsigned int *bytes_written);
 
 /*!
-Closes the standard input stream endpoint of the parent process.
+Closes the stream endpoint of the parent process indicated by /p stream.
 
 This function is necessary when a child process reads from stdin until it is
 closed. After writing all the input to the child process with \see
@@ -160,7 +153,8 @@ reproc_write the standard input stream can be closed using this function.
 Possible errors:
 - REPROC_INTERRUPTED
 */
-REPROC_EXPORT REPROC_ERROR reproc_close_stdin(reproc_type *reproc);
+REPROC_EXPORT REPROC_ERROR reproc_close(reproc_type *reproc,
+                                        REPROC_STREAM stream);
 
 /*!
 Reads up to \p size bytes from the child process' standard output and stores
@@ -170,23 +164,34 @@ Assuming no other errors occur this function keeps returning REPROC_SUCCESS
 until the child process closes its standard output stream (happens
 automatically when it exits) and all bytes have been read from the stream.
 This allows the function to be used in the following way to read all data from
-a child process' stdout:
+a child process stdout stream (C++ for brevity):
 
 \code{.cpp}
-std::stringstream ss;
+std::string output{};
 
 while (true) {
-  error = reproc_read(reproc, buffer, buffer_size - 1, &bytes_read);
+  unsigned int bytes_read = 0;
+  error = reproc_read(reproc, buffer, BUFFER_SIZE, &bytes_read);
   if (error) { break; }
 
-  buffer[bytes_read] = '\0';
-  ss << buffer;
+  output.append(buffer, bytes_read);
 }
+
+if (error != REPROC_STREAM_CLOSED) { return error; }
 \endcode
 
 Remember that this function reads bytes and not strings. It is up to the user
-to put a null terminator if he wants to use \p buffer as a string after this
-function completes.
+to add a null terminator if he wants to use \p buffer as a string after this
+function completes. However, this is easily accomplished as long as we make sure
+to leave space for the null terminator in the buffer when reading:
+
+\code{.c}
+unsigned int bytes_read = 0;
+error = reproc_read(reproc, buffer, BUFFER_SIZE - 1, &bytes_read);
+if (error) { return error; } //     ^^^^^^^^^^^^^^^
+
+buffer[bytes_read] = '\0';
+\endcode
 
 \param[in,out] reproc Cannot be NULL.
 \param[out] buffer Pointer to memory block where bytes read from stdout should
@@ -201,14 +206,10 @@ Possible errors:
 - REPROC_STREAM_CLOSED
 - REPROC_INTERRUPTED
 */
-REPROC_EXPORT REPROC_ERROR reproc_read(reproc_type *reproc, void *buffer,
+REPROC_EXPORT REPROC_ERROR reproc_read(reproc_type *reproc,
+                                       REPROC_STREAM stream, void *buffer,
                                        unsigned int size,
                                        unsigned int *bytes_read);
-
-/*! \see reproc_read for the standard error stream of the child process. */
-REPROC_EXPORT REPROC_ERROR reproc_read_stderr(reproc_type *reproc, void *buffer,
-                                              unsigned int size,
-                                              unsigned int *bytes_read);
 
 /*!
 Waits the specified amount of time for the process to exit.
@@ -304,30 +305,6 @@ exit on its own with \see reproc_wait.
 Possible errors:
 */
 REPROC_EXPORT REPROC_ERROR reproc_destroy(reproc_type *reproc);
-
-/*!
-Returns the last system error code.
-
-On Windows this function returns the result of GetLastError. On POSIX this
-function returns the value of errno. The value is not stored so other
-functions that modify the results of GetLastError or errno should not be
-called if you want to retrieve the last system error that occurred in one of
-reproc's functions.
-
-On POSIX, if an error occurs after fork but before exec it is communicated to
-the parent process which sets its own errno value to the errno value of the
-child process. This makes it possible to also retrieve errors that happen
-after forking with this function (for example in chdir or execve).
-
-\return unsigned int The last system error code
-*/
-REPROC_EXPORT unsigned int reproc_system_error(void);
-
-/*!
-Returns a string representation of /p error. The returned string does not have
-to be freed.
-*/
-REPROC_EXPORT const char *reproc_error_to_string(REPROC_ERROR error);
 
 #ifdef __cplusplus
 }

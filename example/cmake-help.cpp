@@ -1,3 +1,4 @@
+#include <reproc/parser.hpp>
 #include <reproc/reproc.hpp>
 
 #include <iostream>
@@ -8,7 +9,7 @@ int main()
   using reproc::Reproc;
 
   Reproc reproc;
-  reproc::error error = reproc::success;
+  reproc::Error error = reproc::SUCCESS;
 
   std::vector<std::string> args = { "cmake", "--help" };
 
@@ -17,20 +18,16 @@ int main()
 
   std::string output;
 
-  // The C++ wrapper has a convenient method for reading all output of a child
-  // reproc to an output stream. We could directly pass std::cout here as well
-  // but we use std::ostringstream since usually you will want the output of a
-  // child reproc as a string.
-  error = reproc.read_all(output);
+  error = reproc.read(reproc::STDOUT, reproc::string_parser(output));
   if (error) { return error; }
 
   std::cout << output << std::flush;
 
-  // You can also pass an ostream such as std::cerr directory to read_all
-  error = reproc.read_all_stderr(std::cerr);
+  // You can also pass an ostream such as std::cerr to read
+  error = reproc.read(reproc::STDERR, reproc::ostream_parser(std::cerr));
   if (error) { return error; }
 
-  error = reproc.wait(Reproc::INFINITE);
+  error = reproc.wait(reproc::INFINITE);
   if (error) { return error; }
 
   int exit_status;

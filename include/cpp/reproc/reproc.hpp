@@ -3,39 +3,22 @@
 #ifndef REPROC_HPP
 #define REPROC_HPP
 
-#include <iosfwd>
+#include "error.hpp"
+#include "export.hpp"
+
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "error.hpp"
-
-#if defined(_WIN32) && defined(REPROC_SHARED)
-#if defined(REPROC_BUILDING)
-#define REPROC_EXPORT __declspec(dllexport)
-#else
-#define REPROC_EXPORT __declspec(dllimport)
-#endif
-#else
-#define REPROC_EXPORT
-#endif
-
 namespace reproc {
 
-class Reproc {
-private:
-  // Helpers used to remove the read_all/read_all_stderr template functions from
-  // overload resolution when an ostream ref is passed as a parameter so the
-  // ostream & overload of read_all/read_all_stderr is used instead.
-  template <bool B, typename T = void>
-  using enable_if_t = typename std::enable_if<B, T>::type;
+enum Stream { STDIN, STDOUT, STDERR };
 
-  template <typename T>
-  using is_ostream_ref = std::is_convertible<T, std::ostream &>;
+REPROC_EXPORT extern const unsigned int INFINITE;
+
+class Reproc {
 
 public:
-  REPROC_EXPORT static const unsigned int INFINITE;
-
   /*! \see reproc_init. Throws std::bad_alloc if allocating memory for the
   reproc struct of the underlying C library fails */
   REPROC_EXPORT Reproc();
@@ -51,8 +34,8 @@ public:
 
   /*! \see reproc_start. /p working_directory additionally defaults to nullptr
    */
-  REPROC_EXPORT reproc::error start(int argc, const char *const *argv,
-                                    const char *working_directory = nullptr);
+  REPROC_EXPORT Error start(int argc, const char *const *argv,
+                            const char *working_directory = nullptr);
 
   /*!
   Overload of start for convenient usage from C++.
@@ -62,126 +45,85 @@ public:
   includes the missing NULL value).
   \param[in] working_directory Optional working directory. Defaults to nullptr.
   */
-  REPROC_EXPORT reproc::error
-  start(const std::vector<std::string> &args,
-        const std::string *working_directory = nullptr);
+  REPROC_EXPORT Error start(const std::vector<std::string> &args,
+                            const std::string *working_directory = nullptr);
 
   /*! \see reproc_write */
-  REPROC_EXPORT reproc::error write(const void *buffer, unsigned int to_write,
-                                    unsigned int *bytes_written);
+  REPROC_EXPORT Error write(const void *buffer, unsigned int to_write,
+                            unsigned int *bytes_written);
 
-  /*! \see reproc_close_stdin */
-  REPROC_EXPORT reproc::error close_stdin();
+  /*! \see reproc_close */
+  REPROC_EXPORT Error close(Stream stream);
 
   /*! \see reproc_read */
-  REPROC_EXPORT reproc::error read(void *buffer, unsigned int size,
-                                   unsigned int *bytes_read);
-
-  /*! \see reproc_read_stderr */
-  REPROC_EXPORT reproc::error read_stderr(void *buffer, unsigned int size,
-                                          unsigned int *bytes_read);
-
-  // Convenience overloads of read_all/read_all_stderr template function
-  REPROC_EXPORT reproc::error read_all(std::ostream &output);
-  REPROC_EXPORT reproc::error read_all_stderr(std::ostream &output);
-  REPROC_EXPORT reproc::error read_all(std::string &output);
-  REPROC_EXPORT reproc::error read_all_stderr(std::string &output);
+  REPROC_EXPORT Error read(Stream stream, void *buffer, unsigned int size,
+                           unsigned int *bytes_read);
 
   /*!
-  Calls \see read until the child process stdout is closed or an error occurs.
+  Calls \see read until an error occurs or the provided parser returns false.
 
-  Takes a Write function with the following signature:
-
-  \code{.cpp}
-  void write(const char *buffer, unsigned int size);
-  \endcode
-
-  The Write function receives the buffer after each read so it can append it to
-  the final result.
-
-  Example usage (don't actually use this, use the overload of read_all for
-  std::string instead):
+  Takes a Parser with the following signature:
 
   \code{.cpp}
-  std::string output;
-  reproc.read_all([&output](const char *buffer, unsigned int size) {
-    output.append(buffer, size);
-  });
+  class Parser {
+    // If stream_closed_is_error returns false, SUCCESS is returned instead of
+    // STREAM_CLOSED when the stream is closed
+    bool stream_closed_is_error();
+
+    // Receives the buffer after each read so it can be parsed and appended
+    // to the final result
+    bool operator()(const char *buffer, unsigned int size);
+  }
+  bool parser(const char *buffer, unsigned int size);
   \endcode
 
-  This function does not participate in overload resolution if \p write is an
-  ostream ref. This ensures our overloaded version of read_all for ostreams is
-  used.
+  The parser receives the buffer after each read so it can append it to the
+  final result.
 
-  \return reproc::error \see reproc_read except for STREAM_CLOSED
+  For examples of parsers, see parser.hpp.
+
+  \return Error \see reproc_read
   */
-  template <typename Write,
-            typename = enable_if_t<!is_ostream_ref<Write>::value>>
-  reproc::error read_all(Write &&write)
-  {
-    return read_all(
-        [this](void *buffer, unsigned int size, unsigned int *bytes_read) {
-          return read(buffer, size, bytes_read);
-        },
-        std::forward<Write>(write));
-  }
-
-  /*! \see read_all for stderr */
-  template <typename Write,
-            typename = enable_if_t<!is_ostream_ref<Write>::value>>
-  reproc::error read_all_stderr(Write &&write)
-  {
-    return read_all(
-        [this](void *buffer, unsigned int size, unsigned int *bytes_read) {
-          return read_stderr(buffer, size, bytes_read);
-        },
-        std::forward<Write>(write));
-  }
+  template <typename Parser> Error read(Stream stream, Parser &&parser);
 
   /*! \see reproc_wait */
-  REPROC_EXPORT reproc::error wait(unsigned int milliseconds);
+  REPROC_EXPORT Error wait(unsigned int milliseconds);
 
   /*! \see reproc_terminate */
-  REPROC_EXPORT reproc::error terminate(unsigned int milliseconds);
+  REPROC_EXPORT Error terminate(unsigned int milliseconds);
 
   /*! \see reproc_kill */
-  REPROC_EXPORT reproc::error kill(unsigned int milliseconds);
+  REPROC_EXPORT Error kill(unsigned int milliseconds);
 
   /*! \see reproc_exit_status */
-  REPROC_EXPORT reproc::error exit_status(int *exit_status);
-
-  /*! \see reproc_system_error */
-  REPROC_EXPORT static unsigned int system_error();
-
-  /*! \see reproc_error_to_string. This function additionally adds the system
-  error to the error string when /p error is Reproc::UNKNOWN_ERROR. */
-  REPROC_EXPORT static std::string error_to_string(reproc::error error);
+  REPROC_EXPORT Error exit_status(int *exit_status);
 
 private:
   std::unique_ptr<struct reproc_type> reproc;
+};
 
+template <typename Parser> Error Reproc::read(Stream stream, Parser &&parser)
+{
   static constexpr unsigned int BUFFER_SIZE = 1024;
 
-  // Read until the stream used by read is closed or an error occurs.
-  template <typename Read, typename Write>
-  reproc::error read_all(Read &&read, Write &&write)
-  {
-    char buffer[BUFFER_SIZE];
-    reproc::error error = reproc::success;
+  char buffer[BUFFER_SIZE];
+  Error error = SUCCESS;
 
-    while (true) {
-      unsigned int bytes_read = 0;
-      error = read(buffer, BUFFER_SIZE, &bytes_read);
-      if (error) { break; }
+  while (true) {
+    unsigned int bytes_read = 0;
+    error = read(stream, buffer, BUFFER_SIZE, &bytes_read);
+    if (error) { break; }
 
-      write(buffer, bytes_read);
-    }
-
-    if (error != reproc::stream_closed) { return error; }
-
-    return reproc::success;
+    // parser returns false to tell us to stop reading
+    if (!parser(buffer, bytes_read)) { break; }
   }
-};
+
+  if (error == STREAM_CLOSED && !parser.stream_closed_is_error()) {
+    return SUCCESS;
+  }
+
+  return error;
+}
 
 } // namespace reproc
 

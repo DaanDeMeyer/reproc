@@ -35,7 +35,8 @@ int main(void)
   // process closing its output stream is also reported as an error).
   while (true) {
     unsigned int bytes_read = 0;
-    error = reproc_read(&reproc, buffer, BUFFER_SIZE, &bytes_read);
+    error = reproc_read(&reproc, REPROC_STDOUT, buffer, BUFFER_SIZE,
+                        &bytes_read);
     if (error) { break; }
 
     fprintf(stdout, "%.*s", bytes_read, buffer);

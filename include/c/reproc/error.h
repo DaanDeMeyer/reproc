@@ -1,6 +1,8 @@
 #ifndef REPROC_ERROR_H
 #define REPROC_ERROR_H
 
+#include "export.h"
+
 /* When editing make sure to change the corresponding enum in reproc.hpp as
 well */
 typedef enum {
@@ -54,5 +56,29 @@ typedef enum {
   /*! Only part of the buffer was written to the stdin of the child prcess */
   REPROC_PARTIAL_WRITE
 } REPROC_ERROR;
+
+/*!
+Returns the last system error code.
+
+On Windows this function returns the result of GetLastError. On POSIX this
+function returns the value of errno. The value is not stored so other
+functions that modify the results of GetLastError or errno should not be
+called if you want to retrieve the last system error that occurred in one of
+reproc's functions.
+
+On POSIX, if an error occurs after fork but before exec it is communicated to
+the parent process which sets its own errno value to the errno value of the
+child process. This makes it possible to also retrieve errors that happen
+after forking with this function (for example in chdir or execve).
+
+\return unsigned int The last system error code
+*/
+REPROC_EXPORT unsigned int reproc_system_error(void);
+
+/*!
+Returns a string representation of /p error. The returned string does not have
+to be freed.
+*/
+REPROC_EXPORT const char *reproc_error_to_string(REPROC_ERROR error);
 
 #endif

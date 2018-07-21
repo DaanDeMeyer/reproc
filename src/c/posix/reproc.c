@@ -88,36 +88,34 @@ REPROC_ERROR reproc_write(reproc_type *reproc, const void *buffer,
   return pipe_write(reproc->parent_stdin, buffer, to_write, bytes_written);
 }
 
-REPROC_ERROR reproc_close_stdin(struct reproc_type *reproc)
+REPROC_ERROR reproc_close(struct reproc_type *reproc, REPROC_STREAM stream)
 {
   assert(reproc);
-  assert(reproc->parent_stdin != PIPE_NULL);
 
-  pipe_close(&reproc->parent_stdin);
+  switch (stream) {
+  case REPROC_STDIN: pipe_close(&reproc->parent_stdin); break;
+  case REPROC_STDOUT: pipe_close(&reproc->parent_stdout); break;
+  case REPROC_STDERR: pipe_close(&reproc->parent_stderr); break;
+  }
 
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_read(reproc_type *reproc, void *buffer,
-                         unsigned int size, unsigned int *bytes_read)
+REPROC_ERROR reproc_read(reproc_type *reproc, REPROC_STREAM stream,
+                         void *buffer, unsigned int size,
+                         unsigned int *bytes_read)
 {
   assert(reproc);
-  assert(reproc->parent_stdout != PIPE_NULL);
   assert(buffer);
   assert(bytes_read);
 
-  return pipe_read(reproc->parent_stdout, buffer, size, bytes_read);
-}
-
-REPROC_ERROR reproc_read_stderr(reproc_type *reproc, void *buffer,
-                                unsigned int size, unsigned int *bytes_read)
-{
-  assert(reproc);
-  assert(reproc->parent_stderr != PIPE_NULL);
-  assert(buffer);
-  assert(bytes_read);
-
-  return pipe_read(reproc->parent_stderr, buffer, size, bytes_read);
+  switch (stream) {
+  case REPROC_STDIN: assert(0); // stream cannot be REPROC_STDIN
+  case REPROC_STDOUT:
+    return pipe_read(reproc->parent_stdout, buffer, size, bytes_read);
+  case REPROC_STDERR:
+    return pipe_read(reproc->parent_stderr, buffer, size, bytes_read);
+  }
 }
 
 REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds)

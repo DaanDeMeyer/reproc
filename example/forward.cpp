@@ -1,3 +1,4 @@
+#include <reproc/parser.hpp>
 #include <reproc/reproc.hpp>
 
 #include <iostream>
@@ -16,21 +17,21 @@ int main(int argc, char *argv[])
   using reproc::Reproc;
 
   Reproc reproc;
-  reproc::error error = reproc::success;
+  reproc::Error error = reproc::SUCCESS;
 
   error = reproc.start(argc - 1, argv + 1);
   if (error) { return error; }
 
-  error = reproc.close_stdin();
+  error = reproc.close(reproc::STDIN);
   if (error) { return error; }
 
-  error = reproc.read_all(std::cout);
+  error = reproc.read(reproc::STDOUT, reproc::ostream_parser(std::cout));
   if (error) { return error; }
 
-  error = reproc.read_all_stderr(std::cerr);
+  error = reproc.read(reproc::STDERR, reproc::ostream_parser(std::cerr));
   if (error) { return error; }
 
-  error = reproc.wait(Reproc::INFINITE);
+  error = reproc.wait(reproc::INFINITE);
   if (error) { return error; }
 
   int exit_status = 0;

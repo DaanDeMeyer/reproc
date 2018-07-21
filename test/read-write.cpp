@@ -4,8 +4,6 @@
 #include <array>
 #include <string>
 
-static constexpr unsigned int BUFFER_SIZE = 1024;
-
 // NOLINTNEXTLINE(cert-err58-cpp)
 TEST_CASE("read-write")
 {
@@ -17,6 +15,7 @@ TEST_CASE("read-write")
   error = reproc_init(&reproc);
   REQUIRE(!error);
 
+  static constexpr unsigned int BUFFER_SIZE = 1024;
   std::array<char, BUFFER_SIZE> buffer{};
 
   SUBCASE("stdout")
@@ -35,14 +34,15 @@ TEST_CASE("read-write")
                          &bytes_written);
     REQUIRE(!error);
 
-    error = reproc_close_stdin(&reproc);
+    error = reproc_close(&reproc, REPROC_STDIN);
     REQUIRE(!error);
 
     std::string output{};
 
     while (true) {
       unsigned int bytes_read = 0;
-      error = reproc_read(&reproc, buffer.data(), BUFFER_SIZE, &bytes_read);
+      error = reproc_read(&reproc, REPROC_STDOUT, buffer.data(), BUFFER_SIZE,
+                          &bytes_read);
       if (error) { break; }
 
       output.append(buffer.data(), bytes_read);
@@ -67,15 +67,15 @@ TEST_CASE("read-write")
                          &bytes_written);
     REQUIRE(!error);
 
-    error = reproc_close_stdin(&reproc);
+    error = reproc_close(&reproc, REPROC_STDIN);
     REQUIRE(!error);
 
     std::string output{};
 
     while (true) {
       unsigned int bytes_read = 0;
-      error = reproc_read_stderr(&reproc, buffer.data(), BUFFER_SIZE,
-                                 &bytes_read);
+      error = reproc_read(&reproc, REPROC_STDERR, buffer.data(), BUFFER_SIZE,
+                          &bytes_read);
       if (error) { break; }
 
       output.append(buffer.data(), bytes_read);

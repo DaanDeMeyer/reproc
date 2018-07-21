@@ -160,7 +160,7 @@ if(REPROC_BUILD_CXX_WRAPPER)
   target_include_directories(reproc PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/cpp>
   )
-  target_sources(reproc PRIVATE src/cpp/reproc.cpp)
+  target_sources(reproc PRIVATE src/cpp/reproc.cpp src/cpp/error.cpp)
 endif()
 
 ### Tests ###
