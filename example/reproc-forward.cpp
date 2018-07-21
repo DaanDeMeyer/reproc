@@ -17,8 +17,7 @@ int main(int argc, char *argv[])
   using reproc::Reproc;
 
   if (argc <= 1) {
-    fprintf(stderr, "%s",
-            "No arguments provided. Example usage: ./forward echo test");
+    std::cerr << "No arguments provided. Example usage: ./forward echo test";
     return 1;
   }
 

@@ -170,19 +170,19 @@ if(REPROC_BUILD_TESTS)
 
   ### Tests ###
 
-  add_executable(tests "")
-  reproc_set_cxx_standard(tests 11)
+  add_executable(reproc-test "")
+  reproc_set_cxx_standard(reproc-test 11)
 
-  set_target_properties(tests PROPERTIES
+  set_target_properties(reproc-test PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY test
     CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
   )
 
-  target_link_libraries(tests PRIVATE reproc)
-  target_include_directories(tests SYSTEM PRIVATE third-party/doctest)
-  target_compile_options(tests PRIVATE ${REPROC_WARNINGS})
+  target_link_libraries(reproc-test PRIVATE reproc)
+  target_include_directories(reproc-test SYSTEM PRIVATE third-party/doctest)
+  target_compile_options(reproc-test PRIVATE ${REPROC_WARNINGS})
 
-  target_sources(tests PRIVATE
+  target_sources(reproc-test PRIVATE
     test/impl.cpp
     test/read-write.cpp
     test/stop.cpp
@@ -203,29 +203,30 @@ if(REPROC_BUILD_TESTS)
     # Pass paths as compile time parameters so tests can be run from any
     # directory without hardcoding the path in the tests which differs for each
     # user.
-    target_compile_definitions(tests PRIVATE
-      ${TARGET_UPPER_CASE}_PATH="$<TARGET_FILE:${TARGET}>"
+    target_compile_definitions(reproc-test PRIVATE
+      ${TARGET_UPPER_CASE}_HELPER="$<TARGET_FILE:${TARGET}>"
     )
   endfunction()
 
-  reproc_add_test_helper(stdout)
-  reproc_add_test_helper(stderr)
-  reproc_add_test_helper(infinite)
-  reproc_add_test_helper(noop)
+  # Use _ because macro names in C++ can't contain -
+  reproc_add_test_helper(reproc_stdout)
+  reproc_add_test_helper(reproc_stderr)
+  reproc_add_test_helper(reproc_infinite)
+  reproc_add_test_helper(reproc_noop)
 
-  add_dependencies(tests ${REPROC_TEST_HELPERS})
+  add_dependencies(reproc-test ${REPROC_TEST_HELPERS})
 
-  target_compile_definitions(tests PRIVATE
-    NOOP_DIR="$<TARGET_FILE_DIR:noop>"
+  target_compile_definitions(reproc-test PRIVATE
+    REPROC_NOOP_DIR="$<TARGET_FILE_DIR:reproc_noop>"
   )
 
   add_custom_target(
-    run-tests # test is reserved by CMake
-    COMMAND $<TARGET_FILE:tests> --force-colors=true
+    reproc-run-tests
+    COMMAND $<TARGET_FILE:reproc-test> --force-colors=true
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
-  add_dependencies(run-tests tests)
+  add_dependencies(reproc-run-tests reproc-test)
 
 endif()
 
@@ -255,11 +256,11 @@ if(REPROC_BUILD_EXAMPLES)
     )
   endfunction()
 
-  reproc_add_c_example(git-status)
+  reproc_add_c_example(reproc-git-status)
 
   if(REPROC_BUILD_CXX_WRAPPER)
-    reproc_add_cxx_example(cmake-help)
-    reproc_add_cxx_example(forward)
+    reproc_add_cxx_example(reproc-cmake-help)
+    reproc_add_cxx_example(reproc-forward)
   endif()
 endif()
 
@@ -334,7 +335,7 @@ if(REPROC_CLANG_FORMAT)
   )
 
   add_custom_target(
-    format
+    reproc-format
     COMMAND ${REPROC_CLANG_FORMAT} -i ${REPROC_SOURCES}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   )

@@ -23,7 +23,7 @@ TEST_CASE("read-write")
     std::string message = "This is stdout";
     auto message_length = static_cast<unsigned int>(message.length());
 
-    std::array<const char *, 2> argv = { { STDOUT_PATH, nullptr } };
+    std::array<const char *, 2> argv = { { REPROC_STDOUT_HELPER, nullptr } };
     auto argc = static_cast<int>(argv.size() - 1);
 
     error = reproc_start(&reproc, argc, argv.data(), nullptr);
@@ -56,7 +56,7 @@ TEST_CASE("read-write")
     std::string message = "This is stderr";
     auto message_length = static_cast<unsigned int>(message.length());
 
-    std::array<const char *, 2> argv = { { STDERR_PATH, nullptr } };
+    std::array<const char *, 2> argv = { { REPROC_STDERR_HELPER, nullptr } };
     auto argc = static_cast<int>(argv.size() - 1);
 
     error = reproc_start(&reproc, argc, argv.data(), nullptr);
