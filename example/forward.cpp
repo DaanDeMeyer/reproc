@@ -16,6 +16,12 @@ int main(int argc, char *argv[])
 {
   using reproc::Reproc;
 
+  if (argc <= 1) {
+    fprintf(stderr, "%s",
+            "No arguments provided. Example usage: ./forward echo test");
+    return 1;
+  }
+
   Reproc reproc;
   reproc::Error error = reproc::SUCCESS;
 
