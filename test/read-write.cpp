@@ -27,7 +27,7 @@ TEST_CASE("read-write")
     std::array<const char *, 2> argv = { { STDOUT_PATH, nullptr } };
     auto argc = static_cast<int>(argv.size() - 1);
 
-    error = reproc_start(&reproc, argc, argv.data(), NOOP_DIR);
+    error = reproc_start(&reproc, argc, argv.data(), nullptr);
     REQUIRE(!error);
 
     unsigned int bytes_written = 0;
@@ -59,7 +59,7 @@ TEST_CASE("read-write")
     std::array<const char *, 2> argv = { { STDERR_PATH, nullptr } };
     auto argc = static_cast<int>(argv.size() - 1);
 
-    error = reproc_start(&reproc, argc, argv.data(), NOOP_DIR);
+    error = reproc_start(&reproc, argc, argv.data(), nullptr);
     REQUIRE(!error);
 
     unsigned int bytes_written = 0;

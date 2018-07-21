@@ -10,7 +10,7 @@ int main()
 
   std::vector<std::string> args = { "cmake", "--help" };
 
-  error = reproc.start(args, nullptr);
+  error = reproc.start(args);
   if (error) { return error; }
 
   std::string output;
