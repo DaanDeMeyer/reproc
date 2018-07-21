@@ -335,6 +335,8 @@ Overflow answer.
 
 ### Avoiding resource leaks
 
+#### POSIX
+
 On POSIX systems, by default file descriptors are inherited by child processes
 when calling `execve`. To prevent unintended leaking of file descriptors to
 child processes, POSIX provides a function `fcntl` which can be used to set the
@@ -381,15 +383,17 @@ process since only the file descriptors up to the latest resource limit are
 closed. Of course, this only happens if the application manually lowers the
 resource limit.
 
-On Windows the same race condition occurs. The `CreatePipe` function receives a
-flag as part of its arguments that specifies if the returned handles can be
-inherited by child processes or not. The `CreateProcess` function also takes a
-flag indicating whether it should inherit handles or not. Inheritance for
-endpoints of a single pipe can be configured after the `CreatePipe` call using
-the function `SetHandleInformation`. The race condition occurs after calling
-`CreatePipe` (allowing inheritance) but before calling `SetHandleInformation` in
-one thread and calling `CreateProcess` (configured to inherit pipes) in another
-thread. This would unintentionally leak handles into a child process. We try to
+#### Windows
+
+On Windows the `CreatePipe` function receives a flag as part of its arguments
+that specifies if the returned handles can be inherited by child processes or
+not. The `CreateProcess` function also takes a flag indicating whether it should
+inherit handles or not. Inheritance for endpoints of a single pipe can be
+configured after the `CreatePipe` call using the function
+`SetHandleInformation`. A race condition occurs after calling `CreatePipe`
+(allowing inheritance) but before calling `SetHandleInformation` in one thread
+and calling `CreateProcess` (configured to inherit pipes) in another thread. In
+this scenario handles are unintentionally leaked into a child process. We try to
 mitigate this in two ways:
 
 - We call `SetHandleInformation` after `CreatePipe` for the handles that should
