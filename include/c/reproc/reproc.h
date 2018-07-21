@@ -17,6 +17,7 @@
 extern "C" {
 #endif
 
+// Define struct in header file so it can be allocated on the stack
 #if defined(_WIN32)
 struct reproc {
   // unsigned long = DWORD
@@ -38,7 +39,7 @@ struct reproc {
 #endif
 
 /*! Used to store child process information between multiple library calls */
-typedef struct reproc reproc_type;
+typedef struct reproc reproc_type; // _t is reserved by POSIX
 
 /*! Used to indicate that a function that takes a timeout value should wait
 indefinitely. */
@@ -373,6 +374,10 @@ after forking with this function (for example in chdir or execve).
 */
 REPROC_EXPORT unsigned int reproc_system_error(void);
 
+/*!
+Returns a string representation of /p error. The returned string does not have
+to be freed.
+*/
 REPROC_EXPORT const char *reproc_error_to_string(REPROC_ERROR error);
 
 #ifdef __cplusplus
