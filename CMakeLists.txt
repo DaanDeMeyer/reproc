@@ -225,6 +225,8 @@ if(REPROC_BUILD_TESTS)
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+  add_dependencies(run-tests tests)
+
 endif()
 
 ### Examples ###
