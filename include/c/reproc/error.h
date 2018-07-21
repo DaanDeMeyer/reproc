@@ -57,6 +57,10 @@ typedef enum {
   REPROC_PARTIAL_WRITE
 } REPROC_ERROR;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*!
 Returns the last system error code.
 
@@ -80,5 +84,9 @@ Returns a string representation of /p error. The returned string does not have
 to be freed.
 */
 REPROC_EXPORT const char *reproc_error_to_string(REPROC_ERROR error);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
