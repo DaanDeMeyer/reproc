@@ -82,13 +82,13 @@ set_target_properties(reproc PROPERTIES
   # Might not be set so surround with quotes so we always have a value
   C_CLANG_TIDY "${REPROC_CLANG_TIDY}"
 )
-reproc_set_c_standard(reproc 99)
 
+reproc_set_c_standard(reproc 99)
 target_compile_options(reproc PRIVATE ${REPROC_WARNINGS})
 
 # Only use the headers from the repository when building. When installing we
 # want to use the install location of the headers (e.g. /usr/include) as the
-# include directory
+# include directory which is specified later in this file (Install section)
 target_include_directories(reproc PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/c>
 )
@@ -165,7 +165,6 @@ endif()
 ### Tests ###
 
 if(REPROC_BUILD_TESTS)
-
   enable_language(CXX)
 
   ### Tests ###
@@ -248,9 +247,11 @@ if(REPROC_BUILD_EXAMPLES)
   endfunction()
 
   reproc_add_c_example(git-status)
-  reproc_add_cxx_example(cmake-help)
-  reproc_add_cxx_example(forward)
 
+  if(REPROC_BUILD_CPP_WRAPPER)
+    reproc_add_cxx_example(cmake-help)
+    reproc_add_cxx_example(forward)
+  endif()
 endif()
 
 ### Install ###
