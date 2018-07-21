@@ -8,6 +8,8 @@
 // stdin and reading from stderr.
 // See res/echo for the child process code
 
+static constexpr unsigned int BUFFER_SIZE = 1024;
+
 // NOLINTNEXTLINE(cert-err58-cpp)
 TEST_CASE("read-write")
 {
@@ -19,17 +21,15 @@ TEST_CASE("read-write")
   error = reproc_init(&reproc);
   REQUIRE(!error);
 
-  std::array<char, 1024> buffer{};
-  // -1 to leave space for null terminator
-  auto buffer_size = static_cast<unsigned int>(buffer.size() - 1);
+  std::array<char, BUFFER_SIZE> buffer{};
 
   SUBCASE("stdout")
   {
     std::string message = "This is stdout";
     auto message_length = static_cast<unsigned int>(message.length());
 
-    int argc = 1;
     std::array<const char *, 2> argv = { { STDOUT_PATH, nullptr } };
+    auto argc = static_cast<int>(argv.size() - 1);
 
     error = reproc_start(&reproc, argc, argv.data(), NOOP_DIR);
     REQUIRE(!error);
@@ -46,7 +46,7 @@ TEST_CASE("read-write")
 
     while (true) {
       unsigned int bytes_read = 0;
-      error = reproc_read(&reproc, buffer.data(), buffer_size, &bytes_read);
+      error = reproc_read(&reproc, buffer.data(), BUFFER_SIZE, &bytes_read);
       if (error) { break; }
 
       output.append(buffer.data(), bytes_read);
@@ -60,8 +60,8 @@ TEST_CASE("read-write")
     std::string message = "This is stderr";
     auto message_length = static_cast<unsigned int>(message.length());
 
-    int argc = 1;
     std::array<const char *, 2> argv = { { STDERR_PATH, nullptr } };
+    auto argc = static_cast<int>(argv.size() - 1);
 
     error = reproc_start(&reproc, argc, argv.data(), NOOP_DIR);
     REQUIRE(!error);
@@ -78,7 +78,7 @@ TEST_CASE("read-write")
 
     while (true) {
       unsigned int bytes_read = 0;
-      error = reproc_read_stderr(&reproc, buffer.data(), buffer_size,
+      error = reproc_read_stderr(&reproc, buffer.data(), BUFFER_SIZE,
                                  &bytes_read);
       if (error) { break; }
 

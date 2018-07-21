@@ -54,6 +54,7 @@ endif()
 
 if(MSVC)
   set(REPROC_WARNINGS
+    # /W3 is enabled by default
     $<$<BOOL:${REPROC_CI}>:/WX>
   )
 else()
@@ -165,50 +166,21 @@ endif()
 
 if(REPROC_BUILD_TESTS)
 
-  ### Helper programs ###
-
   enable_language(CXX)
-
-  add_executable(stdout test/res/stdout.cpp)
-  target_compile_options(stdout PRIVATE ${REPROC_WARNINGS})
-
-  add_executable(stderr test/res/stderr.cpp)
-  target_compile_options(stderr PRIVATE ${REPROC_WARNINGS})
-
-  add_executable(infinite test/res/infinite.cpp)
-  target_compile_options(infinite PRIVATE ${REPROC_WARNINGS})
-
-  add_executable(noop test/res/noop.cpp)
-  target_compile_options(noop PRIVATE ${REPROC_WARNINGS})
-
-  set_target_properties(stdout stderr infinite noop PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY test/res
-    CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
-  )
 
   ### Tests ###
 
   add_executable(tests "")
-  add_dependencies(tests stdout stderr infinite noop)
   reproc_set_cxx_standard(tests 11)
+
   set_target_properties(tests PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY test
     CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
   )
+
   target_link_libraries(tests PRIVATE reproc)
   target_include_directories(tests SYSTEM PRIVATE third-party/doctest)
   target_compile_options(tests PRIVATE ${REPROC_WARNINGS})
-
-  # Pass paths as compile time parameters so tests can be run from any
-  # directory without hardcoding the path in the tests which differs for each
-  # user.
-  target_compile_definitions(tests PRIVATE
-    STDOUT_PATH="$<TARGET_FILE:stdout>"
-    STDERR_PATH="$<TARGET_FILE:stderr>"
-    INFINITE_PATH="$<TARGET_FILE:infinite>"
-    NOOP_PATH="$<TARGET_FILE:noop>"
-    NOOP_DIR="$<TARGET_FILE_DIR:noop>"
-  )
 
   target_sources(tests PRIVATE
     test/impl.cpp
@@ -216,42 +188,69 @@ if(REPROC_BUILD_TESTS)
     test/stop.cpp
     test/working-directory.cpp
   )
+
+  ### Helper programs ###
+
+  function(reproc_add_test_helper TARGET)
+    add_executable(${TARGET} test/res/${TARGET}.cpp)
+    target_compile_options(${TARGET} PRIVATE ${REPROC_WARNINGS})
+    set_target_properties(${TARGET} PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY test/res
+      CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
+    )
+    set(REPROC_TEST_HELPERS ${REPROC_TEST_HELPERS} ${TARGET} PARENT_SCOPE)
+    string(TOUPPER ${TARGET} TARGET_UPPER_CASE)
+    # Pass paths as compile time parameters so tests can be run from any
+    # directory without hardcoding the path in the tests which differs for each
+    # user.
+    target_compile_definitions(tests PRIVATE
+      ${TARGET_UPPER_CASE}_PATH="$<TARGET_FILE:${TARGET}>"
+    )
+  endfunction()
+
+  reproc_add_test_helper(stdout)
+  reproc_add_test_helper(stderr)
+  reproc_add_test_helper(infinite)
+  reproc_add_test_helper(noop)
+
+  add_dependencies(tests ${REPROC_TEST_HELPERS})
+
+  target_compile_definitions(tests PRIVATE
+    NOOP_DIR="$<TARGET_FILE_DIR:noop>"
+  )
+
 endif()
 
 ### Examples ###
 
 if(REPROC_BUILD_EXAMPLES)
 
-  add_executable(cmake-help-c examples/cmake-help.c)
-  reproc_set_c_standard(cmake-help-c 99)
-  target_link_libraries(cmake-help-c PRIVATE reproc)
-  target_compile_options(cmake-help-c PRIVATE ${REPROC_WARNINGS})
+  function(reproc_add_c_example TARGET)
+    add_executable(${TARGET} examples/${TARGET}.c)
+    reproc_set_c_standard(${TARGET} 99)
+    target_link_libraries(${TARGET} PRIVATE reproc)
+    target_compile_options(${TARGET} PRIVATE ${REPROC_WARNINGS})
+    set_target_properties(${TARGET} PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY examples
+      C_CLANG_TIDY "${REPROC_CLANG_TIDY}"
+    )
+  endfunction()
 
-  set_target_properties(cmake-help-c PROPERTIES
-    C_CLANG_TIDY "${REPROC_CLANG_TIDY}"
-  )
+  function(reproc_add_cxx_example TARGET)
+    add_executable(${TARGET} examples/${TARGET}.cpp)
+    reproc_set_cxx_standard(${TARGET} 11)
+    target_link_libraries(${TARGET} PRIVATE reproc)
+    target_compile_options(${TARGET} PRIVATE ${REPROC_WARNINGS})
+    set_target_properties(${TARGET} PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY examples
+      CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
+    )
+  endfunction()
 
-  add_executable(cmake-help-cpp examples/cmake-help.cpp)
-  reproc_set_cxx_standard(cmake-help-cpp 11)
-  target_link_libraries(cmake-help-cpp reproc)
-  target_compile_options(cmake-help-cpp PRIVATE ${REPROC_WARNINGS})
+  reproc_add_c_example(git-status)
+  reproc_add_cxx_example(cmake-help)
+  reproc_add_cxx_example(forward)
 
-  set_target_properties(cmake-help-cpp PROPERTIES
-    CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
-  )
-
-  add_executable(forward examples/forward.cpp)
-  reproc_set_cxx_standard(forward 11)
-  target_link_libraries(forward reproc)
-  target_compile_options(forward PRIVATE ${REPROC_WARNINGS})
-
-  set_target_properties(cmake-help-cpp PROPERTIES
-    CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
-  )
-
-  set_target_properties(cmake-help-c cmake-help-cpp forward PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY examples
-  )
 endif()
 
 ### Install ###

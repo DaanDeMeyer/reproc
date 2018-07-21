@@ -19,7 +19,7 @@ int main(void)
   // reproc_start takes argc and argv as passed to the main function. Note that
   // argc does not include the final NULL element of the array.
   int argc = 2;
-  const char *argv[3] = { "cmake", "--help", NULL };
+  const char *argv[3] = { "git", "status", NULL };
 
   // reproc_start takes argv, argc and the working directory of the child
   // process. If the working directory is NULL the working directory of the

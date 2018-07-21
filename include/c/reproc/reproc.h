@@ -167,7 +167,7 @@ Possible errors:
 - REPROC_FILE_NOT_FOUND
 */
 REPROC_EXPORT REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
-                                        const char *argv[],
+                                        const char *const *argv,
                                         const char *working_directory);
 
 /*!

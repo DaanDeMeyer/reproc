@@ -14,7 +14,7 @@ Reproc::~Reproc()
   if (reproc) { reproc_destroy(reproc.get()); }
 }
 
-Reproc::Error Reproc::start(int argc, const char *argv[],
+Reproc::Error Reproc::start(int argc, const char *const *argv,
                             const char *working_directory)
 {
   return static_cast<Reproc::Error>(

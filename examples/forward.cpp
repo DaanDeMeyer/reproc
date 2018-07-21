@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
   Reproc reproc;
   Reproc::Error error = Reproc::SUCCESS;
 
-  error = reproc.start(argc - 1, (const char **) argv + 1, nullptr);
+  error = reproc.start(argc - 1, argv + 1, nullptr);
   if (error) { return error; }
 
   error = reproc.close_stdin();

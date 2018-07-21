@@ -14,8 +14,8 @@ TEST_CASE("stop")
   error = reproc_init(&reproc);
   REQUIRE(!error);
 
-  int argc = 1;
   std::array<const char *, 2> argv = { { INFINITE_PATH, nullptr } };
+  auto argc = static_cast<int>(argv.size() - 1);
 
   error = reproc_start(&reproc, argc, argv.data(), nullptr);
   REQUIRE(!error);

@@ -24,7 +24,8 @@ REPROC_ERROR reproc_init(struct reproc *reproc)
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_start(struct reproc *reproc, int argc, const char *argv[],
+REPROC_ERROR reproc_start(struct reproc *reproc, int argc,
+                          const char *const *argv,
                           const char *working_directory)
 {
   assert(reproc);

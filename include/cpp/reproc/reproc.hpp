@@ -66,7 +66,7 @@ public:
   REPROC_EXPORT Reproc &operator=(Reproc &&other) = default;
 
   /*! \see reproc_start */
-  REPROC_EXPORT Reproc::Error start(int argc, const char *argv[],
+  REPROC_EXPORT Reproc::Error start(int argc, const char *const *argv,
                                     const char *working_directory);
 
   /*!
