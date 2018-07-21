@@ -40,14 +40,14 @@ if (REPROC_RUN_CLANG_TIDY)
   else()
     message(WARNING "clang-tidy not found")
     # If clang-tidy is not found REPROC_CLANG_TIDY is not set to an empty value
-    # so we have to unset it
-    unset(REPROC_CLANG_TIDY)
+    # so we have to override it
+    set(REPROC_CLANG_TIDY "")
   endif()
 else()
   # find_program puts its results in the CMake cache. When REPROC_RUN_CLANG_TIDY
-  # is set to OFF in a subsequent invocation of CMake we have to unset
-  # REPROC_CLANG_TIDY to override any existing cache value
-  unset(REPROC_CLANG_TIDY)
+  # is set to OFF in a subsequent invocation of CMake we have to override
+  # REPROC_CLANG_TIDY to make sure it doesn't contain a cache value
+  set(REPROC_CLANG_TIDY "")
 endif()
 
 ### Common options ###
