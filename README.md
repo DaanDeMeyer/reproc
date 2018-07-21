@@ -413,26 +413,32 @@ When making a pull request:
 
 - Format your changes with `clang-format` and run `clang-tidy` locally if
   possible since it will run in CI as well.
-- Make sure all tests still pass. The tests are located at `build/test/tests`
-  after building.
-- When adding a new feature, make sure to implement it for POSIX and Windows.
+
+  If `clang-format` is available in CMake's search path, a `format` target is
+  added that can be used to run `clang-format` on all reproc source files.
+
+  `cmake --build build --target format`
+
+  reproc also supports the `REPROC_RUN_CLANG_TIDY` CMake option to run
+  `clang-tidy` as part of the build. This requires `clang-tidy` to be in CMake's
+  search path (PATH is included in CMake's search path).
+
+- Make sure all tests still pass. Tests can be run by executing
+  `cmake --build build --target test` in the root directory of the reproc
+  repository.
+
+  However, this method does not allow passing arguments to the tests executable.
+  If you want more control over which tests are executed you can run the tests
+  executable directly (located at `build/test/tests`). A list of possible
+  options can be found
+  [here](https://github.com/onqtam/doctest/blob/master/doc/markdown/commandline.md).
+
+  If you don't have access to every platform, make a pull request and CI will
+  compile and run the tests on the platforms you don't have access to.
+
+- When adding a new feature, make sure to implement it for both POSIX and
+  Windows.
 - When adding a new feature, add a new test for it or modify an existing one to
-  test the new feature.
+  also test the new feature.
 - Make sure to update the relevant documentation if needed or write new
   documentation.
-
-If you don't have access to every platform, make a pull request and CI will
-compile and run the tests on the platforms you don't have access to.
-
-### CMake developer options
-
-When working on reproc developers can also enable the `REPROC_RUN_CLANG_TIDY`
-option to run `clang-tidy` as part of the build. This requires `clang-tidy` to
-be in CMake's search path (PATH is included in CMake's search path).
-
-If `clang-format` is available in CMake's search path, a `format` target is
-added that can be used to run `clang-format` on all reproc source files.
-
-```bash
-cmake --build build --target format
-```
