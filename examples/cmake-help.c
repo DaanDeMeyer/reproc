@@ -2,7 +2,6 @@
 
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 /*! Uses the reproc C API to print CMake's help page */
 int main(void)
@@ -13,7 +12,7 @@ int main(void)
   // Always call reproc_init after allocating memory for reproc_type to
   // initialize it
   error = reproc_init(&reproc);
-  if (error) { return (int )error; }
+  if (error) { return (int) error; }
 
   // reproc_start takes argc and argv as passed to the main function. Note that
   // argc does not include the final NULL element of the array.
@@ -39,8 +38,7 @@ int main(void)
     error = reproc_read(&reproc, buffer, buffer_size, &bytes_read);
     if (error) { break; }
 
-    buffer[bytes_read] = '\0';
-    fprintf(stdout, "%s", buffer);
+    fprintf(stdout, "%.*s", bytes_read, buffer);
   }
 
   // Check that the while loop stopped because the output stream of the child
