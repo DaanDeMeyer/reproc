@@ -4,10 +4,6 @@
 #include <array>
 #include <string>
 
-// Alternates between writing to stdin and reading from stdout and writing to
-// stdin and reading from stderr.
-// See res/echo for the child process code
-
 static constexpr unsigned int BUFFER_SIZE = 1024;
 
 // NOLINTNEXTLINE(cert-err58-cpp)
