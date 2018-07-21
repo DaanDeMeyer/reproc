@@ -106,16 +106,20 @@ REPROC_ERROR reproc_read(reproc_type *reproc, REPROC_STREAM stream,
                          unsigned int *bytes_read)
 {
   assert(reproc);
+  assert(stream != REPROC_STDIN); // stream cannot be REPROC_STDIN
   assert(buffer);
   assert(bytes_read);
 
   switch (stream) {
-  case REPROC_STDIN: assert(0); // stream cannot be REPROC_STDIN
+  case REPROC_STDIN: break;
   case REPROC_STDOUT:
     return pipe_read(reproc->parent_stdout, buffer, size, bytes_read);
   case REPROC_STDERR:
     return pipe_read(reproc->parent_stderr, buffer, size, bytes_read);
   }
+
+  // Unreachable but write anyway to silence warning
+  return REPROC_UNKNOWN_ERROR;
 }
 
 REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds)
