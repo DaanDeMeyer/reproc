@@ -2,6 +2,3 @@ build/
 
 # Visual Studio Code
 .vscode/
-
-# QtCreator
-CMakeLists.txt.user
