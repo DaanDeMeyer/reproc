@@ -2,7 +2,6 @@
 #include <reproc/reproc.h>
 
 #include <array>
-#include <sstream>
 
 // Alternates between writing to stdin and reading from stdout and writing to
 // stdin and reading from stderr.
@@ -42,17 +41,17 @@ TEST_CASE("read-write")
     error = reproc_close_stdin(&reproc);
     REQUIRE(!error);
 
-    std::stringstream ss{};
+    std::string output{};
 
     while (true) {
       unsigned int bytes_read = 0;
       error = reproc_read(&reproc, buffer.data(), buffer_size, &bytes_read);
       if (error) { break; }
 
-      ss.write(buffer.data(), bytes_read);
+      output.append(buffer.data(), bytes_read);
     }
 
-    REQUIRE_EQ(ss.str(), message);
+    REQUIRE_EQ(output, message);
   }
 
   SUBCASE("stderr")
@@ -74,7 +73,7 @@ TEST_CASE("read-write")
     error = reproc_close_stdin(&reproc);
     REQUIRE(!error);
 
-    std::stringstream ss;
+    std::string output{};
 
     while (true) {
       unsigned int bytes_read = 0;
@@ -82,10 +81,10 @@ TEST_CASE("read-write")
                                  &bytes_read);
       if (error) { break; }
 
-      ss.write(buffer.data(), bytes_read);
+      output.append(buffer.data(), bytes_read);
     }
 
-    REQUIRE_EQ(ss.str(), message);
+    REQUIRE_EQ(output, message);
   }
 
   error = reproc_wait(&reproc, REPROC_INFINITE);
