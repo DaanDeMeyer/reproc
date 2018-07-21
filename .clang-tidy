@@ -3,10 +3,8 @@ Checks:
 '
 *,
 -fuchsia-default-arguments,
--clang-analyzer-security.insecureAPI.strcpy,
 -readability-implicit-bool-conversion,
 '
 HeaderFilterRegex: '^(?!doctest\.h$).*$'
-AnalyzeTemporaryDtors: false
 ...
 

@@ -29,6 +29,7 @@ REPROC_ERROR string_join(const char *const *string_array, int array_length,
   char *current = string; // Keeps track of where we are in the result string
   for (int i = 0; i < array_length; i++) {
     size_t part_length = strlen(string_array[i]);
+    // NOLINTNEXTLINE(clang-analyzer-security.insecureAPI.strcpy)
     strcpy(current, string_array[i]);
     current += part_length;
 
