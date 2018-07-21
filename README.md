@@ -419,22 +419,23 @@ When making a pull request:
 - Format your changes with `clang-format` and run `clang-tidy` locally if
   possible since it will run in CI as well.
 
-  If `clang-format` is available in CMake's search path, a `format` target is
-  added that can be used to run `clang-format` on all reproc source files.
+  If `clang-format` is available in CMake's search path, a `reproc-format`
+  target is added that can be used to run `clang-format` on all reproc source
+  files.
 
-  `cmake --build build --target format`
+  `cmake --build build --target reproc-format`
 
   reproc also supports the `REPROC_RUN_CLANG_TIDY` CMake option to run
   `clang-tidy` as part of the build. This requires `clang-tidy` to be in CMake's
   search path (PATH is included in CMake's search path).
 
 - Make sure all tests still pass. Tests can be run by executing
-  `cmake --build build --target run-tests` in the root directory of the reproc
-  repository.
+  `cmake --build build --target reproc-run-tests` in the root directory of the
+  reproc repository.
 
   However, this method does not allow passing arguments to the tests executable.
   If you want more control over which tests are executed you can run the tests
-  executable directly (located at `build/test/tests`). A list of possible
+  executable directly (located at `build/test/reproc-test`). A list of possible
   options can be found
   [here](https://github.com/onqtam/doctest/blob/master/doc/markdown/commandline.md).
 
