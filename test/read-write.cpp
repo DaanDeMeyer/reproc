@@ -29,7 +29,7 @@ TEST_CASE("read-write")
     auto message_length = static_cast<unsigned int>(message.length());
 
     int argc = 1;
-    std::array<const char *, 2> argv = { STDOUT_PATH, nullptr };
+    std::array<const char *, 2> argv = { { STDOUT_PATH, nullptr } };
 
     error = reproc_start(&reproc, argc, argv.data(), NOOP_DIR);
     REQUIRE(!error);

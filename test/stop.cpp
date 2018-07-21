@@ -6,9 +6,6 @@
 // NOLINTNEXTLINE(cert-err58-cpp)
 TEST_CASE("stop")
 {
-  std::array<const char *, 2> argv = { INFINITE_PATH, nullptr };
-  int argc = 1;
-
   reproc_type reproc;
 
   REPROC_ERROR error = REPROC_SUCCESS;
@@ -16,6 +13,9 @@ TEST_CASE("stop")
 
   error = reproc_init(&reproc);
   REQUIRE(!error);
+
+  int argc = 1;
+  std::array<const char *, 2> argv = { { INFINITE_PATH, nullptr } };
 
   error = reproc_start(&reproc, argc, argv.data(), nullptr);
   REQUIRE(!error);

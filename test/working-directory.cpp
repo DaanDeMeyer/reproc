@@ -15,7 +15,7 @@ TEST_CASE("working-directory")
   REQUIRE(!error);
 
   int argc = 1;
-  std::array<const char *, 2> argv = { NOOP_PATH, nullptr };
+  std::array<const char *, 2> argv = { { NOOP_PATH, nullptr } };
   const char *working_directory = NOOP_DIR;
 
   error = reproc_start(&reproc, argc, argv.data(), working_directory);
