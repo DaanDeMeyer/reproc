@@ -1,8 +1,10 @@
 #include "reproc/reproc.hpp"
 
-#include <reproc/reproc.h>
-
 #include <ostream>
+
+namespace reproc {
+
+#include <reproc/reproc.h>
 
 const unsigned int Reproc::INFINITE = REPROC_INFINITE;
 
@@ -127,3 +129,5 @@ std::string Reproc::error_to_string(Reproc::Error error)
   }
   return reproc_error_to_string(static_cast<REPROC_ERROR>(error));
 }
+
+} // namespace reproc

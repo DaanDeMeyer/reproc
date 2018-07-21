@@ -13,6 +13,8 @@ executing it with reproc give the same output
 */
 int main(int argc, char *argv[])
 {
+  using reproc::Reproc;
+
   Reproc reproc;
   Reproc::Error error = Reproc::SUCCESS;
 

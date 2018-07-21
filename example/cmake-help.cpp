@@ -5,6 +5,8 @@
 /*! Uses the reproc C++ API to print CMake's help page */
 int main()
 {
+  using reproc::Reproc;
+
   Reproc reproc;
   Reproc::Error error = Reproc::SUCCESS;
 

@@ -18,6 +18,8 @@
 #define REPROC_EXPORT
 #endif
 
+namespace reproc {
+
 class Reproc {
 private:
   // Helpers used to remove the read_all/read_all_stderr template functions from
@@ -199,5 +201,7 @@ private:
     return Reproc::SUCCESS;
   }
 };
+
+}
 
 #endif
