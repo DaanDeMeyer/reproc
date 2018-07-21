@@ -138,4 +138,3 @@ REPROC_ERROR wait_timeout(pid_t pid, int *exit_status,
 
   return REPROC_SUCCESS;
 }
-

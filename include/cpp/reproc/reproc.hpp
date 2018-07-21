@@ -4,9 +4,9 @@
 #define REPROC_HPP
 
 #include <iosfwd>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 #if defined(_WIN32) && defined(REPROC_SHARED)
 #if defined(REPROC_BUILDING)
@@ -67,7 +67,7 @@ public:
 
   /*! \see reproc_start */
   REPROC_EXPORT Reproc::Error start(int argc, const char *argv[],
-                      const char *working_directory);
+                                    const char *working_directory);
 
   /*!
   Overload of start for convenient usage from C++.
@@ -76,21 +76,22 @@ public:
   that it should not end with NULL (which is added in this function).
   */
   REPROC_EXPORT Reproc::Error start(const std::vector<std::string> &args,
-                      const std::string *working_directory);
+                                    const std::string *working_directory);
 
   /*! \see reproc_write */
   REPROC_EXPORT Reproc::Error write(const void *buffer, unsigned int to_write,
-                      unsigned int *bytes_written);
+                                    unsigned int *bytes_written);
 
   /*! \see reproc_close_stdin */
   REPROC_EXPORT Reproc::Error close_stdin();
 
   /*! \see reproc_read */
-  REPROC_EXPORT Reproc::Error read(void *buffer, unsigned int size, unsigned int *bytes_read);
+  REPROC_EXPORT Reproc::Error read(void *buffer, unsigned int size,
+                                   unsigned int *bytes_read);
 
   /*! \see reproc_read_stderr */
   REPROC_EXPORT Reproc::Error read_stderr(void *buffer, unsigned int size,
-                            unsigned int *bytes_read);
+                                          unsigned int *bytes_read);
 
   REPROC_EXPORT Reproc::Error read_all(std::ostream &out);
   REPROC_EXPORT Reproc::Error read_all_stderr(std::ostream &out);

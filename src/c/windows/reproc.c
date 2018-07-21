@@ -88,8 +88,8 @@ REPROC_ERROR reproc_start(struct reproc *reproc, int argc, const char *argv[],
   if (error) { goto cleanup; }
 
   error = process_create(command_line_wstring, working_directory_wstring,
-                         child_stdin, child_stdout, child_stderr,
-                         &reproc->id, &reproc->handle);
+                         child_stdin, child_stdout, child_stderr, &reproc->id,
+                         &reproc->handle);
 
 cleanup:
   // The child process pipe endpoint handles are copied to the child process. We
@@ -202,9 +202,7 @@ REPROC_ERROR reproc_kill(struct reproc *reproc, unsigned int milliseconds)
   if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   SetLastError(0);
-  if (!TerminateProcess(reproc->handle, 1)) {
-    return REPROC_UNKNOWN_ERROR;
-  }
+  if (!TerminateProcess(reproc->handle, 1)) { return REPROC_UNKNOWN_ERROR; }
 
   return reproc_wait(reproc, milliseconds);
 }
