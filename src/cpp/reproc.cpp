@@ -32,11 +32,10 @@ Reproc::Error Reproc::start(const std::vector<std::string> &args,
   }
   argv[args.size()] = nullptr;
 
-  // We don't expect so many args that an int will not be sufficient to count
-  // them
+  // We don't expect so many args that an int will insufficient to count them
   auto argc = static_cast<int>(args.size());
 
-  Error error = start(argc, &argv[0],
+  Error error = start(argc, &argv[0] /* std::vector -> C array */,
                       working_directory ? working_directory->c_str() : nullptr);
 
   return error;
@@ -68,31 +67,31 @@ Reproc::Error Reproc::read_stderr(void *buffer, unsigned int size,
       reproc_read_stderr(reproc.get(), buffer, size, bytes_read));
 }
 
-Reproc::Error Reproc::read_all(std::ostream &out)
+Reproc::Error Reproc::read_all(std::ostream &output)
 {
-  return read_all([&out](const char *buffer, unsigned int size) {
-    out.write(buffer, size);
+  return read_all([&output](const char *buffer, unsigned int size) {
+    output.write(buffer, size);
   });
 }
 
-Reproc::Error Reproc::read_all_stderr(std::ostream &out)
+Reproc::Error Reproc::read_all_stderr(std::ostream &output)
 {
-  return read_all_stderr([&out](const char *buffer, unsigned int size) {
-    out.write(buffer, size);
+  return read_all_stderr([&output](const char *buffer, unsigned int size) {
+    output.write(buffer, size);
   });
 }
 
-Reproc::Error Reproc::read_all(std::string &out)
+Reproc::Error Reproc::read_all(std::string &output)
 {
-  return read_all([&out](const char *buffer, unsigned int size) {
-    out.append(buffer, size);
+  return read_all([&output](const char *buffer, unsigned int size) {
+    output.append(buffer, size);
   });
 }
 
-Reproc::Error Reproc::read_all_stderr(std::string &out)
+Reproc::Error Reproc::read_all_stderr(std::string &output)
 {
-  return read_all_stderr([&out](const char *buffer, unsigned int size) {
-    out.append(buffer, size);
+  return read_all_stderr([&output](const char *buffer, unsigned int size) {
+    output.append(buffer, size);
   });
 }
 

@@ -20,8 +20,9 @@
 
 class Reproc {
 private:
-  // Helpers used to remove the read_all template overload from overload
-  // resolution when an ostream ref is passed as a paramter
+  // Helpers used to remove the read_all/read_all_stderr template functions from
+  // overload resolution when an ostream ref is passed as a parameter so the
+  // ostream & overload of read_all/read_all_stderr is used instead.
   template <bool B, class T = void>
   using enable_if_t = typename std::enable_if<B, T>::type;
 
@@ -65,18 +66,22 @@ public:
   REPROC_EXPORT Reproc(Reproc &&other) noexcept = default;
   REPROC_EXPORT Reproc &operator=(Reproc &&other) = default;
 
-  /*! \see reproc_start */
+  /*! \see reproc_start. /p working_directory additionally defaults to nullptr
+  */
   REPROC_EXPORT Reproc::Error start(int argc, const char *const *argv,
-                                    const char *working_directory);
+                                    const char *working_directory = nullptr);
 
   /*!
   Overload of start for convenient usage from C++.
 
   \param[in] args Has the same restrictions as argv in \see reproc_start except
-  that it should not end with NULL (which is added in this function).
+  that it should not end with NULL (the method allocates a new array which
+  includes the missing NULL value).
+  \param[in] working_directory Optional working directory. Defaults to nullptr.
   */
-  REPROC_EXPORT Reproc::Error start(const std::vector<std::string> &args,
-                                    const std::string *working_directory);
+  REPROC_EXPORT Reproc::Error
+  start(const std::vector<std::string> &args,
+        const std::string *working_directory = nullptr);
 
   /*! \see reproc_write */
   REPROC_EXPORT Reproc::Error write(const void *buffer, unsigned int to_write,
@@ -93,10 +98,11 @@ public:
   REPROC_EXPORT Reproc::Error read_stderr(void *buffer, unsigned int size,
                                           unsigned int *bytes_read);
 
-  REPROC_EXPORT Reproc::Error read_all(std::ostream &out);
-  REPROC_EXPORT Reproc::Error read_all_stderr(std::ostream &out);
-  REPROC_EXPORT Reproc::Error read_all(std::string &out);
-  REPROC_EXPORT Reproc::Error read_all_stderr(std::string &out);
+  // Convenience overloads of read_all/read_all_stderr template function
+  REPROC_EXPORT Reproc::Error read_all(std::ostream &output);
+  REPROC_EXPORT Reproc::Error read_all_stderr(std::ostream &output);
+  REPROC_EXPORT Reproc::Error read_all(std::string &output);
+  REPROC_EXPORT Reproc::Error read_all_stderr(std::string &output);
 
   /*!
   Calls \see read until the child process stdout is closed or an error occurs.
@@ -110,7 +116,8 @@ public:
   The Write function receives the buffer after each read so it can append it to
   the final result.
 
-  Example usage (don't actually use this, use /see read_all instead):
+  Example usage (don't actually use this, use the overload of read_all for
+  std::string instead):
 
   \code{.cpp}
   std::string output;
@@ -119,9 +126,9 @@ public:
   });
   \endcode
 
-  This function does not participate in overload resolution if \p write is a
-  ostream& (This ensures our overloaded version of read_all for ostreams is
-  used).
+  This function does not participate in overload resolution if \p write is an
+  ostream ref. This ensures our overloaded version of read_all for ostreams is
+  used.
 
   \return Reproc::Error \see reproc_read except for STREAM_CLOSED
   */
@@ -161,7 +168,8 @@ public:
   /*! \see reproc_system_error */
   REPROC_EXPORT static unsigned int system_error();
 
-  /*! \see reproc_error_to_string */
+  /*! \see reproc_error_to_string. This function additionally adds the system
+  error to the error string when /p error is Reproc::UNKNOWN_ERROR. */
   REPROC_EXPORT static std::string error_to_string(Reproc::Error error);
 
 private:
@@ -169,6 +177,7 @@ private:
 
   static constexpr unsigned int BUFFER_SIZE = 1024;
 
+  // Read until the stream used by read is closed or an error occurs.
   template <class Read, class Write>
   Reproc::Error read_all(Read &&read, Write &&write)
   {
