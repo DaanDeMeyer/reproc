@@ -2,6 +2,7 @@
 #include <reproc/reproc.h>
 
 #include <array>
+#include <string>
 
 // Alternates between writing to stdin and reading from stdout and writing to
 // stdin and reading from stderr.
