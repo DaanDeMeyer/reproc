@@ -225,8 +225,8 @@ This way we can identify unknown errors and add them to reproc.
   `FD_CLOEXEC` flag set are leaked into child processes created by reproc.
 
   Note that in multithreaded applications immediately setting the `FD_CLOEXEC`
-  with `fcntl` after creating a file descriptor can still not be sufficient to
-  avoid leaks. See [Avoiding resource leaks](#avoiding-resource-leaks) for more
+  with `fcntl` after creating a file descriptor can still insufficient to avoid
+  leaks. See [Avoiding resource leaks](#avoiding-resource-leaks) for more
   information.
 
 - (Windows < Vista) File descriptors that are not marked not inheritable with
