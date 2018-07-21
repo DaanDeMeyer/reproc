@@ -103,7 +103,7 @@ void pipe_close(int *pipe)
 
   // Do nothing and return success on null pipe (0) so callers don't have to
   // check each time if a pipe has been closed already
-  if (!*pipe) { return; }
+  if (*pipe == PIPE_NULL) { return; }
 
   errno = 0;
   close(*pipe);
