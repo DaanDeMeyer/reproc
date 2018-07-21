@@ -290,14 +290,14 @@ install(
 )
 
 install(
-  FILES include/c/reproc/reproc.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/reproc
+  DIRECTORY include/c/reproc
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 if(REPROC_BUILD_CXX_WRAPPER)
   install(
-    FILES include/cpp/reproc/reproc.hpp
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/reproc
+    DIRECTORY include/cpp/reproc
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   )
 endif()
 
