@@ -124,7 +124,8 @@ git clone https://github.com/DaanDeMeyer/reproc.git
 cd reproc
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+      -DREPROC_INSTALL=ON ..
 cmake --build . --target install # Might need root for this
 ```
 
@@ -152,6 +153,7 @@ reproc supports the following CMake options:
 - `REPROC_BUILD_CXX_WRAPPER (ON|OFF)`: Build C++ API (default: `OFF`)
 - `REPROC_BUILD_TESTS (ON|OFF)`: Build tests (default: `OFF`)
 - `REPROC_BUILD_EXAMPLES (ON|OFF)`: Build examples (default: `OFF`)
+- `REPROC_INSTALL (ON|OFF)`: Generate install target (default: `OFF`)
 - `BUILD_SHARED_LIBS (ON|OFF)`: Build reproc as a shared library (default:
   `OFF`)
 

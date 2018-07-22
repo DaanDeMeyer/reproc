@@ -8,6 +8,9 @@ option(REPROC_BUILD_CXX_WRAPPER "Build C++ wrapper" OFF)
 option(REPROC_CI "Add -Werror or equivalent to compiler and clang-tidy" OFF)
 option(REPROC_RUN_CLANG_TIDY "Run clang-tidy as part of the build \
 (requires clang-tidy to be in the PATH)" OFF)
+# Don't generate install target by default so we don't interfere with install
+# targets when reproc is used via add_subdirectory
+option(REPROC_INSTALL "Generate install target" OFF)
 
 ### Helpers ###
 
@@ -268,65 +271,69 @@ endif()
 
 # Adapted from https://codingnest.com/basic-cmake-part-2/
 
-include(GNUInstallDirs)
-set(REPROC_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/reproc)
+if(REPROC_INSTALL)
 
-install(
-  TARGETS reproc
-  EXPORT reproc-targets
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+  include(GNUInstallDirs)
+  set(REPROC_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/reproc)
 
-target_include_directories(reproc PUBLIC
-  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
-
-install(
-  EXPORT reproc-targets
-  FILE reproc-targets.cmake
-  NAMESPACE reproc::
-  DESTINATION ${REPROC_INSTALL_CONFIGDIR}
-)
-
-install(
-  DIRECTORY include/c/reproc
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
-
-if(REPROC_BUILD_CXX_WRAPPER)
   install(
-    DIRECTORY include/cpp/reproc
+    TARGETS reproc
+    EXPORT reproc-targets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  )
+
+  target_include_directories(reproc PUBLIC
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  )
+
+  install(
+    EXPORT reproc-targets
+    FILE reproc-targets.cmake
+    NAMESPACE reproc::
+    DESTINATION ${REPROC_INSTALL_CONFIGDIR}
+  )
+
+  install(
+    DIRECTORY include/c/reproc
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   )
-endif()
 
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/reproc-config-version.cmake
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY AnyNewerVersion
-)
+  if(REPROC_BUILD_CXX_WRAPPER)
+    install(
+      DIRECTORY include/cpp/reproc
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+  endif()
 
-configure_package_config_file(
-    ${CMAKE_CURRENT_LIST_DIR}/cmake/reproc-config.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/reproc-config.cmake
-    INSTALL_DESTINATION ${REPROC_INSTALL_CONFIGDIR}}
-)
-
-install(
-    FILES
-      ${CMAKE_CURRENT_BINARY_DIR}/reproc-config.cmake
+  include(CMakePackageConfigHelpers)
+  write_basic_package_version_file(
       ${CMAKE_CURRENT_BINARY_DIR}/reproc-config-version.cmake
-    DESTINATION ${REPROC_INSTALL_CONFIGDIR}
-)
+      VERSION ${PROJECT_VERSION}
+      COMPATIBILITY AnyNewerVersion
+  )
+
+  configure_package_config_file(
+      ${CMAKE_CURRENT_LIST_DIR}/cmake/reproc-config.cmake.in
+      ${CMAKE_CURRENT_BINARY_DIR}/reproc-config.cmake
+      INSTALL_DESTINATION ${REPROC_INSTALL_CONFIGDIR}}
+  )
+
+  install(
+      FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/reproc-config.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/reproc-config-version.cmake
+      DESTINATION ${REPROC_INSTALL_CONFIGDIR}
+  )
+
+endif()
 
 ### clang-format ###
 
 find_program(REPROC_CLANG_FORMAT clang-format)
 if(REPROC_CLANG_FORMAT)
-  message(STATUS "clang-format found. Adding format target")
+  message(STATUS "clang-format found. Adding reproc-format target")
   file(GLOB_RECURSE REPROC_SOURCES
     include/*.[h,c,hpp,cpp]
     src/*.[h,c,hpp,cpp]
