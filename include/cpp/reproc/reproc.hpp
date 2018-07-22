@@ -19,10 +19,13 @@ REPROC_EXPORT extern const unsigned int INFINITE;
 class Reproc {
 
 public:
-  /*! \see reproc_init. Throws std::bad_alloc if allocating memory for the
-  reproc struct of the underlying C library fails */
+  /*! \see reproc_init. Aditionally allocates memory for the reproc_type struct.
+  Throws std::bad_alloc if allocating memory for the reproc_type struct of the
+  underlying C library fails. */
   REPROC_EXPORT Reproc();
-  /*! \see reproc_destroy */
+
+  /*! \see reproc_destroy. Aditionally frees the memory allocated in the
+  constructor. */
   REPROC_EXPORT ~Reproc();
 
   /* Enforce unique ownership */
@@ -41,9 +44,11 @@ public:
   Overload of start for convenient usage from C++.
 
   \param[in] args Has the same restrictions as argv in \see reproc_start except
-  that it should not end with NULL (the method allocates a new array which
+  that it should not end with NULL (this method allocates a new array which
   includes the missing NULL value).
   \param[in] working_directory Optional working directory. Defaults to nullptr.
+
+  \return Error \see process_start
   */
   REPROC_EXPORT Error start(const std::vector<std::string> &args,
                             const std::string *working_directory = nullptr);
@@ -77,7 +82,7 @@ public:
   bool parser(const char *buffer, unsigned int size);
   \endcode
 
-  The parser receives the buffer after each read so it can append it to the
+  The parser receives the buffer after each read so it can be appended to the
   final result.
 
   For examples of parsers, see parser.hpp.

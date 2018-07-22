@@ -10,8 +10,8 @@
 extern "C" {
 #endif
 
-// Define struct in header file so it can be allocated on the stack
-// Named reproc_type so we can have reproc namespace in C++
+// struct is defined in header file so it can be allocated on the stack
+// Named reproc_type so we can use the reproc namespace in C++ API
 #if defined(_WIN32)
 struct reproc_type {
   // unsigned long = DWORD
@@ -65,13 +65,14 @@ Starts the process specified by argv in the given working directory and
 redirects its standard output streams.
 
 This function should be called after \see reproc_init. If this function
-returns without error the child process actually starts running and can be
-seen in the Task Manager (Windows) or top (Linux).
+returns without error the child process actually starts executing and can be
+inspected using the operating system's tools for process inspection (e.g. ps on
+Linux).
 
 Every successful call to this function should be followed by a call to \see
-reproc_destroy after the process has exited. If an error occurs the function
-cleans up all allocated resources itself so you should call reproc_init again
-if you want to retry.
+reproc_wait and \see reproc_destroy after the process has exited. If an error
+occurs the function cleans up all allocated resources itself so you should call
+reproc_init again if you want to retry starting the process.
 
 \param[in,out] reproc Cannot be NULL. Must have been initialized with \see
 reproc_init.
@@ -151,7 +152,6 @@ reproc_write the standard input stream can be closed using this function.
 \return REPROC_ERROR
 
 Possible errors:
-- REPROC_INTERRUPTED
 */
 REPROC_EXPORT REPROC_ERROR reproc_close(reproc_type *reproc,
                                         REPROC_STREAM stream);
@@ -164,9 +164,14 @@ Assuming no other errors occur this function keeps returning REPROC_SUCCESS
 until the child process closes its standard output stream (happens
 automatically when it exits) and all bytes have been read from the stream.
 This allows the function to be used in the following way to read all data from
-a child process stdout stream (C++ for brevity):
+a child process stdout stream (uses C++ std::string for brevity):
 
 \code{.cpp}
+#define BUFFER_SIZE 1024
+
+...
+
+char buffer[BUFFER_SIZE];
 std::string output{};
 
 while (true) {
@@ -181,9 +186,10 @@ if (error != REPROC_STREAM_CLOSED) { return error; }
 \endcode
 
 Remember that this function reads bytes and not strings. It is up to the user
-to add a null terminator if he wants to use \p buffer as a string after this
-function completes. However, this is easily accomplished as long as we make sure
-to leave space for the null terminator in the buffer when reading:
+to add a null terminator if he wants to use \p buffer as a null terminated
+string after this function completes. However, this is easily accomplished as
+long as we make sure to leave space for the null terminator in the buffer when
+reading:
 
 \code{.c}
 unsigned int bytes_read = 0;
@@ -194,11 +200,12 @@ buffer[bytes_read] = '\0';
 \endcode
 
 \param[in,out] reproc Cannot be NULL.
-\param[out] buffer Pointer to memory block where bytes read from stdout should
-be stored.
-\param[in] size Maximum number of bytes to read from stdout.
-\param[out] bytes_read Amount of bytes read from stdout. Set to zero if an
-error occurs. Cannot be NULL.
+\param[in] stream Stream to read from. Cannot be REPROC_STDIN.
+\param[out] buffer Pointer to buffer where bytes read from stdout should be
+stored.
+\param[in] size Maximum number of bytes to read from stdout. \param[out]
+bytes_read Amount of bytes read from stdout. Set to zero if an error occurs.
+Cannot be NULL.
 
 \return REPROC_ERROR
 
@@ -215,10 +222,9 @@ REPROC_EXPORT REPROC_ERROR reproc_read(reproc_type *reproc,
 Waits the specified amount of time for the process to exit.
 
 \param[in,out] reproc Cannot be NULL.
-\param[in] milliseconds Amount of milliseconds to wait. If it is 0 the
-function will only check if the process is still running without waiting. If
-it is REPROC_INFINITE the function will wait indefinitely for the child
-process to exit.
+\param[in] milliseconds Amount of milliseconds to wait. If 0 the function will
+only check if the process is still running without waiting. If REPROC_INFINITE
+the function will wait indefinitely for the child process to exit.
 
 \return REPROC_ERROR
 
@@ -259,13 +265,13 @@ REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_type *reproc,
 Kills the child process without allowing for cleanup.
 
 On Windows TerminateProcess is called. On POSIX a SIGKILL signal is sent to
-the child process. if the timeout is exceeded REPROC_WAIT_TIMEOUT is returned.
-After sending the signal the function waits for the specified amount of
-milliseconds for the child process to exit. If the child process has already
-exited no signal is sent.
+the child process. After sending the signal the function waits the provided
+amount of milliseconds for the child process to exit. If the child process has
+already exited no signal is sent.
 
-This function should only be used as a last resort. Always try to stop a child
-process with \see reproc_terminate before resorting to this function.
+This function should only be used as a last resort. Always wait for a child
+process to exit on its own or try to stop it with \see reproc_terminate before
+resorting to this function.
 
 \param[in,out] reproc Cannot be NULL.
 \param[in] milliseconds See \see reproc_wait.

@@ -8,7 +8,7 @@
 namespace reproc {
 
 /*! \see REPROC_ERROR */
-/* When editing make sure to change the corresponding enum in reproc.h as
+/* When editing make sure to change the corresponding enum in error.h as
 well */
 enum Error {
   SUCCESS,
