@@ -6,11 +6,13 @@ option(REPROC_BUILD_EXAMPLES "Build examples. Enable REPROC_BUILD_CXX_WRAPPER \
 to build C++ examples." OFF)
 option(REPROC_BUILD_CXX_WRAPPER "Build C++ wrapper" OFF)
 option(REPROC_CI "Add -Werror or equivalent to compiler and clang-tidy" OFF)
-option(REPROC_RUN_CLANG_TIDY "Run clang-tidy as part of the build \
+option(REPROC_TIDY "Run clang-tidy as part of the build \
 (requires clang-tidy to be in the PATH)" OFF)
 # Don't generate install target by default so we don't interfere with install
 # targets when reproc is used via add_subdirectory
 option(REPROC_INSTALL "Generate install target" OFF)
+option(REPROC_FORMAT "Find clang-format and add target to run it on all source \
+files")
 
 ### Helpers ###
 
@@ -331,6 +333,7 @@ endif()
 
 ### clang-format ###
 
+if (REPROC_FORMAT)
 find_program(REPROC_CLANG_FORMAT clang-format)
 if(REPROC_CLANG_FORMAT)
   message(STATUS "clang-format found. Adding reproc-format target")

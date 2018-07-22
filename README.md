@@ -421,20 +421,28 @@ mitigate this in two ways:
 
 ## Contributing
 
-When making a pull request:
+When making changes:
 
-- Format your changes with `clang-format` and run `clang-tidy` locally if
-  possible since it will run in CI as well.
+- Make sure all code in reproc still compiles by enabling all related CMake
+  options:
 
-  If `clang-format` is available in CMake's search path, you can run
-  `cmake --build build --target reproc-format` to format all reproc source
-  files.
+  ```cmake
+  cmake -DREPROC_BUILD_TESTS=ON -DREPROC_BUILD_EXAMPLES=ON
+  -DREPROC_BUILD_CXX_WRAPPER=ON .. # In build subdirectory
+  ```
 
-  reproc also supports the `REPROC_RUN_CLANG_TIDY` CMake option to run
-  `clang-tidy` while building.
+- Format your changes with clang-format and run clang-tidy locally since it will
+  run in CI as well.
 
-  If CMake can't find `clang-format` or `clang-tidy` you can tell it where to
-  look as follows:
+  If the `REPROC_FORMAT` CMake option is enabled, the reproc-format target is
+  added that formats all reproc source files with clang-format.
+
+  Example usage: `cmake --build build --target reproc-format`
+
+  If the `REPROC_TIDY` CMake option is enabled, CMake will run clang-tidy on all
+  reproc source files while building.
+
+  If CMake can't find clang-format or clang-tidy you can tell it where to look:
 
   `cmake -DCMAKE_PREFIX_PATH=<clang-install-location> ..`
 
