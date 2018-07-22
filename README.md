@@ -159,7 +159,10 @@ Options can be configured when building reproc or before calling
 `add_subdirectory`:
 
 - When building (in `<reproc-root-dir>/build` subdirectory):
-  `cmake -DREPROC_BUILD_CXX_WRAPPER=ON ..`
+
+  ```bash
+  cmake -DREPROC_BUILD_CXX_WRAPPER=ON ..
+  ```
 
 - When using `add_subdirectory`:
 
@@ -170,12 +173,12 @@ Options can be configured when building reproc or before calling
 
 ## Usage
 
-See [example/git-status.c](example/cmake-help.c) for an example that uses reproc
-to print the output of `git status`.
-[example/cmake-help.cpp](example/cmake-help.cpp) prints the output of
-`cmake --help` using the C++ API. [example/forward.cpp](example/forward.cpp)
-spawns a child process using the provided command line arguments and prints its
-output.
+See [example/reproc-git-status.c](example/reproc-cmake-help.c) for an example
+that uses reproc to print the output of `git status`.
+[example/reproc-cmake-help.cpp](example/reproc-cmake-help.cpp) prints the output
+of `cmake --help` using the C++ API.
+[example/reproc-forward.cpp](example/reproc-forward.cpp) spawns a child process
+using the provided command line arguments and prints its output.
 
 ## Documentation
 
@@ -295,12 +298,10 @@ the format expected by the C API.
 
 ### (POSIX) Waiting on child process with timeout
 
-I did not find a counterpart for the Windows
-[WaitForSingleObject](<https://msdn.microsoft.com/en-us/library/windows/desktop/ms687032(v=vs.85).aspx>)
-function which can be used to wait until a process exits or the provided timeout
-expires. POSIX has a similar function called
-[waitpid](https://linux.die.net/man/2/waitpid) but this function does not
-support specifying a timeout value.
+I did not find a counterpart for the Windows `WaitForSingleObject` function
+which can be used to wait until a process exits or the provided timeout expires.
+POSIX has a similar function `waitpid` but this function does not support
+specifying a timeout value.
 
 To support waiting with a timeout value on POSIX, each process is put in its own
 process group with the same id as the process id with a call to `setpgid` after
@@ -309,15 +310,15 @@ is forked which we put in the same process group as the process we want to wait
 for with the same `setpgid` function and puts itself to sleep for the requested
 amount of time (timeout value) before exiting. We then call the `waitpid`
 function in the main process but instead of passing the process id of the
-process we want to wait for we pass the negative value of the process id
-`-reproc->pid`. Passing a negative value for the process id to `waitpid`
-instructs it to wait for all processes in the process group of the absolute
-value of the passed negative value. In our case it will wait for both the
-timeout process we started and the process we actually want to wait for. If
-`waitpid` returns the process id of the timeout process we know the timeout
-value has been exceeded. If `waitpid` returns the process id of the process we
-want to wait for we know it has exited before the timeout process and that the
-timeout value has not been exceeded.
+process we want to wait for we pass the negative value of the process id.
+Passing a negative value for the process id to `waitpid` instructs it to wait
+for all processes in the process group of the absolute value of the passed
+negative value. In our case it will wait for both the timeout process we started
+and the process we actually want to wait for. If `waitpid` returns the process
+id of the timeout process we know the timeout value has been exceeded. If
+`waitpid` returns the process id of the process we want to wait for we know it
+has exited before the timeout process and that the timeout value has not been
+exceeded.
 
 This solution was inspired by [this](https://stackoverflow.com/a/8020324) Stack
 Overflow answer.
@@ -423,15 +424,17 @@ When making a pull request:
 - Format your changes with `clang-format` and run `clang-tidy` locally if
   possible since it will run in CI as well.
 
-  If `clang-format` is available in CMake's search path, a `reproc-format`
-  target is added that can be used to run `clang-format` on all reproc source
+  If `clang-format` is available in CMake's search path, you can run
+  `cmake --build build --target reproc-format` to format all reproc source
   files.
 
-  `cmake --build build --target reproc-format`
-
   reproc also supports the `REPROC_RUN_CLANG_TIDY` CMake option to run
-  `clang-tidy` as part of the build. This requires `clang-tidy` to be in CMake's
-  search path (PATH is included in CMake's search path).
+  `clang-tidy` while building.
+
+  If CMake can't find `clang-format` or `clang-tidy` you can tell it where to
+  look as follows:
+
+  `cmake -DCMAKE_PREFIX_PATH=<clang-install-location> ..`
 
 - Make sure all tests still pass. Tests can be run by executing
   `cmake --build build --target reproc-run-tests` in the root directory of the
