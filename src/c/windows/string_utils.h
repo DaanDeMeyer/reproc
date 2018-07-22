@@ -11,6 +11,4 @@ REPROC_ERROR string_join(const char *const *string_array, int array_length,
 
 REPROC_ERROR string_to_wstring(const char *string, wchar_t **result);
 
-REPROC_ERROR wstring_to_string(const wchar_t *wstring, char **result);
-
 #endif

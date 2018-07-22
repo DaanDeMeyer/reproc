@@ -84,38 +84,3 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
 
   return REPROC_SUCCESS;
 }
-
-REPROC_ERROR wstring_to_string(const wchar_t *wstring, char **result)
-{
-  // Same logic as string_to_wstring but in the opposite direction
-  assert(wstring);
-  assert(result);
-
-  SetLastError(0);
-  int string_length = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS,
-                                          wstring, -1, NULL, 0, NULL, NULL);
-  if (string_length == 0) {
-    switch (GetLastError()) {
-    case ERROR_NO_UNICODE_TRANSLATION: return REPROC_INVALID_UNICODE;
-    default: return REPROC_UNKNOWN_ERROR;
-    }
-  }
-
-  char *string = malloc(sizeof(char) * string_length);
-  if (!string) { return REPROC_MEMORY_ERROR; }
-
-  SetLastError(0);
-  int written = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstring, -1,
-                                    string, string_length, NULL, NULL);
-  if (written == 0) {
-    free(string);
-    switch (GetLastError()) {
-    case ERROR_NO_UNICODE_TRANSLATION: return REPROC_INVALID_UNICODE;
-    default: return REPROC_UNKNOWN_ERROR;
-    }
-  }
-
-  *result = string;
-
-  return REPROC_SUCCESS;
-}
