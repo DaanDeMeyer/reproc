@@ -173,7 +173,7 @@ Options can be configured when building reproc or before calling
 
 ## Usage
 
-See [example/reproc-git-status.c](example/reproc-cmake-help.c) for an example
+See [example/reproc-git-status.c](example/reproc-git-status.c) for an example
 that uses reproc to print the output of `git status`.
 [example/reproc-cmake-help.cpp](example/reproc-cmake-help.cpp) prints the output
 of `cmake --help` using the C++ API.
