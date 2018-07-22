@@ -2,6 +2,8 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define BUFFER_SIZE 1024
 
@@ -16,16 +18,22 @@ int main(void)
   error = reproc_init(&reproc);
   if (error) { return (int) error; }
 
-  // reproc_start takes argc and argv as passed to the main function. Note that
-  // argc does not include the final NULL element of the array.
+  // reproc_start imposes the same restrictions on argc and argv as the regular
+  // main function of C and C++ applications.
   int argc = 2;
   const char *argv[3] = { "git", "status", NULL };
 
-  // reproc_start takes argv, argc and the working directory of the child
+  // reproc_start takes argc, argv and the working directory of the child
   // process. If the working directory is NULL the working directory of the
   // parent process is used.
   error = reproc_start(&reproc, argc, argv, NULL);
   if (error) { return (int) error; }
+
+  // Start with an empty string
+  size_t size = 0;
+  char *output = malloc(sizeof(char));
+  if (!output) { return 1; }
+  output[0] = '\0';
 
   char buffer[BUFFER_SIZE];
 
@@ -39,12 +47,29 @@ int main(void)
                         &bytes_read);
     if (error) { break; }
 
-    fprintf(stdout, "%.*s", bytes_read, buffer);
+    // +1 to leave space for null terminator
+    char *realloc_result = realloc(output,
+                                   sizeof(char) * (size + bytes_read + 1));
+    if (!realloc_result) {
+      free(output);
+      return 1;
+    }
+    output = realloc_result;
+
+    memcpy(output + size, buffer, bytes_read);
+    size += bytes_read;
   }
 
   // Check that the while loop stopped because the output stream of the child
   // process was closed and not because of another error
-  if (error != REPROC_STREAM_CLOSED) { return (int) error; }
+  if (error != REPROC_STREAM_CLOSED) {
+    free(output);
+    return (int) error;
+  }
+
+  output[size] = '\0';
+  printf("%s", output);
+  free(output);
 
   // Wait for the process to exit. This should always be done since some systems
   // don't clean up system resources allocated to a child process until the
