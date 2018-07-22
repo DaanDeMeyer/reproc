@@ -105,8 +105,11 @@ void pipe_close(int *pipe)
   // check each time if a pipe has been closed already
   if (*pipe == PIPE_NULL) { return; }
 
-  errno = 0;
+  // Avoid close errors overriding other system errors
+  int last_system_error  = errno;
   close(*pipe);
+  errno = last_system_error;
+
   // Close should not be repeated on error so always set pipe to 0 after close
   *pipe = PIPE_NULL;
 }

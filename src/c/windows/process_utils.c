@@ -1,4 +1,5 @@
 #include "process_utils.h"
+#include "handle.h"
 
 #include <assert.h>
 
@@ -115,7 +116,7 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
 #endif
 
   // We don't need the handle to the primary thread of the child process
-  CloseHandle(info.hThread);
+  handle_close(&info.hThread);
 
   if (!result) {
     switch (GetLastError()) {

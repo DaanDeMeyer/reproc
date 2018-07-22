@@ -10,8 +10,11 @@ void handle_close(HANDLE *handle)
   // handle has been closed already
   if (!*handle) { return; }
 
-  SetLastError(0);
+  // Avoid handle close errors overriding other system errors
+  unsigned int last_error = GetLastError();
   CloseHandle(*handle);
+  SetLastError(last_error);
+
   // CloseHandle should not be repeated on error so always set handle to NULL
   // after calling CloseHandle
   *handle = NULL;
