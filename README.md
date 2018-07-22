@@ -16,8 +16,6 @@
 - [Gotcha's](#gotchas)
 - [Design](#design)
   - [Memory allocation](#memory-allocation)
-    - [C](#c)
-    - [C++](#c)
   - [(POSIX) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
   - [(POSIX) Check if execve call was succesful](#posix-check-if-execve-call-was-succesful)
   - [Avoiding resource leaks](#avoiding-resource-leaks)
@@ -34,8 +32,8 @@ either make an issue or ask questions directly in the reproc
 ## Getting started
 
 To use reproc you'll have to compile it first. reproc can either be installed or
-directly built as part of your project when using CMake. We explain all possible
-options below.
+built as part of your project when using CMake. We explain all possible options
+below.
 
 ### FetchContent
 
@@ -55,6 +53,7 @@ FetchContent_Declare(
 FetchContent_GetProperties(REPROC)
 if(NOT REPROC_POPULATED)
   FetchContent_Populate(REPROC)
+  # Configure reproc's build here
   add_subdirectory(${REPROC_SOURCE_DIR} ${REPROC_BINARY_DIR})
 endif()
 
@@ -72,15 +71,30 @@ submodule instead:
 mkdir third-party
 cd third-party
 git submodule add https://github.com/DaanDeMeyer/reproc.git
-# Optionally checkout a specific commit. This is usually a commit that
-# corresponds to a Github release.
+# Checkout a specific commit. This is usually a commit that corresponds to a
+# Github release.
 cd reproc
-git checkout 41f90d0
+git checkout 41f90d0 # Replace with latest commit or release tag
 cd ../..
 # Commit the result
-git add third-party
+git add .gitmodules third-party
 git commit -m "Added reproc as a Git submodule"
 ```
+
+The repository now has to be cloned with `git clone --recursive` instead of the
+usual `git clone` to make sure all git submodules are pulled in as well.
+`git submodule update --init` can be used to clone the git submodule in existing
+clones.
+
+We recommend against tracking the master branch when using git submodules
+(instead of tracking a specific commit). This will result in the latest commit
+being pulled in each time the submodule is cloned or updated. This can easily
+lead to a different commits of reproc being used in separate clones which could
+result in errors.
+
+Updating the submodule is as simple as going into the submodule's root
+directory, running `git checkout master` followed by `git pull` and checking out
+the commit/release you want to update to.
 
 If you're not using git you can download a zip/tar of the source code from
 Github and manually put the code in a third-party directory. To update you
@@ -128,17 +142,18 @@ search path of CMake. If this is the case you can tell CMake where to search for
 reproc as follows:
 
 ```bash
-cmake -DCMAKE_PREFIX_PATH=<reproc-install-dir> .. # example: /usr on Linux
+cmake -DCMAKE_PREFIX_PATH=<reproc-install-dir> .. # example: /usr/local on Linux
 ```
 
 ### CMake user options
 
 reproc supports the following CMake options:
 
-- `REPROC_BUILD_CXX_WRAPPER (ON|OFF)`: Build the C++ wrapper (default: `OFF`)
+- `REPROC_BUILD_CXX_WRAPPER (ON|OFF)`: Build C++ API (default: `OFF`)
 - `REPROC_BUILD_TESTS (ON|OFF)`: Build tests (default: `OFF`)
 - `REPROC_BUILD_EXAMPLES (ON|OFF)`: Build examples (default: `OFF`)
-- `BUILD_SHARED_LIBS (ON|OFF)`: Build reproc as a static or shared library
+- `BUILD_SHARED_LIBS (ON|OFF)`: Build reproc as a shared library (default:
+  `OFF`)
 
 Options can be configured when building reproc or before calling
 `add_subdirectory`:
@@ -149,7 +164,7 @@ Options can be configured when building reproc or before calling
 - When using `add_subdirectory`:
 
   ```cmake
-  set(REPROC_BUILD_CXX_WRAPPER ON CACHE BOOL FORCE)
+  set(REPROC_BUILD_CXX_WRAPPER ON CACHE BOOL "" FORCE)
   add_subdirectory(third-party/reproc)
   ```
 
@@ -170,21 +185,22 @@ important headers are [reproc.h](include/c/reproc/reproc.h) and
 
 ## Unknown errors
 
-There are lots of things that can go wrong when working with child processes.
-reproc tries to unify the different platform errors as much as possible but this
-is an ongoing effort. In particular, the Windows Win32 documentation mostly does
-not specify what errors a function can throw. As a result, when an error occurs
-on Windows reproc will usually return `REPROC_UNKNOWN_ERROR`. To get more
-information reproc provides a function `process_system_error` which returns
-actual system error. Use this function to retrieve the actual system error and
-file an issue with the system error and the reproc function that returned it.
-This way we can identify unknown errors and add them to reproc.
+Lots of things can go wrong when working with child processes. reproc tries to
+unify the different platform errors as much as possible but this is an ongoing
+effort. In particular, the Windows Win32 documentation mostly does not specify
+what errors a function can throw. As a result, when an error occurs on Windows
+reproc will usually return `REPROC_UNKNOWN_ERROR` (C++:
+`reproc::UNKNOWN_ERROR`). To get more information reproc provides a function
+`reproc_system_error` (C++: `reproc::system_error`) which returns actual system
+error. Use this function to retrieve the actual system error and file an issue
+with the system error and the reproc function that returned it. This way we can
+identify unknown errors and add them to reproc.
 
 ## Gotcha's
 
 - (POSIX) On POSIX a parent process is required to wait on a child process
   (using `reproc_wait`) that has exited before all resources related to that
-  process can be freed by the kernel. If the parent doesn't wait on a child
+  process can be released by the kernel. If the parent doesn't wait on a child
   process after it exits, the child process becomes a
   [zombie process](https://en.wikipedia.org/wiki/Zombie_process).
 
@@ -216,8 +232,9 @@ This way we can identify unknown errors and add them to reproc.
 
 - File descriptors/handles created by reproc can leak to child processes not
   spawned by reproc if the application is multithreaded. This is not the case on
-  systems that support the `pipe2` system call (Linux 2.6+ and newer BSD's). See
-  [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
+  systems that support the `pipe2` system call (Linux 2.6+ and newer BSD's).
+
+  See [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
 
 - (POSIX) On POSIX platforms, file descriptors above the file descriptor
   resource limit (obtained with `sysconf(_SC_OPEN_MAX)`) and without the
@@ -225,8 +242,9 @@ This way we can identify unknown errors and add them to reproc.
 
   Note that in multithreaded applications immediately setting the `FD_CLOEXEC`
   with `fcntl` after creating a file descriptor can still insufficient to avoid
-  leaks. See [Avoiding resource leaks](#avoiding-resource-leaks) for more
-  information.
+  leaks.
+
+  See [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
 
 - (Windows < Vista) File descriptors that are not marked not inheritable with
   `SetHandleInformation` will leak into reproc child processes.
@@ -234,8 +252,9 @@ This way we can identify unknown errors and add them to reproc.
   Note that the same `FD_CLOEXEC` caveat as mentioned above applies. In
   multithreaded applications there is a split moment after calling `CreatePipe`
   but before calling `SetHandleInformation` that a handle can still be inherited
-  by reproc child processes. See
-  [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
+  by reproc child processes.
+
+  See [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
 
 ## Design
 
@@ -245,8 +264,6 @@ terminating it. In this section we explain some design decisions as well as how
 some parts of reproc work under the hood.
 
 ### Memory allocation
-
-#### C
 
 reproc aims to do as few dynamic memory allocations as possible in its own code
 (not counting allocations that happen in system calls). As of this moment,
@@ -271,23 +288,10 @@ The reproc C code uses the standard `malloc` and `free` functions to allocate
 and free memory. However, providing support for custom allocators should be
 straightforward. If you need them, please open an issue.
 
-#### C++
-
-To avoid having to include reproc.h in reproc.hpp (the C++ API header) we have
-to forward declare the `reproc` struct in the `Reproc` class of the C++ API.
-This means each instance of the `Reproc` class comes with at least one
-allocation in its constructor to allocate memory for the `reproc` struct.
-
-Aside from this, we can divide the methods of the `Reproc` class in two
-categories:
-
-- The methods that directly map to methods of the C api. These don't do any
-  extra processing and thus do not allocate any memory (aside from allocations
-  that happen in the C api).
-
-- Convenience methods that are not available in the C api and are meant to make
-  reproc easier to use from C++ (e.g. `read_all`). These methods work with STL
-  types and do allocate memory.
+In the C++ API, functions/methods that directly map to functions of the C API do
+not do any extra allocations. Convenience functions/methods that do not appear
+in the C API might do extra allocations in order to convert their arguments to
+the format expected by the C API.
 
 ### (POSIX) Waiting on child process with timeout
 
