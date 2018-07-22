@@ -1,7 +1,5 @@
 #include "reproc/reproc.hpp"
 
-#include <ostream>
-
 namespace reproc {
 
 #include <reproc/reproc.h>
