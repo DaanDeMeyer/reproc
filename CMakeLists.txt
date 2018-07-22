@@ -334,19 +334,22 @@ endif()
 ### clang-format ###
 
 if (REPROC_FORMAT)
-find_program(REPROC_CLANG_FORMAT clang-format)
-if(REPROC_CLANG_FORMAT)
-  message(STATUS "clang-format found. Adding reproc-format target")
-  file(GLOB_RECURSE REPROC_SOURCES
-    include/*.[h,c,hpp,cpp]
-    src/*.[h,c,hpp,cpp]
-    test/*.[h,c,hpp,cpp]
-    example/*.[h,c,hpp,cpp]
-  )
+  find_program(REPROC_CLANG_FORMAT clang-format)
+  if(REPROC_CLANG_FORMAT)
+    message(STATUS "clang-format found. Adding reproc-format target")
+    file(GLOB_RECURSE REPROC_SOURCES
+      include/*.[h,c,hpp,cpp]
+      src/*.[h,c,hpp,cpp]
+      test/*.[h,c,hpp,cpp]
+      example/*.[h,c,hpp,cpp]
+    )
 
-  add_custom_target(
-    reproc-format
-    COMMAND ${REPROC_CLANG_FORMAT} -i ${REPROC_SOURCES}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+    add_custom_target(
+      reproc-format
+      COMMAND ${REPROC_CLANG_FORMAT} -i ${REPROC_SOURCES}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+  else()
+    message(WARNING "clang-format not found")
+  endif()
 endif()
