@@ -84,13 +84,13 @@ git commit -m "Added reproc as a Git submodule"
 The repository now has to be cloned with `git clone --recursive` instead of the
 usual `git clone` to make sure all git submodules are pulled in as well.
 `git submodule update --init` can be used to clone the git submodule in existing
-clones.
+clones of the repository.
 
 We recommend against tracking the master branch when using git submodules
 (instead of tracking a specific commit). This will result in the latest commit
 being pulled in each time the submodule is cloned or updated. This can easily
-lead to a different commits of reproc being used in separate clones which could
-result in errors.
+lead to a different commits of reproc being used in separate clones of the
+repository which could result in errors.
 
 Updating the submodule is as simple as going into the submodule's root
 directory, running `git checkout master` followed by `git pull` and checking out
