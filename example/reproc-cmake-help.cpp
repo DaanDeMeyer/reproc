@@ -6,32 +6,30 @@
 /*! Uses the reproc C++ API to print CMake's help page */
 int main()
 {
-  using reproc::Reproc;
-
-  Reproc reproc;
-  reproc::Error error = reproc::SUCCESS;
+  reproc::process cmake_help;
+  reproc::error error = reproc::success;
 
   std::vector<std::string> args = { "cmake", "--help" };
 
-  error = reproc.start(args);
+  error = cmake_help.start(args);
   if (error) { return error; }
 
   std::string output;
 
-  error = reproc.read(reproc::STDOUT, reproc::string_parser(output));
+  error = cmake_help.read(reproc::cout, reproc::string_parser(output));
   if (error) { return error; }
 
   std::cout << output << std::flush;
 
   // You can also pass an ostream such as std::cerr to read
-  error = reproc.read(reproc::STDERR, reproc::ostream_parser(std::cerr));
+  error = cmake_help.read(reproc::cerr, reproc::ostream_parser(std::cerr));
   if (error) { return error; }
 
-  error = reproc.wait(reproc::INFINITE);
+  error = cmake_help.wait(reproc::infinite);
   if (error) { return error; }
 
   int exit_status;
-  error = reproc.exit_status(&exit_status);
+  error = cmake_help.exit_status(&exit_status);
   if (error) { return error; }
 
   return exit_status;

@@ -10,12 +10,12 @@
 /*! Uses the reproc C API to print CMake's help page */
 int main(void)
 {
-  reproc_type reproc;
+  reproc_type git_status;
   REPROC_ERROR error = REPROC_SUCCESS;
 
   // Always call reproc_init after allocating memory for reproc_type to
   // initialize it
-  error = reproc_init(&reproc);
+  error = reproc_init(&git_status);
   if (error) { return (int) error; }
 
   // reproc_start imposes the same restrictions on argc and argv as the regular
@@ -26,7 +26,7 @@ int main(void)
   // reproc_start takes argc, argv and the working directory of the child
   // process. If the working directory is NULL the working directory of the
   // parent process is used.
-  error = reproc_start(&reproc, argc, argv, NULL);
+  error = reproc_start(&git_status, argc, argv, NULL);
   if (error) { return (int) error; }
 
   // Start with an empty string
@@ -43,7 +43,7 @@ int main(void)
   // process closing its output stream is also reported as an error).
   while (true) {
     unsigned int bytes_read = 0;
-    error = reproc_read(&reproc, REPROC_STDOUT, buffer, BUFFER_SIZE,
+    error = reproc_read(&git_status, REPROC_STDOUT, buffer, BUFFER_SIZE,
                         &bytes_read);
     if (error) { break; }
 
@@ -73,16 +73,16 @@ int main(void)
   // Wait for the process to exit. This should always be done since some systems
   // don't clean up system resources allocated to a child process until the
   // parent process waits for it.
-  error = reproc_wait(&reproc, REPROC_INFINITE);
+  error = reproc_wait(&git_status, REPROC_INFINITE);
   if (error) { return (int) error; }
 
   // Get the exit status (returns error if the child process is still running)
   int exit_status = 0;
-  error = reproc_exit_status(&reproc, &exit_status);
+  error = reproc_exit_status(&git_status, &exit_status);
   if (error) { return (int) error; }
 
   // Release all remaining resources related to the child process
-  error = reproc_destroy(&reproc);
+  error = reproc_destroy(&git_status);
   if (error) { return (int) error; }
 
   return exit_status;

@@ -10,22 +10,22 @@ namespace reproc {
 /*! \see REPROC_ERROR */
 /* When editing make sure to change the corresponding enum in error.h as
 well */
-enum Error {
-  SUCCESS,
-  UNKNOWN_ERROR,
-  WAIT_TIMEOUT,
-  STREAM_CLOSED,
-  STILL_RUNNING,
-  MEMORY_ERROR,
-  PIPE_LIMIT_REACHED,
-  INTERRUPTED,
-  PROCESS_LIMIT_REACHED,
-  INVALID_UNICODE,
-  PERMISSION_DENIED,
-  SYMLINK_LOOP,
-  FILE_NOT_FOUND,
-  NAME_TOO_LONG,
-  PARTIAL_WRITE,
+enum error {
+  success,
+  unknown_error,
+  wait_timeout,
+  stream_closed,
+  still_running,
+  memory_error,
+  pipe_limit_reached,
+  interrupted,
+  process_limit_reached,
+  invalid_unicode,
+  permission_denied,
+  symlink_loop,
+  file_not_found,
+  name_too_long,
+  partial_write,
 };
 
 /*! \see reproc_system_error */
@@ -33,7 +33,7 @@ REPROC_EXPORT unsigned int system_error();
 
 /*! \see reproc_error_to_string. This function additionally adds the system
 error to the error string when /p error is Reproc::UNKNOWN_ERROR. */
-REPROC_EXPORT std::string error_to_string(Error error);
+REPROC_EXPORT std::string error_to_string(reproc::error error);
 
 } // namespace reproc
 

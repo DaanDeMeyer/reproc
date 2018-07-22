@@ -7,12 +7,12 @@
 // NOLINTNEXTLINE(cert-err58-cpp)
 TEST_CASE("read-write")
 {
-  reproc_type reproc;
+  reproc_type io;
 
   REPROC_ERROR error = REPROC_SUCCESS;
   CAPTURE(error);
 
-  error = reproc_init(&reproc);
+  error = reproc_init(&io);
   REQUIRE(!error);
 
   static constexpr unsigned int BUFFER_SIZE = 1024;
@@ -26,22 +26,22 @@ TEST_CASE("read-write")
     std::array<const char *, 2> argv = { { REPROC_STDOUT_HELPER, nullptr } };
     auto argc = static_cast<int>(argv.size() - 1);
 
-    error = reproc_start(&reproc, argc, argv.data(), nullptr);
+    error = reproc_start(&io, argc, argv.data(), nullptr);
     REQUIRE(!error);
 
     unsigned int bytes_written = 0;
-    error = reproc_write(&reproc, message.data(), message_length,
+    error = reproc_write(&io, message.data(), message_length,
                          &bytes_written);
     REQUIRE(!error);
 
-    error = reproc_close(&reproc, REPROC_STDIN);
+    error = reproc_close(&io, REPROC_STDIN);
     REQUIRE(!error);
 
     std::string output{};
 
     while (true) {
       unsigned int bytes_read = 0;
-      error = reproc_read(&reproc, REPROC_STDOUT, buffer.data(), BUFFER_SIZE,
+      error = reproc_read(&io, REPROC_STDOUT, buffer.data(), BUFFER_SIZE,
                           &bytes_read);
       if (error) { break; }
 
@@ -59,22 +59,22 @@ TEST_CASE("read-write")
     std::array<const char *, 2> argv = { { REPROC_STDERR_HELPER, nullptr } };
     auto argc = static_cast<int>(argv.size() - 1);
 
-    error = reproc_start(&reproc, argc, argv.data(), nullptr);
+    error = reproc_start(&io, argc, argv.data(), nullptr);
     REQUIRE(!error);
 
     unsigned int bytes_written = 0;
-    error = reproc_write(&reproc, message.data(), message_length,
+    error = reproc_write(&io, message.data(), message_length,
                          &bytes_written);
     REQUIRE(!error);
 
-    error = reproc_close(&reproc, REPROC_STDIN);
+    error = reproc_close(&io, REPROC_STDIN);
     REQUIRE(!error);
 
     std::string output{};
 
     while (true) {
       unsigned int bytes_read = 0;
-      error = reproc_read(&reproc, REPROC_STDERR, buffer.data(), BUFFER_SIZE,
+      error = reproc_read(&io, REPROC_STDERR, buffer.data(), BUFFER_SIZE,
                           &bytes_read);
       if (error) { break; }
 
@@ -84,14 +84,14 @@ TEST_CASE("read-write")
     REQUIRE_EQ(output, message);
   }
 
-  error = reproc_wait(&reproc, REPROC_INFINITE);
+  error = reproc_wait(&io, REPROC_INFINITE);
   REQUIRE(!error);
 
   int exit_status = 0;
-  error = reproc_exit_status(&reproc, &exit_status);
+  error = reproc_exit_status(&io, &exit_status);
   REQUIRE(!error);
   REQUIRE((exit_status == 0));
 
-  error = reproc_destroy(&reproc);
+  error = reproc_destroy(&io);
   REQUIRE(!error);
 }

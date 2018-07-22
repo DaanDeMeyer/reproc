@@ -14,33 +14,31 @@ executing it with reproc give the same output
 */
 int main(int argc, char *argv[])
 {
-  using reproc::Reproc;
-
   if (argc <= 1) {
     std::cerr << "No arguments provided. Example usage: ./forward echo test";
     return 1;
   }
 
-  Reproc reproc;
-  reproc::Error error = reproc::SUCCESS;
+  reproc::process forward;
+  reproc::error error = reproc::success;
 
-  error = reproc.start(argc - 1, argv + 1);
+  error = forward.start(argc - 1, argv + 1);
   if (error) { return error; }
 
-  error = reproc.close(reproc::STDIN);
+  error = forward.close(reproc::cin);
   if (error) { return error; }
 
-  error = reproc.read(reproc::STDOUT, reproc::ostream_parser(std::cout));
+  error = forward.read(reproc::cout, reproc::ostream_parser(std::cout));
   if (error) { return error; }
 
-  error = reproc.read(reproc::STDERR, reproc::ostream_parser(std::cerr));
+  error = forward.read(reproc::cerr, reproc::ostream_parser(std::cerr));
   if (error) { return error; }
 
-  error = reproc.wait(reproc::INFINITE);
+  error = forward.wait(reproc::infinite);
   if (error) { return error; }
 
   int exit_status = 0;
-  error = reproc.exit_status(&exit_status);
+  error = forward.exit_status(&exit_status);
   if (error) { return error; }
 
   return exit_status;

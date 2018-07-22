@@ -12,33 +12,33 @@
 
 namespace reproc {
 
-enum Stream { STDIN, STDOUT, STDERR };
+enum stream { cin, cout, cerr };
 
-REPROC_EXPORT extern const unsigned int INFINITE;
+REPROC_EXPORT extern const unsigned int infinite;
 
-class Reproc {
+class process {
 
 public:
-  /*! \see reproc_init. Aditionally allocates memory for the reproc_type struct.
-  Throws std::bad_alloc if allocating memory for the reproc_type struct of the
-  underlying C library fails. */
-  REPROC_EXPORT Reproc();
+  /*! \see reproc_init. Aditionally allocates memory for the process_type
+  struct. Throws std::bad_alloc if allocating memory for the process_type struct
+  of the underlying C library fails. */
+  REPROC_EXPORT process();
 
   /*! \see reproc_destroy. Aditionally frees the memory allocated in the
   constructor. */
-  REPROC_EXPORT ~Reproc();
+  REPROC_EXPORT ~process();
 
   /* Enforce unique ownership */
-  Reproc(const Reproc &) = delete;
-  Reproc &operator=(const Reproc &) = delete;
+  process(const process &) = delete;
+  process &operator=(const process &) = delete;
 
-  REPROC_EXPORT Reproc(Reproc &&other) noexcept = default;
-  REPROC_EXPORT Reproc &operator=(Reproc &&other) = default;
+  REPROC_EXPORT process(process &&other) noexcept = default;
+  REPROC_EXPORT process &operator=(process &&other) = default;
 
   /*! \see reproc_start. /p working_directory additionally defaults to nullptr
    */
-  REPROC_EXPORT Error start(int argc, const char *const *argv,
-                            const char *working_directory = nullptr);
+  REPROC_EXPORT reproc::error start(int argc, const char *const *argv,
+                                    const char *working_directory = nullptr);
 
   /*!
   Overload of start for convenient usage from C++.
@@ -48,21 +48,22 @@ public:
   includes the missing NULL value).
   \param[in] working_directory Optional working directory. Defaults to nullptr.
 
-  \return Error \see process_start
+  \return reproc::error \see process_start
   */
-  REPROC_EXPORT Error start(const std::vector<std::string> &args,
-                            const std::string *working_directory = nullptr);
+  REPROC_EXPORT reproc::error
+  start(const std::vector<std::string> &args,
+        const std::string *working_directory = nullptr);
 
   /*! \see reproc_write */
-  REPROC_EXPORT Error write(const void *buffer, unsigned int to_write,
-                            unsigned int *bytes_written);
+  REPROC_EXPORT reproc::error write(const void *buffer, unsigned int to_write,
+                                    unsigned int *bytes_written);
 
   /*! \see reproc_close */
-  REPROC_EXPORT Error close(Stream stream);
+  REPROC_EXPORT reproc::error close(reproc::stream stream);
 
   /*! \see reproc_read */
-  REPROC_EXPORT Error read(Stream stream, void *buffer, unsigned int size,
-                           unsigned int *bytes_read);
+  REPROC_EXPORT reproc::error read(reproc::stream stream, void *buffer,
+                                   unsigned int size, unsigned int *bytes_read);
 
   /*!
   Calls \see read until an error occurs or the provided parser returns false.
@@ -87,32 +88,34 @@ public:
 
   For examples of parsers, see parser.hpp.
 
-  \return Error \see reproc_read
+  \return reproc::error \see reproc_read
   */
-  template <typename Parser> Error read(Stream stream, Parser &&parser);
+  template <typename Parser>
+  reproc::error read(reproc::stream stream, Parser &&parser);
 
   /*! \see reproc_wait */
-  REPROC_EXPORT Error wait(unsigned int milliseconds);
+  REPROC_EXPORT reproc::error wait(unsigned int milliseconds);
 
   /*! \see reproc_terminate */
-  REPROC_EXPORT Error terminate(unsigned int milliseconds);
+  REPROC_EXPORT reproc::error terminate(unsigned int milliseconds);
 
   /*! \see reproc_kill */
-  REPROC_EXPORT Error kill(unsigned int milliseconds);
+  REPROC_EXPORT reproc::error kill(unsigned int milliseconds);
 
   /*! \see reproc_exit_status */
-  REPROC_EXPORT Error exit_status(int *exit_status);
+  REPROC_EXPORT reproc::error exit_status(int *exit_status);
 
 private:
-  std::unique_ptr<struct reproc_type> reproc;
+  std::unique_ptr<struct reproc_type> process_;
 };
 
-template <typename Parser> Error Reproc::read(Stream stream, Parser &&parser)
+template <typename Parser>
+reproc::error process::read(reproc::stream stream, Parser &&parser)
 {
   static constexpr unsigned int BUFFER_SIZE = 1024;
 
   char buffer[BUFFER_SIZE];
-  Error error = SUCCESS;
+  reproc::error error = reproc::success;
 
   while (true) {
     unsigned int bytes_read = 0;
@@ -123,8 +126,8 @@ template <typename Parser> Error Reproc::read(Stream stream, Parser &&parser)
     if (!parser(buffer, bytes_read)) { break; }
   }
 
-  if (error == STREAM_CLOSED && !parser.stream_closed_is_error()) {
-    return SUCCESS;
+  if (error == reproc::stream_closed && !parser.stream_closed_is_error()) {
+    return success;
   }
 
   return error;

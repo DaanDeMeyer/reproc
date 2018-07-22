@@ -4,24 +4,24 @@ namespace reproc {
 
 #include <reproc/reproc.h>
 
-const unsigned int INFINITE = REPROC_INFINITE;
+const unsigned int infinite = REPROC_INFINITE;
 
-Reproc::Reproc() : reproc(new struct reproc_type()) {}
+process::process() : process_(new struct reproc_type()) {}
 
-Reproc::~Reproc()
+process::~process()
 {
   // Check for null because the object could have been moved
-  if (reproc) { reproc_destroy(reproc.get()); }
+  if (process_) { reproc_destroy(process_.get()); }
 }
 
-Error Reproc::start(int argc, const char *const *argv,
+reproc::error process::start(int argc, const char *const *argv,
                     const char *working_directory)
 {
-  return static_cast<Error>(
-      reproc_start(reproc.get(), argc, argv, working_directory));
+  return static_cast<reproc::error>(
+      reproc_start(process_.get(), argc, argv, working_directory));
 }
 
-Error Reproc::start(const std::vector<std::string> &args,
+reproc::error process::start(const std::vector<std::string> &args,
                     const std::string *working_directory)
 {
   // Turn args into array of C strings
@@ -35,51 +35,51 @@ Error Reproc::start(const std::vector<std::string> &args,
   // We don't expect so many args that an int will insufficient to count them
   auto argc = static_cast<int>(args.size());
 
-  Error error = start(argc, &argv[0] /* std::vector -> C array */,
+  reproc::error error = start(argc, &argv[0] /* std::vector -> C array */,
                       working_directory ? working_directory->c_str() : nullptr);
 
   return error;
 }
 
-Error Reproc::close(Stream stream)
+reproc::error process::close(reproc::stream stream)
 {
-  return static_cast<Error>(
-      reproc_close(reproc.get(), static_cast<REPROC_STREAM>(stream)));
+  return static_cast<reproc::error>(
+      reproc_close(process_.get(), static_cast<REPROC_STREAM>(stream)));
 }
 
-Error Reproc::write(const void *buffer, unsigned int to_write,
+reproc::error process::write(const void *buffer, unsigned int to_write,
                     unsigned int *bytes_written)
 {
-  return static_cast<Error>(
-      reproc_write(reproc.get(), buffer, to_write, bytes_written));
+  return static_cast<reproc::error>(
+      reproc_write(process_.get(), buffer, to_write, bytes_written));
 }
 
-Error Reproc::read(Stream stream, void *buffer, unsigned int size,
+reproc::error process::read(reproc::stream stream, void *buffer, unsigned int size,
                    unsigned int *bytes_read)
 {
-  return static_cast<Error>(reproc_read(reproc.get(),
+  return static_cast<reproc::error>(reproc_read(process_.get(),
                                         static_cast<REPROC_STREAM>(stream),
                                         buffer, size, bytes_read));
 }
 
-Error Reproc::wait(unsigned int milliseconds)
+reproc::error process::wait(unsigned int milliseconds)
 {
-  return static_cast<Error>(reproc_wait(reproc.get(), milliseconds));
+  return static_cast<reproc::error>(reproc_wait(process_.get(), milliseconds));
 }
 
-Error Reproc::terminate(unsigned int milliseconds)
+reproc::error process::terminate(unsigned int milliseconds)
 {
-  return static_cast<Error>(reproc_terminate(reproc.get(), milliseconds));
+  return static_cast<reproc::error>(reproc_terminate(process_.get(), milliseconds));
 }
 
-Error Reproc::kill(unsigned int milliseconds)
+reproc::error process::kill(unsigned int milliseconds)
 {
-  return static_cast<Error>(reproc_kill(reproc.get(), milliseconds));
+  return static_cast<reproc::error>(reproc_kill(process_.get(), milliseconds));
 }
 
-Error Reproc::exit_status(int *exit_status)
+reproc::error process::exit_status(int *exit_status)
 {
-  return static_cast<Error>(reproc_exit_status(reproc.get(), exit_status));
+  return static_cast<reproc::error>(reproc_exit_status(process_.get(), exit_status));
 }
 
 } // namespace reproc
