@@ -31,7 +31,7 @@ int main(void)
 
   // Start with an empty string
   size_t size = 0;
-  char *output = malloc(sizeof(char));
+  char *output = malloc(1);
   if (!output) { return 1; }
   output[0] = '\0';
 
@@ -48,8 +48,7 @@ int main(void)
     if (error) { break; }
 
     // +1 to leave space for null terminator
-    char *realloc_result = realloc(output,
-                                   sizeof(char) * (size + bytes_read + 1));
+    char *realloc_result = realloc(output, size + bytes_read + 1);
     if (!realloc_result) {
       free(output);
       return 1;
