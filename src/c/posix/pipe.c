@@ -1,7 +1,5 @@
 #include "pipe.h"
 
-#include "constants.h"
-
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -103,7 +101,7 @@ void pipe_close(int *pipe)
 
   // Do nothing and return success on null pipe (0) so callers don't have to
   // check each time if a pipe has been closed already
-  if (*pipe == PIPE_NULL) { return; }
+  if (*pipe == 0) { return; }
 
   // Avoid close errors overriding other system errors
   int last_system_error  = errno;
@@ -111,5 +109,5 @@ void pipe_close(int *pipe)
   errno = last_system_error;
 
   // Close should not be repeated on error so always set pipe to 0 after close
-  *pipe = PIPE_NULL;
+  *pipe = 0;
 }

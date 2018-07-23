@@ -28,7 +28,6 @@ struct reproc_type {
   int parent_stdin;
   int parent_stdout;
   int parent_stderr;
-  int exit_status;
 };
 #endif
 
@@ -53,12 +52,8 @@ Call order:
 - ...
 
 \param[in,out] reproc Cannot be NULL.
-
-\return REPROC_ERROR
-
-Possible errors:
 */
-REPROC_EXPORT REPROC_ERROR reproc_init(reproc_type *reproc);
+REPROC_EXPORT void reproc_init(reproc_type *reproc);
 
 /*!
 Starts the process specified by argv in the given working directory and
@@ -153,8 +148,7 @@ reproc_write the standard input stream can be closed using this function.
 
 Possible errors:
 */
-REPROC_EXPORT REPROC_ERROR reproc_close(reproc_type *reproc,
-                                        REPROC_STREAM stream);
+REPROC_EXPORT void reproc_close(reproc_type *reproc, REPROC_STREAM stream);
 
 /*!
 Reads up to \p size bytes from the child process' standard output and stores
@@ -240,7 +234,8 @@ Possible errors when milliseconds is not 0 or REPROC_INFINITE:
 - REPROC_MEMORY_ERROR
 */
 REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_type *reproc,
-                                       unsigned int milliseconds);
+                                       unsigned int milliseconds,
+                                       unsigned int *exit_status);
 
 /*!
 Tries to terminate the child process cleanly (the child process has a chance
@@ -284,20 +279,6 @@ REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_type *reproc,
                                        unsigned int milliseconds);
 
 /*!
-Returns the exit status of the child process
-
-\param[in,out] reproc Cannot be NULL.
-\param[out] exit_status Exit status of the process. Cannot be NULL.
-
-\return REPROC_ERROR
-
-Possible errors:
-- REPROC_STILL_RUNNING
-*/
-REPROC_EXPORT REPROC_ERROR reproc_exit_status(reproc_type *reproc,
-                                              int *exit_status);
-
-/*!
 Releases all resources associated with the child process.
 
 This function does not stop the child process. Call \see reproc_terminate or
@@ -310,7 +291,7 @@ exit on its own with \see reproc_wait.
 
 Possible errors:
 */
-REPROC_EXPORT REPROC_ERROR reproc_destroy(reproc_type *reproc);
+REPROC_EXPORT void reproc_destroy(reproc_type *reproc);
 
 #ifdef __cplusplus
 }

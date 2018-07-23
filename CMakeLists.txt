@@ -119,7 +119,6 @@ if(WIN32)
 elseif(UNIX)
   target_include_directories(reproc PRIVATE src/c/posix)
   target_sources(reproc PRIVATE
-    src/c/posix/constants.c
     src/c/posix/fork_exec_redirect.c
     src/c/posix/pipe.c
     src/c/posix/reproc.c

@@ -8,23 +8,26 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-static int parse_exit_status(int status)
+static unsigned int parse_exit_status(int status)
 {
+  // WEXITSTATUS returns a value between [0,256) so casting to unsigned int is
+  // safe
+
   // NOLINTNEXTLINE(hicpp-signed-bitwise)
-  if (WIFEXITED(status)) { return WEXITSTATUS(status); }
+  if (WIFEXITED(status)) { return (unsigned int) WEXITSTATUS(status); }
 
   // NOLINTNEXTLINE(hicpp-signed-bitwise)
   assert(WIFSIGNALED(status));
 
   // NOLINTNEXTLINE(hicpp-signed-bitwise)
-  return WTERMSIG(status);
+  return WTERMSIG((unsigned int) status);
 }
 
-REPROC_ERROR wait_no_hang(pid_t pid, int *exit_status)
+REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
 {
   assert(exit_status);
 
-  int status = EXIT_STATUS_NULL;
+  int status = 0;
   errno = 0;
   // Adding WNOHANG makes waitpid only check and return immediately
   pid_t wait_result = waitpid(pid, &status, WNOHANG);
@@ -35,16 +38,16 @@ REPROC_ERROR wait_no_hang(pid_t pid, int *exit_status)
     return REPROC_UNKNOWN_ERROR;
   }
 
-  *exit_status = parse_exit_status(status);
+  if (exit_status) { *exit_status = parse_exit_status(status); }
 
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR wait_infinite(pid_t pid, int *exit_status)
+REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
 {
   assert(exit_status);
 
-  int status = EXIT_STATUS_NULL;
+  int status = 0;
   errno = 0;
   if (waitpid(pid, &status, 0) == -1) {
     switch (errno) {
@@ -53,23 +56,16 @@ REPROC_ERROR wait_infinite(pid_t pid, int *exit_status)
     }
   }
 
-  *exit_status = parse_exit_status(status);
+  if (exit_status) { *exit_status = parse_exit_status(status); }
 
   return REPROC_SUCCESS;
 }
 
 // See Design section in README.md for an explanation of how this works
-REPROC_ERROR wait_timeout(pid_t pid, int *exit_status,
-                          unsigned int milliseconds)
+REPROC_ERROR wait_timeout(pid_t pid, unsigned int milliseconds,
+                          unsigned int *exit_status)
 {
-  assert(exit_status);
   assert(milliseconds > 0);
-
-  REPROC_ERROR error = REPROC_SUCCESS;
-
-  // Check if process hasn't already exited before starting timeout fork
-  error = wait_no_hang(pid, exit_status);
-  if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   errno = 0;
   pid_t timeout_pid = fork();
@@ -111,7 +107,7 @@ REPROC_ERROR wait_timeout(pid_t pid, int *exit_status,
   // which in this case will be the process we want to wait for and the timeout
   // process. waitpid will return the process id of whichever process exits
   // first
-  int status = EXIT_STATUS_NULL;
+  int status = 0;
   errno = 0;
   pid_t exit_pid = waitpid(-pid, &status, 0);
 
@@ -140,7 +136,7 @@ REPROC_ERROR wait_timeout(pid_t pid, int *exit_status,
     }
   }
 
-  *exit_status = parse_exit_status(status);
+  if (exit_status) { *exit_status = parse_exit_status(status); }
 
   return REPROC_SUCCESS;
 }

@@ -1,6 +1,5 @@
 #include "reproc/reproc.h"
 
-#include "constants.h"
 #include "fork_exec_redirect.h"
 #include "pipe.h"
 #include "wait.h"
@@ -10,21 +9,17 @@
 #include <signal.h>
 #include <string.h>
 
-REPROC_ERROR reproc_init(reproc_type *reproc)
+void reproc_init(reproc_type *reproc)
 {
   assert(reproc);
 
-  reproc->id = PID_NULL;
-
-  reproc->parent_stdin = PIPE_NULL;
-  reproc->parent_stdout = PIPE_NULL;
-  reproc->parent_stderr = PIPE_NULL;
-  // We save the exit status because after calling waitpid multiple times on a
-  // process that has already exited is unsafe since after the first time the
-  // system can reuse the process id for another process.
-  reproc->exit_status = EXIT_STATUS_NULL;
-
-  return REPROC_SUCCESS;
+  // process id 0 is reserved by the system so we can use it as a null value
+  reproc->id = 0;
+  // File descriptor 0 won't be assigned by pipe() call (its reserved for stdin)
+  // so we use it as a null value
+  reproc->parent_stdin = 0;
+  reproc->parent_stdout = 0;
+  reproc->parent_stderr = 0;
 }
 
 REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
@@ -43,11 +38,11 @@ REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
 
   // Make sure reproc_start is only called once for each reproc_init call
   // (reproc_init sets reproc->id to PID_NULL)
-  assert(reproc->id == PID_NULL);
+  assert(reproc->id == 0);
 
-  int child_stdin = PIPE_NULL;
-  int child_stdout = PIPE_NULL;
-  int child_stderr = PIPE_NULL;
+  int child_stdin = 0;
+  int child_stdout = 0;
+  int child_stderr = 0;
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
@@ -81,14 +76,14 @@ REPROC_ERROR reproc_write(reproc_type *reproc, const void *buffer,
                           unsigned int to_write, unsigned int *bytes_written)
 {
   assert(reproc);
-  assert(reproc->parent_stdin != PIPE_NULL);
+  assert(reproc->parent_stdin != 0);
   assert(buffer);
   assert(bytes_written);
 
   return pipe_write(reproc->parent_stdin, buffer, to_write, bytes_written);
 }
 
-REPROC_ERROR reproc_close(struct reproc_type *reproc, REPROC_STREAM stream)
+void reproc_close(struct reproc_type *reproc, REPROC_STREAM stream)
 {
   assert(reproc);
 
@@ -97,8 +92,6 @@ REPROC_ERROR reproc_close(struct reproc_type *reproc, REPROC_STREAM stream)
   case REPROC_STDOUT: pipe_close(&reproc->parent_stdout); break;
   case REPROC_STDERR: pipe_close(&reproc->parent_stderr); break;
   }
-
-  return REPROC_SUCCESS;
 }
 
 REPROC_ERROR reproc_read(reproc_type *reproc, REPROC_STREAM stream,
@@ -122,85 +115,54 @@ REPROC_ERROR reproc_read(reproc_type *reproc, REPROC_STREAM stream,
   return REPROC_UNKNOWN_ERROR;
 }
 
-REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds)
+REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds,
+                         unsigned int *exit_status)
 {
   assert(reproc);
-  assert(reproc->id != PID_NULL);
-
-  // Don't wait if child process has already exited. We don't use waitpid for
-  // this because if we've already waited once after the process has exited the
-  // pid of the process might have already been reused by the system.
-  if (reproc->exit_status != EXIT_STATUS_NULL) { return REPROC_SUCCESS; }
+  assert(reproc->id != 0);
+  assert(exit_status);
 
   if (milliseconds == 0) {
-    return wait_no_hang(reproc->id, &reproc->exit_status);
+    return wait_no_hang(reproc->id, exit_status);
   }
 
   if (milliseconds == REPROC_INFINITE) {
-    return wait_infinite(reproc->id, &reproc->exit_status);
+    return wait_infinite(reproc->id, exit_status);
   }
 
-  return wait_timeout(reproc->id, &reproc->exit_status, milliseconds);
+  return wait_timeout(reproc->id, milliseconds, exit_status);
 }
 
 REPROC_ERROR reproc_terminate(struct reproc_type *reproc,
                               unsigned int milliseconds)
 {
   assert(reproc);
-  assert(reproc->id != PID_NULL);
-
-  // Check if child process has already exited before sending signal
-  REPROC_ERROR error = reproc_wait(reproc, 0);
-
-  // Return if wait succeeds (which means the child process has already exited)
-  // or if an error other than a wait timeout occurs during waiting
-  if (error != REPROC_WAIT_TIMEOUT) { return error; }
+  assert(reproc->id != 0);
 
   errno = 0;
   if (kill(reproc->id, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
 
-  return reproc_wait(reproc, milliseconds);
+  return reproc_wait(reproc, milliseconds, NULL);
 }
 
 REPROC_ERROR reproc_kill(reproc_type *reproc, unsigned int milliseconds)
 {
   assert(reproc);
-  assert(reproc->id != PID_NULL);
-
-  // Check if child process has already exited before sending signal
-  REPROC_ERROR error = reproc_wait(reproc, 0);
-
-  // Return if wait succeeds (which means the child process has already exited)
-  // or if an error other than a wait timeout occurs during waiting
-  if (error != REPROC_WAIT_TIMEOUT) { return error; }
+  assert(reproc->id != 0);
 
   errno = 0;
   if (kill(reproc->id, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
 
-  return reproc_wait(reproc, milliseconds);
+  return reproc_wait(reproc, milliseconds, NULL);
 }
 
-REPROC_ERROR reproc_exit_status(reproc_type *reproc, int *exit_status)
-{
-  assert(reproc);
-  assert(exit_status);
-
-  if (reproc->exit_status == EXIT_STATUS_NULL) { return REPROC_STILL_RUNNING; }
-
-  *exit_status = reproc->exit_status;
-
-  return REPROC_SUCCESS;
-}
-
-REPROC_ERROR reproc_destroy(reproc_type *reproc)
+void reproc_destroy(reproc_type *reproc)
 {
   assert(reproc);
 
   pipe_close(&reproc->parent_stdin);
   pipe_close(&reproc->parent_stdout);
   pipe_close(&reproc->parent_stderr);
-
-  return REPROC_SUCCESS;
 }
 
 unsigned int reproc_system_error(void) { return (unsigned int) errno; }

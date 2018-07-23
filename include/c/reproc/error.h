@@ -27,9 +27,6 @@ typedef enum {
   /*! The child process closed one of its streams (and in case of
   stdout/stderr all of the data from that stream has been read). */
   REPROC_STREAM_CLOSED,
-  /*! \see reproc_exit_status was called while the child process was still
-  running. */
-  REPROC_STILL_RUNNING,
   /*! A memory allocation in the library code failed (Windows only) or the
   underlying system did not have enough memory to execute a system call. */
   REPROC_MEMORY_ERROR,
