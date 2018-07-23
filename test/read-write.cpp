@@ -8,12 +8,10 @@
 TEST_CASE("read-write")
 {
   reproc_type io;
+  reproc_init(&io);
 
   REPROC_ERROR error = REPROC_SUCCESS;
   CAPTURE(error);
-
-  error = reproc_init(&io);
-  REQUIRE(!error);
 
   static constexpr unsigned int BUFFER_SIZE = 1024;
   std::array<char, BUFFER_SIZE> buffer{};
@@ -34,8 +32,7 @@ TEST_CASE("read-write")
                          &bytes_written);
     REQUIRE(!error);
 
-    error = reproc_close(&io, REPROC_STDIN);
-    REQUIRE(!error);
+    reproc_close(&io, REPROC_STDIN);
 
     std::string output{};
 
@@ -67,8 +64,7 @@ TEST_CASE("read-write")
                          &bytes_written);
     REQUIRE(!error);
 
-    error = reproc_close(&io, REPROC_STDIN);
-    REQUIRE(!error);
+    reproc_close(&io, REPROC_STDIN);
 
     std::string output{};
 
@@ -84,14 +80,10 @@ TEST_CASE("read-write")
     REQUIRE_EQ(output, message);
   }
 
-  error = reproc_wait(&io, REPROC_INFINITE);
-  REQUIRE(!error);
-
-  int exit_status = 0;
-  error = reproc_exit_status(&io, &exit_status);
+  unsigned int exit_status = 0;
+  error = reproc_wait(&io, REPROC_INFINITE, &exit_status);
   REQUIRE(!error);
   REQUIRE((exit_status == 0));
 
-  error = reproc_destroy(&io);
-  REQUIRE(!error);
+  reproc_destroy(&io);
 }

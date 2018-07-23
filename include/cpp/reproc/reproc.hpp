@@ -59,7 +59,7 @@ public:
                                     unsigned int *bytes_written);
 
   /*! \see reproc_close */
-  REPROC_EXPORT reproc::error close(reproc::stream stream);
+  REPROC_EXPORT void close(reproc::stream stream);
 
   /*! \see reproc_read */
   REPROC_EXPORT reproc::error read(reproc::stream stream, void *buffer,
@@ -94,16 +94,14 @@ public:
   reproc::error read(reproc::stream stream, Parser &&parser);
 
   /*! \see reproc_wait */
-  REPROC_EXPORT reproc::error wait(unsigned int milliseconds);
+  REPROC_EXPORT reproc::error wait(unsigned int milliseconds,
+                                   unsigned int *exit_status);
 
   /*! \see reproc_terminate */
   REPROC_EXPORT reproc::error terminate(unsigned int milliseconds);
 
   /*! \see reproc_kill */
   REPROC_EXPORT reproc::error kill(unsigned int milliseconds);
-
-  /*! \see reproc_exit_status */
-  REPROC_EXPORT reproc::error exit_status(int *exit_status);
 
 private:
   std::unique_ptr<struct reproc_type> process_;

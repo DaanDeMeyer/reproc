@@ -25,12 +25,9 @@ int main()
   error = cmake_help.read(reproc::cerr, reproc::ostream_parser(std::cerr));
   if (error) { return error; }
 
-  error = cmake_help.wait(reproc::infinite);
+  unsigned int exit_status = 0;
+  error = cmake_help.wait(reproc::infinite, &exit_status);
   if (error) { return error; }
 
-  int exit_status;
-  error = cmake_help.exit_status(&exit_status);
-  if (error) { return error; }
-
-  return exit_status;
+  return static_cast<int>(exit_status);
 }

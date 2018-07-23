@@ -1,7 +1,5 @@
 #include "wait.h"
 
-#include "constants.h"
-
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>

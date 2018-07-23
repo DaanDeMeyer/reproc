@@ -9,7 +9,6 @@ const char *reproc_error_to_string(REPROC_ERROR error)
   case REPROC_UNKNOWN_ERROR: return "reproc => unknown error";
   case REPROC_WAIT_TIMEOUT: return "reproc => wait timeout";
   case REPROC_STREAM_CLOSED: return "reproc => stream closed";
-  case REPROC_STILL_RUNNING: return "reproc: still running";
   case REPROC_MEMORY_ERROR: return "reproc => memory error";
   case REPROC_PIPE_LIMIT_REACHED: return "reproc => pipe limit reached";
   case REPROC_INTERRUPTED: return "reproc => interrupted";

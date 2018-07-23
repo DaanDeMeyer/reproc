@@ -11,17 +11,14 @@
 int main(void)
 {
   reproc_type git_status;
-  REPROC_ERROR error = REPROC_SUCCESS;
-
-  // Always call reproc_init after allocating memory for reproc_type to
-  // initialize it
-  error = reproc_init(&git_status);
-  if (error) { return (int) error; }
+  reproc_init(&git_status);
 
   // reproc_start imposes the same restrictions on argc and argv as the regular
   // main function of C and C++ applications.
   int argc = 2;
   const char *argv[3] = { "git", "status", NULL };
+
+  REPROC_ERROR error = REPROC_SUCCESS;
 
   // reproc_start takes argc, argv and the working directory of the child
   // process. If the working directory is NULL the working directory of the
@@ -73,17 +70,12 @@ int main(void)
   // Wait for the process to exit. This should always be done since some systems
   // don't clean up system resources allocated to a child process until the
   // parent process waits for it.
-  error = reproc_wait(&git_status, REPROC_INFINITE);
-  if (error) { return (int) error; }
-
-  // Get the exit status (returns error if the child process is still running)
-  int exit_status = 0;
-  error = reproc_exit_status(&git_status, &exit_status);
+  unsigned int exit_status = 0;
+  error = reproc_wait(&git_status, REPROC_INFINITE, &exit_status);
   if (error) { return (int) error; }
 
   // Release all remaining resources related to the child process
-  error = reproc_destroy(&git_status);
-  if (error) { return (int) error; }
+  reproc_destroy(&git_status);
 
-  return exit_status;
+  return (int) exit_status;
 }

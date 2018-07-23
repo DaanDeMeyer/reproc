@@ -7,15 +7,13 @@
 TEST_CASE("stop")
 {
   reproc_type infinite;
-
-  REPROC_ERROR error = REPROC_SUCCESS;
-  CAPTURE(error);
-
-  error = reproc_init(&infinite);
-  REQUIRE(!error);
+  reproc_init(&infinite);
 
   std::array<const char *, 2> argv = { { REPROC_INFINITE_HELPER, nullptr } };
   auto argc = static_cast<int>(argv.size() - 1);
+
+  REPROC_ERROR error = REPROC_SUCCESS;
+  CAPTURE(error);
 
   error = reproc_start(&infinite, argc, argv.data(), nullptr);
   REQUIRE(!error);
@@ -23,7 +21,8 @@ TEST_CASE("stop")
 // Wait to avoid terminating the child process on Windows before it is
 // initialized (which would result in an error window appearing)
 #if defined(_WIN32)
-  error = reproc_wait(&infinite, 50);
+  unsigned int exit_status = 0;
+  error = reproc_wait(&infinite, 50, &exit_status);
   REQUIRE((error == REPROC_WAIT_TIMEOUT));
 #endif
 
@@ -39,6 +38,5 @@ TEST_CASE("stop")
     REQUIRE(!error);
   }
 
-  error = reproc_destroy(&infinite);
-  REQUIRE(!error);
+  reproc_destroy(&infinite);
 }

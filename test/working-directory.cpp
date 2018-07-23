@@ -7,28 +7,22 @@
 TEST_CASE("working-directory")
 {
   reproc_type noop;
-
-  REPROC_ERROR error = REPROC_SUCCESS;
-  CAPTURE(error);
-
-  error = reproc_init(&noop);
-  REQUIRE(!error);
+  reproc_init(&noop);
 
   std::array<const char *, 2> argv = { { REPROC_NOOP_HELPER, nullptr } };
   auto argc = static_cast<int>(argv.size() - 1);
   const char *working_directory = REPROC_NOOP_DIR;
 
+  REPROC_ERROR error = REPROC_SUCCESS;
+  CAPTURE(error);
+
   error = reproc_start(&noop, argc, argv.data(), working_directory);
   REQUIRE(!error);
 
-  error = reproc_wait(&noop, REPROC_INFINITE);
-  REQUIRE(!error);
-
-  int exit_status = 0;
-  error = reproc_exit_status(&noop, &exit_status);
+  unsigned int exit_status = 0;
+  error = reproc_wait(&noop, REPROC_INFINITE, &exit_status);
   REQUIRE(!error);
   REQUIRE((exit_status == 0));
 
-  error = reproc_destroy(&noop);
-  REQUIRE(!error);
+  reproc_destroy(&noop);
 }
