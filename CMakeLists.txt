@@ -34,7 +34,7 @@ endfunction()
 
 ### clang-tidy ###
 
-if (REPROC_RUN_CLANG_TIDY)
+if (REPROC_TIDY)
   cmake_minimum_required(VERSION 3.6)
   find_program(REPROC_CLANG_TIDY clang-tidy)
 

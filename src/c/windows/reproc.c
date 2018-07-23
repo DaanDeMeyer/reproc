@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <windows.h>
 
-REPROC_ERROR reproc_init(reproc_type *reproc)
+void reproc_init(reproc_type *reproc)
 {
   assert(reproc);
 
@@ -20,8 +20,6 @@ REPROC_ERROR reproc_init(reproc_type *reproc)
   reproc->parent_stdin = NULL;
   reproc->parent_stdout = NULL;
   reproc->parent_stderr = NULL;
-
-  return REPROC_SUCCESS;
 }
 
 REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
@@ -121,7 +119,7 @@ REPROC_ERROR reproc_write(reproc_type *reproc, const void *buffer,
   return pipe_write(reproc->parent_stdin, buffer, to_write, bytes_written);
 }
 
-REPROC_ERROR reproc_close(reproc_type *reproc, REPROC_STREAM stream)
+void reproc_close(reproc_type *reproc, REPROC_STREAM stream)
 {
   assert(reproc);
 
@@ -130,8 +128,6 @@ REPROC_ERROR reproc_close(reproc_type *reproc, REPROC_STREAM stream)
   case REPROC_STDOUT: handle_close(&reproc->parent_stdout); break;
   case REPROC_STDERR: handle_close(&reproc->parent_stderr); break;
   }
-
-  return REPROC_SUCCESS;
 }
 
 REPROC_ERROR reproc_read(reproc_type *reproc, REPROC_STREAM stream,
@@ -155,18 +151,8 @@ REPROC_ERROR reproc_read(reproc_type *reproc, REPROC_STREAM stream,
   return REPROC_UNKNOWN_ERROR;
 }
 
-REPROC_ERROR reproc_read_stderr(reproc_type *reproc, void *buffer,
-                                unsigned int size, unsigned int *bytes_read)
-{
-  assert(reproc);
-  assert(reproc->parent_stderr);
-  assert(buffer);
-  assert(bytes_read);
-
-  return pipe_read(reproc->parent_stderr, buffer, size, bytes_read);
-}
-
-REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds)
+REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds,
+                         unsigned int *exit_status)
 {
   assert(reproc);
   assert(reproc->handle);
@@ -176,6 +162,14 @@ REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds)
   if (wait_result == WAIT_TIMEOUT) { return REPROC_WAIT_TIMEOUT; }
   if (wait_result == WAIT_FAILED) { return REPROC_UNKNOWN_ERROR; }
 
+  if (exit_status == NULL) { return REPROC_SUCCESS; }
+
+  SetLastError(0);
+  // DWORD == unsigned int so cast is safe
+  if (!GetExitCodeProcess(reproc->handle, (LPDWORD) exit_status)) {
+    return REPROC_UNKNOWN_ERROR;
+  }
+
   return REPROC_SUCCESS;
 }
 
@@ -183,13 +177,6 @@ REPROC_ERROR reproc_terminate(reproc_type *reproc, unsigned int milliseconds)
 {
   assert(reproc);
   assert(reproc->handle);
-
-  // Check if child process has already exited before sending signal
-  REPROC_ERROR error = reproc_wait(reproc, 0);
-
-  // Return if wait succeeds (which means process has already exited) or if
-  // an error other than a wait timeout occurs during waiting
-  if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   // GenerateConsoleCtrlEvent can only be passed a process group id. This is why
   // we start each child process in its own process group (which has the same id
@@ -200,7 +187,7 @@ REPROC_ERROR reproc_terminate(reproc_type *reproc, unsigned int milliseconds)
     return REPROC_UNKNOWN_ERROR;
   }
 
-  return reproc_wait(reproc, milliseconds);
+  return reproc_wait(reproc, milliseconds, NULL);
 }
 
 REPROC_ERROR reproc_kill(reproc_type *reproc, unsigned int milliseconds)
@@ -208,38 +195,13 @@ REPROC_ERROR reproc_kill(reproc_type *reproc, unsigned int milliseconds)
   assert(reproc);
   assert(reproc->handle);
 
-  // Check if child process has already exited before sending signal
-  REPROC_ERROR error = reproc_wait(reproc, 0);
-
-  // Return if wait succeeds (which means process has already exited) or if an
-  // error other than a wait timeout occurs during waiting
-  if (error != REPROC_WAIT_TIMEOUT) { return error; }
-
   SetLastError(0);
   if (!TerminateProcess(reproc->handle, 1)) { return REPROC_UNKNOWN_ERROR; }
 
-  return reproc_wait(reproc, milliseconds);
+  return reproc_wait(reproc, milliseconds, NULL);
 }
 
-REPROC_ERROR reproc_exit_status(reproc_type *reproc, int *exit_status)
-{
-  assert(reproc);
-  assert(reproc->handle);
-
-  DWORD unsigned_exit_status = 0;
-  SetLastError(0);
-  if (!GetExitCodeProcess(reproc->handle, &unsigned_exit_status)) {
-    return REPROC_UNKNOWN_ERROR;
-  }
-
-  if (unsigned_exit_status == STILL_ACTIVE) { return REPROC_STILL_RUNNING; }
-
-  *exit_status = unsigned_exit_status;
-
-  return REPROC_SUCCESS;
-}
-
-REPROC_ERROR reproc_destroy(reproc_type *reproc)
+void reproc_destroy(reproc_type *reproc)
 {
   assert(reproc);
 
@@ -248,8 +210,6 @@ REPROC_ERROR reproc_destroy(reproc_type *reproc)
   handle_close(&reproc->parent_stdin);
   handle_close(&reproc->parent_stdout);
   handle_close(&reproc->parent_stderr);
-
-  return REPROC_SUCCESS;
 }
 
 unsigned int reproc_system_error(void) { return GetLastError(); }

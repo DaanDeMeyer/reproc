@@ -120,7 +120,6 @@ REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds,
 {
   assert(reproc);
   assert(reproc->id != 0);
-  assert(exit_status);
 
   if (milliseconds == 0) {
     return wait_no_hang(reproc->id, exit_status);

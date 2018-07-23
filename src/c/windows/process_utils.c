@@ -50,8 +50,7 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
 
 REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
                             HANDLE child_stdin, HANDLE child_stdout,
-                            HANDLE child_stderr, unsigned long *pid,
-                            void **handle)
+                            HANDLE child_stderr, DWORD *pid, HANDLE *handle)
 {
   assert(command_line);
   assert(child_stdin);
@@ -70,10 +69,9 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
   // To ensure no handles other than those necessary are inherited we use the
   // approach detailed in https://stackoverflow.com/a/2345126
   HANDLE to_inherit[3] = { child_stdin, child_stdout, child_stderr };
+
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
-  error = handle_inherit_list_create(to_inherit,
-                                     sizeof(to_inherit) / sizeof(to_inherit[0]),
-                                     &attribute_list);
+  error = handle_inherit_list_create(to_inherit, 3, &attribute_list);
   if (error) { return error; }
 
   creation_flags |= EXTENDED_STARTUPINFO_PRESENT;
