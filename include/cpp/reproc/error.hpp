@@ -15,7 +15,6 @@ enum error {
   unknown_error,
   wait_timeout,
   stream_closed,
-  still_running,
   memory_error,
   pipe_limit_reached,
   interrupted,
