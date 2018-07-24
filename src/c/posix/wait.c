@@ -18,7 +18,7 @@ static unsigned int parse_exit_status(int status)
   assert(WIFSIGNALED(status));
 
   // NOLINTNEXTLINE(hicpp-signed-bitwise)
-  return WTERMSIG((unsigned int) status);
+  return (unsigned int) WTERMSIG(status);
 }
 
 REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
