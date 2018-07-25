@@ -121,9 +121,7 @@ REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds,
   assert(reproc);
   assert(reproc->id != 0);
 
-  if (milliseconds == 0) {
-    return wait_no_hang(reproc->id, exit_status);
-  }
+  if (milliseconds == 0) { return wait_no_hang(reproc->id, exit_status); }
 
   if (milliseconds == REPROC_INFINITE) {
     return wait_infinite(reproc->id, exit_status);

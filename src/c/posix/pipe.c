@@ -104,7 +104,7 @@ void pipe_close(int *pipe)
   if (*pipe == 0) { return; }
 
   // Avoid close errors overriding other system errors
-  int last_system_error  = errno;
+  int last_system_error = errno;
   close(*pipe);
   errno = last_system_error;
 

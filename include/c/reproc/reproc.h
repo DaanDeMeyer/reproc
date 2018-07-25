@@ -99,7 +99,7 @@ current process.
 Possible errors:
 - REPROC_PIPE_LIMIT_REACHED
 - REPROC_PROCESS_LIMIT_REACHED
-- REPROC_MEMORY_ERROR
+- REPROC_NOT_ENOUGH_MEMORY
 - REPROC_INVALID_UNICODE
 - REPROC_PERMISSION_DENIED
 - REPROC_SYMLINK_LOOP
@@ -231,7 +231,7 @@ Possible errors when milliseconds is 0:
 Possible errors when milliseconds is not 0 or REPROC_INFINITE:
 - REPROC_INTERRUPTED
 - REPROC_PROCESS_LIMIT_REACHED
-- REPROC_MEMORY_ERROR
+- REPROC_NOT_ENOUGH_MEMORY
 */
 REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_type *reproc,
                                        unsigned int milliseconds,

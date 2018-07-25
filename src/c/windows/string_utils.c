@@ -24,7 +24,7 @@ REPROC_ERROR string_join(const char *const *string_array, int array_length,
   }
 
   char *string = malloc(sizeof(char) * string_length);
-  if (string == NULL) { return REPROC_MEMORY_ERROR; }
+  if (string == NULL) { return REPROC_NOT_ENOUGH_MEMORY; }
 
   char *current = string; // Keeps track of where we are in the result string
   for (int i = 0; i < array_length; i++) {
@@ -65,7 +65,7 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
   }
 
   wchar_t *wstring = malloc(sizeof(wchar_t) * wstring_length);
-  if (!wstring) { return REPROC_MEMORY_ERROR; }
+  if (!wstring) { return REPROC_NOT_ENOUGH_MEMORY; }
 
   // Now that we pass our allocated string and its length MultiByteToWideChar
   // will actually perform the conversion.

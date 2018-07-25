@@ -3,19 +3,21 @@
 
 #include "export.hpp"
 
-#include <string>
+#include <system_error>
 
-namespace reproc {
+namespace reproc
+{
 
 /*! \see REPROC_ERROR */
 /* When editing make sure to change the corresponding enum in error.h as
 well */
-enum error {
-  success,
-  unknown_error,
-  wait_timeout,
+enum class error {
+  // reproc errors
+  wait_timeout = 1,
   stream_closed,
-  memory_error,
+  partial_write,
+  // system errors
+  not_enough_memory,
   pipe_limit_reached,
   interrupted,
   process_limit_reached,
@@ -24,16 +26,21 @@ enum error {
   symlink_loop,
   file_not_found,
   name_too_long,
-  partial_write,
 };
 
-/*! \see reproc_system_error */
-REPROC_EXPORT unsigned int system_error();
+REPROC_EXPORT const std::error_category &error_category() noexcept;
 
-/*! \see reproc_error_to_string. This function additionally adds the system
-error to the error string when /p error is Reproc::UNKNOWN_ERROR. */
-REPROC_EXPORT std::string error_to_string(reproc::error error);
+REPROC_EXPORT std::error_condition
+make_error_condition(reproc::error error) noexcept;
 
 } // namespace reproc
+
+namespace std
+{
+
+template <> struct is_error_condition_enum<reproc::error> : true_type {
+};
+
+} // namespace std
 
 #endif

@@ -23,7 +23,7 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
   }
 
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = malloc(attribute_list_size);
-  if (!attribute_list) { return REPROC_MEMORY_ERROR; }
+  if (!attribute_list) { return REPROC_NOT_ENOUGH_MEMORY; }
 
   SetLastError(0);
   if (!InitializeProcThreadAttributeList(attribute_list, 1, 0,

@@ -3,31 +3,36 @@
 
 #include <ostream>
 
-namespace reproc {
+namespace reproc
+{
 
-class string_parser {
+class string_parser
+{
   std::string &out_;
 
 public:
-  string_parser(std::string &out) : out_(out) {}
+  string_parser(std::string &out) noexcept : out_(out) {}
 
-  bool stream_closed_is_error() { return false; }
+  bool stream_closed_is_error() const noexcept { return false; }
 
-  bool operator()(const char *buffer, unsigned int size) {
+  bool operator()(const char *buffer, unsigned int size)
+  {
     out_.append(buffer, size);
     return true;
   }
 };
 
-class ostream_parser {
+class ostream_parser
+{
   std::ostream &out_;
 
 public:
-  ostream_parser(std::ostream &out) : out_(out) {}
+  ostream_parser(std::ostream &out) noexcept : out_(out) {}
 
-  bool stream_closed_is_error() { return false; }
+  bool stream_closed_is_error() const noexcept { return false; }
 
-  bool operator()(const char *buffer, unsigned int size) {
+  bool operator()(const char *buffer, unsigned int size)
+  {
     out_.write(buffer, size);
     return true;
   }

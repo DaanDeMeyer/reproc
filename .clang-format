@@ -5,7 +5,7 @@ Language: Cpp
 AllowShortBlocksOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: true
-BreakBeforeBraces: Stroustrup
+BreakBeforeBraces: Linux
 Cpp11BracedListStyle: false
 PenaltyBreakAssignment: 100
 PenaltyBreakBeforeFirstCallParameter: 100

@@ -71,7 +71,7 @@ REPROC_ERROR wait_timeout(pid_t pid, unsigned int milliseconds,
   if (timeout_pid == -1) {
     switch (errno) {
     case EAGAIN: return REPROC_PROCESS_LIMIT_REACHED;
-    case ENOMEM: return REPROC_MEMORY_ERROR;
+    case ENOMEM: return REPROC_NOT_ENOUGH_MEMORY;
     default: return REPROC_UNKNOWN_ERROR;
     }
   }

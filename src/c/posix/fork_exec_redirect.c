@@ -42,7 +42,7 @@ REPROC_ERROR fork_exec_redirect(int argc, const char *const *argv,
 
     switch (errno) {
     case EAGAIN: return REPROC_PROCESS_LIMIT_REACHED;
-    case ENOMEM: return REPROC_MEMORY_ERROR;
+    case ENOMEM: return REPROC_NOT_ENOUGH_MEMORY;
     default: return REPROC_UNKNOWN_ERROR;
     }
   }
@@ -150,7 +150,7 @@ REPROC_ERROR fork_exec_redirect(int argc, const char *const *argv,
     case EACCES: return REPROC_PERMISSION_DENIED;
     case EPERM: return REPROC_PERMISSION_DENIED;
     case ELOOP: return REPROC_SYMLINK_LOOP;
-    case ENOMEM: return REPROC_MEMORY_ERROR;
+    case ENOMEM: return REPROC_NOT_ENOUGH_MEMORY;
     case ENOENT: return REPROC_FILE_NOT_FOUND;
     case ENOTDIR: return REPROC_FILE_NOT_FOUND;
     case EMFILE: return REPROC_PIPE_LIMIT_REACHED;
