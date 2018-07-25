@@ -44,15 +44,14 @@ REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
 Starts the process specified by argv in the given working directory and
 redirects its standard output streams.
 
-This function should be called after \see reproc_init. If this function
-returns without error the child process actually starts executing and can be
-inspected using the operating system's tools for process inspection (e.g. ps on
-Linux).
+If this function does not return an error the child process actually starts
+executing and can be inspected using the operating system's tools for process
+inspection (e.g. ps on Linux).
 
 Every successful call to this function should be followed by a call to \see
-reproc_wait and \see reproc_destroy after the process has exited. If an error
-occurs the function cleans up all allocated resources itself so you should call
-reproc_init again if you want to retry starting the process.
+reproc_wait (and possibly \see reproc_terminate or \see reproc_kill) and \see
+reproc_destroy after the process has exited. If an error occurs the function
+cleans up all allocated resources are cleaned up before the function returns.
 
 \param[in,out] reproc Cannot be NULL. Must have been initialized with \see
 reproc_init.
@@ -128,6 +127,7 @@ closed. After writing all the input to the child process with \see
 reproc_write the standard input stream can be closed using this function.
 
 \param[in,out] reproc Cannot be NULL.
+\param[in] stream The stream to close.
 
 \return REPROC_ERROR
 
@@ -139,11 +139,11 @@ REPROC_EXPORT void reproc_close(reproc_type *reproc, REPROC_STREAM stream);
 Reads up to \p size bytes from the child process' standard output and stores
 them in \p buffer. \p bytes_read is set to the amount of bytes read.
 
-Assuming no other errors occur this function keeps returning REPROC_SUCCESS
-until the child process closes its standard output stream (happens
-automatically when it exits) and all bytes have been read from the stream.
-This allows the function to be used in the following way to read all data from
-a child process stdout stream (uses C++ std::string for brevity):
+Assuming no other errors occur this function returns REPROC_SUCCESS until the
+child process closes its standard output stream (happens automatically when it
+exits) and all bytes have been read from the stream. This allows the function to
+be used in the following way to read all data from a child process stdout stream
+(uses C++ std::string for brevity):
 
 \code{.cpp}
 #define BUFFER_SIZE 1024
@@ -155,13 +155,15 @@ std::string output{};
 
 while (true) {
   unsigned int bytes_read = 0;
-  error = reproc_read(reproc, buffer, BUFFER_SIZE, &bytes_read);
+  error = reproc_read(reproc, REPROC_STDOUT, buffer, BUFFER_SIZE, &bytes_read);
   if (error) { break; }
 
   output.append(buffer, bytes_read);
 }
 
 if (error != REPROC_STREAM_CLOSED) { return error; }
+
+// Do something with output
 \endcode
 
 Remember that this function reads bytes and not strings. It is up to the user
@@ -172,10 +174,11 @@ reading:
 
 \code{.c}
 unsigned int bytes_read = 0;
-error = reproc_read(reproc, buffer, BUFFER_SIZE - 1, &bytes_read);
-if (error) { return error; } //     ^^^^^^^^^^^^^^^
+error = reproc_read(reproc, REPROC_STDOUT, buffer, BUFFER_SIZE - 1,
+                    &bytes_read); //               ^^^^^^^^^^^^^^^
+if (error) { return error; }
 
-buffer[bytes_read] = '\0';
+buffer[bytes_read] = '\0'; // Add null terminator
 \endcode
 
 \param[in,out] reproc Cannot be NULL.
@@ -204,6 +207,12 @@ Waits the specified amount of time for the process to exit.
 \param[in] milliseconds Amount of milliseconds to wait. If 0 the function will
 only check if the process is still running without waiting. If REPROC_INFINITE
 the function will wait indefinitely for the child process to exit.
+\param[out] exit_status Output parameter used to store the exit status of the
+child process if reproc_wait is succesfull (the child process exits within the
+timeout).
+
+This function cannot be called again for the current child process if it is
+succesfull.
 
 \return REPROC_ERROR
 
@@ -215,6 +224,7 @@ Possible errors when milliseconds is 0:
 
 Possible errors when milliseconds is not 0 or REPROC_INFINITE:
 - REPROC_INTERRUPTED
+- REPROC_WAIT_TIMEOUT
 - REPROC_PROCESS_LIMIT_REACHED
 - REPROC_NOT_ENOUGH_MEMORY
 */
@@ -230,6 +240,9 @@ On Windows a CTRL-BREAK signal is sent to the child process. On POSIX a
 SIGTERM signal is sent to the child process. After sending the signal the
 function waits for the specified amount of milliseconds for the child process
 to exit. If the child process has already exited no signal is sent.
+
+This function cannot be called again for the current child process if it is
+succesfull.
 
 \param[in,out] reproc Cannot be NULL.
 \param[in] milliseconds See \see reproc_wait.
@@ -252,6 +265,9 @@ already exited no signal is sent.
 This function should only be used as a last resort. Always wait for a child
 process to exit on its own or try to stop it with \see reproc_terminate before
 resorting to this function.
+
+This function cannot be called again for the current child process if it is
+succesfull.
 
 \param[in,out] reproc Cannot be NULL.
 \param[in] milliseconds See \see reproc_wait.
