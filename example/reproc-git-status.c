@@ -11,7 +11,6 @@
 int main(void)
 {
   reproc_type git_status;
-  reproc_init(&git_status);
 
   // reproc_start imposes the same restrictions on argc and argv as the regular
   // main function of C and C++ applications.

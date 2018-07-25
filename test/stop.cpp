@@ -7,7 +7,6 @@
 TEST_CASE("stop")
 {
   reproc_type infinite;
-  reproc_init(&infinite);
 
   std::array<const char *, 2> argv = { { REPROC_INFINITE_HELPER, nullptr } };
   auto argc = static_cast<int>(argv.size() - 1);

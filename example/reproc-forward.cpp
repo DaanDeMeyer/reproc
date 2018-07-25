@@ -10,8 +10,8 @@ int fail(std::error_code ec)
 }
 
 /*!
-Forwards the passed arguments to reproc and prints the child process output
-on stdout.
+Forwards the program arguments to a child process and prints its output on
+stdout.
 
 Example: "./forward cmake --help" will print CMake's help output.
 
@@ -31,14 +31,18 @@ int main(int argc, char *argv[])
   ec = forward.start(argc - 1, argv + 1);
   if (ec) { return fail(ec); }
 
+  // Some programs wait for the input stream to be closed before continuing
   forward.close(reproc::cin);
 
+  // Pipe child process stdout output to std::cout of parent process
   ec = forward.read(reproc::cout, reproc::ostream_parser(std::cout));
   if (ec) { return fail(ec); }
 
+  // Pipe child process stderr output to std::cerr of parent process
   ec = forward.read(reproc::cerr, reproc::ostream_parser(std::cerr));
   if (ec) { return fail(ec); }
 
+  // wait stores the exit status in exit_status if it succeeds
   unsigned int exit_status = 0;
   ec = forward.wait(reproc::infinite, &exit_status);
   if (ec) { return fail(ec); }

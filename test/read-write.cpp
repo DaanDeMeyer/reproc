@@ -8,7 +8,6 @@
 TEST_CASE("read-write")
 {
   reproc_type io;
-  reproc_init(&io);
 
   REPROC_ERROR error = REPROC_SUCCESS;
   CAPTURE(error);

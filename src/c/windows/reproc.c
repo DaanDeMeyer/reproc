@@ -9,19 +9,6 @@
 #include <stdlib.h>
 #include <windows.h>
 
-void reproc_init(reproc_type *reproc)
-{
-  assert(reproc);
-
-  // process id 0 is reserved by the system so we can use it as a null value
-  reproc->id = 0;
-  reproc->handle = NULL;
-
-  reproc->parent_stdin = NULL;
-  reproc->parent_stdout = NULL;
-  reproc->parent_stderr = NULL;
-}
-
 REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
                           const char *const *argv,
                           const char *working_directory)
@@ -35,9 +22,6 @@ REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
   for (int i = 0; i < argc; i++) {
     assert(argv[i]);
   }
-
-  // Make sure reproc_start is only called once for each reproc_init call
-  assert(reproc->handle == NULL);
 
   // Predeclare every variable so we can use goto
 

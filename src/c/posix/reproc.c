@@ -9,19 +9,6 @@
 #include <signal.h>
 #include <string.h>
 
-void reproc_init(reproc_type *reproc)
-{
-  assert(reproc);
-
-  // process id 0 is reserved by the system so we can use it as a null value
-  reproc->id = 0;
-  // File descriptor 0 won't be assigned by pipe() call (its reserved for stdin)
-  // so we use it as a null value
-  reproc->parent_stdin = 0;
-  reproc->parent_stdout = 0;
-  reproc->parent_stderr = 0;
-}
-
 REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
                           const char *const *argv,
                           const char *working_directory)
@@ -36,9 +23,7 @@ REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
     assert(argv[i]);
   }
 
-  // Make sure reproc_start is only called once for each reproc_init call
-  // (reproc_init sets reproc->id to PID_NULL)
-  assert(reproc->id == 0);
+  // Predeclare every variable so we can use goto
 
   int child_stdin = 0;
   int child_stdout = 0;

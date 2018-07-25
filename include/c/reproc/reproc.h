@@ -41,21 +41,6 @@ indefinitely. */
 REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
 
 /*!
-Initializes the members of \p reproc.
-
-Call order:
-- \see reproc_init
-- \see reproc_start
-- ... (read/write/terminate/...)
-- \see reproc_destroy
-- \see reproc_init (If you want to reuse \p reproc to run another process)
-- ...
-
-\param[in,out] reproc Cannot be NULL.
-*/
-REPROC_EXPORT void reproc_init(reproc_type *reproc);
-
-/*!
 Starts the process specified by argv in the given working directory and
 redirects its standard output streams.
 
