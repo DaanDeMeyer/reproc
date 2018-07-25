@@ -1,5 +1,8 @@
 #include "reproc/error.hpp"
+
 #include "reproc/error.h"
+
+#include <string>
 
 namespace reproc
 {
