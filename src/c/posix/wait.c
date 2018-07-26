@@ -1,5 +1,7 @@
 #include "wait.h"
 
+#include "fork.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
@@ -65,41 +67,9 @@ REPROC_ERROR wait_timeout(pid_t pid, unsigned int milliseconds,
 {
   assert(milliseconds > 0);
 
-  errno = 0;
-  pid_t timeout_pid = fork();
-
-  if (timeout_pid == -1) {
-    switch (errno) {
-    case EAGAIN: return REPROC_PROCESS_LIMIT_REACHED;
-    case ENOMEM: return REPROC_NOT_ENOUGH_MEMORY;
-    default: return REPROC_UNKNOWN_ERROR;
-    }
-  }
-
-  // Process group of child is set in both parent and child to avoid race
-  // conditions
-
-  if (timeout_pid == 0) {
-    errno = 0;
-    if (setpgid(0, pid) == -1) { _exit(errno); }
-
-    struct timeval tv;
-    tv.tv_sec = milliseconds / 1000;           // ms -> s
-    tv.tv_usec = (milliseconds % 1000) * 1000; // leftover ms -> us
-
-    // Select with no file descriptors can be used as a makeshift sleep function
-    // (that can still be interrupted by SIGTERM)
-    errno = 0;
-    if (select(0, NULL, NULL, NULL, &tv) == -1) { _exit(errno); }
-
-    _exit(0);
-  }
-
-  errno = 0;
-  if (setpgid(timeout_pid, pid) == -1) {
-    // EACCES should not occur since we don't call execve in the timeout process
-    return REPROC_UNKNOWN_ERROR;
-  };
+  pid_t timeout_pid = 0;
+  REPROC_ERROR error = fork_timeout(milliseconds, pid, &timeout_pid);
+  if (error) { return error; }
 
   // -reproc->pid waits for all processes in the reproc->pid process group
   // which in this case will be the process we want to wait for and the timeout

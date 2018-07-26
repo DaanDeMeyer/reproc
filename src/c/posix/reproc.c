@@ -1,6 +1,6 @@
 #include "reproc/reproc.h"
 
-#include "fork_exec_redirect.h"
+#include "fork.h"
 #include "pipe.h"
 #include "wait.h"
 
@@ -84,7 +84,7 @@ REPROC_ERROR reproc_read(reproc_type *reproc, REPROC_STREAM stream,
                          unsigned int *bytes_read)
 {
   assert(reproc);
-  assert(stream != REPROC_STDIN); // stream cannot be REPROC_STDIN
+  assert(stream != REPROC_STDIN);
   assert(buffer);
   assert(bytes_read);
 
@@ -96,7 +96,7 @@ REPROC_ERROR reproc_read(reproc_type *reproc, REPROC_STREAM stream,
     return pipe_read(reproc->parent_stderr, buffer, size, bytes_read);
   }
 
-  // Unreachable but write anyway to silence warning
+  // Only reachable when compiled without asserts
   return REPROC_UNKNOWN_ERROR;
 }
 

@@ -131,7 +131,7 @@ REPROC_ERROR reproc_read(reproc_type *reproc, REPROC_STREAM stream,
     return pipe_read(reproc->parent_stderr, buffer, size, bytes_read);
   }
 
-  // Unreachable but write anyway to silence warning
+  // Only reachable when compiled without asserts
   return REPROC_UNKNOWN_ERROR;
 }
 
