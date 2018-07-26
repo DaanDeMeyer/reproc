@@ -89,7 +89,7 @@ Possible errors:
 - REPROC_SYMLINK_LOOP
 - REPROC_FILE_NOT_FOUND
 */
-REPROC_EXPORT REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
+REPROC_EXPORT REPROC_ERROR reproc_start(reproc_type *process, int argc,
                                         const char *const *argv,
                                         const char *working_directory);
 
@@ -115,7 +115,7 @@ Possible errors:
 - REPROC_INTERRUPTED
 - REPROC_PARTIAL_WRITE
 */
-REPROC_EXPORT REPROC_ERROR reproc_write(reproc_type *reproc, const void *buffer,
+REPROC_EXPORT REPROC_ERROR reproc_write(reproc_type *process, const void *buffer,
                                         unsigned int to_write,
                                         unsigned int *bytes_written);
 
@@ -133,7 +133,7 @@ reproc_write the standard input stream can be closed using this function.
 
 Possible errors:
 */
-REPROC_EXPORT void reproc_close(reproc_type *reproc, REPROC_STREAM stream);
+REPROC_EXPORT void reproc_close(reproc_type *process, REPROC_STREAM stream);
 
 /*!
 Reads up to \p size bytes from the child process' standard output and stores
@@ -195,7 +195,7 @@ Possible errors:
 - REPROC_STREAM_CLOSED
 - REPROC_INTERRUPTED
 */
-REPROC_EXPORT REPROC_ERROR reproc_read(reproc_type *reproc,
+REPROC_EXPORT REPROC_ERROR reproc_read(reproc_type *process,
                                        REPROC_STREAM stream, void *buffer,
                                        unsigned int size,
                                        unsigned int *bytes_read);
@@ -228,7 +228,7 @@ Possible errors when milliseconds is not 0 or REPROC_INFINITE:
 - REPROC_PROCESS_LIMIT_REACHED
 - REPROC_NOT_ENOUGH_MEMORY
 */
-REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_type *reproc,
+REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_type *process,
                                        unsigned int milliseconds,
                                        unsigned int *exit_status);
 
@@ -251,7 +251,7 @@ succesfull.
 
 Possible errors: See \see reproc_wait
 */
-REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_type *reproc,
+REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_type *process,
                                             unsigned int milliseconds);
 
 /*!
@@ -276,7 +276,7 @@ succesfull.
 
 Possible errors: See \see reproc_wait
 */
-REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_type *reproc,
+REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_type *process,
                                        unsigned int milliseconds);
 
 /*!
@@ -292,7 +292,7 @@ exit on its own with \see reproc_wait.
 
 Possible errors:
 */
-REPROC_EXPORT void reproc_destroy(reproc_type *reproc);
+REPROC_EXPORT void reproc_destroy(reproc_type *process);
 
 #ifdef __cplusplus
 }

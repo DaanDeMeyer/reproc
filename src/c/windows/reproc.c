@@ -9,11 +9,11 @@
 #include <stdlib.h>
 #include <windows.h>
 
-REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
+REPROC_ERROR reproc_start(reproc_type *process, int argc,
                           const char *const *argv,
                           const char *working_directory)
 {
-  assert(reproc);
+  assert(process);
 
   assert(argc > 0);
   assert(argv);
@@ -40,19 +40,19 @@ REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
   // inheritance of the parent pipe handles to lower the chance of other
   // CreateProcess calls (outside of this library) unintentionally inheriting
   // these handles.
-  error = pipe_init(&child_stdin, &reproc->parent_stdin);
+  error = pipe_init(&child_stdin, &process->parent_stdin);
   if (error) { goto cleanup; }
-  error = pipe_disable_inherit(reproc->parent_stdin);
-  if (error) { goto cleanup; }
-
-  error = pipe_init(&reproc->parent_stdout, &child_stdout);
-  if (error) { goto cleanup; }
-  error = pipe_disable_inherit(reproc->parent_stdout);
+  error = pipe_disable_inherit(process->parent_stdin);
   if (error) { goto cleanup; }
 
-  error = pipe_init(&reproc->parent_stderr, &child_stderr);
+  error = pipe_init(&process->parent_stdout, &child_stdout);
   if (error) { goto cleanup; }
-  error = pipe_disable_inherit(reproc->parent_stderr);
+  error = pipe_disable_inherit(process->parent_stdout);
+  if (error) { goto cleanup; }
+
+  error = pipe_init(&process->parent_stderr, &child_stderr);
+  if (error) { goto cleanup; }
+  error = pipe_disable_inherit(process->parent_stderr);
   if (error) { goto cleanup; }
 
   // Join argv to whitespace delimited string as required by CreateProcess
@@ -71,8 +71,8 @@ REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
   if (error) { goto cleanup; }
 
   error = process_create(command_line_wstring, working_directory_wstring,
-                         child_stdin, child_stdout, child_stderr, &reproc->id,
-                         &reproc->handle);
+                         child_stdin, child_stdout, child_stderr, &process->id,
+                         &process->handle);
 
 cleanup:
   // The child process pipe endpoint handles are copied to the child process. We
@@ -85,40 +85,40 @@ cleanup:
   free(working_directory_wstring);
 
   if (error) {
-    reproc_destroy(reproc);
+    reproc_destroy(process);
     return error;
   }
 
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_write(reproc_type *reproc, const void *buffer,
+REPROC_ERROR reproc_write(reproc_type *process, const void *buffer,
                           unsigned int to_write, unsigned int *bytes_written)
 {
-  assert(reproc);
-  assert(reproc->parent_stdin);
+  assert(process);
+  assert(process->parent_stdin);
   assert(buffer);
   assert(bytes_written);
 
-  return pipe_write(reproc->parent_stdin, buffer, to_write, bytes_written);
+  return pipe_write(process->parent_stdin, buffer, to_write, bytes_written);
 }
 
-void reproc_close(reproc_type *reproc, REPROC_STREAM stream)
+void reproc_close(reproc_type *process, REPROC_STREAM stream)
 {
-  assert(reproc);
+  assert(process);
 
   switch (stream) {
-  case REPROC_STDIN: handle_close(&reproc->parent_stdin); break;
-  case REPROC_STDOUT: handle_close(&reproc->parent_stdout); break;
-  case REPROC_STDERR: handle_close(&reproc->parent_stderr); break;
+  case REPROC_STDIN: handle_close(&process->parent_stdin); break;
+  case REPROC_STDOUT: handle_close(&process->parent_stdout); break;
+  case REPROC_STDERR: handle_close(&process->parent_stderr); break;
   }
 }
 
-REPROC_ERROR reproc_read(reproc_type *reproc, REPROC_STREAM stream,
+REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
                          void *buffer, unsigned int size,
                          unsigned int *bytes_read)
 {
-  assert(reproc);
+  assert(process);
   assert(stream != REPROC_STDIN);
   assert(buffer);
   assert(bytes_read);
@@ -126,23 +126,23 @@ REPROC_ERROR reproc_read(reproc_type *reproc, REPROC_STREAM stream,
   switch (stream) {
   case REPROC_STDIN: break;
   case REPROC_STDOUT:
-    return pipe_read(reproc->parent_stdout, buffer, size, bytes_read);
+    return pipe_read(process->parent_stdout, buffer, size, bytes_read);
   case REPROC_STDERR:
-    return pipe_read(reproc->parent_stderr, buffer, size, bytes_read);
+    return pipe_read(process->parent_stderr, buffer, size, bytes_read);
   }
 
   // Only reachable when compiled without asserts
   return REPROC_UNKNOWN_ERROR;
 }
 
-REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds,
+REPROC_ERROR reproc_wait(reproc_type *process, unsigned int milliseconds,
                          unsigned int *exit_status)
 {
-  assert(reproc);
-  assert(reproc->handle);
+  assert(process);
+  assert(process->handle);
 
   SetLastError(0);
-  DWORD wait_result = WaitForSingleObject(reproc->handle, milliseconds);
+  DWORD wait_result = WaitForSingleObject(process->handle, milliseconds);
   if (wait_result == WAIT_TIMEOUT) { return REPROC_WAIT_TIMEOUT; }
   if (wait_result == WAIT_FAILED) { return REPROC_UNKNOWN_ERROR; }
 
@@ -150,50 +150,50 @@ REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds,
 
   SetLastError(0);
   // DWORD == unsigned int so cast is safe
-  if (!GetExitCodeProcess(reproc->handle, (LPDWORD) exit_status)) {
+  if (!GetExitCodeProcess(process->handle, (LPDWORD) exit_status)) {
     return REPROC_UNKNOWN_ERROR;
   }
 
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_terminate(reproc_type *reproc, unsigned int milliseconds)
+REPROC_ERROR reproc_terminate(reproc_type *process, unsigned int milliseconds)
 {
-  assert(reproc);
-  assert(reproc->handle);
+  assert(process);
+  assert(process->handle);
 
   // GenerateConsoleCtrlEvent can only be passed a process group id. This is why
   // we start each child process in its own process group (which has the same id
   // as the child process id) so we can call GenerateConsoleCtrlEvent on single
   // child processes
   SetLastError(0);
-  if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, reproc->id)) {
+  if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, process->id)) {
     return REPROC_UNKNOWN_ERROR;
   }
 
-  return reproc_wait(reproc, milliseconds, NULL);
+  return reproc_wait(process, milliseconds, NULL);
 }
 
-REPROC_ERROR reproc_kill(reproc_type *reproc, unsigned int milliseconds)
+REPROC_ERROR reproc_kill(reproc_type *process, unsigned int milliseconds)
 {
-  assert(reproc);
-  assert(reproc->handle);
+  assert(process);
+  assert(process->handle);
 
   SetLastError(0);
-  if (!TerminateProcess(reproc->handle, 1)) { return REPROC_UNKNOWN_ERROR; }
+  if (!TerminateProcess(process->handle, 1)) { return REPROC_UNKNOWN_ERROR; }
 
-  return reproc_wait(reproc, milliseconds, NULL);
+  return reproc_wait(process, milliseconds, NULL);
 }
 
-void reproc_destroy(reproc_type *reproc)
+void reproc_destroy(reproc_type *process)
 {
-  assert(reproc);
+  assert(process);
 
-  handle_close(&reproc->handle);
+  handle_close(&process->handle);
 
-  handle_close(&reproc->parent_stdin);
-  handle_close(&reproc->parent_stdout);
-  handle_close(&reproc->parent_stderr);
+  handle_close(&process->parent_stdin);
+  handle_close(&process->parent_stdout);
+  handle_close(&process->parent_stderr);
 }
 
 unsigned int reproc_system_error(void) { return GetLastError(); }

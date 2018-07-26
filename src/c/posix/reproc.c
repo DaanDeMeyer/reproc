@@ -9,11 +9,11 @@
 #include <signal.h>
 #include <string.h>
 
-REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
+REPROC_ERROR reproc_start(reproc_type *process, int argc,
                           const char *const *argv,
                           const char *working_directory)
 {
-  assert(reproc);
+  assert(process);
 
   assert(argc > 0);
   assert(argv);
@@ -31,15 +31,15 @@ REPROC_ERROR reproc_start(reproc_type *reproc, int argc,
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
-  error = pipe_init(&child_stdin, &reproc->parent_stdin);
+  error = pipe_init(&child_stdin, &process->parent_stdin);
   if (error) { goto cleanup; }
-  error = pipe_init(&reproc->parent_stdout, &child_stdout);
+  error = pipe_init(&process->parent_stdout, &child_stdout);
   if (error) { goto cleanup; }
-  error = pipe_init(&reproc->parent_stderr, &child_stderr);
+  error = pipe_init(&process->parent_stderr, &child_stderr);
   if (error) { goto cleanup; }
 
   error = fork_exec_redirect(argc, argv, working_directory, child_stdin,
-                             child_stdout, child_stderr, &reproc->id);
+                             child_stdout, child_stderr, &process->id);
 
 cleanup:
   // An error has ocurred or the child pipe endpoints have been copied to the
@@ -50,40 +50,40 @@ cleanup:
   pipe_close(&child_stderr);
 
   if (error) {
-    reproc_destroy(reproc);
+    reproc_destroy(process);
     return error;
   }
 
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_write(reproc_type *reproc, const void *buffer,
+REPROC_ERROR reproc_write(reproc_type *process, const void *buffer,
                           unsigned int to_write, unsigned int *bytes_written)
 {
-  assert(reproc);
-  assert(reproc->parent_stdin != 0);
+  assert(process);
+  assert(process->parent_stdin != 0);
   assert(buffer);
   assert(bytes_written);
 
-  return pipe_write(reproc->parent_stdin, buffer, to_write, bytes_written);
+  return pipe_write(process->parent_stdin, buffer, to_write, bytes_written);
 }
 
-void reproc_close(struct reproc_type *reproc, REPROC_STREAM stream)
+void reproc_close(struct reproc_type *process, REPROC_STREAM stream)
 {
-  assert(reproc);
+  assert(process);
 
   switch (stream) {
-  case REPROC_STDIN: pipe_close(&reproc->parent_stdin); break;
-  case REPROC_STDOUT: pipe_close(&reproc->parent_stdout); break;
-  case REPROC_STDERR: pipe_close(&reproc->parent_stderr); break;
+  case REPROC_STDIN: pipe_close(&process->parent_stdin); break;
+  case REPROC_STDOUT: pipe_close(&process->parent_stdout); break;
+  case REPROC_STDERR: pipe_close(&process->parent_stderr); break;
   }
 }
 
-REPROC_ERROR reproc_read(reproc_type *reproc, REPROC_STREAM stream,
+REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
                          void *buffer, unsigned int size,
                          unsigned int *bytes_read)
 {
-  assert(reproc);
+  assert(process);
   assert(stream != REPROC_STDIN);
   assert(buffer);
   assert(bytes_read);
@@ -91,60 +91,60 @@ REPROC_ERROR reproc_read(reproc_type *reproc, REPROC_STREAM stream,
   switch (stream) {
   case REPROC_STDIN: break;
   case REPROC_STDOUT:
-    return pipe_read(reproc->parent_stdout, buffer, size, bytes_read);
+    return pipe_read(process->parent_stdout, buffer, size, bytes_read);
   case REPROC_STDERR:
-    return pipe_read(reproc->parent_stderr, buffer, size, bytes_read);
+    return pipe_read(process->parent_stderr, buffer, size, bytes_read);
   }
 
   // Only reachable when compiled without asserts
   return REPROC_UNKNOWN_ERROR;
 }
 
-REPROC_ERROR reproc_wait(reproc_type *reproc, unsigned int milliseconds,
+REPROC_ERROR reproc_wait(reproc_type *process, unsigned int milliseconds,
                          unsigned int *exit_status)
 {
-  assert(reproc);
-  assert(reproc->id != 0);
+  assert(process);
+  assert(process->id != 0);
 
-  if (milliseconds == 0) { return wait_no_hang(reproc->id, exit_status); }
+  if (milliseconds == 0) { return wait_no_hang(process->id, exit_status); }
 
   if (milliseconds == REPROC_INFINITE) {
-    return wait_infinite(reproc->id, exit_status);
+    return wait_infinite(process->id, exit_status);
   }
 
-  return wait_timeout(reproc->id, milliseconds, exit_status);
+  return wait_timeout(process->id, milliseconds, exit_status);
 }
 
-REPROC_ERROR reproc_terminate(struct reproc_type *reproc,
+REPROC_ERROR reproc_terminate(struct reproc_type *process,
                               unsigned int milliseconds)
 {
-  assert(reproc);
-  assert(reproc->id != 0);
+  assert(process);
+  assert(process->id != 0);
 
   errno = 0;
-  if (kill(reproc->id, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
+  if (kill(process->id, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
 
-  return reproc_wait(reproc, milliseconds, NULL);
+  return reproc_wait(process, milliseconds, NULL);
 }
 
-REPROC_ERROR reproc_kill(reproc_type *reproc, unsigned int milliseconds)
+REPROC_ERROR reproc_kill(reproc_type *process, unsigned int milliseconds)
 {
-  assert(reproc);
-  assert(reproc->id != 0);
+  assert(process);
+  assert(process->id != 0);
 
   errno = 0;
-  if (kill(reproc->id, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
+  if (kill(process->id, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
 
-  return reproc_wait(reproc, milliseconds, NULL);
+  return reproc_wait(process, milliseconds, NULL);
 }
 
-void reproc_destroy(reproc_type *reproc)
+void reproc_destroy(reproc_type *process)
 {
-  assert(reproc);
+  assert(process);
 
-  pipe_close(&reproc->parent_stdin);
-  pipe_close(&reproc->parent_stdout);
-  pipe_close(&reproc->parent_stderr);
+  pipe_close(&process->parent_stdin);
+  pipe_close(&process->parent_stdout);
+  pipe_close(&process->parent_stderr);
 }
 
 unsigned int reproc_system_error(void) { return (unsigned int) errno; }
