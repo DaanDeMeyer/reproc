@@ -188,18 +188,57 @@ API documentation can be found in the [header files](include). The two most
 important headers are [reproc.h](include/c/reproc/reproc.h) and
 [reproc.hpp](include/cpp/reproc/reproc.hpp).
 
-## Unknown errors
+## Error handling
 
-Lots of things can go wrong when working with child processes. reproc tries to
-unify the different platform errors as much as possible but this is an ongoing
-effort. In particular, the Windows Win32 documentation mostly does not specify
-what errors a function can throw. As a result, when an error occurs on Windows
-reproc will usually return `REPROC_UNKNOWN_ERROR` (C++:
-`reproc::UNKNOWN_ERROR`). To get more information reproc provides a function
-`reproc_system_error` (C++: `reproc::system_error`) which returns actual system
-error. Use this function to retrieve the actual system error and file an issue
-with the system error and the reproc function that returned it. This way we can
-identify unknown errors and add them to reproc.
+Most functions in the reproc C API return `REPROC_ERROR`. The `REPROC_ERROR`
+represents all possible errors that can occur when calling reproc functions. Not
+all errors apply to each function so the documentation includes a section
+detailing which errors can occur in each function. One error that can be
+returned by each function that returns `REPROC_ERROR` is `REPROC_UNKNOWN_ERROR`.
+`REPROC_UNKNOWN_ERROR` is necessary because the documentation of the underlying
+system calls reproc uses doesn't always detail what errors occur in which
+circumstances (Windows is especially bad here).
+
+To get more information when a reproc function returns `REPROC_UNKNOWN_ERROR`
+reproc provides the `reproc_system_error` function that returns the actual
+system error. Use this function to retrieve the actual system error and file an
+issue with the system error and the reproc function that returned it. With this
+information an extra value can be added to `REPROC_ERROR` and you'll be able to
+check against this value instead of having to check against
+`REPROC_UNKNOWN_ERROR`.
+
+In the C++ API reproc's errors integrate with the C++ standard library error
+codes (`std::error_code` and `std::error_condition`). All functions in the C++
+API return `std::error_code` values that represent the actual system error if a
+system error occurred. This means the `reproc_system_error` function is not
+necessary in the C++ API since printing the value of the error code will print
+the system error (in the C API printing the error value only gives you its value
+in `REPROC_ERROR` and not the actual system error value). You can still test
+against these error codes using the `reproc::error` enum:
+
+```c++
+reproc::process;
+std::error_code ec = process.start(...);
+if (ec == reproc::error::unknown_error) {
+  // Will print the actual system error value from errno or GetLastError() if
+  // error is a system error
+  std::cerr << ec.value();
+  // You can also print a string representation of the error
+  std::cerr << ec.message();
+  return 1;
+}
+```
+
+Because reproc integrates with `std::error_code` you can also test against
+reproc errors using values from `std::errc`:
+
+```c++
+reproc::process;
+std::error_code ec = process.start(...);
+if (ec == std::errc::not_enough_memory) {
+  // handle error
+}
+```
 
 ## Gotcha's
 
