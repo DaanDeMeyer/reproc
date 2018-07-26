@@ -25,8 +25,6 @@ static unsigned int parse_exit_status(int status)
 
 REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
 {
-  assert(exit_status);
-
   int status = 0;
   errno = 0;
   // Adding WNOHANG makes waitpid only check and return immediately
@@ -45,8 +43,6 @@ REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
 
 REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
 {
-  assert(exit_status);
-
   int status = 0;
   errno = 0;
   if (waitpid(pid, &status, 0) == -1) {
@@ -67,8 +63,14 @@ REPROC_ERROR wait_timeout(pid_t pid, unsigned int milliseconds,
 {
   assert(milliseconds > 0);
 
+  REPROC_ERROR error = REPROC_SUCCESS;
+
+  // Check if child process hasn't exited already before starting timeout fork
+  error = wait_no_hang(pid, exit_status);
+  if (error != REPROC_WAIT_TIMEOUT) { return error;}
+
   pid_t timeout_pid = 0;
-  REPROC_ERROR error = fork_timeout(milliseconds, pid, &timeout_pid);
+  error = fork_timeout(milliseconds, pid, &timeout_pid);
   if (error) { return error; }
 
   // -reproc->pid waits for all processes in the reproc->pid process group
