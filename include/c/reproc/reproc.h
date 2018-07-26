@@ -53,8 +53,7 @@ reproc_wait (and possibly \see reproc_terminate or \see reproc_kill) and \see
 reproc_destroy after the process has exited. If an error occurs the function
 cleans up all allocated resources are cleaned up before the function returns.
 
-\param[in,out] reproc Cannot be NULL. Must have been initialized with \see
-reproc_init.
+\param[in,out] process Cannot be NULL.
 
 \param[in] argv An array of UTF-8 encoded, null terminated strings specifying
 the program to execute along with its arguments. Must at least contain one
@@ -102,7 +101,7 @@ block until the requested amount of bytes have been written to the pipe so
 this function should only rarely succeed without writing the full amount of
 bytes requested.
 
-\param[in,out] reproc Cannot be NULL.
+\param[in,out] process Cannot be NULL.
 \param[in] buffer Pointer to memory block from which bytes should be written.
 \param[in] to_write Maximum amount of bytes to write.
 \param[out] bytes_written Amount of bytes written. Set to zero if an error
@@ -126,7 +125,7 @@ This function is necessary when a child process reads from stdin until it is
 closed. After writing all the input to the child process with \see
 reproc_write the standard input stream can be closed using this function.
 
-\param[in,out] reproc Cannot be NULL.
+\param[in,out] process Cannot be NULL.
 \param[in] stream The stream to close.
 
 \return REPROC_ERROR
@@ -155,7 +154,7 @@ std::string output{};
 
 while (true) {
   unsigned int bytes_read = 0;
-  error = reproc_read(reproc, REPROC_STDOUT, buffer, BUFFER_SIZE, &bytes_read);
+  error = reproc_read(process, REPROC_STDOUT, buffer, BUFFER_SIZE, &bytes_read);
   if (error) { break; }
 
   output.append(buffer, bytes_read);
@@ -174,14 +173,14 @@ reading:
 
 \code{.c}
 unsigned int bytes_read = 0;
-error = reproc_read(reproc, REPROC_STDOUT, buffer, BUFFER_SIZE - 1,
+error = reproc_read(process, REPROC_STDOUT, buffer, BUFFER_SIZE - 1,
                     &bytes_read); //               ^^^^^^^^^^^^^^^
 if (error) { return error; }
 
 buffer[bytes_read] = '\0'; // Add null terminator
 \endcode
 
-\param[in,out] reproc Cannot be NULL.
+\param[in,out] process Cannot be NULL.
 \param[in] stream Stream to read from. Cannot be REPROC_STDIN.
 \param[out] buffer Pointer to buffer where bytes read from stdout should be
 stored.
@@ -203,7 +202,7 @@ REPROC_EXPORT REPROC_ERROR reproc_read(reproc_type *process,
 /*!
 Waits the specified amount of time for the process to exit.
 
-\param[in,out] reproc Cannot be NULL.
+\param[in,out] process Cannot be NULL.
 \param[in] milliseconds Amount of milliseconds to wait. If 0 the function will
 only check if the process is still running without waiting. If REPROC_INFINITE
 the function will wait indefinitely for the child process to exit.
@@ -244,7 +243,7 @@ to exit. If the child process has already exited no signal is sent.
 This function cannot be called again for the current child process if it is
 succesfull.
 
-\param[in,out] reproc Cannot be NULL.
+\param[in,out] process Cannot be NULL.
 \param[in] milliseconds See \see reproc_wait.
 
 \return REPROC_ERROR
@@ -269,7 +268,7 @@ resorting to this function.
 This function cannot be called again for the current child process if it is
 succesfull.
 
-\param[in,out] reproc Cannot be NULL.
+\param[in,out] process Cannot be NULL.
 \param[in] milliseconds See \see reproc_wait.
 
 \return REPROC_ERROR
@@ -286,7 +285,7 @@ This function does not stop the child process. Call \see reproc_terminate or
 \see reproc_kill first if you want to stop the child process or wait for it to
 exit on its own with \see reproc_wait.
 
-\param[in,out] reproc Cannot be NULL
+\param[in,out] process Cannot be NULL
 
 \return REPROC_ERROR
 
