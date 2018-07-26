@@ -126,7 +126,8 @@ mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
       -DREPROC_INSTALL=ON ..
-cmake --build . --target install # Might need root for this
+# Might need root for this depending on install location
+cmake --build . --target install
 ```
 
 After installing reproc you can use `find_package` in the root CMakeLists.txt
@@ -146,7 +147,7 @@ reproc as follows:
 cmake -DCMAKE_PREFIX_PATH=<reproc-install-dir> .. # example: /usr/local on Linux
 ```
 
-### CMake user options
+### CMake options
 
 reproc supports the following CMake options:
 
