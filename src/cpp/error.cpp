@@ -49,6 +49,8 @@ public:
       return error_code == std::errc::no_such_file_or_directory;
     case reproc::error::name_too_long:
       return error_code == std::errc::filename_too_long;
+    case reproc::error::unknown_error:
+      return error_code.category() == std::system_category();
     default:
       return false;
     }

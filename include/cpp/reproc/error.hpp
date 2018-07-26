@@ -26,6 +26,7 @@ enum class error {
   symlink_loop,
   file_not_found,
   name_too_long,
+  unknown_error
 };
 
 REPROC_EXPORT const std::error_category &error_category() noexcept;
