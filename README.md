@@ -4,15 +4,17 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/9d79srq8n7ytnrs5?svg=true)](https://ci.appveyor.com/project/DaanDeMeyer/reproc)
 [![Join the chat at https://gitter.im/reproc/Lobby](https://badges.gitter.im/reproc/Lobby.svg)](https://gitter.im/reproc/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+- [What is reproc?](#what-is-reproc)
+- [Features](#features)
 - [Questions](#questions)
 - [Getting started](#getting-started)
   - [FetchContent](#fetchcontent)
   - [Git submodule/vendor](#git-submodulevendor)
   - [Install](#install)
-  - [CMake user options](#cmake-user-options)
+  - [CMake options](#cmake-options)
 - [Usage](#usage)
 - [Documentation](#documentation)
-- [Unknown errors](#unknown-errors)
+- [Error handling](#error-handling)
 - [Gotcha's](#gotchas)
 - [Design](#design)
   - [Memory allocation](#memory-allocation)
@@ -22,6 +24,32 @@
     - [POSIX](#posix)
     - [Windows](#windows)
 - [Contributing](#contributing)
+
+## What is reproc?
+
+Reproc (Redirected Process) is cross-platform library that starts external
+processes from within a C or C++ application, reads/writes to their
+stdin/stdout/stderr streams and waits for them to exit or forcefully stops them.
+
+The main use case is working with command line tools from within C or C++
+applications.
+
+## Features
+
+- Start any program from within C or C++ code
+- Write to its standard input stream and read from its standard output and
+  standard error streams
+- Wait for the program to exit or forcefully stop it yourself. When forcefully
+  stopping a process you can optionally allow the process to clean up its
+  resources or immediately stop it
+- The core library is written in pure C. An optional C++ wrapper with extra
+  features is available for use in C++ applications
+- Zero dependencies
+- Multiple installation methods. Either build reproc as part of your project or
+  install it as a shared library
+- Care was taken to not leak resources anywhere in the library. See
+  [Gotcha's](#gotcha's) and [Avoiding resource leaks](##avoiding-resource-leaks)
+  for more information
 
 ## Questions
 
