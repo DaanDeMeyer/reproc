@@ -101,6 +101,10 @@ block until the requested amount of bytes have been written to the pipe so
 this function should only rarely succeed without writing the full amount of
 bytes requested.
 
+(POSIX) Writing to a closed stdin pipe by default terminates the parent process
+with the `SIGPIPE` signal. reproc_write will only return REPROC_STREAM_CLOSED if
+this signal is ignored by the parent process.<
+
 \param[in,out] process Cannot be NULL.
 \param[in] buffer Pointer to memory block from which bytes should be written.
 \param[in] to_write Maximum amount of bytes to write.
@@ -114,7 +118,8 @@ Possible errors:
 - REPROC_INTERRUPTED
 - REPROC_PARTIAL_WRITE
 */
-REPROC_EXPORT REPROC_ERROR reproc_write(reproc_type *process, const void *buffer,
+REPROC_EXPORT REPROC_ERROR reproc_write(reproc_type *process,
+                                        const void *buffer,
                                         unsigned int to_write,
                                         unsigned int *bytes_written);
 

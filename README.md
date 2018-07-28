@@ -329,6 +329,12 @@ if (ec == std::errc::not_enough_memory) {
 
   See [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
 
+- (POSIX) Writing to a closed stdin pipe of a child process will crash the
+  parent process with the `SIGPIPE` signal. To avoid this the `SIGPIPE` signal
+  has to be ignored in the parent process. If the `SIGPIPE` signal is ignored
+  `reproc_write` will return `REPROC_STREAM_CLOSED` as expected when writing to
+  a closed stdin pipe.
+
 ## Design
 
 reproc is designed to be a minimal wrapper around the platform-specific API's
