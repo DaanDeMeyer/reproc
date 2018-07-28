@@ -19,9 +19,11 @@ int main()
 
   ec = cmake_help.start(args);
   if (ec == reproc::error::file_not_found) {
-    std::cerr << "cmake executable not found. Make sure it's available from "
-                 "the PATH.";
-  } else if (ec) { return fail(ec); }
+    std::cerr << "cmake not found. Make sure it's available from the PATH.";
+    return 1;
+  } else if (ec) {
+    return fail(ec);
+  }
 
   std::string output;
 
