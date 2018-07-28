@@ -75,16 +75,16 @@ public:
   Takes a Parser with the following signature:
 
   \code{.cpp}
-  class Parser {
-    // If stream_closed_is_error returns false, SUCCESS is returned instead of
-    // STREAM_CLOSED when the stream is closed
+  struct Parser {
+    // If stream_closed_is_error returns false, no error is returned when the
+    // stream is closed. This avoids having to check for
+    // reproc::error::stream_closed after read returns.
     bool stream_closed_is_error();
 
     // Receives the buffer after each read so it can be parsed and appended
     // to the final result
     bool operator()(const char *buffer, unsigned int size);
   }
-  bool parser(const char *buffer, unsigned int size);
   \endcode
 
   The parser receives the buffer after each read so it can be appended to the
