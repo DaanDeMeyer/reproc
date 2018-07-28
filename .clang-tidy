@@ -4,6 +4,7 @@ Checks:
 *,
 -fuchsia-default-arguments,
 -readability-implicit-bool-conversion,
+-readability-else-after-return
 '
 HeaderFilterRegex: '^(?!doctest\.h$).*$'
 ...
