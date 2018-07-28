@@ -27,7 +27,9 @@ int main(void)
     fprintf(stderr, "%s",
             "git not found. Make sure it's available from the PATH");
     return 1;
-  } else if (error) {
+  }
+
+  if (error) {
     return (int) error;
   }
 
