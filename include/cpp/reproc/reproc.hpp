@@ -78,27 +78,38 @@ public:
   /*!
   Calls \see read until an error occurs or the provided parser returns false.
 
-  Takes a Parser with the following signature:
+  /p parser should be a function with the following signature:
 
   \code{.cpp}
-  struct Parser {
-    // If stream_closed_is_error returns false, no error is returned when the
-    // stream is closed. This avoids having to check for
-    // reproc::error::stream_closed after read returns.
-    bool stream_closed_is_error();
-
-    // Receives the buffer after each read so it can be parsed and appended
-    // to the final result
-    bool operator()(const char *buffer, unsigned int size);
-  }
+  bool parser(const char *buffer, unsigned int size);
   \endcode
 
   The parser receives the buffer after each read so it can be appended to the
-  final result.
+  final result. One way to make a parser is to use a lambda:
+
+  \code{.cpp}
+  reproc::process process;
+  process.start(...)
+
+  std::string output;
+  process.read(reproc::stream::cout,
+               [&output](const char *buffer, unsigned int size) {
+    output.append(buffer, size);
+    return true;
+  });
+  \endcode
+
+  This parser reads all the output of the child process into a string.
+
+  It is also possible to use a class that overloads the call operator as a
+  parser. parser.hpp contains built-in parsers that are defined as a class.
+
+  Note that this method does not report the child process closing the output
+  stream as an error.
 
   For examples of parsers, see parser.hpp.
 
-  \return reproc::error \see reproc_read
+  \return reproc::error \see read except for reproc::error::stream_closed
   */
   template <typename Parser>
   std::error_code read(reproc::stream stream, Parser &&parser);
@@ -134,9 +145,8 @@ std::error_code process::read(reproc::stream stream, Parser &&parser)
     if (!parser(buffer, bytes_read)) { break; }
   }
 
-  if (ec == reproc::error::stream_closed && !parser.stream_closed_is_error()) {
-    return {}; // success
-  }
+  // The child process closing the stream is not treated as an error
+  if (ec == reproc::error::stream_closed) { return {}; }
 
   return ec;
 }

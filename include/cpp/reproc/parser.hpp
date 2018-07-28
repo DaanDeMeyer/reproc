@@ -13,8 +13,6 @@ class string_parser
 public:
   string_parser(std::string &out) noexcept : out_(out) {}
 
-  bool stream_closed_is_error() const noexcept { return false; }
-
   bool operator()(const char *buffer, unsigned int size)
   {
     out_.append(buffer, size);
@@ -28,8 +26,6 @@ class ostream_parser
 
 public:
   ostream_parser(std::ostream &out) noexcept : out_(out) {}
-
-  bool stream_closed_is_error() const noexcept { return false; }
 
   bool operator()(const char *buffer, unsigned int size)
   {
