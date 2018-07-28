@@ -21,9 +21,9 @@ class process
 {
 
 public:
-  /*! \see reproc_init. Aditionally allocates memory for the process_type
-  struct. Throws std::bad_alloc if allocating memory for the process_type struct
-  of the underlying C library fails. */
+  /*! Allocates memory for the reproc_type struct. Throws std::bad_alloc if
+  allocating memory for the reproc_type struct of the underlying C library
+  fails. */
   REPROC_EXPORT process();
 
   /*! \see reproc_destroy. Aditionally frees the memory allocated in the
@@ -129,7 +129,7 @@ std::error_code process::read(reproc::stream stream, Parser &&parser)
   }
 
   if (ec == reproc::error::stream_closed && !parser.stream_closed_is_error()) {
-    return std::error_code{};
+    return {}; // success
   }
 
   return ec;
