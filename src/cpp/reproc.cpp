@@ -13,7 +13,13 @@ static std::error_code reproc_error_to_error_code(REPROC_ERROR error)
   case REPROC_STREAM_CLOSED: return { error, reproc::error_category() };
   case REPROC_PARTIAL_WRITE: return { error, reproc::error_category() };
   default:
+  // errno values should have generic_category() but windows errors should have
+  // system_category()
+#ifdef _WIN32
     return { static_cast<int>(reproc_system_error()), std::system_category() };
+#else
+    return { static_cast<int>(reproc_system_error()), std::generic_category() };
+#endif
   }
 }
 

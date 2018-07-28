@@ -50,9 +50,12 @@ public:
     case reproc::error::name_too_long:
       return error_code == std::errc::filename_too_long;
     case reproc::error::unknown_error:
+#ifdef _WIN32
+      return error_code.category() == std::generic_category();
+#else
       return error_code.category() == std::system_category();
-    default:
-      return false;
+#endif
+    default: return false;
     }
   }
 };
