@@ -269,6 +269,19 @@ if (ec == std::errc::not_enough_memory) {
 }
 ```
 
+## Multithreading
+
+Guidelines for using a reproc child process from multiple threads:
+
+- Don't wait for or stop the same child process from multiple threads at the
+  same time
+- Don't read from or write to the same stream of the same child process from
+  multiple threads at the same time
+
+Different threads can read from or write to different streams at the same time.
+This is a valid approach when you want to write to stdin and read from stdout in
+parallel.
+
 ## Gotcha's
 
 - (POSIX) On POSIX a parent process is required to wait on a child process
