@@ -23,7 +23,13 @@ int main(void)
   // process. If the working directory is NULL the working directory of the
   // parent process is used.
   error = reproc_start(&git_status, argc, argv, NULL);
-  if (error) { return (int) error; }
+  if (error == REPROC_FILE_NOT_FOUND) {
+    fprintf(stderr, "%s",
+            "git not found. Make sure it's available from the PATH");
+    return 1;
+  } else if (error) {
+    return (int) error;
+  }
 
   // Start with an empty string
   size_t size = 0;
