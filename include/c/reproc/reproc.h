@@ -103,7 +103,7 @@ bytes requested.
 
 (POSIX) Writing to a closed stdin pipe by default terminates the parent process
 with the `SIGPIPE` signal. reproc_write will only return REPROC_STREAM_CLOSED if
-this signal is ignored by the parent process.<
+this signal is ignored by the parent process.
 
 \param[in,out] process Cannot be NULL.
 \param[in] buffer Pointer to memory block from which bytes should be written.
