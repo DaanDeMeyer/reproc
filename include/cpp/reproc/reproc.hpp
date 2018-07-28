@@ -26,8 +26,14 @@ public:
   fails. */
   REPROC_EXPORT process();
 
-  /*! \see reproc_destroy. Aditionally frees the memory allocated in the
-  constructor. */
+  /*!
+  see reproc_destroy. Aditionally frees the memory allocated in the
+  constructor.
+
+  The destructor does not stop the child process if it still running. Make sure
+  the process has stopped before the destructor is called by using a combination
+  of \see wait, \see terminate and \see kill.
+  */
   REPROC_EXPORT ~process() noexcept;
 
   /* Enforce unique ownership */
