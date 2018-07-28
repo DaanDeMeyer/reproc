@@ -29,7 +29,11 @@ int main(int argc, char *argv[])
   std::error_code ec;
 
   ec = forward.start(argc - 1, argv + 1);
-  if (ec) { return fail(ec); }
+  if (ec == reproc::error::file_not_found) {
+    std::cerr << "Program not found. Make sure it's available from the PATH";
+  } else if (ec) {
+    return fail(ec);
+  }
 
   // Some programs wait for the input stream to be closed before continuing
   forward.close(reproc::cin);

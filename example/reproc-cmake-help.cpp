@@ -18,7 +18,10 @@ int main()
   std::vector<std::string> args = { "cmake", "--help" };
 
   ec = cmake_help.start(args);
-  if (ec) { return fail(ec); }
+  if (ec == reproc::error::file_not_found) {
+    std::cerr << "cmake executable not found. Make sure it's available from "
+                 "the PATH.";
+  } else if (ec) { return fail(ec); }
 
   std::string output;
 
