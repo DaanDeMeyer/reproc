@@ -119,7 +119,8 @@ public:
                                      unsigned int *exit_status) noexcept;
 
   /*! \see reproc_terminate */
-  REPROC_EXPORT std::error_code terminate(unsigned int milliseconds) noexcept;
+  REPROC_EXPORT std::error_code terminate(unsigned int milliseconds,
+                                          unsigned int *exit_status) noexcept;
 
   /*! \see reproc_kill */
   REPROC_EXPORT std::error_code kill(unsigned int milliseconds) noexcept;

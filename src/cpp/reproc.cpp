@@ -13,8 +13,8 @@ static std::error_code reproc_error_to_error_code(REPROC_ERROR error)
   case REPROC_STREAM_CLOSED: return { error, reproc::error_category() };
   case REPROC_PARTIAL_WRITE: return { error, reproc::error_category() };
   default:
-  // errno values should have generic_category() but windows errors should have
-  // system_category()
+    // errno values should have generic_category() but windows errors should
+    // have system_category()
 #ifdef _WIN32
     return { static_cast<int>(reproc_system_error()), std::system_category() };
 #else
@@ -93,9 +93,11 @@ std::error_code process::wait(unsigned int milliseconds,
   return reproc_error_to_error_code(error);
 }
 
-std::error_code process::terminate(unsigned int milliseconds) noexcept
+std::error_code process::terminate(unsigned int milliseconds,
+                                   unsigned int *exit_status) noexcept
 {
-  REPROC_ERROR error = reproc_terminate(process_.get(), milliseconds);
+  REPROC_ERROR error = reproc_terminate(process_.get(), milliseconds,
+                                        exit_status);
   return reproc_error_to_error_code(error);
 }
 

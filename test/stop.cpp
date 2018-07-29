@@ -2,6 +2,7 @@
 #include <reproc/reproc.h>
 
 #include <array>
+#include <iostream>
 
 // NOLINTNEXTLINE(cert-err58-cpp)
 TEST_CASE("stop")
@@ -20,14 +21,13 @@ TEST_CASE("stop")
 // Wait to avoid terminating the child process on Windows before it is
 // initialized (which would result in an error window appearing)
 #if defined(_WIN32)
-  unsigned int exit_status = 0;
-  error = reproc_wait(&infinite, 50, &exit_status);
+  error = reproc_wait(&infinite, 50, nullptr);
   REQUIRE((error == REPROC_WAIT_TIMEOUT));
 #endif
 
   SUBCASE("terminate")
   {
-    error = reproc_terminate(&infinite, 50);
+    error = reproc_terminate(&infinite, 50, nullptr);
     REQUIRE(!error);
   }
 

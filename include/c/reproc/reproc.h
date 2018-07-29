@@ -205,18 +205,30 @@ REPROC_EXPORT REPROC_ERROR reproc_read(reproc_type *process,
                                        unsigned int *bytes_read);
 
 /*!
-Waits the specified amount of time for the process to exit.
+Waits the specified amount of time for the child process to exit. If the child
+process exited normally the exit status of the process is stored in \p
+exit_status.
+
+Exiting normally is defined as follows for the different platforms:
+- POSIX: The process returned from its main function or called exit or _exit
+- Windows: The process returned from its main or WinMain function
+
+If the function did not exit normally the following values are stored in \p
+exit_status:
+- POSIX: Number of the signal that terminated the child process
+- Windows: exit status passed to ExitProcess or TerminateProcess function call
+that terminated the child process
+
+This function cannot be called again for the current child process if a previous
+call to reproc_wait, reproc_terminate or reproc_kill was succesfull.
 
 \param[in,out] process Cannot be NULL.
 \param[in] milliseconds Amount of milliseconds to wait. If 0 the function will
 only check if the process is still running without waiting. If REPROC_INFINITE
 the function will wait indefinitely for the child process to exit.
-\param[out] exit_status Output parameter used to store the exit status of the
-child process if reproc_wait is succesfull (the child process exits within the
-timeout).
-
-This function cannot be called again for the current child process if it is
-succesfull.
+\param[out] exit_status Optional output parameter used to store the exit status
+of the child process if reproc_wait is succesfull (the child process exits
+within the timeout).
 
 \return REPROC_ERROR
 
@@ -242,21 +254,27 @@ to clean up).
 
 On Windows a CTRL-BREAK signal is sent to the child process. On POSIX a
 SIGTERM signal is sent to the child process. After sending the signal the
-function waits for the specified amount of milliseconds for the child process
-to exit. If the child process has already exited no signal is sent.
+function calls reproc_wait to wait for the specified amount of milliseconds for
+the child process to exit.
 
-This function cannot be called again for the current child process if it is
-succesfull.
+Because child processes can still exit normally when receiving CTRL-BREAK or
+SIGTERM this function also takes an optional out argument to store the possible
+exit status of the child process.
+
+This function cannot be called again for the current child process if a previous
+call to reproc_wait, reproc_terminate or reproc_kill was succesfull.
 
 \param[in,out] process Cannot be NULL.
-\param[in] milliseconds See \see reproc_wait.
+\param[in] milliseconds See reproc_wait
+\param[out] exit_status See reproc_wait
 
 \return REPROC_ERROR
 
 Possible errors: See \see reproc_wait
 */
 REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_type *process,
-                                            unsigned int milliseconds);
+                                            unsigned int milliseconds,
+                                            unsigned int *exit_status);
 
 /*!
 Kills the child process without allowing for cleanup.
@@ -270,8 +288,8 @@ This function should only be used as a last resort. Always wait for a child
 process to exit on its own or try to stop it with \see reproc_terminate before
 resorting to this function.
 
-This function cannot be called again for the current child process if it is
-succesfull.
+This function cannot be called again for the current child process if a previous
+call to reproc_wait, reproc_terminate or reproc_kill was succesfull.
 
 \param[in,out] process Cannot be NULL.
 \param[in] milliseconds See \see reproc_wait.

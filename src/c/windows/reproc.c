@@ -157,7 +157,8 @@ REPROC_ERROR reproc_wait(reproc_type *process, unsigned int milliseconds,
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_terminate(reproc_type *process, unsigned int milliseconds)
+REPROC_ERROR reproc_terminate(reproc_type *process, unsigned int milliseconds,
+                              unsigned int *exit_status)
 {
   assert(process);
   assert(process->handle);
@@ -171,7 +172,7 @@ REPROC_ERROR reproc_terminate(reproc_type *process, unsigned int milliseconds)
     return REPROC_UNKNOWN_ERROR;
   }
 
-  return reproc_wait(process, milliseconds, NULL);
+  return reproc_wait(process, milliseconds, exit_status);
 }
 
 REPROC_ERROR reproc_kill(reproc_type *process, unsigned int milliseconds)
