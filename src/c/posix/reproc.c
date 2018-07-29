@@ -116,7 +116,8 @@ REPROC_ERROR reproc_wait(reproc_type *process, unsigned int milliseconds,
 }
 
 REPROC_ERROR reproc_terminate(struct reproc_type *process,
-                              unsigned int milliseconds)
+                              unsigned int milliseconds,
+                              unsigned int *exit_status)
 {
   assert(process);
   assert(process->id != 0);
@@ -124,7 +125,7 @@ REPROC_ERROR reproc_terminate(struct reproc_type *process,
   errno = 0;
   if (kill(process->id, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
 
-  return reproc_wait(process, milliseconds, NULL);
+  return reproc_wait(process, milliseconds, exit_status);
 }
 
 REPROC_ERROR reproc_kill(reproc_type *process, unsigned int milliseconds)
