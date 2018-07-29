@@ -2,7 +2,6 @@
 #include <reproc/reproc.h>
 
 #include <array>
-#include <iostream>
 
 // NOLINTNEXTLINE(cert-err58-cpp)
 TEST_CASE("stop")
