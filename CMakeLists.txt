@@ -70,6 +70,7 @@ else()
     -pedantic-errors
     -Wshadow
     -Wconversion
+    -fsanitize=address,undefined
     $<$<BOOL:${REPROC_CI}>:-Werror>
     $<$<C_COMPILER_ID:Clang>:-fcolor-diagnostics>
     $<$<C_COMPILER_ID:GNU>:-fdiagnostics-color>
