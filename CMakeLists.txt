@@ -58,19 +58,25 @@ endif()
 
 ### Common options ###
 
+
+
 if(MSVC)
-  set(REPROC_WARNINGS
+  set(REPROC_SANITIZERS "")
+
+  set(REPROC_COMPILE_OPTIONS
     # /W3 is enabled by default
     $<$<BOOL:${REPROC_CI}>:/WX>
   )
 else()
-  set(REPROC_WARNINGS
+  set(REPROC_SANITIZERS -fsanitize=address,undefined)
+
+  set(REPROC_COMPILE_OPTIONS
     -Wall
     -Wextra
     -pedantic-errors
     -Wshadow
     -Wconversion
-    -fsanitize=address,undefined
+    ${REPROC_SANITIZERS}
     $<$<BOOL:${REPROC_CI}>:-Werror>
     $<$<C_COMPILER_ID:Clang>:-fcolor-diagnostics>
     $<$<C_COMPILER_ID:GNU>:-fdiagnostics-color>
@@ -92,6 +98,7 @@ set_target_properties(reproc PROPERTIES
 
 reproc_set_c_standard(reproc 99)
 target_compile_options(reproc PRIVATE ${REPROC_WARNINGS})
+target_link_libraries(reproc PRIVATE ${REPROC_SANITIZERS})
 
 # Only use the headers from the repository when building. When installing we
 # want to use the install location of the headers (e.g. /usr/include) as the
@@ -183,9 +190,9 @@ if(REPROC_BUILD_TESTS)
     CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
   )
 
-  target_link_libraries(reproc-test PRIVATE reproc)
-  target_include_directories(reproc-test SYSTEM PRIVATE third-party/doctest)
   target_compile_options(reproc-test PRIVATE ${REPROC_WARNINGS})
+  target_link_libraries(reproc-test PRIVATE reproc ${REPROC_SANITIZERS})
+  target_include_directories(reproc-test SYSTEM PRIVATE third-party/doctest)
 
   target_sources(reproc-test PRIVATE
     test/impl.cpp
@@ -199,6 +206,7 @@ if(REPROC_BUILD_TESTS)
   function(reproc_add_test_helper TARGET)
     add_executable(${TARGET} test/res/${TARGET}.cpp)
     target_compile_options(${TARGET} PRIVATE ${REPROC_WARNINGS})
+    target_link_libraries(reproc-test PRIVATE ${REPROC_SANITIZERS})
     set_target_properties(${TARGET} PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY test/res
       CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
@@ -242,8 +250,8 @@ if(REPROC_BUILD_EXAMPLES)
   function(reproc_add_c_example TARGET)
     add_executable(${TARGET} example/${TARGET}.c)
     reproc_set_c_standard(${TARGET} 99)
-    target_link_libraries(${TARGET} PRIVATE reproc)
     target_compile_options(${TARGET} PRIVATE ${REPROC_WARNINGS})
+    target_link_libraries(${TARGET} PRIVATE reproc ${REPROC_SANITIZERS})
     set_target_properties(${TARGET} PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY example
       C_CLANG_TIDY "${REPROC_CLANG_TIDY}"
@@ -253,8 +261,8 @@ if(REPROC_BUILD_EXAMPLES)
   function(reproc_add_cxx_example TARGET)
     add_executable(${TARGET} example/${TARGET}.cpp)
     reproc_set_cxx_standard(${TARGET} 11)
-    target_link_libraries(${TARGET} PRIVATE reproc)
     target_compile_options(${TARGET} PRIVATE ${REPROC_WARNINGS})
+    target_link_libraries(${TARGET} PRIVATE reproc ${REPROC_SANITIZERS})
     set_target_properties(${TARGET} PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY example
       CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
