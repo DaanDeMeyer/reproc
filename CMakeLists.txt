@@ -189,21 +189,22 @@ if(REPROC_BUILD_TESTS)
 
   ### Tests ###
 
-  add_executable(reproc-test "")
-  reproc_set_cxx_standard(reproc-test 11)
+  add_executable(reproc-tests "")
+  reproc_set_cxx_standard(reproc-tests 11)
 
-  set_target_properties(reproc-test PROPERTIES
+  set_target_properties(reproc-tests PROPERTIES
+    OUTPUT_NAME tests
     RUNTIME_OUTPUT_DIRECTORY test
     CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
   )
 
-  target_link_libraries(reproc-test PRIVATE
+  target_link_libraries(reproc-tests PRIVATE
     reproc
     $<BUILD_INTERFACE:reproc-dev-flags>
   )
-  target_include_directories(reproc-test SYSTEM PRIVATE third-party/doctest)
+  target_include_directories(reproc-tests SYSTEM PRIVATE third-party/doctest)
 
-  target_sources(reproc-test PRIVATE
+  target_sources(reproc-tests PRIVATE
     test/impl.cpp
     test/read-write.cpp
     test/stop.cpp
@@ -213,43 +214,41 @@ if(REPROC_BUILD_TESTS)
   ### Helper programs ###
 
   function(reproc_add_test_helper TARGET)
-    add_executable(${TARGET} test/res/${TARGET}.cpp)
-    target_link_libraries(${TARGET} PRIVATE
+    add_executable(reproc-${TARGET} test/res/${TARGET}.cpp)
+    target_link_libraries(reproc-${TARGET} PRIVATE
       $<BUILD_INTERFACE:reproc-dev-flags>
     )
-    set_target_properties(${TARGET} PROPERTIES
+    set_target_properties(reproc-${TARGET} PROPERTIES
+      OUTPUT_NAME ${TARGET}
       RUNTIME_OUTPUT_DIRECTORY test/res
       CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
     )
-    set(REPROC_TEST_HELPERS ${REPROC_TEST_HELPERS} ${TARGET} PARENT_SCOPE)
     string(TOUPPER ${TARGET} TARGET_UPPER_CASE)
     # Pass paths as compile time parameters so tests can be run from any
     # directory without hardcoding the path in the tests which differs for each
     # user.
-    target_compile_definitions(reproc-test PRIVATE
-      ${TARGET_UPPER_CASE}_HELPER="$<TARGET_FILE:${TARGET}>"
+    target_compile_definitions(reproc-tests PRIVATE
+      ${TARGET_UPPER_CASE}_PATH="$<TARGET_FILE:reproc-${TARGET}>"
     )
+    add_dependencies(reproc-tests reproc-${TARGET})
   endfunction()
 
-  # Use _ because macro names in C++ can't contain -
-  reproc_add_test_helper(reproc_stdout)
-  reproc_add_test_helper(reproc_stderr)
-  reproc_add_test_helper(reproc_infinite)
-  reproc_add_test_helper(reproc_noop)
+  reproc_add_test_helper(stdout)
+  reproc_add_test_helper(stderr)
+  reproc_add_test_helper(infinite)
+  reproc_add_test_helper(noop)
 
-  add_dependencies(reproc-test ${REPROC_TEST_HELPERS})
-
-  target_compile_definitions(reproc-test PRIVATE
-    REPROC_NOOP_DIR="$<TARGET_FILE_DIR:reproc_noop>"
+  target_compile_definitions(reproc-tests PRIVATE
+    REPROC_NOOP_DIR="$<TARGET_FILE_DIR:reproc-noop>"
   )
 
   add_custom_target(
     reproc-run-tests
-    COMMAND $<TARGET_FILE:reproc-test> --force-colors=true
+    COMMAND $<TARGET_FILE:reproc-tests> --force-colors=true
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
-  add_dependencies(reproc-run-tests reproc-test)
+  add_dependencies(reproc-run-tests reproc-tests)
 
 endif()
 
@@ -258,18 +257,19 @@ endif()
 if(REPROC_BUILD_EXAMPLES)
 
   function(reproc_add_c_example TARGET)
-    add_executable(${TARGET} example/${TARGET}.c)
-    reproc_set_c_standard(${TARGET} 99)
-    target_link_libraries(${TARGET} PRIVATE
+    add_executable(reproc-${TARGET} example/${TARGET}.c)
+    reproc_set_c_standard(reproc-${TARGET} 99)
+    target_link_libraries(reproc-${TARGET} PRIVATE
       reproc
       $<BUILD_INTERFACE:reproc-dev-flags>
     )
-    set_target_properties(${TARGET} PROPERTIES
+    set_target_properties(reproc-${TARGET} PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY example
       C_CLANG_TIDY "${REPROC_CLANG_TIDY}"
+      OUTPUT_NAME ${TARGET}
     )
     if(REPROC_SANITIZERS)
-      set_target_properties(${TARGET} PROPERTIES
+      set_target_properties(reproc-${TARGET} PROPERTIES
         # Hack to avoid ubsan undefined reference errors
         LINKER_LANGUAGE CXX
       )
@@ -277,23 +277,24 @@ if(REPROC_BUILD_EXAMPLES)
   endfunction()
 
   function(reproc_add_cxx_example TARGET)
-    add_executable(${TARGET} example/${TARGET}.cpp)
-    reproc_set_cxx_standard(${TARGET} 11)
-    target_link_libraries(${TARGET} PRIVATE
+    add_executable(reproc-${TARGET} example/${TARGET}.cpp)
+    reproc_set_cxx_standard(reproc-${TARGET} 11)
+    target_link_libraries(reproc-${TARGET} PRIVATE
       reproc
       $<BUILD_INTERFACE:reproc-dev-flags>
     )
-    set_target_properties(${TARGET} PROPERTIES
+    set_target_properties(reproc-${TARGET} PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY example
       CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
+      OUTPUT_NAME ${TARGET}
     )
   endfunction()
 
-  reproc_add_c_example(reproc-git-status)
+  reproc_add_c_example(git-status)
 
   if(REPROC_BUILD_CXX_WRAPPER)
-    reproc_add_cxx_example(reproc-cmake-help)
-    reproc_add_cxx_example(reproc-forward)
+    reproc_add_cxx_example(cmake-help)
+    reproc_add_cxx_example(forward)
   endif()
 endif()
 

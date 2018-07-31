@@ -8,7 +8,7 @@ TEST_CASE("stop")
 {
   reproc_type infinite;
 
-  std::array<const char *, 2> argv = { { REPROC_INFINITE_HELPER, nullptr } };
+  std::array<const char *, 2> argv = { { INFINITE_PATH, nullptr } };
   auto argc = static_cast<int>(argv.size() - 1);
 
   REPROC_ERROR error = REPROC_SUCCESS;

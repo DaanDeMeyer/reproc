@@ -8,7 +8,7 @@ TEST_CASE("working-directory")
 {
   reproc_type noop;
 
-  std::array<const char *, 2> argv = { { REPROC_NOOP_HELPER, nullptr } };
+  std::array<const char *, 2> argv = { { NOOP_PATH, nullptr } };
   auto argc = static_cast<int>(argv.size() - 1);
   const char *working_directory = REPROC_NOOP_DIR;
 
