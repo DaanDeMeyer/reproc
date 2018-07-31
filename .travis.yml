@@ -4,6 +4,9 @@ sudo: false
 # See: https://stackoverflow.com/questions/35110123/travis-ci-with-c14-and-linux
 language: generic
 
+# Stops Leak Sanitizer from crashing
+sudo: true
+
 notifications:
   email: false
 
