@@ -17,7 +17,7 @@ option(REPROC_SANITIZERS "Compile with sanitizers" OFF)
 
 ### clang-tidy ###
 
-if (REPROC_TIDY)
+if(REPROC_TIDY)
   cmake_minimum_required(VERSION 3.6)
   find_program(REPROC_CLANG_TIDY clang-tidy)
 
@@ -27,15 +27,7 @@ if (REPROC_TIDY)
     endif()
   else()
     message(WARNING "clang-tidy not found")
-    # If clang-tidy is not found REPROC_CLANG_TIDY is not set to an empty value
-    # so we have to override it
-    set(REPROC_CLANG_TIDY "")
   endif()
-else()
-  # find_program puts its results in the CMake cache. When REPROC_RUN_CLANG_TIDY
-  # is set to OFF in a subsequent invocation of CMake we have to override
-  # REPROC_CLANG_TIDY to make sure it doesn't contain a cache value
-  set(REPROC_CLANG_TIDY "")
 endif()
 
 ### Common development flags ###
@@ -82,8 +74,6 @@ function(reproc_set_common TARGET LANGUAGE OUTPUT_DIRECTORY)
     ${LANGUAGE}_STANDARD ${REPROC_${LANGUAGE}_STANDARD}
     ${LANGUAGE}_STANDARD_REQUIRED ON
     ${LANGUAGE}_EXTENSIONS OFF
-    # Might not be set so surround with quotes so we always have a value
-    ${LANGUAGE}_CLANG_TIDY "${REPROC_CLANG_TIDY}"
     OUTPUT_NAME ${WITHOUT_PREFIX}
     RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
     ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
@@ -92,6 +82,14 @@ function(reproc_set_common TARGET LANGUAGE OUTPUT_DIRECTORY)
   target_link_libraries(${TARGET} PRIVATE
     $<BUILD_INTERFACE:reproc-dev-flags>
   )
+
+  if(REPROC_TIDY AND REPROC_CLANG_TIDY)
+    set_target_properties(${TARGET} PROPERTIES
+      # REPROC_CLANG_TIDY is a list so we surround it with quotes to pass it as
+      # a single argument
+      ${LANGUAGE}_CLANG_TIDY "${REPROC_CLANG_TIDY}"
+    )
+  endif()
 endfunction()
 
 ### Library ###
