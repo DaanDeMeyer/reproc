@@ -13,7 +13,7 @@ option(REPROC_TIDY "Run clang-tidy as part of the build \
 option(REPROC_INSTALL "Generate install target" OFF)
 option(REPROC_FORMAT "Find clang-format and add target to run it on all source \
 files")
-option(REPROC_BUILD_SANITIZERS "Compile with sanitizers" OFF)
+option(REPROC_SANITIZERS "Compile with sanitizers" OFF)
 
 ### Helpers ###
 
