@@ -114,7 +114,7 @@ target_include_directories(reproc PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/c>
 )
 
-# Used to add __declspec(dllexport/dllimport) on Windows
+# Used to add visibility modifiers (declspec)
 target_compile_definitions(reproc
   PUBLIC $<$<BOOL:${BUILD_SHARED_LIBS}>:REPROC_SHARED>
   PRIVATE $<BUILD_INTERFACE:REPROC_BUILDING>
