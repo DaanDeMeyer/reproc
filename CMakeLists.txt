@@ -39,7 +39,6 @@ if (REPROC_TIDY)
   find_program(REPROC_CLANG_TIDY clang-tidy)
 
   if(REPROC_CLANG_TIDY)
-    message(STATUS "clang-tidy found")
     if (REPROC_CI)
       set(REPROC_CLANG_TIDY ${REPROC_CLANG_TIDY} -warnings-as-errors=*)
     endif()
@@ -56,23 +55,29 @@ else()
   set(REPROC_CLANG_TIDY "")
 endif()
 
-### Common options ###
+### Common development options ###
+
+add_library(reproc-dev-flags INTERFACE)
 
 if(MSVC)
-  set(REPROC_COMPILE_OPTIONS
+  target_compile_options(reproc-dev-flags INTERFACE
     # /W3 is enabled by default
     $<$<BOOL:${REPROC_CI}>:/WX>
   )
 else()
-  set(REPROC_COMPILE_OPTIONS
+  target_compile_options(reproc-dev-flags INTERFACE
     -Wall
     -Wextra
     -pedantic-errors
     -Wshadow
     -Wconversion
+    -fsanitize=address,undefined
     $<$<BOOL:${REPROC_CI}>:-Werror>
     $<$<C_COMPILER_ID:Clang>:-fcolor-diagnostics>
     $<$<C_COMPILER_ID:GNU>:-fdiagnostics-color>
+  )
+  target_link_libraries(reproc-dev-flags INTERFACE
+    -fsanitize=address,undefined
   )
 endif()
 
@@ -90,7 +95,9 @@ set_target_properties(reproc PROPERTIES
 )
 
 reproc_set_c_standard(reproc 99)
-target_compile_options(reproc PRIVATE ${REPROC_COMPILE_OPTIONS})
+target_link_libraries(reproc PRIVATE
+  $<BUILD_INTERFACE:reproc-dev-flags>
+)
 
 # Only use the headers from the repository when building. When installing we
 # want to use the install location of the headers (e.g. /usr/include) as the
@@ -182,8 +189,10 @@ if(REPROC_BUILD_TESTS)
     CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
   )
 
-  target_compile_options(reproc-test PRIVATE ${REPROC_COMPILE_OPTIONS})
-  target_link_libraries(reproc-test PRIVATE reproc)
+  target_link_libraries(reproc-test PRIVATE
+    reproc
+    $<BUILD_INTERFACE:reproc-dev-flags>
+  )
   target_include_directories(reproc-test SYSTEM PRIVATE third-party/doctest)
 
   target_sources(reproc-test PRIVATE
@@ -197,7 +206,9 @@ if(REPROC_BUILD_TESTS)
 
   function(reproc_add_test_helper TARGET)
     add_executable(${TARGET} test/res/${TARGET}.cpp)
-    target_compile_options(${TARGET} PRIVATE ${REPROC_COMPILE_OPTIONS})
+    target_link_libraries(${TARGET} PRIVATE
+      $<BUILD_INTERFACE:reproc-dev-flags>
+    )
     set_target_properties(${TARGET} PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY test/res
       CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"
@@ -241,8 +252,10 @@ if(REPROC_BUILD_EXAMPLES)
   function(reproc_add_c_example TARGET)
     add_executable(${TARGET} example/${TARGET}.c)
     reproc_set_c_standard(${TARGET} 99)
-    target_compile_options(${TARGET} PRIVATE ${REPROC_COMPILE_OPTIONS})
-    target_link_libraries(${TARGET} PRIVATE reproc)
+    target_link_libraries(${TARGET} PRIVATE
+      reproc
+      $<BUILD_INTERFACE:reproc-dev-flags>
+    )
     set_target_properties(${TARGET} PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY example
       C_CLANG_TIDY "${REPROC_CLANG_TIDY}"
@@ -335,7 +348,6 @@ endif()
 if (REPROC_FORMAT)
   find_program(REPROC_CLANG_FORMAT clang-format)
   if(REPROC_CLANG_FORMAT)
-    message(STATUS "clang-format found. Adding reproc-format target")
     file(GLOB_RECURSE REPROC_SOURCES
       include/*.[h,c,hpp,cpp]
       src/*.[h,c,hpp,cpp]
