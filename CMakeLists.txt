@@ -267,6 +267,8 @@ if(REPROC_BUILD_EXAMPLES)
     set_target_properties(${TARGET} PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY example
       C_CLANG_TIDY "${REPROC_CLANG_TIDY}"
+      # Hack to avoid UBSAN errors
+      LINKER_LANGUAGE CXX
     )
   endfunction()
 
