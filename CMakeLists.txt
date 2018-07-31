@@ -13,6 +13,7 @@ option(REPROC_TIDY "Run clang-tidy as part of the build \
 option(REPROC_INSTALL "Generate install target" OFF)
 option(REPROC_FORMAT "Find clang-format and add target to run it on all source \
 files")
+option(REPROC_BUILD_SANITIZERS "Compile with sanitizers" OFF)
 
 ### Helpers ###
 
@@ -71,15 +72,21 @@ else()
     -pedantic-errors
     -Wshadow
     -Wconversion
-    -fsanitize=address,undefined
+    -fvisibility=hidden
     $<$<BOOL:${REPROC_CI}>:-Werror>
     $<$<C_COMPILER_ID:Clang>:-fcolor-diagnostics>
     $<$<C_COMPILER_ID:GNU>:-fdiagnostics-color>
   )
-  target_link_libraries(reproc-dev-flags INTERFACE
-    -fsanitize=address,undefined
-    $<$<C_COMPILER_ID:GNU>:-fuse-ld=gold>
-  )
+
+  if(REPROC_SANITIZERS)
+    target_compile_options(reproc-dev-flags INTERFACE
+      -fsanitize=address,undefined
+    )
+    target_link_libraries(reproc-dev-flags INTERFACE
+      -fsanitize=address,undefined
+      $<C_COMPILER_ID:GNU>:-fuse-ld=gold>
+    )
+  endif()
 endif()
 
 ### Library ###
@@ -266,8 +273,10 @@ if(REPROC_BUILD_EXAMPLES)
   function(reproc_add_cxx_example TARGET)
     add_executable(${TARGET} example/${TARGET}.cpp)
     reproc_set_cxx_standard(${TARGET} 11)
-    target_compile_options(${TARGET} PRIVATE ${REPROC_COMPILE_OPTIONS})
-    target_link_libraries(${TARGET} PRIVATE reproc)
+    target_link_libraries(${TARGET} PRIVATE
+      reproc
+      $<BUILD_INTERFACE:reproc-dev-flags>
+    )
     set_target_properties(${TARGET} PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY example
       CXX_CLANG_TIDY "${REPROC_CLANG_TIDY}"

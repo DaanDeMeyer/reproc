@@ -8,7 +8,7 @@
 #define REPROC_EXPORT __declspec(dllimport)
 #endif
 #else
-#define REPROC_EXPORT
+#define REPROC_EXPORT __attribute__ ((visibility("default")))
 #endif
 
 #endif

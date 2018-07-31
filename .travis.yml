@@ -63,6 +63,7 @@ matrix:
 script:
   - cmake -DCMAKE_BUILD_TYPE=Debug -DREPROC_BUILD_TESTS=ON
     -DREPROC_BUILD_EXAMPLES=ON -DREPROC_BUILD_CXX_WRAPPER=ON
-    -DREPROC_CI=ON -DREPROC_TIDY=ON .
+    -DREPROC_CI=ON -DREPROC_TIDY=ON -DREPROC_SANITIZERS=ON
+    -DBUILD_SHARED_LIBS=ON .
   - cmake --build . -- -j 3
   - cmake --build . --target reproc-run-tests
