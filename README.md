@@ -204,12 +204,11 @@ Options can be configured when building reproc or before calling
 
 ## Usage
 
-See [example/reproc-git-status.c](example/reproc-git-status.c) for an example
-that uses reproc to print the output of `git status`.
-[example/reproc-cmake-help.cpp](example/reproc-cmake-help.cpp) prints the output
-of `cmake --help` using the C++ API.
-[example/reproc-forward.cpp](example/reproc-forward.cpp) spawns a child process
-using the provided command line arguments and prints its output.
+See [git-status](example/git-status.c) for an example that uses reproc to print
+the output of `git status`. [cmake-help](example/cmake-help.cpp) prints the
+output of `cmake --help` using the C++ API. [forward](example/forward.cpp)
+spawns a child process using the provided command line arguments and prints its
+output.
 
 ## Documentation
 
@@ -548,7 +547,7 @@ When making changes:
 
   However, this method does not allow passing arguments to the tests executable.
   If you want more control over which tests are executed you can run the tests
-  executable directly (located at `build/test/reproc-test`). A list of possible
+  executable directly (located at `build/test/tests`). A list of possible
   options can be found
   [here](https://github.com/onqtam/doctest/blob/master/doc/markdown/commandline.md).
 
