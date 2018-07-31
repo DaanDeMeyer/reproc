@@ -84,7 +84,7 @@ else()
     )
     target_link_libraries(reproc-dev-flags INTERFACE
       -fsanitize=address,undefined
-      $<C_COMPILER_ID:GNU>:-fuse-ld=gold>
+      $<$<C_COMPILER_ID:GNU>:-fuse-ld=gold>
     )
   endif()
 endif()
