@@ -554,6 +554,12 @@ When making changes:
   If you don't have access to every platform, make a pull request and CI will
   compile and run the tests on the platforms you don't have access to.
 
+  Tests will be compiled with sanitizers in CI so make sure
+  to not introduce any leaks or undefined behaviour. Enable compiling with
+  sanitizers locally as follows:
+
+  `cmake -DREPROC_SANITIZERS=ON ..`
+
 - When adding a new feature, make sure to implement it for both POSIX and
   Windows.
 - When adding a new feature, add a new test for it or modify an existing one to

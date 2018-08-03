@@ -1,6 +1,12 @@
+# Every variable is namespaced with REPROC and everything except for the library
+# itself is turned off by default to make reproc easy to use as a CMake
+# subproject with add_subdirectory
+
 cmake_minimum_required(VERSION 3.1)
 project(reproc VERSION 0.0.1 LANGUAGES C)
 
+# Tip: use cmake-gui when contributing to reproc to turn on everything without
+# having to type out all the options by hand (cmake .. && cmake-gui .)
 option(REPROC_BUILD_TESTS "Build tests" OFF)
 option(REPROC_BUILD_EXAMPLES "Build examples. Enable REPROC_BUILD_CXX_WRAPPER \
 to build C++ examples." OFF)
@@ -8,8 +14,6 @@ option(REPROC_BUILD_CXX_WRAPPER "Build C++ wrapper" OFF)
 option(REPROC_CI "Add -Werror or equivalent to compiler and clang-tidy" OFF)
 option(REPROC_TIDY "Run clang-tidy as part of the build \
 (requires clang-tidy to be in the PATH)" OFF)
-# Don't generate install target by default so we don't interfere with install
-# targets when reproc is used via add_subdirectory
 option(REPROC_INSTALL "Generate install target" OFF)
 option(REPROC_FORMAT "Find clang-format and add target to run it on all source \
 files")
@@ -32,6 +36,8 @@ endif()
 
 ### Common development flags ###
 
+# Shared options are gathered in reproc-dev-flags target which every other
+# target links against in order to get the options
 add_library(reproc-dev-flags INTERFACE)
 
 if(MSVC)
@@ -46,7 +52,6 @@ else()
     -pedantic-errors
     -Wshadow
     -Wconversion
-    -fvisibility=hidden
     $<$<BOOL:${REPROC_CI}>:-Werror>
     $<$<C_COMPILER_ID:Clang>:-fcolor-diagnostics>
     $<$<C_COMPILER_ID:GNU>:-fdiagnostics-color>
@@ -98,6 +103,13 @@ add_library(reproc "")
 add_library(reproc::reproc ALIAS reproc)
 
 reproc_set_common(reproc C lib)
+
+if(NOT MSVC)
+  target_compile_options(reproc PRIVATE
+    # More or less dllexport/dllimport for GCC and Clang
+    -fvisibility=hidden
+  )
+endif()
 
 # Only use the headers from the repository when building. When installing we
 # want to use the install location of the headers (e.g. /usr/include) as the
@@ -227,31 +239,27 @@ endif()
 
 if(REPROC_BUILD_EXAMPLES)
 
-  function(reproc_add_c_example TARGET)
-    add_executable(reproc-${TARGET} example/${TARGET}.c)
-    reproc_set_common(reproc-${TARGET} C example)
+  set(REPROC_C_EXT c)
+  set(REPROC_CXX_EXT cpp)
+
+  function(reproc_add_example TARGET LANGUAGE)
+    add_executable(reproc-${TARGET} example/${TARGET}.${REPROC_${LANGUAGE}_EXT})
+    reproc_set_common(reproc-${TARGET} ${LANGUAGE} example)
 
     target_link_libraries(reproc-${TARGET} PRIVATE reproc)
     if(REPROC_SANITIZERS)
       set_target_properties(reproc-${TARGET} PROPERTIES
-        # Hack to avoid ubsan undefined reference errors
+        # Hack to avoid UBSAN undefined reference errors
         LINKER_LANGUAGE CXX
       )
     endif()
   endfunction()
 
-  function(reproc_add_cxx_example TARGET)
-    add_executable(reproc-${TARGET} example/${TARGET}.cpp)
-    reproc_set_common(reproc-${TARGET} CXX example)
-
-    target_link_libraries(reproc-${TARGET} PRIVATE reproc)
-  endfunction()
-
-  reproc_add_c_example(git-status)
+  reproc_add_example(git-status C)
 
   if(REPROC_BUILD_CXX_WRAPPER)
-    reproc_add_cxx_example(cmake-help)
-    reproc_add_cxx_example(forward)
+    reproc_add_example(cmake-help CXX)
+    reproc_add_example(forward CXX)
   endif()
 endif()
 
@@ -319,7 +327,7 @@ endif()
 
 ### clang-format ###
 
-if (REPROC_FORMAT)
+if(REPROC_FORMAT)
   find_program(REPROC_CLANG_FORMAT clang-format)
   if(REPROC_CLANG_FORMAT)
     file(GLOB_RECURSE REPROC_SOURCES
