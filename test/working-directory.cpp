@@ -10,7 +10,7 @@ TEST_CASE("working-directory")
 
   std::array<const char *, 2> argv = { { NOOP_PATH, nullptr } };
   auto argc = static_cast<int>(argv.size() - 1);
-  const char *working_directory = REPROC_NOOP_DIR;
+  const char *working_directory = NOOP_DIR;
 
   REPROC_ERROR error = REPROC_SUCCESS;
   CAPTURE(error);

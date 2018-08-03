@@ -204,6 +204,7 @@ if(REPROC_BUILD_TESTS)
     # user.
     target_compile_definitions(reproc-tests PRIVATE
       ${TARGET_UPPER_CASE}_PATH="$<TARGET_FILE:reproc-${TARGET}>"
+      ${TARGET_UPPER_CASE}_DIR="$<TARGET_FILE_DIR:reproc-${TARGET}>"
     )
     add_dependencies(reproc-tests reproc-${TARGET})
   endfunction()
@@ -212,10 +213,6 @@ if(REPROC_BUILD_TESTS)
   reproc_add_test_helper(stderr)
   reproc_add_test_helper(infinite)
   reproc_add_test_helper(noop)
-
-  target_compile_definitions(reproc-tests PRIVATE
-    REPROC_NOOP_DIR="$<TARGET_FILE_DIR:reproc-noop>"
-  )
 
   add_custom_target(
     reproc-run-tests
