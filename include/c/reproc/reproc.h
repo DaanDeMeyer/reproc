@@ -101,9 +101,9 @@ block until the requested amount of bytes have been written to the pipe so
 this function should only rarely succeed without writing the full amount of
 bytes requested.
 
-(POSIX) Writing to a closed stdin pipe by default terminates the parent process
-with the `SIGPIPE` signal. reproc_write will only return REPROC_STREAM_CLOSED if
-this signal is ignored by the parent process.
+(POSIX) Writing to a closed stdin pipe by default terminates the parent
+process with the `SIGPIPE` signal. reproc_write will only return
+REPROC_STREAM_CLOSED if this signal is ignored by the parent process.
 
 \param[in,out] process Cannot be NULL.
 \param[in] buffer Pointer to memory block from which bytes should be written.
@@ -145,9 +145,9 @@ them in \p buffer. \p bytes_read is set to the amount of bytes read.
 
 Assuming no other errors occur this function returns REPROC_SUCCESS until the
 child process closes its standard output stream (happens automatically when it
-exits) and all bytes have been read from the stream. This allows the function to
-be used in the following way to read all data from a child process stdout stream
-(uses C++ std::string for brevity):
+exits) and all bytes have been read from the stream. This allows the function
+to be used in the following way to read all data from a child process stdout
+stream (uses C++ std::string for brevity):
 
 \code{.cpp}
 #define BUFFER_SIZE 1024
@@ -159,8 +159,8 @@ std::string output{};
 
 while (true) {
   unsigned int bytes_read = 0;
-  error = reproc_read(process, REPROC_STDOUT, buffer, BUFFER_SIZE, &bytes_read);
-  if (error) { break; }
+  error = reproc_read(process, REPROC_STDOUT, buffer, BUFFER_SIZE,
+&bytes_read); if (error) { break; }
 
   output.append(buffer, bytes_read);
 }
@@ -204,117 +204,87 @@ REPROC_EXPORT REPROC_ERROR reproc_read(reproc_type *process,
                                        unsigned int size,
                                        unsigned int *bytes_read);
 
+typedef enum {
+  /*! Wait for the child process to exit on its own */
+  REPROC_WAIT = 1 << 0,
+  /*! Send SIGTERM (POSIX) or CTRL-BREAK (Windows) and wait for the child
+  process to exit */
+  REPROC_TERMINATE = 1 << 1,
+  /*! Send SIGKILL (POSIX) or call TerminateProcess (Windows) and wait for the
+  child process to exit. Because SIGKILL and TerminateProcess do not allow the
+  child process to clean up its resources this flag should only be used if the
+  REPROC_TERMINATE flag is not sufficient to stop a child process. */
+  REPROC_KILL = 1 << 2
+} REPROC_CLEANUP;
+
 /*!
-Waits the specified amount of time for the child process to exit. If the child
-process exited normally the exit status of the process is stored in \p
-exit_status.
+Tries to stop the child process according to the flags specified by /p
+cleanup_flags and cleans up all associated resources.
+
+Regardless whether the child process is succesfully stopped or not this function
+releases all resources associated with the child process. Because of this, it
+can only be called once for each child process. Always make sure the combination
+of \p cleanup_flags and \p timeout is enough to stop the child process
+completely.
+
+\param[in,out] process Cannot be NULL.
+
+\param[in] cleanup_flags Indicate which actions should be performed to stop
+the process. This parameter takes a combination of flags from the \see
+REPROC_CLEANUP enum. Flags can be combined with a bitwise OR.
+
+Example: if \p cleanup_flags is REPROC_WAIT | REPROC_TERMINATE the function will
+first wait for \p timeout milliseconds for the child process to exit on its
+own. If the child process hasn't exited after waiting, the function will then
+send SIGTERM (POSIX) or CTRL-BREAK (Windows) to the child process and wait \p
+timeout milliseconds again for the child process to exit. If the child
+process is still running after waiting the REPROC_WAIT_TIMEOUT error is
+returned.
+
+\param[in] timeout Amount of milliseconds to wait after each step in
+stopping the process.
+
+If 0 the function will only check if the process is still running without
+waiting after each step.
+
+If REPROC_INFINITE the function will wait indefinitely after each step for the
+child process to exit (this implies only one step will ever run even if multiple
+steps are specified since the function will wait indefinitely after the first
+step).
+
+\param[out] exit_status Optional output parameter used to store the exit
+status of the child process.
+
+If the child process exits normally the exit status of the child process is
+stored in \p exit_status.
 
 Exiting normally is defined as follows for the different platforms:
 - POSIX: The process returned from its main function or called exit or _exit
 - Windows: The process returned from its main or WinMain function
 
-If the function did not exit normally the following values are stored in \p
+If the function does not exit normally the following values are stored in \p
 exit_status:
 - POSIX: Number of the signal that terminated the child process
 - Windows: exit status passed to ExitProcess or TerminateProcess function call
 that terminated the child process
 
-This function cannot be called again for the current child process if a previous
-call to reproc_wait, reproc_terminate or reproc_kill was succesfull.
-
-\param[in,out] process Cannot be NULL.
-\param[in] milliseconds Amount of milliseconds to wait. If 0 the function will
-only check if the process is still running without waiting. If REPROC_INFINITE
-the function will wait indefinitely for the child process to exit.
-\param[out] exit_status Optional output parameter used to store the exit status
-of the child process if reproc_wait is succesfull (the child process exits
-within the timeout).
-
 \return REPROC_ERROR
 
-Possible errors when \p milliseconds is REPROC_INFINITE:
+Possible errors when \p timeout is REPROC_INFINITE:
 - REPROC_INTERRUPTED
 
-Possible errors when milliseconds is 0:
+Possible errors when \p timeout is 0:
 - REPROC_WAIT_TIMEOUT
 
-Possible errors when milliseconds is not 0 or REPROC_INFINITE:
+Possible errors when \p timeout is not 0 or REPROC_INFINITE:
 - REPROC_INTERRUPTED
 - REPROC_WAIT_TIMEOUT
 - REPROC_PROCESS_LIMIT_REACHED
 - REPROC_NOT_ENOUGH_MEMORY
 */
-REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_type *process,
-                                       unsigned int milliseconds,
+REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_type *process, int cleanup_flags,
+                                       unsigned int timeout,
                                        unsigned int *exit_status);
-
-/*!
-Tries to terminate the child process cleanly (the child process has a chance
-to clean up).
-
-On Windows a CTRL-BREAK signal is sent to the child process. On POSIX a
-SIGTERM signal is sent to the child process. After sending the signal the
-function calls reproc_wait to wait for the specified amount of milliseconds for
-the child process to exit.
-
-Because child processes can still exit normally when receiving CTRL-BREAK or
-SIGTERM this function also takes an optional out argument to store the possible
-exit status of the child process.
-
-This function cannot be called again for the current child process if a previous
-call to reproc_wait, reproc_terminate or reproc_kill was succesfull.
-
-\param[in,out] process Cannot be NULL.
-\param[in] milliseconds See reproc_wait
-\param[out] exit_status See reproc_wait
-
-\return REPROC_ERROR
-
-Possible errors: See \see reproc_wait
-*/
-REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_type *process,
-                                            unsigned int milliseconds,
-                                            unsigned int *exit_status);
-
-/*!
-Kills the child process without allowing for cleanup.
-
-On Windows TerminateProcess is called. On POSIX a SIGKILL signal is sent to
-the child process. After sending the signal the function waits the provided
-amount of milliseconds for the child process to exit. If the child process has
-already exited no signal is sent.
-
-This function should only be used as a last resort. Always wait for a child
-process to exit on its own or try to stop it with \see reproc_terminate before
-resorting to this function.
-
-This function cannot be called again for the current child process if a previous
-call to reproc_wait, reproc_terminate or reproc_kill was succesfull.
-
-\param[in,out] process Cannot be NULL.
-\param[in] milliseconds See \see reproc_wait.
-
-\return REPROC_ERROR
-
-Possible errors: See \see reproc_wait
-*/
-REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_type *process,
-                                       unsigned int milliseconds);
-
-/*!
-Releases all resources associated with the child process.
-
-This function does not stop the child process. Call \see reproc_terminate or
-\see reproc_kill first if you want to stop the child process or wait for it to
-exit on its own with \see reproc_wait.
-
-\param[in,out] process Cannot be NULL
-
-\return REPROC_ERROR
-
-Possible errors:
-*/
-REPROC_EXPORT void reproc_destroy(reproc_type *process);
 
 #ifdef __cplusplus
 }

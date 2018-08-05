@@ -17,6 +17,8 @@ enum stream { cin, cout, cerr };
 
 REPROC_EXPORT extern const unsigned int infinite;
 
+enum cleanup { wait = 1 << 0, terminate = 1 << 1, kill = 1 << 2 };
+
 class process
 {
 
@@ -26,14 +28,9 @@ public:
   fails. */
   REPROC_EXPORT process();
 
-  /*!
-  see reproc_destroy. Aditionally frees the memory allocated in the
-  constructor.
-
-  The destructor does not stop the child process if it still running. Make sure
-  the process has stopped before the destructor is called by using a combination
-  of \see wait, \see terminate and \see kill.
-  */
+  /*! The destructor does not stop the child process if it still running. Make
+  sure the process has stopped before the destructor is called by using \see
+  stop. */
   REPROC_EXPORT ~process() noexcept;
 
   /* Enforce unique ownership */
@@ -114,16 +111,9 @@ public:
   template <typename Parser>
   std::error_code read(reproc::stream stream, Parser &&parser);
 
-  /*! \see reproc_wait */
-  REPROC_EXPORT std::error_code wait(unsigned int milliseconds,
-                                     unsigned int *exit_status) noexcept;
-
-  /*! \see reproc_terminate */
-  REPROC_EXPORT std::error_code terminate(unsigned int milliseconds,
-                                          unsigned int *exit_status) noexcept;
-
-  /*! \see reproc_kill */
-  REPROC_EXPORT std::error_code kill(unsigned int milliseconds) noexcept;
+  /*! \see reproc_stop */
+  REPROC_EXPORT std::error_code stop(int cleanup_flags, unsigned int timeout,
+                                     unsigned int *exit_status);
 
 private:
   std::unique_ptr<struct reproc_type> process_;

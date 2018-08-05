@@ -2,12 +2,21 @@
 
 #include "fork.h"
 #include "pipe.h"
-#include "wait.h"
+#include "process.h"
 
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
 #include <string.h>
+
+static void reproc_destroy(reproc_type *process)
+{
+  assert(process);
+
+  pipe_close(&process->parent_stdin);
+  pipe_close(&process->parent_stdout);
+  pipe_close(&process->parent_stderr);
+}
 
 REPROC_ERROR reproc_start(reproc_type *process, int argc,
                           const char *const *argv,
@@ -100,52 +109,33 @@ REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
   return REPROC_UNKNOWN_ERROR;
 }
 
-REPROC_ERROR reproc_wait(reproc_type *process, unsigned int milliseconds,
-                         unsigned int *exit_status)
+REPROC_ERROR reproc_stop(struct reproc_type *process, int cleanup_flags,
+                         unsigned int timeout, unsigned int *exit_status)
 {
   assert(process);
-  assert(process->id != 0);
 
-  if (milliseconds == 0) { return wait_no_hang(process->id, exit_status); }
+  REPROC_ERROR error = REPROC_SUCCESS;
 
-  if (milliseconds == REPROC_INFINITE) {
-    return wait_infinite(process->id, exit_status);
+  if (cleanup_flags & REPROC_WAIT) {
+    error = process_wait(process->id, timeout, exit_status);
   }
 
-  return wait_timeout(process->id, milliseconds, exit_status);
-}
+  if (error && error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
 
-REPROC_ERROR reproc_terminate(struct reproc_type *process,
-                              unsigned int milliseconds,
-                              unsigned int *exit_status)
-{
-  assert(process);
-  assert(process->id != 0);
+  if (cleanup_flags & REPROC_TERMINATE) {
+    error = process_terminate(process->id, timeout, exit_status);
+  }
 
-  errno = 0;
-  if (kill(process->id, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
+  if (error && error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
 
-  return reproc_wait(process, milliseconds, exit_status);
-}
+  if (cleanup_flags & REPROC_KILL) {
+    error = process_kill(process->id, timeout, exit_status);
+  }
 
-REPROC_ERROR reproc_kill(reproc_type *process, unsigned int milliseconds)
-{
-  assert(process);
-  assert(process->id != 0);
+cleanup:
+  reproc_destroy(process);
 
-  errno = 0;
-  if (kill(process->id, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
-
-  return reproc_wait(process, milliseconds, NULL);
-}
-
-void reproc_destroy(reproc_type *process)
-{
-  assert(process);
-
-  pipe_close(&process->parent_stdin);
-  pipe_close(&process->parent_stdout);
-  pipe_close(&process->parent_stderr);
+  return error;
 }
 
 unsigned int reproc_system_error(void) { return (unsigned int) errno; }

@@ -35,7 +35,6 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
   // Add the handles to be inherited to the attribute list
   SetLastError(0);
   if (!UpdateProcThreadAttribute(attribute_list, 0,
-                                 // NOLINTNEXTLINE(hicpp-signed-bitwise)
                                  PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,
                                  amount * sizeof(HANDLE), NULL, NULL)) {
     DeleteProcThreadAttributeList(attribute_list);

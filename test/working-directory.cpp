@@ -19,9 +19,7 @@ TEST_CASE("working-directory")
   REQUIRE(!error);
 
   unsigned int exit_status = 0;
-  error = reproc_wait(&noop, REPROC_INFINITE, &exit_status);
+  error = reproc_stop(&noop, REPROC_WAIT, REPROC_INFINITE, &exit_status);
   REQUIRE(!error);
   REQUIRE((exit_status == 0));
-
-  reproc_destroy(&noop);
 }

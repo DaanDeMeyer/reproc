@@ -131,7 +131,7 @@ if(WIN32)
   target_sources(reproc PRIVATE
     src/c/windows/handle.c
     src/c/windows/pipe.c
-    src/c/windows/process_utils.c
+    src/c/windows/process.c
     src/c/windows/reproc.c
     src/c/windows/string_utils.c
   )
@@ -141,7 +141,7 @@ elseif(UNIX)
     src/c/posix/fork.c
     src/c/posix/pipe.c
     src/c/posix/reproc.c
-    src/c/posix/wait.c
+    src/c/posix/process.c
   )
 endif()
 

@@ -13,17 +13,14 @@ static unsigned int parse_exit_status(int status)
   // WEXITSTATUS returns a value between [0,256) so casting to unsigned int is
   // safe
 
-  // NOLINTNEXTLINE(hicpp-signed-bitwise)
   if (WIFEXITED(status)) { return (unsigned int) WEXITSTATUS(status); }
 
-  // NOLINTNEXTLINE(hicpp-signed-bitwise)
   assert(WIFSIGNALED(status));
 
-  // NOLINTNEXTLINE(hicpp-signed-bitwise)
   return (unsigned int) WTERMSIG(status);
 }
 
-REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
+static REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
 {
   int status = 0;
   errno = 0;
@@ -41,7 +38,7 @@ REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
+static REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
 {
   int status = 0;
   errno = 0;
@@ -58,19 +55,19 @@ REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
 }
 
 // See Design section in README.md for an explanation of how this works
-REPROC_ERROR wait_timeout(pid_t pid, unsigned int milliseconds,
-                          unsigned int *exit_status)
+static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
+                                 unsigned int *exit_status)
 {
-  assert(milliseconds > 0);
+  assert(timeout > 0);
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
   // Check if child process hasn't exited already before starting timeout fork
   error = wait_no_hang(pid, exit_status);
-  if (error != REPROC_WAIT_TIMEOUT) { return error;}
+  if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   pid_t timeout_pid = 0;
-  error = fork_timeout(milliseconds, pid, &timeout_pid);
+  error = fork_timeout(timeout, pid, &timeout_pid);
   if (error) { return error; }
 
   // -reproc->pid waits for all processes in the reproc->pid process group
@@ -109,4 +106,32 @@ REPROC_ERROR wait_timeout(pid_t pid, unsigned int milliseconds,
   if (exit_status) { *exit_status = parse_exit_status(status); }
 
   return REPROC_SUCCESS;
+}
+
+REPROC_ERROR process_wait(pid_t pid, unsigned int timeout,
+                          unsigned int *exit_status)
+{
+  if (timeout == 0) { return wait_no_hang(pid, exit_status); }
+
+  if (timeout == 0xFFFFFFFF) { return wait_infinite(pid, exit_status); }
+
+  return wait_timeout(pid, timeout, exit_status);
+}
+
+REPROC_ERROR process_terminate(pid_t pid, unsigned int timeout,
+                               unsigned int *exit_status)
+{
+  errno = 0;
+  if (kill(pid, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
+
+  return process_wait(pid, timeout, exit_status);
+}
+
+REPROC_ERROR process_kill(pid_t pid, unsigned int timeout,
+                         unsigned int *exit_status)
+{
+  errno = 0;
+  if (kill(pid, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
+
+  return process_wait(pid, timeout, exit_status);
 }

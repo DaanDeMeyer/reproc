@@ -76,11 +76,8 @@ int main(void)
   // don't clean up system resources allocated to a child process until the
   // parent process waits for it.
   unsigned int exit_status = 0;
-  error = reproc_wait(&git_status, REPROC_INFINITE, &exit_status);
+  error = reproc_stop(&git_status, REPROC_WAIT, REPROC_INFINITE, &exit_status);
   if (error) { return (int) error; }
-
-  // Release all remaining resources related to the child process
-  reproc_destroy(&git_status);
 
   return (int) exit_status;
 }

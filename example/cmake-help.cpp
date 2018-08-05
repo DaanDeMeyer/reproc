@@ -38,7 +38,7 @@ int main()
   if (ec) { return fail(ec); }
 
   unsigned int exit_status = 0;
-  ec = cmake_help.wait(reproc::infinite, &exit_status);
+  ec = cmake_help.stop(reproc::wait, reproc::infinite, &exit_status);
   if (ec) { return fail(ec); }
 
   return static_cast<int>(exit_status);

@@ -27,11 +27,7 @@ const unsigned int infinite = REPROC_INFINITE;
 
 process::process() : process_(new struct reproc_type()) {}
 
-process::~process() noexcept
-{
-  // Check for null because the object could have been moved from
-  if (process_) { reproc_destroy(process_.get()); }
-}
+process::~process() noexcept = default;
 
 std::error_code process::start(int argc, const char *const *argv,
                                const char *working_directory) noexcept
@@ -86,24 +82,11 @@ std::error_code process::read(reproc::stream stream, void *buffer,
   return reproc_error_to_error_code(error);
 }
 
-std::error_code process::wait(unsigned int milliseconds,
-                              unsigned int *exit_status) noexcept
+std::error_code process::stop(int cleanup_flags, unsigned int timeout,
+                              unsigned int *exit_status)
 {
-  REPROC_ERROR error = reproc_wait(process_.get(), milliseconds, exit_status);
-  return reproc_error_to_error_code(error);
-}
-
-std::error_code process::terminate(unsigned int milliseconds,
-                                   unsigned int *exit_status) noexcept
-{
-  REPROC_ERROR error = reproc_terminate(process_.get(), milliseconds,
-                                        exit_status);
-  return reproc_error_to_error_code(error);
-}
-
-std::error_code process::kill(unsigned int milliseconds) noexcept
-{
-  REPROC_ERROR error = reproc_kill(process_.get(), milliseconds);
+  REPROC_ERROR error = reproc_stop(process_.get(), cleanup_flags, timeout,
+                                   exit_status);
   return reproc_error_to_error_code(error);
 }
 

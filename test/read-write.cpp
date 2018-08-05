@@ -80,9 +80,7 @@ TEST_CASE("read-write")
   }
 
   unsigned int exit_status = 0;
-  error = reproc_wait(&io, REPROC_INFINITE, &exit_status);
+  error = reproc_stop(&io, REPROC_WAIT, REPROC_INFINITE, &exit_status);
   REQUIRE(!error);
   REQUIRE((exit_status == 0));
-
-  reproc_destroy(&io);
 }

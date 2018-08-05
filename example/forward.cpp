@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 
   // wait stores the exit status in exit_status if it succeeds
   unsigned int exit_status = 0;
-  ec = forward.wait(reproc::infinite, &exit_status);
+  ec = forward.stop(reproc::wait, reproc::infinite, &exit_status);
   if (ec) { return fail(ec); }
 
   return static_cast<int>(exit_status);

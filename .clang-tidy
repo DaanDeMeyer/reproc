@@ -3,6 +3,7 @@ Checks:
 '
 *,
 -fuchsia-default-arguments,
+-hicpp-signed-bitwise,
 -readability-implicit-bool-conversion,
 -readability-else-after-return
 '
