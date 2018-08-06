@@ -73,7 +73,7 @@ int main(void)
   printf("%s", output);
   free(output);
 
-cleanup:
+cleanup:;
   // Wait for the process to exit. This should always be done since some systems
   // (POSIX) don't clean up system resources allocated to a child process until
   // the parent process explicitly waits for it after it has exited.
