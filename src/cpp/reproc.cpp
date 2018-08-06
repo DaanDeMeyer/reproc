@@ -25,6 +25,12 @@ static std::error_code reproc_error_to_error_code(REPROC_ERROR error)
 
 const unsigned int infinite = REPROC_INFINITE;
 
+reproc::cleanup operator|(reproc::cleanup lhs, reproc::cleanup rhs)
+{
+  return static_cast<reproc::cleanup>(static_cast<int>(lhs) |
+                                      static_cast<int>(rhs));
+}
+
 process::process() : process_(new struct reproc_type()) {}
 
 process::~process() noexcept = default;
@@ -82,10 +88,11 @@ std::error_code process::read(reproc::stream stream, void *buffer,
   return reproc_error_to_error_code(error);
 }
 
-std::error_code process::stop(int cleanup_flags, unsigned int timeout,
-                              unsigned int *exit_status)
+std::error_code process::stop(reproc::cleanup cleanup_flags,
+                              unsigned int timeout, unsigned int *exit_status)
 {
-  REPROC_ERROR error = reproc_stop(process_.get(), cleanup_flags, timeout,
+  REPROC_ERROR error = reproc_stop(process_.get(),
+                                   static_cast<int>(cleanup_flags), timeout,
                                    exit_status);
   return reproc_error_to_error_code(error);
 }

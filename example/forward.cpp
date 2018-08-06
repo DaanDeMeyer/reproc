@@ -37,19 +37,19 @@ int main(int argc, char *argv[])
   }
 
   // Some programs wait for the input stream to be closed before continuing
-  forward.close(reproc::cin);
+  forward.close(reproc::stream::in);
 
   // Pipe child process stdout output to std::cout of parent process
-  ec = forward.read(reproc::cout, reproc::ostream_parser(std::cout));
+  ec = forward.read(reproc::stream::out, reproc::ostream_parser(std::cout));
   if (ec) { return fail(ec); }
 
   // Pipe child process stderr output to std::cerr of parent process
-  ec = forward.read(reproc::cerr, reproc::ostream_parser(std::cerr));
+  ec = forward.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
   if (ec) { return fail(ec); }
 
   // wait stores the exit status in exit_status if it succeeds
   unsigned int exit_status = 0;
-  ec = forward.stop(reproc::wait, reproc::infinite, &exit_status);
+  ec = forward.stop(reproc::cleanup::wait, reproc::infinite, &exit_status);
   if (ec) { return fail(ec); }
 
   return static_cast<int>(exit_status);

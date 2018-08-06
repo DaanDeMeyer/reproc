@@ -28,17 +28,17 @@ int main()
   std::string output;
 
   // string_parser reads the output into a string
-  ec = cmake_help.read(reproc::cout, reproc::string_parser(output));
+  ec = cmake_help.read(reproc::stream::out, reproc::string_parser(output));
   if (ec) { return fail(ec); }
 
   std::cout << output << std::flush;
 
   // You can also pass an ostream_parser to write the output directly to cerr
-  ec = cmake_help.read(reproc::cerr, reproc::ostream_parser(std::cerr));
+  ec = cmake_help.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
   if (ec) { return fail(ec); }
 
   unsigned int exit_status = 0;
-  ec = cmake_help.stop(reproc::wait, reproc::infinite, &exit_status);
+  ec = cmake_help.stop(reproc::cleanup::wait, reproc::infinite, &exit_status);
   if (ec) { return fail(ec); }
 
   return static_cast<int>(exit_status);

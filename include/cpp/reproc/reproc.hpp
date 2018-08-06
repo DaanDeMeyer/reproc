@@ -13,11 +13,13 @@
 namespace reproc
 {
 
-enum stream { cin, cout, cerr };
+enum class stream { in, out, err };
 
 REPROC_EXPORT extern const unsigned int infinite;
 
-enum cleanup { wait = 1 << 0, terminate = 1 << 1, kill = 1 << 2 };
+enum class cleanup : int { wait = 1 << 0, terminate = 1 << 1, kill = 1 << 2 };
+
+reproc::cleanup operator|(reproc::cleanup lhs, reproc::cleanup rhs);
 
 class process
 {
@@ -112,7 +114,8 @@ public:
   std::error_code read(reproc::stream stream, Parser &&parser);
 
   /*! \see reproc_stop */
-  REPROC_EXPORT std::error_code stop(int cleanup_flags, unsigned int timeout,
+  REPROC_EXPORT std::error_code stop(reproc::cleanup cleanup_flags,
+                                     unsigned int timeout,
                                      unsigned int *exit_status);
 
 private:
