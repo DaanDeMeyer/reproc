@@ -116,7 +116,7 @@ public:
   /*! \see reproc_stop */
   REPROC_EXPORT std::error_code stop(reproc::cleanup cleanup_flags,
                                      unsigned int timeout,
-                                     unsigned int *exit_status);
+                                     unsigned int *exit_status) noexcept;
 
 private:
   std::unique_ptr<struct reproc_type> process_;

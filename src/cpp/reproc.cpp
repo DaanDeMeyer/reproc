@@ -89,7 +89,8 @@ std::error_code process::read(reproc::stream stream, void *buffer,
 }
 
 std::error_code process::stop(reproc::cleanup cleanup_flags,
-                              unsigned int timeout, unsigned int *exit_status)
+                              unsigned int timeout,
+                              unsigned int *exit_status) noexcept
 {
   REPROC_ERROR error = reproc_stop(process_.get(),
                                    static_cast<int>(cleanup_flags), timeout,
