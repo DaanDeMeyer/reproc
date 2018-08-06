@@ -1,4 +1,4 @@
-#include "wait.h"
+#include "process.h"
 
 #include "fork.h"
 
