@@ -3,6 +3,10 @@
 
 #include <array>
 
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
 // NOLINTNEXTLINE(cert-err58-cpp)
 TEST_CASE("stop")
 {
@@ -20,8 +24,7 @@ TEST_CASE("stop")
 // Wait to avoid terminating the child process on Windows before it is
 // initialized (which would result in an error window appearing)
 #if defined(_WIN32)
-  error = reproc_wait(&infinite, 50, nullptr);
-  REQUIRE((error == REPROC_WAIT_TIMEOUT));
+  Sleep(50);
 #endif
 
   SUBCASE("terminate")

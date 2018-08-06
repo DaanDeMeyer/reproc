@@ -9,6 +9,17 @@
 #include <stdlib.h>
 #include <windows.h>
 
+static void reproc_destroy(reproc_type *process)
+{
+  assert(process);
+
+  handle_close(&process->handle);
+
+  handle_close(&process->parent_stdin);
+  handle_close(&process->parent_stdout);
+  handle_close(&process->parent_stderr);
+}
+
 REPROC_ERROR reproc_start(reproc_type *process, int argc,
                           const char *const *argv,
                           const char *working_directory)
@@ -135,66 +146,34 @@ REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
   return REPROC_UNKNOWN_ERROR;
 }
 
-REPROC_ERROR reproc_wait(reproc_type *process, unsigned int milliseconds,
-                         unsigned int *exit_status)
+REPROC_ERROR reproc_stop(reproc_type *process, int cleanup_flags,
+                         unsigned int timeout, unsigned int *exit_status)
 {
   assert(process);
-  assert(process->handle);
 
-  SetLastError(0);
-  DWORD wait_result = WaitForSingleObject(process->handle, milliseconds);
-  if (wait_result == WAIT_TIMEOUT) { return REPROC_WAIT_TIMEOUT; }
-  if (wait_result == WAIT_FAILED) { return REPROC_UNKNOWN_ERROR; }
+  REPROC_ERROR error = REPROC_SUCCESS;
 
-  if (exit_status == NULL) { return REPROC_SUCCESS; }
-
-  SetLastError(0);
-  // DWORD == unsigned int so cast is safe
-  if (!GetExitCodeProcess(process->handle, (LPDWORD) exit_status)) {
-    return REPROC_UNKNOWN_ERROR;
+  if (cleanup_flags & REPROC_WAIT) {
+    error = process_wait(process->handle, timeout, exit_status);
   }
 
-  return REPROC_SUCCESS;
-}
+  if (error && error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
 
-REPROC_ERROR reproc_terminate(reproc_type *process, unsigned int milliseconds,
-                              unsigned int *exit_status)
-{
-  assert(process);
-  assert(process->handle);
-
-  // GenerateConsoleCtrlEvent can only be passed a process group id. This is why
-  // we start each child process in its own process group (which has the same id
-  // as the child process id) so we can call GenerateConsoleCtrlEvent on single
-  // child processes
-  SetLastError(0);
-  if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, process->id)) {
-    return REPROC_UNKNOWN_ERROR;
+  if (cleanup_flags & REPROC_TERMINATE) {
+    error = process_terminate(process->handle, process->id, timeout,
+                              exit_status);
   }
 
-  return reproc_wait(process, milliseconds, exit_status);
-}
+  if (error && error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
 
-REPROC_ERROR reproc_kill(reproc_type *process, unsigned int milliseconds)
-{
-  assert(process);
-  assert(process->handle);
+  if (cleanup_flags & REPROC_KILL) {
+    error = process_kill(process->handle, timeout, exit_status);
+  }
 
-  SetLastError(0);
-  if (!TerminateProcess(process->handle, 1)) { return REPROC_UNKNOWN_ERROR; }
+cleanup:
+  reproc_destroy(process);
 
-  return reproc_wait(process, milliseconds, NULL);
-}
-
-void reproc_destroy(reproc_type *process)
-{
-  assert(process);
-
-  handle_close(&process->handle);
-
-  handle_close(&process->parent_stdin);
-  handle_close(&process->parent_stdout);
-  handle_close(&process->parent_stderr);
+  return error;
 }
 
 unsigned int reproc_system_error(void) { return GetLastError(); }

@@ -1,4 +1,4 @@
-#include "process_utils.h"
+#include "process.h"
 #include "handle.h"
 
 #include <assert.h>
@@ -126,4 +126,54 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
   *handle = info.hProcess;
 
   return REPROC_SUCCESS;
+}
+
+REPROC_ERROR process_wait(HANDLE process, unsigned int milliseconds,
+                          unsigned int *exit_status)
+{
+  assert(process);
+
+  SetLastError(0);
+  DWORD wait_result = WaitForSingleObject(process, milliseconds);
+  if (wait_result == WAIT_TIMEOUT) { return REPROC_WAIT_TIMEOUT; }
+  if (wait_result == WAIT_FAILED) { return REPROC_UNKNOWN_ERROR; }
+
+  if (exit_status == NULL) { return REPROC_SUCCESS; }
+
+  SetLastError(0);
+  // DWORD == unsigned int so cast is safe
+  if (!GetExitCodeProcess(process, (LPDWORD) exit_status)) {
+    return REPROC_UNKNOWN_ERROR;
+  }
+
+  return REPROC_SUCCESS;
+}
+
+REPROC_ERROR process_terminate(HANDLE process, unsigned long pid,
+                               unsigned int milliseconds,
+                               unsigned int *exit_status)
+{
+  assert(process);
+
+  // GenerateConsoleCtrlEvent can only be passed a process group id. This is why
+  // we start each child process in its own process group (which has the same id
+  // as the child process id) so we can call GenerateConsoleCtrlEvent on single
+  // child processes
+  SetLastError(0);
+  if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pid)) {
+    return REPROC_UNKNOWN_ERROR;
+  }
+
+  return process_wait(process, milliseconds, exit_status);
+}
+
+REPROC_ERROR process_kill(HANDLE process, unsigned int milliseconds,
+                          unsigned int *exit_status)
+{
+  assert(process);
+
+  SetLastError(0);
+  if (!TerminateProcess(process, 1)) { return REPROC_UNKNOWN_ERROR; }
+
+  return process_wait(process, milliseconds, exit_status);
 }
