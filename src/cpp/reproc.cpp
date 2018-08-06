@@ -31,9 +31,17 @@ reproc::cleanup operator|(reproc::cleanup lhs, reproc::cleanup rhs)
                                       static_cast<int>(rhs));
 }
 
-process::process() : process_(new struct reproc_type()) {}
+process::process(reproc::cleanup cleanup_flags, unsigned int timeout)
+    : cleanup_flags_(cleanup_flags), timeout_(timeout),
+      process_(new struct reproc_type()), running_(false)
+{
+}
 
-process::~process() noexcept = default;
+process::~process() noexcept {
+  if (process_ && running_) {
+    stop(cleanup_flags_, timeout_, nullptr);
+  }
+}
 
 std::error_code process::start(int argc, const char *const *argv,
                                const char *working_directory) noexcept
@@ -61,6 +69,8 @@ std::error_code process::start(const std::vector<std::string> &args,
   std::error_code error = start(argc, &argv[0] /* std::vector -> C array */,
                                 working_directory ? working_directory->c_str()
                                                   : nullptr);
+
+  if (!error) { running_ = true; }
 
   return error;
 }
@@ -95,6 +105,9 @@ std::error_code process::stop(reproc::cleanup cleanup_flags,
   REPROC_ERROR error = reproc_stop(process_.get(),
                                    static_cast<int>(cleanup_flags), timeout,
                                    exit_status);
+
+  running_ = false;
+
   return reproc_error_to_error_code(error);
 }
 

@@ -25,7 +25,21 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  reproc::process forward;
+  // The destructor calls process::stop with the parameters we pass in the
+  // constructor which saves us from having to make sure the process is always
+  // stopped correctly.
+  //
+  // Any kind of process can be started with forward so we make sure the process
+  // is cleaned up correctly by adding the reproc::cleanup::terminate flag
+  // (sends SIGTERM (POSIX) or CTRL-BREAK (Windows) and waits 5 seconds). We
+  // also add the reproc::cleanup::kill flag which sends SIGKILL (POSIX) or
+  // calls TerminateProcess (Windows) if the process hasn't exited after 5
+  // seconds and waits 5 more seconds.
+  //
+  // Note that the timout value of 5s is a maximum time to wait. If the process
+  // exits earlier than the timeout the destructor will return immediately.
+  reproc::process forward(reproc::cleanup::terminate | reproc::cleanup::kill,
+                          5000);
   std::error_code ec;
 
   ec = forward.start(argc - 1, argv + 1);
@@ -47,7 +61,8 @@ int main(int argc, char *argv[])
   ec = forward.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
   if (ec) { return fail(ec); }
 
-  // wait stores the exit status in exit_status if it succeeds
+  // Call stop ourselves to get the exit_status. See cmake-help example for more
+  // info.
   unsigned int exit_status = 0;
   ec = forward.stop(reproc::cleanup::wait, reproc::infinite, &exit_status);
   if (ec) { return fail(ec); }

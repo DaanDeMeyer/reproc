@@ -28,7 +28,8 @@ public:
   /*! Allocates memory for the reproc_type struct. Throws std::bad_alloc if
   allocating memory for the reproc_type struct of the underlying C library
   fails. */
-  REPROC_EXPORT process();
+  REPROC_EXPORT process(reproc::cleanup cleanup_flags = reproc::cleanup::wait,
+                        unsigned int timeout = 0);
 
   /*! The destructor does not stop the child process if it still running. Make
   sure the process has stopped before the destructor is called by using \see
@@ -119,7 +120,10 @@ public:
                                      unsigned int *exit_status) noexcept;
 
 private:
+  reproc::cleanup cleanup_flags_;
+  unsigned int timeout_;
   std::unique_ptr<struct reproc_type> process_;
+  bool running_;
 };
 
 template <typename Parser>
