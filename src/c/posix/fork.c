@@ -59,7 +59,7 @@ REPROC_ERROR fork_exec_redirect(int argc, const char *const *argv,
     errno = 0;
 
     // We put the child process in its own process group which is needed by
-    // reproc_wait. Normally there might be a race condition if the parent
+    // reproc_stop. Normally there might be a race condition if the parent
     // process waits for the child process before the child process puts itself
     // in its own process group (with setpgid) but this is avoided because we
     // always read from the error pipe in the parent process after forking. When

@@ -49,9 +49,8 @@ executing and can be inspected using the operating system's tools for process
 inspection (e.g. ps on Linux).
 
 Every successful call to this function should be followed by a call to \see
-reproc_wait (and possibly \see reproc_terminate or \see reproc_kill) and \see
-reproc_destroy after the process has exited. If an error occurs the function
-cleans up all allocated resources are cleaned up before the function returns.
+reproc_stop. If an error occurs all allocated resources are cleaned up before
+the function returns.
 
 \param[in,out] process Cannot be NULL.
 

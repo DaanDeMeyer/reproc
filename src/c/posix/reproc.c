@@ -116,17 +116,20 @@ REPROC_ERROR reproc_stop(struct reproc_type *process, int cleanup_flags,
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
+  error = process_wait(process->id, 0, exit_status);
+  if (error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
+
   if (cleanup_flags & REPROC_WAIT) {
     error = process_wait(process->id, timeout, exit_status);
   }
 
-  if (error && error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
+  if (error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
 
   if (cleanup_flags & REPROC_TERMINATE) {
     error = process_terminate(process->id, timeout, exit_status);
   }
 
-  if (error && error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
+  if (error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
 
   if (cleanup_flags & REPROC_KILL) {
     error = process_kill(process->id, timeout, exit_status);

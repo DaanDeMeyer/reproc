@@ -284,36 +284,36 @@ parallel.
 ## Gotcha's
 
 - (POSIX) On POSIX a parent process is required to wait on a child process
-  (using `reproc_wait`) that has exited before all resources related to that
+  (using `reproc_stop`) that has exited before all resources related to that
   process can be released by the kernel. If the parent doesn't wait on a child
   process after it exits, the child process becomes a
   [zombie process](https://en.wikipedia.org/wiki/Zombie_process).
 
-- While `reproc_terminate` allows the child process to perform cleanup it is up
+- While `REPROC_TERMINATE` allows the child process to perform cleanup it is up
   to the child process to correctly clean up after itself. reproc only sends a
   termination signal to the child process. The child process itself is
   responsible for cleaning up its own child processes and other resources.
 
-- When using `reproc_kill` the child process does not receive a chance to
+- When using `REPROC_KILL` the child process does not receive a chance to
   perform cleanup which could result in resources being leaked. Chief among
   these leaks is that the child process will not be able to stop its own child
   processes. Always let a child process exit normally or try to stop it with
-  `reproc_terminate` before calling `reproc_kill`.
+  `REPROC_TERMINATE` before calling `REPROC_KILL`.
 
-- (Windows) `reproc_kill` is not guaranteed to kill a child process on Windows.
+- (Windows) `REPROC_KILL` is not guaranteed to kill a child process on Windows.
   For more information, read the Remarks section in the documentation of the
   `TerminateProcess` function that reproc uses to kill child processes on
   Windows.
 
-- (Windows) Immediately stopping a process (using either `reproc_terminate` or
-  `reproc_kill`) after starting it on Windows might result in an error window
+- (Windows) Immediately stopping a process (using either `REPROC_TERMINATE` or
+  `REPROC_KILL`) after starting it on Windows might result in an error window
   with error code `0xc0000142` popping up. The error code indicates that the
   process was terminated before it was fully initialized. This problem shouldn't
   pop up with normal use of the library since most of the time you'll want to
   read/write to the process or wait until it exits normally.
 
-  If someone runs into this problem, reproc's tests mitigate it by waiting a few
-  milliseconds using `reproc_wait` before terminating the child process.
+  If someone runs into this problem, reproc's tests mitigate it by sleeping a
+  few milliseconds before terminating the child process.
 
 - File descriptors/handles created by reproc can leak to child processes not
   spawned by reproc if the application is multithreaded. This is not the case on
@@ -353,7 +353,7 @@ parallel.
   any exit status can be passed to the `ExitProcess` and `TerminateProcess`
   functions there is no cross-platform way to check if a child process exited
   normally or if it was interrupted by a signal or stopped by a call to
-  ExitProcess or TerminateProcess (unless you terminate it your own code of
+  `ExitProcess` or `TerminateProcess` (unless you terminate it your own code of
   course).
 
 ## Design
@@ -402,20 +402,20 @@ specifying a timeout value.
 
 To support waiting with a timeout value on POSIX, each process is put in its own
 process group with the same id as the process id with a call to `setpgid` after
-forking the process. When calling the `reproc_wait` function, a timeout process
-is forked which we put in the same process group as the process we want to wait
-for with the same `setpgid` function and puts itself to sleep for the requested
-amount of time (timeout value) before exiting. We then call the `waitpid`
-function in the main process but instead of passing the process id of the
-process we want to wait for we pass the negative value of the process id.
-Passing a negative value for the process id to `waitpid` instructs it to wait
-for all processes in the process group of the absolute value of the passed
-negative value. In our case it will wait for both the timeout process we started
-and the process we actually want to wait for. If `waitpid` returns the process
-id of the timeout process we know the timeout value has been exceeded. If
-`waitpid` returns the process id of the process we want to wait for we know it
-has exited before the timeout process and that the timeout value has not been
-exceeded.
+forking the process. When calling the `reproc_stop` function with a timeout
+value between 0 and `REPROC_INFINITE`, a timeout process is forked which we put
+in the same process group as the process we want to wait for with the same
+`setpgid` function and puts itself to sleep for the requested amount of time
+(timeout value) before exiting. We then call the `waitpid` function in the main
+process but instead of passing the process id of the process we want to wait for
+we pass the negative value of the process id. Passing a negative value for the
+process id to `waitpid` instructs it to wait for all processes in the process
+group of the absolute value of the passed negative value. In our case it will
+wait for both the timeout process we started and the process we actually want to
+wait for. If `waitpid` returns the process id of the timeout process we know the
+timeout value has been exceeded. If `waitpid` returns the process id of the
+process we want to wait for we know it has exited before the timeout process and
+that the timeout value has not been exceeded.
 
 This solution was inspired by [this](https://stackoverflow.com/a/8020324) Stack
 Overflow answer.
@@ -554,9 +554,9 @@ When making changes:
   If you don't have access to every platform, make a pull request and CI will
   compile and run the tests on the platforms you don't have access to.
 
-  Tests will be compiled with sanitizers in CI so make sure
-  to not introduce any leaks or undefined behaviour. Enable compiling with
-  sanitizers locally as follows:
+  Tests will be compiled with sanitizers in CI so make sure to not introduce any
+  leaks or undefined behaviour. Enable compiling with sanitizers locally as
+  follows:
 
   `cmake -DREPROC_SANITIZERS=ON ..`
 

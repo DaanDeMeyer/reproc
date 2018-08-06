@@ -62,10 +62,6 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
-  // Check if child process hasn't exited already before starting timeout fork
-  error = wait_no_hang(pid, exit_status);
-  if (error != REPROC_WAIT_TIMEOUT) { return error; }
-
   pid_t timeout_pid = 0;
   error = fork_timeout(timeout, pid, &timeout_pid);
   if (error) { return error; }
