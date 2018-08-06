@@ -128,13 +128,13 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR process_wait(HANDLE process, unsigned int milliseconds,
+REPROC_ERROR process_wait(HANDLE process, unsigned int timeout,
                           unsigned int *exit_status)
 {
   assert(process);
 
   SetLastError(0);
-  DWORD wait_result = WaitForSingleObject(process, milliseconds);
+  DWORD wait_result = WaitForSingleObject(process, timeout);
   if (wait_result == WAIT_TIMEOUT) { return REPROC_WAIT_TIMEOUT; }
   if (wait_result == WAIT_FAILED) { return REPROC_UNKNOWN_ERROR; }
 
@@ -150,7 +150,7 @@ REPROC_ERROR process_wait(HANDLE process, unsigned int milliseconds,
 }
 
 REPROC_ERROR process_terminate(HANDLE process, unsigned long pid,
-                               unsigned int milliseconds,
+                               unsigned int timeout,
                                unsigned int *exit_status)
 {
   assert(process);
@@ -164,10 +164,10 @@ REPROC_ERROR process_terminate(HANDLE process, unsigned long pid,
     return REPROC_UNKNOWN_ERROR;
   }
 
-  return process_wait(process, milliseconds, exit_status);
+  return process_wait(process, timeout, exit_status);
 }
 
-REPROC_ERROR process_kill(HANDLE process, unsigned int milliseconds,
+REPROC_ERROR process_kill(HANDLE process, unsigned int timeout,
                           unsigned int *exit_status)
 {
   assert(process);
@@ -175,5 +175,5 @@ REPROC_ERROR process_kill(HANDLE process, unsigned int milliseconds,
   SetLastError(0);
   if (!TerminateProcess(process, 1)) { return REPROC_UNKNOWN_ERROR; }
 
-  return process_wait(process, milliseconds, exit_status);
+  return process_wait(process, timeout, exit_status);
 }

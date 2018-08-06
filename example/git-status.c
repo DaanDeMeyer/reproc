@@ -7,7 +7,7 @@
 
 #define BUFFER_SIZE 1024
 
-/*! Uses the reproc C API to print CMake's help page */
+/*! Uses the reproc C API to print the output of git status */
 int main(void)
 {
   reproc_type git_status;
@@ -24,17 +24,18 @@ int main(void)
   // parent process is used.
   error = reproc_start(&git_status, argc, argv, NULL);
   if (error == REPROC_FILE_NOT_FOUND) {
-    fprintf(stderr, "%s",
+    fprintf(stderr, "%s\n",
             "git not found. Make sure it's available from the PATH");
     return 1;
   } else if (error) {
+    fprintf(stderr, "%s\n", reproc_error_to_string(error));
     return (int) error;
   }
 
   // Start with an empty string
-  size_t size = 0;
+  size_t output_length = 0;
   char *output = malloc(1);
-  if (!output) { return 1; }
+  if (!output) { goto cleanup; }
   output[0] = '\0';
 
   char buffer[BUFFER_SIZE];
@@ -50,34 +51,39 @@ int main(void)
     if (error) { break; }
 
     // +1 to leave space for null terminator
-    char *realloc_result = realloc(output, size + bytes_read + 1);
+    char *realloc_result = realloc(output, output_length + bytes_read + 1);
     if (!realloc_result) {
       free(output);
-      return 1;
+      goto cleanup;
     }
     output = realloc_result;
 
-    memcpy(output + size, buffer, bytes_read);
-    size += bytes_read;
+    memcpy(output + output_length, buffer, bytes_read);
+    output_length += bytes_read;
   }
 
   // Check that the while loop stopped because the output stream of the child
   // process was closed and not because of another error
   if (error != REPROC_STREAM_CLOSED) {
     free(output);
-    return (int) error;
+    goto cleanup;
   }
 
-  output[size] = '\0';
+  output[output_length] = '\0';
   printf("%s", output);
   free(output);
 
+cleanup:
   // Wait for the process to exit. This should always be done since some systems
-  // don't clean up system resources allocated to a child process until the
-  // parent process waits for it.
+  // (POSIX) don't clean up system resources allocated to a child process until
+  // the parent process explicitly waits for it after it has exited.
   unsigned int exit_status = 0;
   error = reproc_stop(&git_status, REPROC_WAIT, REPROC_INFINITE, &exit_status);
-  if (error) { return (int) error; }
+
+  if (error) {
+    fprintf(stderr, "%s\n", reproc_error_to_string(error));
+    return (int) error;
+  }
 
   return (int) exit_status;
 }
