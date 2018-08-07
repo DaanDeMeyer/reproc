@@ -62,6 +62,11 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
+  // Check if process has already exited before starting (expensive) timeout
+  // fork. Return if wait succeeds or error (that isn't a timeout) occurs
+  error = process_wait(pid, 0, exit_status);
+  if (error != REPROC_WAIT_TIMEOUT) { return error; }
+
   pid_t timeout_pid = 0;
   error = fork_timeout(timeout, pid, &timeout_pid);
   if (error) { return error; }
@@ -124,7 +129,7 @@ REPROC_ERROR process_terminate(pid_t pid, unsigned int timeout,
 }
 
 REPROC_ERROR process_kill(pid_t pid, unsigned int timeout,
-                         unsigned int *exit_status)
+                          unsigned int *exit_status)
 {
   errno = 0;
   if (kill(pid, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }

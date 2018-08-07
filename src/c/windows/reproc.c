@@ -153,12 +153,8 @@ REPROC_ERROR reproc_stop(reproc_type *process, int cleanup_flags,
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
-  // Check if child process has already exited
-  error = process_wait(process->handle, 0, exit_status);
-  if (error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
-
   // We already did a 0 ms timeout check so we don't do it again
-  if (cleanup_flags & REPROC_WAIT && timeout > 0) {
+  if (cleanup_flags & REPROC_WAIT) {
     error = process_wait(process->handle, timeout, exit_status);
   }
 
