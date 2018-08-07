@@ -114,7 +114,9 @@ REPROC_ERROR reproc_stop(struct reproc_type *process, int cleanup_flags,
 {
   assert(process);
 
-  REPROC_ERROR error = REPROC_SUCCESS;
+  // Don't set to REPROC_SUCCESS so we can check if wait/terminate/kill
+  // succeeded (sets error to REPROC_SUCCESS)
+  REPROC_ERROR error = REPROC_WAIT_TIMEOUT;
 
   if (cleanup_flags & REPROC_WAIT) {
     error = process_wait(process->id, timeout, exit_status);
