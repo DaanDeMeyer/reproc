@@ -19,7 +19,8 @@ REPROC_EXPORT extern const unsigned int infinite;
 
 enum class cleanup : int { wait = 1 << 0, terminate = 1 << 1, kill = 1 << 2 };
 
-reproc::cleanup operator|(reproc::cleanup lhs, reproc::cleanup rhs);
+REPROC_EXPORT reproc::cleanup operator|(reproc::cleanup lhs,
+                                        reproc::cleanup rhs);
 
 class process
 {
