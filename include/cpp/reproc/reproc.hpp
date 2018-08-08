@@ -28,13 +28,15 @@ class process
 public:
   /*! Allocates memory for the reproc_type struct. Throws std::bad_alloc if
   allocating memory for the reproc_type struct of the underlying C library
-  fails. */
+  fails. Takes arguments that are passed to process::stop in the destructor if
+  the process is still running by that time. \see reproc_stop for more info. */
   REPROC_EXPORT process(reproc::cleanup cleanup_flags = reproc::cleanup::wait,
                         unsigned int timeout = 0);
 
-  /*! The destructor does not stop the child process if it still running. Make
-  sure the process has stopped before the destructor is called by using \see
-  stop. */
+  /*! By default the destructor only checks if the process has exited and frees
+  the allocated memory for the reproc_type struct. Extra parameters can be
+  passed to the constructor if the process should be stopped in the destructor.
+  */
   REPROC_EXPORT ~process() noexcept;
 
   /* Enforce unique ownership */
