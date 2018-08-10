@@ -89,7 +89,7 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
                                 .dwFlags = STARTF_USESTDHANDLES,
                                 .hStdInput = child_stdin,
                                 .hStdOutput = child_stdout,
-                                .hStdError = child_stderr }
+                                .hStdError = child_stderr };
 
   LPSTARTUPINFOW startup_info_address = &startup_info;
 #endif
