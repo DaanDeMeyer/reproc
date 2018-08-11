@@ -23,12 +23,7 @@ matrix:
   fast_finish: true
   include:
     - os: linux
-      env: CC=gcc-5 CXX=g++-5
-      addons:
-        apt:
-          sources: *sources
-          packages:
-            - g++-5
+      env: CC=gcc CXX=g++
 
     - os: linux
       env: CC=gcc-8 CXX=g++-8
@@ -39,13 +34,7 @@ matrix:
             - g++-8
 
     - os: linux
-      env: CC=clang-3.6 CXX=clang++-3.6
-      addons:
-        apt:
-          sources: *sources
-          packages:
-            - clang-3.6
-            - g++-5
+      env: CC=clang CXX=clang++
 
     - os: linux
       env: CC=clang-6.0 CXX=clang++-6.0
@@ -54,7 +43,6 @@ matrix:
           sources: *sources
           packages:
             - clang-6.0
-            - g++-5
 
     - os: osx
       osx_image: xcode9.2
