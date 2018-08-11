@@ -3,7 +3,7 @@
 # subproject with add_subdirectory
 
 cmake_minimum_required(VERSION 3.1)
-project(reproc VERSION 0.0.1 LANGUAGES C)
+project(reproc VERSION 1.0.0 LANGUAGES C)
 
 # Tip: use cmake-gui when contributing to reproc to turn on everything without
 # having to type out all the options by hand (cmake .. && cmake-gui .)
