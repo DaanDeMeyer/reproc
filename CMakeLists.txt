@@ -111,6 +111,11 @@ if(NOT MSVC)
   )
 endif()
 
+set_target_properties(reproc PROPERTIES
+  VERSION ${PROJECT_VERSION}
+  SOVERSION ${PROJECT_VERSION_MAJOR}
+)
+
 # Only use the headers from the repository when building. When installing we
 # want to use the install location of the headers (e.g. /usr/include) as the
 # include directory which is specified later in this file (Install section)
