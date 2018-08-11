@@ -177,7 +177,7 @@ cleanup:
   }
 
   *pid = exec_pid;
-  return REPROC_SUCCESS;;
+  return REPROC_SUCCESS;
 }
 
 // This code is the same as above except for the code that gets executed inside

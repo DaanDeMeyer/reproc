@@ -4,7 +4,7 @@
 #include <assert.h>
 
 #if defined(HAS_ATTRIBUTE_LIST)
-#include <stdlib.h>
+#  include <stdlib.h>
 
 REPROC_ERROR
 static handle_inherit_list_create(HANDLE *handles, int amount,
@@ -150,8 +150,7 @@ REPROC_ERROR process_wait(HANDLE process, unsigned int timeout,
 }
 
 REPROC_ERROR process_terminate(HANDLE process, unsigned long pid,
-                               unsigned int timeout,
-                               unsigned int *exit_status)
+                               unsigned int timeout, unsigned int *exit_status)
 {
   assert(process);
 
