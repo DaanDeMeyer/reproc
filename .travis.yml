@@ -52,7 +52,6 @@ matrix:
         - REPROC_SANITIZERS=ON
 
     - os: osx
-      osx_image: xcode9.2
       env:
         - CC=clang
         - CXX=clang++
