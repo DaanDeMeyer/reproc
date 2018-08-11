@@ -53,8 +53,6 @@ else()
     -Wshadow
     -Wconversion
     $<$<BOOL:${REPROC_CI}>:-Werror>
-    $<$<C_COMPILER_ID:Clang>:-fcolor-diagnostics>
-    $<$<C_COMPILER_ID:GNU>:-fdiagnostics-color>
   )
 
   if(REPROC_SANITIZERS)
