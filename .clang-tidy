@@ -2,9 +2,11 @@
 Checks:
 '
 *,
+-cppcoreguidelines-pro-bounds-array-to-pointer-decay,
 -fuchsia-default-arguments,
 -fuchsia-overloaded-operator,
 -hicpp-signed-bitwise,
+-hicpp-no-array-decay,
 -readability-implicit-bool-conversion,
 -readability-else-after-return
 '

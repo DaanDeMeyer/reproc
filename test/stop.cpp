@@ -1,8 +1,6 @@
 #include <doctest.h>
 #include <reproc/reproc.h>
 
-#include <array>
-
 #if defined(_WIN32)
 #include <windows.h>
 #endif
@@ -12,13 +10,13 @@ TEST_CASE("stop")
 {
   reproc_type infinite;
 
-  std::array<const char *, 2> argv = { { INFINITE_PATH, nullptr } };
-  auto argc = static_cast<int>(argv.size() - 1);
+  static constexpr unsigned int ARGV_SIZE = 2;
+  const char *argv[ARGV_SIZE] = { INFINITE_PATH, nullptr };
 
   REPROC_ERROR error = REPROC_SUCCESS;
   CAPTURE(error);
 
-  error = reproc_start(&infinite, argc, argv.data(), nullptr);
+  error = reproc_start(&infinite, ARGV_SIZE - 1, argv, nullptr);
   REQUIRE(!error);
 
 // Wait to avoid terminating the child process on Windows before it is
