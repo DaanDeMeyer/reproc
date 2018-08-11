@@ -10,48 +10,63 @@ sudo: true
 notifications:
   email: false
 
-addons:
-  apt:
-    sources: &sources
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-precise-3.6
-      - llvm-toolchain-trusty-6.0
-
 # When building with Clang GCC still has to be installed to provide libstdc++
 # that Clang uses (Clang doesn't bundle libc++)
 matrix:
   fast_finish: true
   include:
     - os: linux
-      env: CC=gcc CXX=g++
+      env:
+        - CC=gcc
+        - CXX=g++
+        - REPROC_SANITIZERS=OFF
 
     - os: linux
-      env: CC=gcc-8 CXX=g++-8
+      env:
+        - CC=clang
+        - CXX=clang++
+        - REPROC_SANITIZERS=ON
+
+    - os: linux
       addons:
         apt:
-          sources: *sources
+          sources:
+            - ubuntu-toolchain-r-test
           packages:
             - g++-8
+      env:
+        - CC=gcc-8
+        - CXX=g++-8
+        - REPROC_SANITIZERS=ON
 
     - os: linux
-      env: CC=clang CXX=clang++
-
-    - os: linux
-      env: CC=clang-6.0 CXX=clang++-6.0
       addons:
         apt:
-          sources: *sources
+          sources:
+            - llvm-toolchain-trusty-6.0
           packages:
             - clang-6.0
+      env:
+        - CC=clang-6.0
+        - CXX=clang++-6.0
+        - REPROC_SANITIZERS=ON
 
     - os: osx
       osx_image: xcode9.2
-      env: CC=clang CXX=clang++
+      env:
+        - CC=clang
+        - CXX=clang++
+        - REPROC_SANITIZERS=ON
 
 script:
-  - cmake -DCMAKE_BUILD_TYPE=Debug -DREPROC_BUILD_TESTS=ON
-    -DREPROC_BUILD_EXAMPLES=ON -DREPROC_BUILD_CXX_WRAPPER=ON
-    -DREPROC_CI=ON -DREPROC_TIDY=ON -DREPROC_SANITIZERS=ON
-    -DBUILD_SHARED_LIBS=ON .
+  - cmake
+      -DCMAKE_BUILD_TYPE=Debug
+      -DREPROC_BUILD_TESTS=ON
+      -DREPROC_BUILD_EXAMPLES=ON
+      -DREPROC_BUILD_CXX_WRAPPER=ON
+      -DREPROC_CI=ON
+      -DREPROC_TIDY=ON
+      -DREPROC_SANITIZERS=$REPROC_SANITIZERS
+      -DBUILD_SHARED_LIBS=ON .
   - cmake --build . -- -j 3
   - cmake --build . --target reproc-run-tests
