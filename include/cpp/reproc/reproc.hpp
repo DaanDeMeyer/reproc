@@ -13,7 +13,7 @@
 namespace reproc
 {
 
-enum class stream { stdin, stdout, stderr };
+enum class stream { in, out, err };
 
 REPROC_EXPORT extern const unsigned int infinite;
 

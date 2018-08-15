@@ -51,14 +51,14 @@ int main(int argc, char *argv[])
   }
 
   // Some programs wait for the input stream to be closed before continuing
-  forward.close(reproc::stream::stdin);
+  forward.close(reproc::stream::in);
 
   // Pipe child process stdout output to std::cout of parent process
-  ec = forward.read(reproc::stream::stdout, reproc::ostream_parser(std::cout));
+  ec = forward.read(reproc::stream::out, reproc::ostream_parser(std::cout));
   if (ec) { return fail(ec); }
 
   // Pipe child process stderr output to std::cerr of parent process
-  ec = forward.read(reproc::stream::stderr, reproc::ostream_parser(std::cerr));
+  ec = forward.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
   if (ec) { return fail(ec); }
 
   // Call stop ourselves to get the exit_status. See cmake-help example for more

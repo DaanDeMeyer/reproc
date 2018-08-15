@@ -30,13 +30,13 @@ TEST_CASE("read-write")
                          &bytes_written);
     REQUIRE(!error);
 
-    reproc_close(&io, REPROC_STDIN);
+    reproc_close(&io, REPROC_IN);
 
     std::string output{};
 
     while (true) {
       unsigned int bytes_read = 0;
-      error = reproc_read(&io, REPROC_STDOUT, buffer, BUFFER_SIZE,
+      error = reproc_read(&io, REPROC_OUT, buffer, BUFFER_SIZE,
                           &bytes_read);
       if (error) { break; }
 
@@ -62,13 +62,13 @@ TEST_CASE("read-write")
                          &bytes_written);
     REQUIRE(!error);
 
-    reproc_close(&io, REPROC_STDIN);
+    reproc_close(&io, REPROC_IN);
 
     std::string output{};
 
     while (true) {
       unsigned int bytes_read = 0;
-      error = reproc_read(&io, REPROC_STDERR, buffer, BUFFER_SIZE,
+      error = reproc_read(&io, REPROC_ERR, buffer, BUFFER_SIZE,
                           &bytes_read);
       if (error) { break; }
 

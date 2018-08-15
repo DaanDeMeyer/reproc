@@ -34,7 +34,7 @@ struct reproc_type {
 /*! Used to store child process information between multiple library calls */
 typedef struct reproc_type reproc_type; // _t is reserved by POSIX
 
-typedef enum { REPROC_STDIN, REPROC_STDOUT, REPROC_STDERR } REPROC_STREAM;
+typedef enum { REPROC_IN, REPROC_OUT, REPROC_ERR } REPROC_STREAM;
 
 /*! Used to indicate that a function that takes a timeout value should wait
 indefinitely. */

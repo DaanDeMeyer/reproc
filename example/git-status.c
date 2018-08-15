@@ -46,7 +46,7 @@ int main(void)
   // process closing its output stream is also reported as an error).
   while (true) {
     unsigned int bytes_read = 0;
-    error = reproc_read(&git_status, REPROC_STDOUT, buffer, BUFFER_SIZE,
+    error = reproc_read(&git_status, REPROC_OUT, buffer, BUFFER_SIZE,
                         &bytes_read);
     if (error) { break; }
 
@@ -73,6 +73,7 @@ int main(void)
   printf("%s", output);
   free(output);
 
+// ; because declaration directly after label is illegal in C
 cleanup:;
   // Wait for the process to exit. This should always be done since some systems
   // (POSIX) don't clean up system resources allocated to a child process until
