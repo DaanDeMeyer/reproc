@@ -1,5 +1,4 @@
 dist: trusty
-sudo: false
 # Use generic to avoid travis-ci overwriting CC and CXX
 # See: https://stackoverflow.com/questions/35110123/travis-ci-with-c14-and-linux
 language: generic
@@ -56,16 +55,9 @@ matrix:
         - CXX=clang++
 
 script:
-  - cmake .
-      -DREPROC_BUILD_TESTS=ON
-      -DREPROC_BUILD_EXAMPLES=ON
-      -DREPROC_BUILD_CXX_WRAPPER=ON
-      -DREPROC_CI=ON
-      -DREPROC_TIDY=ON
-      -DREPROC_INSTALL=ON
-      -DREPROC_FORMAT=ON
-      -DREPROC_SANITIZERS=$REPROC_SANITIZERS
-      -DCMAKE_BUILD_TYPE=Debug
-      -DBUILD_SHARED_LIBS=ON
+  - cmake . -DREPROC_BUILD_TESTS=ON -DREPROC_BUILD_EXAMPLES=ON
+    -DREPROC_BUILD_CXX_WRAPPER=ON -DREPROC_CI=ON -DREPROC_TIDY=ON
+    -DREPROC_INSTALL=ON -DREPROC_FORMAT=ON -DCMAKE_BUILD_TYPE=Debug
+    -DBUILD_SHARED_LIBS=ON -DREPROC_SANITIZERS=$REPROC_SANITIZERS
   - cmake --build . -- -j 3
   - cmake --build . --target reproc-run-tests

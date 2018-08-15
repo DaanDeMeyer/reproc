@@ -4,23 +4,17 @@ image:
 platform:
   - x86
   - x64
+configuration: Debug
 
 environment:
   # Add directory of dll to PATH so Windows can find it
   PATH: $(APPVEYOR_BUILD_FOLDER)\lib\Debug;$(PATH)
 
 before_build:
-  - cmake .
-      -DREPROC_BUILD_TESTS=ON
-      -DREPROC_BUILD_EXAMPLES=ON
-      -DREPROC_BUILD_CXX_WRAPPER=ON
-      -DREPROC_CI=ON
-      -DREPROC_TIDY=ON
-      -DREPROC_INSTALL=ON
-      -DREPROC_FORMAT=ON
-      -DBUILD_SHARED_LIBS=ON
+  cmake . -DREPROC_BUILD_TESTS=ON -DREPROC_BUILD_EXAMPLES=ON
+  -DREPROC_BUILD_CXX_WRAPPER=ON -DREPROC_CI=ON -DREPROC_TIDY=ON
+  -DREPROC_INSTALL=ON -DREPROC_FORMAT=ON -DBUILD_SHARED_LIBS=ON
 
-build_script:
-  - cmake --build . --config Debug
+build_script: cmake --build . --config %CONFIGURATION%
 
 test_script: cmake --build . --target reproc-run-tests
