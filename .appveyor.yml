@@ -1,15 +1,13 @@
-version: "{build}"
-image: Visual Studio 2017
-platform: x64
-configuration: Debug
+image:
+  - Visual Studio 2015
+  - Visual Studio 2017
+platform:
+  - x86
+  - x64
 
 environment:
   # Add directory of dll to PATH so Windows can find it
   PATH: $(APPVEYOR_BUILD_FOLDER)\lib\Debug;$(PATH)
-  CLICOLOR_FORCE: 1
-  matrix:
-    - MSYSTEM: MINGW64
-    - MSYSTEM: MSVC
 
 before_build:
   - cmake .
@@ -20,10 +18,9 @@ before_build:
       -DREPROC_TIDY=ON
       -DREPROC_INSTALL=ON
       -DREPROC_FORMAT=ON
-      -DCMAKE_GENERATOR_PLATFORM=x64
       -DBUILD_SHARED_LIBS=ON
 
-build:
-  project: reproc.sln
+build_script:
+  - cmake --build . --config Debug
 
 test_script: cmake --build . --target reproc-run-tests
