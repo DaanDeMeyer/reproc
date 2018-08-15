@@ -59,5 +59,5 @@ script:
     -DREPROC_BUILD_CXX_WRAPPER=ON -DREPROC_CI=ON -DREPROC_TIDY=ON
     -DREPROC_INSTALL=ON -DREPROC_FORMAT=ON -DCMAKE_BUILD_TYPE=Debug
     -DBUILD_SHARED_LIBS=ON -DREPROC_SANITIZERS=$REPROC_SANITIZERS
-  - cmake --build . -- -j 3
+  - cmake --build . -- -j 2
   - cmake --build . --target reproc-run-tests
