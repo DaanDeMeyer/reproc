@@ -27,6 +27,12 @@ option(REPROC_SANITIZERS "Compile with sanitizers" OFF)
 option(REPROC_ENABLE_W4 "Enable /W4 on Windows (modifies CMAKE_C_FLAGS and \
 CMAKE_CXX_FLAGS)" OFF)
 
+# C++
+
+if(REPROC_BUILD_CXX_WRAPPER OR REPROC_BUILD_TESTS)
+  enable_language(CXX)
+endif()
+
 ### clang-tidy ###
 
 if(REPROC_TIDY)
@@ -211,8 +217,6 @@ endif()
 ### C++ Wrapper ###
 
 if(REPROC_BUILD_CXX_WRAPPER)
-  enable_language(CXX)
-
   reproc_set_common(reproc CXX lib)
 
   target_include_directories(reproc PUBLIC
@@ -224,10 +228,6 @@ endif()
 ### Tests ###
 
 if(REPROC_BUILD_TESTS)
-  enable_language(CXX)
-
-  ### Tests ###
-
   add_executable(reproc-tests "")
   reproc_set_common(reproc-tests CXX test)
 
