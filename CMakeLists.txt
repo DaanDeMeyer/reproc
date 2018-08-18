@@ -124,7 +124,7 @@ function(reproc_set_common TARGET LANGUAGE OUTPUT_DIRECTORY)
   # reproc_set_common is called twice for reproc target (once for C and once for
   # C++) which means we have to take care to not add link options twice
   get_property(LINK_FLAGS TARGET ${TARGET} PROPERTY LINK_FLAGS)
-  if(NOT "${LINK_FLAGS}" MATCHES ${REPROC_LINK_OPTIONS_STRING})
+  if(NOT "${LINK_FLAGS}" MATCHES "${REPROC_LINK_OPTIONS_STRING}")
     set_property(TARGET ${TARGET} PROPERTY
                  LINK_FLAGS "${LINK_FLAGS} ${REPROC_LINK_OPTIONS_STRING}")
   endif()
