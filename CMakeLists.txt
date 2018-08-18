@@ -63,6 +63,7 @@ if(MSVC)
   check_c_compiler_flag(/permissive- REPROC_HAS_PERMISSIVE)
 
   set(REPROC_COMPILE_OPTIONS
+    /nologo
     $<$<BOOL:${REPROC_CI}>:/WX>
     $<$<BOOL:${REPROC_HAS_PERMISSIVE}>:/permissive->
     # MSVC reports non-constant initializers as a nonstandard extension but
