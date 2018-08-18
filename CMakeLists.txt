@@ -36,17 +36,22 @@ endif()
 
 ### Common development flags ###
 
-# Shared options are gathered in reproc-dev-flags target which every other
-# target links against in order to get the options
-add_library(reproc-dev-flags INTERFACE)
-
 if(MSVC)
-  target_compile_options(reproc-dev-flags INTERFACE
-    # /W3 is enabled by default
+  set(REPROC_COMPILE_OPTIONS
+    /nologo
+    /W3
     $<$<BOOL:${REPROC_CI}>:/WX>
+    $<$<C_COMPILER_ID:MSVC>:/permissive->
+    # See https://github.com/onqtam/doctest/issues/143
+    $<$<C_COMPILER_ID:Clang>:-Wno-deprecated-declarations>
+    $<$<C_COMPILER_ID:Clang>:-Wno-switch>
+  )
+  set(REPROC_LINK_OPTIONS
+    /nologo
+    /INCREMENTAL:NO
   )
 else()
-  target_compile_options(reproc-dev-flags INTERFACE
+  set(REPROC_COMPILE_OPTIONS
     -Wall
     -Wextra
     -pedantic-errors
@@ -56,10 +61,10 @@ else()
   )
 
   if(REPROC_SANITIZERS)
-    target_compile_options(reproc-dev-flags INTERFACE
+    set(REPROC_COMPILE_OPTIONS ${REPROC_COMPILE_OPTIONS}
       -fsanitize=address,undefined
     )
-    target_link_libraries(reproc-dev-flags INTERFACE
+    set(REPROC_LINK_OPTIONS
       -fsanitize=address,undefined
       $<$<C_COMPILER_ID:GNU>:-fuse-ld=gold>
     )
@@ -73,6 +78,7 @@ set(REPROC_CXX_STANDARD 11)
 
 function(reproc_set_common TARGET LANGUAGE OUTPUT_DIRECTORY)
   string(REPLACE "reproc-" "" WITHOUT_PREFIX ${TARGET})
+
   set_target_properties(${TARGET} PROPERTIES
     ${LANGUAGE}_STANDARD ${REPROC_${LANGUAGE}_STANDARD}
     ${LANGUAGE}_STANDARD_REQUIRED ON
@@ -82,8 +88,11 @@ function(reproc_set_common TARGET LANGUAGE OUTPUT_DIRECTORY)
     ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
     LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
   )
-  target_link_libraries(${TARGET} PRIVATE
-    $<BUILD_INTERFACE:reproc-dev-flags>
+  target_compile_options(${TARGET} PRIVATE ${REPROC_COMPILE_OPTIONS})
+
+  string(REPLACE ";" " " REPROC_LINK_OPTIONS_STRING "${REPROC_LINK_OPTIONS}")
+  set_property(TARGET ${TARGET} APPEND PROPERTY
+    LINK_FLAGS ${REPROC_LINK_OPTIONS_STRING}
   )
 
   if(REPROC_TIDY AND REPROC_CLANG_TIDY)
