@@ -55,8 +55,9 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
   // Determine wstring length (MultiByteToWideChar returns required size if last
   // two arguments are NULL and 0)
   SetLastError(0);
-  int wstring_length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
-                                           string, -1, NULL, 0);
+  unsigned int wstring_length = (unsigned int)
+      MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string, -1, NULL, 0);
+
   if (wstring_length == 0) {
     switch (GetLastError()) {
     case ERROR_NO_UNICODE_TRANSLATION: return REPROC_INVALID_UNICODE;

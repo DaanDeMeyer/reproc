@@ -8,7 +8,8 @@ Checks:
 -hicpp-signed-bitwise,
 -hicpp-no-array-decay,
 -readability-implicit-bool-conversion,
--readability-else-after-return
+-readability-else-after-return,
+-clang-diagnostic-unused-command-line-argument
 '
 HeaderFilterRegex: '^(?!doctest\.h$).*$'
 ...

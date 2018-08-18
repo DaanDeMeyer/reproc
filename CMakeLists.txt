@@ -16,8 +16,16 @@ option(REPROC_TIDY "Run clang-tidy as part of the build \
 (requires clang-tidy to be in the PATH)" OFF)
 option(REPROC_INSTALL "Generate install target" OFF)
 option(REPROC_FORMAT "Find clang-format and add target to run it on all source \
-files")
+files" OFF)
 option(REPROC_SANITIZERS "Compile with sanitizers" OFF)
+# CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default on Windows so
+# when we add /W4 via target_compile_options cl.exe complains that both /W3 and
+# /W4 are passed. We can avoid these warnings by replacing /W3 with /W4 in
+# CMAKE_CXX_FLAGS but this is intrusive when reproc is used via add_subdirectory
+# since it would add /W4 for every target. To solve this, we add this option so
+# /W4 can be enabled by developers and in CI without forcing it on for users.
+option(REPROC_ENABLE_W4 "Enable /W4 on Windows (modifies CMAKE_C_FLAGS and \
+CMAKE_CXX_FLAGS)" OFF)
 
 ### clang-tidy ###
 
@@ -37,17 +45,31 @@ endif()
 ### Common development flags ###
 
 if(MSVC)
+  if(REPROC_ENABLE_W4)
+    string(REGEX REPLACE /W[0-4] "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4" )
+
+    string(REGEX REPLACE /W[0-4] "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4" )
+  endif()
+
+  include(CheckCCompilerFlag)
+  check_c_compiler_flag(/permissive- REPROC_HAS_PERMISSIVE)
+
   set(REPROC_COMPILE_OPTIONS
-    /nologo
-    /W3
     $<$<BOOL:${REPROC_CI}>:/WX>
-    $<$<C_COMPILER_ID:MSVC>:/permissive->
+    $<$<BOOL:${REPROC_HAS_PERMISSIVE}>:/permissive->
+    # MSVC reports non-constant initializers as a nonstandard extension but
+    # they've been standardized in C99 and we're targeting C99 so this warning
+    # is not valid for us
+    $<$<C_COMPILER_ID:MSVC>:/wd4204>
     # See https://github.com/onqtam/doctest/issues/143
     $<$<C_COMPILER_ID:Clang>:-Wno-deprecated-declarations>
     $<$<C_COMPILER_ID:Clang>:-Wno-switch>
   )
   set(REPROC_LINK_OPTIONS
     /nologo
+    # Disable incremental linking to silence warnings when rebuilding reproc
     /INCREMENTAL:NO
   )
 else()
@@ -122,6 +144,9 @@ set_target_properties(reproc PROPERTIES
   VERSION ${PROJECT_VERSION}
   SOVERSION ${PROJECT_VERSION_MAJOR}
 )
+
+# Remove MSVC Library version from output
+set_property(TARGET reproc APPEND PROPERTY STATIC_LIBRARY_FLAGS /nologo)
 
 # Only use the headers from the repository when building. When installing we
 # want to use the install location of the headers (e.g. /usr/include) as the
