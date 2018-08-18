@@ -120,7 +120,7 @@ function(reproc_set_common TARGET LANGUAGE OUTPUT_DIRECTORY)
 
   string(REPLACE ";" " " REPROC_LINK_OPTIONS_STRING "${REPROC_LINK_OPTIONS}")
   set_property(TARGET ${TARGET} APPEND PROPERTY
-    LINK_FLAGS ${REPROC_LINK_OPTIONS_STRING}
+    LINK_FLAGS "${REPROC_LINK_OPTIONS_STRING}"
   )
 
   if(REPROC_TIDY AND REPROC_CLANG_TIDY)
@@ -151,8 +151,10 @@ set_target_properties(reproc PROPERTIES
   SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
-# Remove MSVC Library version from output
-set_property(TARGET reproc APPEND PROPERTY STATIC_LIBRARY_FLAGS /nologo)
+# Silence MSVC Library Manager version output
+if(MSVC)
+  set_property(TARGET reproc APPEND PROPERTY STATIC_LIBRARY_FLAGS /nologo)
+endif()
 
 # Only use the headers from the repository when building. When installing we
 # want to use the install location of the headers (e.g. /usr/include) as the
