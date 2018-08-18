@@ -99,6 +99,8 @@ else()
   endif()
 endif()
 
+string(REPLACE ";" " " REPROC_LINK_OPTIONS_STRING "${REPROC_LINK_OPTIONS}")
+
 ### Helpers ###
 
 set(REPROC_C_STANDARD 99)
@@ -118,10 +120,13 @@ function(reproc_set_common TARGET LANGUAGE OUTPUT_DIRECTORY)
   )
   target_compile_options(${TARGET} PRIVATE ${REPROC_COMPILE_OPTIONS})
 
-  string(REPLACE ";" " " REPROC_LINK_OPTIONS_STRING "${REPROC_LINK_OPTIONS}")
-  set_property(TARGET ${TARGET} APPEND PROPERTY
-    LINK_FLAGS "${REPROC_LINK_OPTIONS_STRING}"
-  )
+  # reproc_set_common is called twice for reproc target (once for C and once for
+  # C++) which means we have to take care to not add link options twice
+  get_property(LINK_FLAGS TARGET ${TARGET} PROPERTY LINK_FLAGS)
+  if(NOT "${LINK_FLAGS}" MATCHES ${REPROC_LINK_OPTIONS_STRING})
+    set_property(TARGET ${TARGET} PROPERTY
+                 LINK_FLAGS "${LINK_FLAGS} ${REPROC_LINK_OPTIONS_STRING}")
+  endif()
 
   if(REPROC_TIDY AND REPROC_CLANG_TIDY)
     set_target_properties(${TARGET} PROPERTIES
