@@ -70,9 +70,6 @@ if(MSVC)
     # they've been standardized in C99 and we're targeting C99 so this warning
     # is not valid for us
     $<$<C_COMPILER_ID:MSVC>:/wd4204>
-    # See https://github.com/onqtam/doctest/issues/143
-    $<$<C_COMPILER_ID:Clang>:-Wno-deprecated-declarations>
-    $<$<C_COMPILER_ID:Clang>:-Wno-switch>
   )
   set(REPROC_LINK_OPTIONS
     /nologo
