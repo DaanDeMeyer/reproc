@@ -90,10 +90,12 @@ else()
     set(REPROC_COMPILE_OPTIONS ${REPROC_COMPILE_OPTIONS}
       -fsanitize=address,undefined
     )
-    set(REPROC_LINK_OPTIONS
-      -fsanitize=address,undefined
-      $<$<C_COMPILER_ID:GNU>:-fuse-ld=gold>
-    )
+
+    set(REPROC_LINK_OPTIONS -fsanitize=address,undefined)
+
+    if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
+      set(REPROC_LINK_OPTIONS ${REPROC_LINK_OPTIONS} -fuse-ld=gold)
+    endif()
   endif()
 endif()
 
