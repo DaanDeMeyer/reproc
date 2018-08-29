@@ -1,11 +1,33 @@
-platform:
-  - x86
-  - x64
-
 environment:
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       VCVARSALL: C:\"Program Files (x86)"\"Microsoft Visual Studio 14.0"\VC\vcvarsall.bat
+      PLATFORM: x64
+      CC: cl.exe
+      CXX: cl.exe
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      VCVARSALL: C:\"Program Files (x86)"\"Microsoft Visual Studio 14.0"\VC\vcvarsall.bat
+      PLATFORM: x86
+      CC: clang-cl.exe
+      CXX: clang-cl.exe
+      # https://gitlab.kitware.com/cmake/cmake/issues/16259
+      CFLAGS: -m32
+      CXXFLAGS: -m32
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      VCVARSALL: C:\"Program Files (x86)"\"Microsoft Visual Studio"\2017\Community\VC\Auxiliary\Build\vcvarsall.bat
+      PLATFORM: x86
+      CC: cl.exe
+      CXX: cl.exe
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      VCVARSALL: C:\"Program Files (x86)"\"Microsoft Visual Studio"\2017\Community\VC\Auxiliary\Build\vcvarsall.bat
+      PLATFORM: x64
+      CC: clang-cl.exe
+      CXX: clang-cl.exe
+      CFLAGS: -m64
+      CXXFLAGS: -m64
 
 install:
   - ps: iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
@@ -29,4 +51,3 @@ before_build:
 build_script: cmake --build .
 
 test_script: cmake --build . --target reproc-run-tests
-
