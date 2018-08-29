@@ -10,12 +10,21 @@ environment:
   # Add directory of dll to PATH so Windows can find it
   PATH: $(APPVEYOR_BUILD_FOLDER)\lib\Debug;$(PATH)
 
+install:
+  - ps: iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
+  - ps: scoop install ninja
+
 before_build:
-  cmake . -DREPROC_BUILD_TESTS=ON -DREPROC_BUILD_EXAMPLES=ON
-  -DREPROC_BUILD_CXX_WRAPPER=ON -DREPROC_CI=ON -DREPROC_TIDY=ON
-  -DREPROC_INSTALL=ON -DREPROC_FORMAT=ON -DBUILD_SHARED_LIBS=ON
+  cmake . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DREPROC_BUILD_TESTS=ON
+  -DREPROC_BUILD_EXAMPLES=ON -DREPROC_BUILD_CXX_WRAPPER=ON -DREPROC_CI=ON
+  -DREPROC_TIDY=ON -DREPROC_INSTALL=ON -DREPROC_FORMAT=ON -DBUILD_SHARED_LIBS=ON
   -DREPROC_ENABLE_W4=ON
 
-build_script: cmake --build . --config %CONFIGURATION% -- /p:CL_MPCount=2
+build_script: cmake --build .
 
 test_script: cmake --build . --target reproc-run-tests
+
+on_finish:
+  - ps:
+      $blockRdp = $true; iex ((new-object
+      net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
