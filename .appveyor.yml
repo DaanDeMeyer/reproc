@@ -30,6 +30,7 @@ environment:
       CXXFLAGS: -m64
 
 install:
+    # LLVM's (clang-cl) MSBuild integration is outdated so we use Ninja instead
   - ps: iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
   - ps: scoop install ninja
 
