@@ -30,7 +30,3 @@ build_script: cmake --build .
 
 test_script: cmake --build . --target reproc-run-tests
 
-on_finish:
-  - ps:
-      $blockRdp = $true; iex ((new-object
-      net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
