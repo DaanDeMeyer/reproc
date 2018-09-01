@@ -76,7 +76,7 @@ include(FetchContent)
 FetchContent_Declare(
   REPROC
   GIT_REPOSITORY https://github.com/DaanDeMeyer/reproc.git
-  GIT_TAG        1.0.0
+  GIT_TAG        v1.0.0-beta.1
 )
 
 FetchContent_GetProperties(REPROC)
@@ -103,7 +103,7 @@ git submodule add https://github.com/DaanDeMeyer/reproc.git
 # Checkout a specific commit. This is usually a commit that corresponds to a
 # Github release.
 cd reproc
-git checkout 1.0.0 # Replace with latest commit or release tag
+git checkout v1.0.0-beta.1 # Replace with latest commit or release tag
 cd ../..
 # Commit the result
 git add .gitmodules third-party
