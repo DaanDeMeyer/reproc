@@ -97,8 +97,8 @@ submodule instead:
 
 ```bash
 # In your application source directory
-mkdir third-party
-cd third-party
+mkdir extern
+cd extern
 git submodule add https://github.com/DaanDeMeyer/reproc.git
 # Checkout a specific commit. This is usually a commit that corresponds to a
 # Github release.
@@ -106,7 +106,7 @@ cd reproc
 git checkout v1.0.0-beta.1 # Replace with latest commit or release tag
 cd ../..
 # Commit the result
-git add .gitmodules third-party
+git add .gitmodules extern
 git commit -m "Added reproc as a Git submodule"
 ```
 
@@ -126,14 +126,14 @@ directory, running `git checkout master` followed by `git pull` and checking out
 the commit/release you want to update to.
 
 If you're not using git you can download a zip/tar of the source code from
-Github and manually put the code in a third-party directory. To update you
-overwrite the directory with the contents of an updated zip/tar from Github.
+Github and manually put the code in a directory. To update you overwrite the
+directory with the contents of an updated zip/tar from Github.
 
 You can now call `add_subdirectory` in the root CMakeLists.txt file of your
 application:
 
 ```cmake
-add_subdirectory(third-party/reproc)
+add_subdirectory(extern/reproc)
 add_executable(myapp myapp.c)
 target_link_libraries(myapp reproc::reproc)
 ```
@@ -200,7 +200,7 @@ Options can be configured when building reproc or before calling
 
   ```cmake
   set(REPROC_BUILD_CXX_WRAPPER ON CACHE BOOL "" FORCE)
-  add_subdirectory(third-party/reproc)
+  add_subdirectory(extern/reproc)
   ```
 
 ## Usage

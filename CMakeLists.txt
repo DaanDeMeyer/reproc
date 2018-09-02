@@ -3,6 +3,14 @@
 # subproject with add_subdirectory
 
 cmake_minimum_required(VERSION 3.1)
+
+# https://cliutils.gitlab.io/modern-cmake/chapters/basics.html
+if(${CMAKE_VERSION} VERSION_LESS 3.12)
+    cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
+else()
+    cmake_policy(VERSION 3.12)
+endif()
+
 project(reproc VERSION 1.0.0 LANGUAGES C)
 
 # Tip: use cmake-gui when contributing to reproc to turn on everything without
@@ -243,11 +251,12 @@ endif()
 ### Tests ###
 
 if(REPROC_BUILD_TESTS)
+
   add_executable(reproc-tests "")
   reproc_set_common(reproc-tests CXX test)
 
   target_link_libraries(reproc-tests PRIVATE reproc)
-  target_include_directories(reproc-tests SYSTEM PRIVATE third-party/doctest)
+  target_include_directories(reproc-tests SYSTEM PRIVATE extern/doctest)
 
   target_sources(reproc-tests PRIVATE
     test/impl.cpp
