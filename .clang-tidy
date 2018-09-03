@@ -11,6 +11,5 @@ Checks:
 -readability-else-after-return,
 -clang-diagnostic-unused-command-line-argument
 '
-HeaderFilterRegex: '^(?!doctest\.h$).*$'
 ...
 
