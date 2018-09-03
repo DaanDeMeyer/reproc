@@ -1,6 +1,6 @@
 # Every variable is namespaced with REPROC and everything except for the library
 # itself is turned off by default to make reproc easy to use as a CMake
-# subproject with add_subdirectory
+# subproject with add_subdirectory.
 
 cmake_minimum_required(VERSION 3.1)
 
@@ -14,17 +14,17 @@ endif()
 project(reproc VERSION 1.0.0 LANGUAGES C)
 
 # Tip: use cmake-gui when contributing to reproc to turn on everything without
-# having to type out all the options by hand (cmake .. && cmake-gui .)
+# having to type out all the options by hand (cmake .. && cmake-gui .).
 option(REPROC_BUILD_TESTS "Build tests" OFF)
 option(REPROC_BUILD_EXAMPLES "Build examples. Enable REPROC_BUILD_CXX_WRAPPER \
 to build C++ examples." OFF)
 option(REPROC_BUILD_CXX_WRAPPER "Build C++ wrapper" OFF)
 option(REPROC_CI "Add -Werror or equivalent to compiler and clang-tidy" OFF)
-option(REPROC_TIDY "Run clang-tidy as part of the build \
-(requires clang-tidy to be in the PATH)" OFF)
 option(REPROC_INSTALL "Generate install target" OFF)
-option(REPROC_FORMAT "Find clang-format and add target to run it on all source \
-files" OFF)
+option(REPROC_CLANG_TIDY "Run clang-tidy as part of the build (requires \
+clang-tidy to be in the PATH)" OFF)
+option(REPROC_CLANG_FORMAT "Find clang-format and add target to run it on all \
+source files" OFF)
 option(REPROC_SANITIZERS "Compile with sanitizers" OFF)
 # CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default on Windows so
 # when we add /W4 via target_compile_options cl.exe complains that both /W3 and
@@ -43,13 +43,16 @@ endif()
 
 ### clang-tidy ###
 
-if(REPROC_TIDY)
+if(REPROC_CLANG_TIDY)
+  # CMake added clang-tidy support in CMake 3.6.
   cmake_minimum_required(VERSION 3.6)
-  find_program(REPROC_CLANG_TIDY clang-tidy)
+  find_program(REPROC_CLANG_TIDY_PROGRAM clang-tidy)
 
-  if(REPROC_CLANG_TIDY)
+  if(REPROC_CLANG_TIDY_PROGRAM)
+    # Treat clang-tidy warnings as errors when on CI.
     if (REPROC_CI)
-      set(REPROC_CLANG_TIDY ${REPROC_CLANG_TIDY} -warnings-as-errors=*)
+      set(REPROC_CLANG_TIDY_PROGRAM
+          ${REPROC_CLANG_TIDY_PROGRAM} -warnings-as-errors=*)
     endif()
   else()
     message(WARNING "clang-tidy not found")
@@ -59,6 +62,8 @@ endif()
 ### Common development flags ###
 
 if(MSVC)
+  # See REPROC_ENABLE_W4 option declaration for why we can't just add /W4 as a
+  # compile option.
   if(REPROC_ENABLE_W4)
     string(REGEX REPLACE /W[0-4] "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4" )
@@ -71,17 +76,20 @@ if(MSVC)
   check_c_compiler_flag(/permissive- REPROC_HAS_PERMISSIVE)
 
   set(REPROC_COMPILE_OPTIONS
+    # Silence MSVC compiler version output.
     /nologo
     $<$<BOOL:${REPROC_CI}>:/WX>
     $<$<BOOL:${REPROC_HAS_PERMISSIVE}>:/permissive->
     # MSVC reports non-constant initializers as a nonstandard extension but
     # they've been standardized in C99 and we're targeting C99 so this warning
-    # is not valid for us
+    # is not valid for us.
     $<$<C_COMPILER_ID:MSVC>:/wd4204>
   )
   set(REPROC_LINK_OPTIONS
+    # Silence MSVC linker version output.
     /nologo
     # Disable incremental linking to silence warnings when rebuilding reproc
+    # after executing ninja -t clean.
     /INCREMENTAL:NO
   )
 else()
@@ -102,11 +110,14 @@ else()
     set(REPROC_LINK_OPTIONS -fsanitize=address,undefined)
 
     if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
+      # GCC sanitizers only work when using the gold linker.
       set(REPROC_LINK_OPTIONS ${REPROC_LINK_OPTIONS} -fuse-ld=gold)
     endif()
   endif()
 endif()
 
+# LINK_FLAGS (see reproc_set_common) property expects a string instead of a
+# list.
 string(REPLACE ";" " " REPROC_LINK_OPTIONS_STRING "${REPROC_LINK_OPTIONS}")
 
 ### Helpers ###
@@ -128,19 +139,22 @@ function(reproc_set_common TARGET LANGUAGE OUTPUT_DIRECTORY)
   )
   target_compile_options(${TARGET} PRIVATE ${REPROC_COMPILE_OPTIONS})
 
-  # reproc_set_common is called twice for reproc target (once for C and once for
-  # C++) which means we have to take care to not add link options twice
+  # reproc_set_common is called twice for the reproc target (once for C and once
+  # for C++) which means we have to take care to not add link options twice.
+
+  # Both LINK_FLAGS and REPROC_LINK_OPTIONS_STRING can be empty so we have to
+  # surround them with quotes to avoid CMake syntax errors.
   get_property(LINK_FLAGS TARGET ${TARGET} PROPERTY LINK_FLAGS)
   if(NOT "${LINK_FLAGS}" MATCHES "${REPROC_LINK_OPTIONS_STRING}")
     set_property(TARGET ${TARGET} PROPERTY
                  LINK_FLAGS "${LINK_FLAGS} ${REPROC_LINK_OPTIONS_STRING}")
   endif()
 
-  if(REPROC_TIDY AND REPROC_CLANG_TIDY)
+  if(REPROC_CLANG_TIDY AND REPROC_CLANG_TIDY_PROGRAM)
     set_target_properties(${TARGET} PROPERTIES
       # REPROC_CLANG_TIDY is a list so we surround it with quotes to pass it as
-      # a single argument
-      ${LANGUAGE}_CLANG_TIDY "${REPROC_CLANG_TIDY}"
+      # a single argument.
+      ${LANGUAGE}_CLANG_TIDY "${REPROC_CLANG_TIDY_PROGRAM}"
     )
   endif()
 endfunction()
@@ -150,8 +164,8 @@ endfunction()
 add_library(reproc "")
 add_library(reproc::reproc ALIAS reproc)
 
-# Put library files in test on CI so tests.exe finds reproc.dll without us
-# having to modify the PATH
+# Put library files in test on CI so tests.exe finds reproc.dll without having
+# to modify the PATH.
 if(REPROC_CI AND BUILD_SHARED_LIBS)
   set(REPROC_OUTPUT_DIRECTORY test)
 else()
@@ -162,7 +176,7 @@ reproc_set_common(reproc C ${REPROC_OUTPUT_DIRECTORY})
 
 if(NOT MSVC)
   target_compile_options(reproc PRIVATE
-    # More or less dllexport/dllimport for GCC and Clang
+    # More or less dllexport/dllimport for GCC and Clang.
     -fvisibility=hidden
   )
 endif()
@@ -172,19 +186,20 @@ set_target_properties(reproc PROPERTIES
   SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
-# Silence MSVC Library Manager version output
+# Silence MSVC Library Manager version output.
 if(MSVC)
   set_property(TARGET reproc APPEND PROPERTY STATIC_LIBRARY_FLAGS /nologo)
 endif()
 
 # Only use the headers from the repository when building. When installing we
 # want to use the install location of the headers (e.g. /usr/include) as the
-# include directory which is specified later in this file (Install section)
+# include directory which is specified later in this file (Install section).
 target_include_directories(reproc PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/c>
 )
 
-# Used to add visibility modifiers (declspec)
+# Used to add visibility modifiers (see include/c/export.h and
+# include/cpp/export.hpp).
 target_compile_definitions(reproc
   PUBLIC $<$<BOOL:${BUILD_SHARED_LIBS}>:REPROC_SHARED>
   PRIVATE $<BUILD_INTERFACE:REPROC_BUILDING>
@@ -212,20 +227,21 @@ elseif(UNIX)
 endif()
 
 if(MSVC)
-  # Check if STARTUPINFOEX and related functions are available
+  # Check if STARTUPINFOEX and related functions are available.
   include(CheckSymbolExists)
   check_symbol_exists(InitializeProcThreadAttributeList windows.h
                       REPROC_ATTRIBUTE_LIST_FOUND)
 
   target_compile_definitions(reproc PRIVATE
     _CRT_SECURE_NO_WARNINGS
+    # Remove unneeded stuff from windows.h.
     WIN32_LEAN_AND_MEAN
     VC_EXTRALEAN
     NOMINMAX
     $<$<BOOL:${REPROC_ATTRIBUTE_LIST_FOUND}>:HAS_ATTRIBUTE_LIST>
   )
 elseif(UNIX)
-  # Check if pipe2 is available
+  # Check if pipe2 is available.
   include(CheckSymbolExists)
   list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
   check_symbol_exists(pipe2 unistd.h REPROC_PIPE2_FOUND)
@@ -237,7 +253,7 @@ elseif(UNIX)
   )
 endif()
 
-### C++ Wrapper ###
+### C++ wrapper ###
 
 if(REPROC_BUILD_CXX_WRAPPER)
   reproc_set_common(reproc CXX ${REPROC_OUTPUT_DIRECTORY})
@@ -310,7 +326,7 @@ if(REPROC_BUILD_EXAMPLES)
     target_link_libraries(reproc-${TARGET} PRIVATE reproc)
     if(REPROC_SANITIZERS)
       set_target_properties(reproc-${TARGET} PROPERTIES
-        # Hack to avoid UBSAN undefined reference errors
+        # Hack to avoid UBSAN undefined reference errors.
         LINKER_LANGUAGE CXX
       )
     endif()
@@ -326,7 +342,7 @@ endif()
 
 ### Install ###
 
-# Adapted from https://codingnest.com/basic-cmake-part-2/
+# Adapted from https://codingnest.com/basic-cmake-part-2/.
 
 if(REPROC_INSTALL)
 
@@ -388,9 +404,12 @@ endif()
 
 ### clang-format ###
 
-if(REPROC_FORMAT)
-  find_program(REPROC_CLANG_FORMAT clang-format)
-  if(REPROC_CLANG_FORMAT)
+if(REPROC_CLANG_FORMAT)
+  find_program(REPROC_CLANG_FORMAT_PROGRAM clang-format)
+  if(REPROC_CLANG_FORMAT_PROGRAM)
+    # CMake discourages globbing for specifying source files but since we
+    # already manually specify our sources there's no harm in using globbing to
+    # gather all source files so we can pass them to clang-format.
     file(GLOB_RECURSE REPROC_SOURCES
       include/*.[h,c,hpp,cpp]
       src/*.[h,c,hpp,cpp]
@@ -400,7 +419,7 @@ if(REPROC_FORMAT)
 
     add_custom_target(
       reproc-format
-      COMMAND ${REPROC_CLANG_FORMAT} -i ${REPROC_SOURCES}
+      COMMAND ${REPROC_CLANG_FORMAT_PROGRAM} -i ${REPROC_SOURCES}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
   else()
