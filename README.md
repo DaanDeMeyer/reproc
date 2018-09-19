@@ -97,8 +97,8 @@ submodule instead:
 
 ```bash
 # In your application source directory
-mkdir extern
-cd extern
+mkdir external
+cd external
 git submodule add https://github.com/DaanDeMeyer/reproc.git
 # Checkout a specific commit. This is usually a commit that corresponds to a
 # Github release.
@@ -106,7 +106,7 @@ cd reproc
 git checkout v1.0.0-beta.1 # Replace with latest commit or release tag
 cd ../..
 # Commit the result
-git add .gitmodules extern
+git add .gitmodules external
 git commit -m "Added reproc as a Git submodule"
 ```
 
@@ -133,7 +133,7 @@ You can now call `add_subdirectory` in the root CMakeLists.txt file of your
 application:
 
 ```cmake
-add_subdirectory(extern/reproc)
+add_subdirectory(external/reproc)
 add_executable(myapp myapp.c)
 target_link_libraries(myapp reproc::reproc)
 ```
@@ -200,14 +200,14 @@ Options can be configured when building reproc or before calling
 
   ```cmake
   set(REPROC_BUILD_CXX_WRAPPER ON CACHE BOOL "" FORCE)
-  add_subdirectory(extern/reproc)
+  add_subdirectory(external/reproc)
   ```
 
 ## Usage
 
-See [git-status](example/git-status.c) for an example that uses reproc to print
-the output of `git status`. [cmake-help](example/cmake-help.cpp) prints the
-output of `cmake --help` using the C++ API. [forward](example/forward.cpp)
+See [git-status](examples/git-status.c) for an example that uses reproc to print
+the output of `git status`. [cmake-help](examples/cmake-help.cpp) prints the
+output of `cmake --help` using the C++ API. [forward](examples/forward.cpp)
 spawns a child process using the provided command line arguments and prints its
 output.
 
@@ -548,7 +548,7 @@ When making changes:
 
   However, this method does not allow passing arguments to the tests executable.
   If you want more control over which tests are executed you can run the tests
-  executable directly (located at `build/test/tests`). A list of possible
+  executable directly (located at `build/tests/tests`). A list of possible
   options can be found
   [here](https://github.com/onqtam/doctest/blob/master/doc/markdown/commandline.md).
 

@@ -164,10 +164,10 @@ endfunction()
 add_library(reproc "")
 add_library(reproc::reproc ALIAS reproc)
 
-# Put library files in test on CI so tests.exe finds reproc.dll without having
-# to modify the PATH.
+# Put library files in tests directory on CI so tests.exe finds reproc.dll
+# without having to modify the PATH.
 if(REPROC_CI AND BUILD_SHARED_LIBS)
-  set(REPROC_OUTPUT_DIRECTORY test)
+  set(REPROC_OUTPUT_DIRECTORY tests)
 else()
   set(REPROC_OUTPUT_DIRECTORY lib)
 endif()
@@ -269,23 +269,23 @@ endif()
 if(REPROC_BUILD_TESTS)
 
   add_executable(reproc-tests "")
-  reproc_set_common(reproc-tests CXX test)
+  reproc_set_common(reproc-tests CXX tests)
 
   target_link_libraries(reproc-tests PRIVATE reproc)
   target_include_directories(reproc-tests SYSTEM PRIVATE external/doctest)
 
   target_sources(reproc-tests PRIVATE
-    test/impl.cpp
-    test/read-write.cpp
-    test/stop.cpp
-    test/working-directory.cpp
+    tests/impl.cpp
+    tests/read-write.cpp
+    tests/stop.cpp
+    tests/working-directory.cpp
   )
 
   ### Helper programs ###
 
   function(reproc_add_test_helper TARGET)
-    add_executable(reproc-${TARGET} test/res/${TARGET}.cpp)
-    reproc_set_common(reproc-${TARGET} CXX test/res)
+    add_executable(reproc-${TARGET} tests/resources/${TARGET}.cpp)
+    reproc_set_common(reproc-${TARGET} CXX tests/resources)
 
     string(TOUPPER ${TARGET} TARGET_UPPER_CASE)
     # Pass paths as compile time parameters so tests can be run from any
@@ -320,8 +320,8 @@ if(REPROC_BUILD_EXAMPLES)
   set(REPROC_CXX_EXT cpp)
 
   function(reproc_add_example TARGET LANGUAGE)
-    add_executable(reproc-${TARGET} example/${TARGET}.${REPROC_${LANGUAGE}_EXT})
-    reproc_set_common(reproc-${TARGET} ${LANGUAGE} example)
+    add_executable(reproc-${TARGET} examples/${TARGET}.${REPROC_${LANGUAGE}_EXT})
+    reproc_set_common(reproc-${TARGET} ${LANGUAGE} examples)
 
     target_link_libraries(reproc-${TARGET} PRIVATE reproc)
     if(REPROC_SANITIZERS)
@@ -413,8 +413,8 @@ if(REPROC_CLANG_FORMAT)
     file(GLOB_RECURSE REPROC_SOURCES
       include/*.[h,c,hpp,cpp]
       src/*.[h,c,hpp,cpp]
-      test/*.[h,c,hpp,cpp]
-      example/*.[h,c,hpp,cpp]
+      tests/*.[h,c,hpp,cpp]
+      examples/*.[h,c,hpp,cpp]
     )
 
     add_custom_target(
