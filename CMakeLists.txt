@@ -272,7 +272,7 @@ if(REPROC_BUILD_TESTS)
   reproc_set_common(reproc-tests CXX test)
 
   target_link_libraries(reproc-tests PRIVATE reproc)
-  target_include_directories(reproc-tests SYSTEM PRIVATE extern/doctest)
+  target_include_directories(reproc-tests SYSTEM PRIVATE external/doctest)
 
   target_sources(reproc-tests PRIVATE
     test/impl.cpp
