@@ -1,3 +1,5 @@
+/*! \file parser.hpp */
+
 #ifndef REPROC_PARSER_HPP
 #define REPROC_PARSER_HPP
 

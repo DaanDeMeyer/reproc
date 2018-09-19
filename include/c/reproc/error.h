@@ -1,10 +1,12 @@
+/*! \file error.h */
+
 #ifndef REPROC_ERROR_H
 #define REPROC_ERROR_H
 
 #include "export.h"
 
 /* When editing make sure to change the corresponding enum in error.hpp as
-well */
+well. */
 typedef enum {
   /*!
   Indicates a library call was successful. Because it evaluates to zero it can
@@ -26,7 +28,7 @@ typedef enum {
   /*! The child process closed one of its streams (and in case of
   stdout/stderr all of the data from that stream has been read). */
   REPROC_STREAM_CLOSED,
-  /*! Only part of the buffer was written to the stdin of the child process */
+  /*! Only part of the buffer was written to the stdin of the child process. */
   REPROC_PARTIAL_WRITE,
 
   // system errors (correspond to a system error)
@@ -44,13 +46,13 @@ typedef enum {
   /*! One of the UTF-8 strings passed to the library did not contain
   valid unicode. */
   REPROC_INVALID_UNICODE,
-  /*! The current process does not have permission to execute the program */
+  /*! The current process does not have permission to execute the program. */
   REPROC_PERMISSION_DENIED,
-  /*! Too many symlinks were encountered while looking for the program */
+  /*! Too many symlinks were encountered while looking for the program. */
   REPROC_SYMLINK_LOOP,
-  /*! The program or working directory was not found */
+  /*! The program or working directory was not found. */
   REPROC_FILE_NOT_FOUND,
-  /*! The given name was too long (most systems have path length limits) */
+  /*! The given name was too long (most systems have path length limits). */
   REPROC_NAME_TOO_LONG,
   /*! Unlike POSIX, Windows does not include information about exactly which
   errors can occur in its documentation. If an error occurs that is not known
@@ -76,7 +78,7 @@ the parent process which sets its own errno value to the errno value of the
 child process. This makes it possible to retrieve errors that happen after
 forking with this function (for example in chdir or execve).
 
-\return unsigned int The last system error code
+\return unsigned int The last system error code.
 */
 REPROC_EXPORT unsigned int reproc_system_error(void);
 

@@ -1,3 +1,5 @@
+/*! \file reproc.hpp */
+
 #ifndef REPROC_ERROR_HPP
 #define REPROC_ERROR_HPP
 

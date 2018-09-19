@@ -10,8 +10,10 @@
 extern "C" {
 #endif
 
-// struct is defined in header file so it can be allocated on the stack
-// Named reproc_type so we can use the reproc namespace in C++ API
+// reproc_type is defined in the header file so it can be allocated on the
+// stack. It is used to store child process information between multiple library
+// calls. We name it reproc_type so we can use the reproc namespace in the C++
+// API (naming both the C struct and the namespace reproc results in conflicts).
 #if defined(_WIN32)
 struct reproc_type {
   // unsigned long = DWORD
@@ -31,13 +33,12 @@ struct reproc_type {
 };
 #endif
 
-/*! Used to store child process information between multiple library calls */
 typedef struct reproc_type reproc_type; // _t is reserved by POSIX
 
 typedef enum { REPROC_IN, REPROC_OUT, REPROC_ERR } REPROC_STREAM;
 
-/*! Used to indicate that a function that takes a timeout value should wait
-indefinitely. */
+/*! REPROC_INFINITE is used to indicate that a function that takes a timeout
+value should wait indefinitely. */
 REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
 
 /*!
