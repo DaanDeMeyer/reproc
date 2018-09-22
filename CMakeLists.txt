@@ -165,15 +165,22 @@ endfunction()
 add_library(reproc "")
 add_library(reproc::reproc ALIAS reproc)
 
+reproc_set_common(reproc C lib)
+
 # Put library files in tests directory on CI so tests.exe finds reproc.dll
 # without having to modify the PATH.
-if(REPROC_CI AND BUILD_SHARED_LIBS)
-  set(REPROC_OUTPUT_DIRECTORY tests)
-else()
-  set(REPROC_OUTPUT_DIRECTORY lib)
+if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
+  add_custom_command(
+    TARGET reproc
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:reproc> tests
+  )
+  add_custom_command(
+    TARGET reproc
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:reproc> examples
+  )
 endif()
-
-reproc_set_common(reproc C ${REPROC_OUTPUT_DIRECTORY})
 
 if(NOT MSVC)
   target_compile_options(reproc PRIVATE
@@ -257,7 +264,7 @@ endif()
 ### C++ wrapper ###
 
 if(REPROC_BUILD_CXX_WRAPPER)
-  reproc_set_common(reproc CXX ${REPROC_OUTPUT_DIRECTORY})
+  reproc_set_common(reproc CXX lib)
 
   target_include_directories(reproc PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/cpp>
