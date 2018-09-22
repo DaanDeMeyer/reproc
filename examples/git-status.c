@@ -1,3 +1,5 @@
+/*! \example git-status.c */
+
 #include <reproc/reproc.h>
 
 #include <stdbool.h>
@@ -7,7 +9,7 @@
 
 #define BUFFER_SIZE 1024
 
-/*! Uses the reproc C API to print the output of git status */
+// Uses the reproc C API to print the output of git status.
 int main(void)
 {
   reproc_type git_status;
@@ -31,6 +33,11 @@ int main(void)
     fprintf(stderr, "%s\n", reproc_error_to_string(error));
     return (int) error;
   }
+
+  // Close the stdin stream since we're not going to write any input to git.
+  // While the example works perfectly without closing stdin we do it here to
+  // show how reproc_close works.
+  reproc_close(&git_status, REPROC_IN);
 
   // Start with an empty string
   size_t output_length = 0;

@@ -5,20 +5,19 @@
 
 #include "export.h"
 
-/* When editing make sure to change the corresponding enum in error.hpp as
-well. */
+/*!
+Error enum. Contains all errors that may be returned from reproc's API. Because
+#REPROC_SUCCESS evaluates to zero it is possible to check for errors as follows:
+
+\code{.c}
+REPROC_ERROR error = reproc_read(...);
+if (error) { return error; } // Only executes if reproc_read returns an error
+\endcode
+*/
+// When editing make sure to change the corresponding enum in error.hpp as well.
 typedef enum {
-  /*!
-  Indicates a library call was successful. Because it evaluates to zero it can
-  be used as follows:
-
-  \code{.c}
-  REPROC_ERROR error = reproc_read(...);
-  if (error) { return error; } // Only executes if reproc_read returns error
-  \endcode
-
-  All library function return this value if no error occurs.
-  */
+  /*! Indicates a library call was successful. All library function return this
+  value if no error occurs. */
   REPROC_SUCCESS,
 
   // reproc errors (do not correspond to a system error)
@@ -56,7 +55,7 @@ typedef enum {
   REPROC_NAME_TOO_LONG,
   /*! Unlike POSIX, Windows does not include information about exactly which
   errors can occur in its documentation. If an error occurs that is not known
-  functions will return REPROC_UNKNOWN_ERROR. */
+  functions will return #REPROC_UNKNOWN_ERROR. */
   REPROC_UNKNOWN_ERROR,
 } REPROC_ERROR;
 
@@ -67,16 +66,16 @@ extern "C" {
 /*!
 Returns the last system error code.
 
-On Windows this function returns the result of GetLastError. On POSIX platforms
-this function returns the value of errno. The value is not stored so other
-functions that modify the results of GetLastError or errno should not be
-called if you want to retrieve the last system error that occurred in one of
+On Windows this function returns the result of `GetLastError`. On POSIX
+platforms this function returns the value of `errno`. The value is not stored so
+other functions that modify the results of `GetLastError` or `errno` should not
+be called if you want to retrieve the last system error that occurred in one of
 reproc's functions.
 
-On POSIX, if an error occurs after fork but before exec it is communicated to
-the parent process which sets its own errno value to the errno value of the
-child process. This makes it possible to retrieve errors that happen after
-forking with this function (for example in chdir or execve).
+On POSIX, if an error occurs after `fork` but before `exec` it is communicated
+to the parent process which sets its own `errno` value to the `errno` value of
+the child process. This makes it possible to retrieve errors that happen after
+forking with this function (for example in `chdir` or `execve`).
 
 \return unsigned int The last system error code.
 */

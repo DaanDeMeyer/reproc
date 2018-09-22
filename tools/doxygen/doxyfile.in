@@ -1,0 +1,28 @@
+PROJECT_NAME = reproc
+PROJECT_NUMBER = v1.0.0-beta.1
+PROJECT_BRIEF = "Cross-platform library that simplifies working with external CLI applications from C and C++"
+
+OPTIMIZE_OUTPUT_FOR_C = YES
+
+OUTPUT_DIRECTORY = @CMAKE_CURRENT_BINARY_DIR@/docs
+INPUT = @CMAKE_CURRENT_LIST_DIR@/include @CMAKE_CURRENT_LIST_DIR@/examples @CMAKE_CURRENT_LIST_DIR@/tools/doxygen/mainpage.md
+EXAMPLE_PATH = @CMAKE_CURRENT_LIST_DIR@/examples
+RECURSIVE = YES
+
+ENABLE_PREPROCESSING = YES
+MACRO_EXPANSION = YES
+EXPAND_ONLY_PREDEF = YES
+PREDEFINED = REPROC_EXPORT
+
+TYPEDEF_HIDES_STRUCT = YES
+
+SORT_MEMBER_DOCS = NO
+
+TAGFILES += "cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/"
+
+USE_MDFILE_AS_MAINPAGE = @CMAKE_CURRENT_LIST_DIR@/tools/doxygen/mainpage.md
+TOC_INCLUDE_HEADINGS = 20
+
+GENERATE_LATEX = NO
+
+SOURCE_BROWSER = YES

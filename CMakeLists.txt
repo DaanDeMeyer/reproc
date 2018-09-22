@@ -19,6 +19,7 @@ option(REPROC_BUILD_TESTS "Build tests" OFF)
 option(REPROC_BUILD_EXAMPLES "Build examples. Enable REPROC_BUILD_CXX_WRAPPER \
 to build C++ examples." OFF)
 option(REPROC_BUILD_CXX_WRAPPER "Build C++ wrapper" OFF)
+option(REPROC_BUILD_DOCS "Build API documentation" OFF)
 option(REPROC_CI "Add -Werror or equivalent to compiler and clang-tidy" OFF)
 option(REPROC_INSTALL "Generate install target" OFF)
 option(REPROC_CLANG_TIDY "Run clang-tidy as part of the build (requires \
@@ -388,7 +389,7 @@ if(REPROC_INSTALL)
   )
 
   configure_package_config_file(
-      ${CMAKE_CURRENT_LIST_DIR}/cmake/reproc-config.cmake.in
+      ${CMAKE_CURRENT_LIST_DIR}/tools/cmake/reproc-config.cmake.in
       ${CMAKE_CURRENT_BINARY_DIR}/reproc-config.cmake
       INSTALL_DESTINATION ${REPROC_INSTALL_CONFIGDIR}}
   )
@@ -406,6 +407,7 @@ endif()
 
 if(REPROC_CLANG_FORMAT)
   find_program(REPROC_CLANG_FORMAT_PROGRAM clang-format)
+
   if(REPROC_CLANG_FORMAT_PROGRAM)
     # CMake discourages globbing for specifying source files but since we
     # already manually specify our sources there's no harm in using globbing to
@@ -424,5 +426,34 @@ if(REPROC_CLANG_FORMAT)
     )
   else()
     message(WARNING "clang-format not found")
+  endif()
+endif()
+
+### Doxygen ###
+
+if(REPROC_BUILD_DOCS)
+  find_package(Doxygen 1.8.3 REQUIRED)
+
+  if(DOXYGEN_FOUND)
+    configure_file(
+      ${CMAKE_CURRENT_LIST_DIR}/tools/doxygen/doxyfile.in
+      ${CMAKE_CURRENT_BINARY_DIR}/doxyfile
+      @ONLY
+    )
+
+    if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/cppreference-doxygen-web.tag.xml)
+      file(
+        DOWNLOAD
+        http://upload.cppreference.com/mwiki/images/f/f8/cppreference-doxygen-web.tag.xml
+        ${CMAKE_CURRENT_BINARY_DIR}/cppreference-doxygen-web.tag.xml
+      )
+    endif()
+
+    add_custom_target(
+      reproc-docs
+      COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile
+    )
+  else()
+    message(WARNING "doxygen not found")
   endif()
 endif()

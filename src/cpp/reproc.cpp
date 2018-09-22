@@ -25,7 +25,7 @@ static std::error_code reproc_error_to_error_code(REPROC_ERROR error)
 
 const unsigned int infinite = REPROC_INFINITE;
 
-reproc::cleanup operator|(reproc::cleanup lhs, reproc::cleanup rhs)
+reproc::cleanup operator|(reproc::cleanup lhs, reproc::cleanup rhs) noexcept
 {
   return static_cast<reproc::cleanup>(static_cast<int>(lhs) |
                                       static_cast<int>(rhs));

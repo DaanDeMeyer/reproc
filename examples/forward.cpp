@@ -1,3 +1,5 @@
+/*! \example forward.cpp */
+
 #include <reproc/parser.hpp>
 #include <reproc/reproc.hpp>
 
@@ -9,14 +11,14 @@ int fail(std::error_code ec)
   return 1;
 }
 
-/*!
+/*
 Forwards the program arguments to a child process and prints its output on
 stdout.
 
 Example: "./forward cmake --help" will print CMake's help output.
 
 This program can be used to verify that manually executing a command and
-executing it with reproc give the same output
+executing it with reproc give the same output.
 */
 int main(int argc, char *argv[])
 {
@@ -40,9 +42,8 @@ int main(int argc, char *argv[])
   // exits earlier than the timeout the destructor will return immediately.
   reproc::process forward(reproc::cleanup::terminate | reproc::cleanup::kill,
                           5000);
-  std::error_code ec;
 
-  ec = forward.start(argc - 1, argv + 1);
+  std::error_code ec = forward.start(argc - 1, argv + 1);
   if (ec == reproc::error::file_not_found) {
     std::cerr << "Program not found. Make sure it's available from the PATH";
     return 1;
@@ -50,7 +51,8 @@ int main(int argc, char *argv[])
     return fail(ec);
   }
 
-  // Some programs wait for the input stream to be closed before continuing
+  // Some programs wait for the input stream to be closed before continuing so
+  // we close it explicitly.
   forward.close(reproc::stream::in);
 
   // Pipe child process stdout output to std::cout of parent process
@@ -61,8 +63,8 @@ int main(int argc, char *argv[])
   ec = forward.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
   if (ec) { return fail(ec); }
 
-  // Call stop ourselves to get the exit_status. See cmake-help example for more
-  // info.
+  // Call stop ourselves to get the exit_status. See the cmake-help example for
+  // more info.
   unsigned int exit_status = 0;
   ec = forward.stop(reproc::cleanup::wait, reproc::infinite, &exit_status);
   if (ec) { return fail(ec); }

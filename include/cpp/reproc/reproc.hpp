@@ -10,57 +10,93 @@
 #include <string>
 #include <vector>
 
+/*! The `reproc` namespace wraps all reproc C++ declarations. reproc::process
+wraps the C api inside a C++ class. reproc::error improves on #REPROC_ERROR by
+integrating with C++'s std::error_code error handling mechanism. To avoid
+exposing the C API when using the C++ API all the other enums and constants of
+the C API have a replacement in the `reproc` namespace as well. */
 namespace reproc
 {
 
-enum class stream { in, out, err };
+/*! \see REPROC_STREAM */
+enum class stream {
+  /*! #REPROC_IN */
+  in,
+  /*! #REPROC_OUT */
+  out,
+  /*! #REPROC_ERR */
+  err
+};
 
+/*! \see REPROC_INFINITE */
 REPROC_EXPORT extern const unsigned int infinite;
 
-enum class cleanup : int { wait = 1 << 0, terminate = 1 << 1, kill = 1 << 2 };
+/*! \see REPROC_CLEANUP */
+enum class cleanup {
+  /*! #REPROC_WAIT */
+  wait = 1 << 0,
+  /*! #REPROC_TERMINATE */
+  terminate = 1 << 1,
+  /*! #REPROC_KILL */
+  kill = 1 << 2
+};
 
+/*! Used to combine multiple flags from reproc::cleanup. */
 REPROC_EXPORT reproc::cleanup operator|(reproc::cleanup lhs,
-                                        reproc::cleanup rhs);
+                                        reproc::cleanup rhs) noexcept;
 
+/*! Improves on reproc's C API by wrapping it in a class. Aside from methods
+that mimick the C API it also adds configurable RAII and several methods that
+reduce the boilerplate required when using reproc from idiomatic C++ code. */
 class process
 {
 
 public:
-  /*! Allocates memory for the reproc_type struct. Throws std::bad_alloc if
-  allocating memory for the reproc_type struct of the underlying C library
-  fails. Takes arguments that are passed to process::stop in the destructor if
-  the process is still running by that time. \see reproc_stop for more info. */
+  /*! Allocates memory for the #reproc_type struct. Throws std::bad_alloc if
+  allocating memory for the #reproc_type struct of the underlying C library
+  fails.
+
+  Takes arguments that are passed to #stop in the destructor if the process is
+  still running by the time the object is destroyed. The default flags and
+  timeout value only tell the destructor to check if the process has exited.
+  Pass different flags and timeout values if the destructor should wait longer
+  for the process to exit or if the process should be stopped forcefully in the
+  destructor.
+
+  \see reproc_stop
+  */
   REPROC_EXPORT process(reproc::cleanup cleanup_flags = reproc::cleanup::wait,
                         unsigned int timeout = 0);
 
-  /*! By default the destructor only checks if the process has exited and frees
-  the allocated memory for the reproc_type struct. Extra parameters can be
-  passed to the constructor if the process should be stopped in the destructor.
-  */
+  /*! Frees the allocated memory for the #reproc_type struct and calls #stop
+  with the arguments provided in the constructor if #stop hasn't been called
+  explicitly yet. */
   REPROC_EXPORT ~process() noexcept;
 
-  /* Enforce unique ownership */
+  // Enforce unique ownership
   process(const process &) = delete;
   process &operator=(const process &) = delete;
 
   REPROC_EXPORT process(process &&other) noexcept = default;
   REPROC_EXPORT process &operator=(process &&other) noexcept = default;
 
-  /*! \see reproc_start. /p working_directory additionally defaults to nullptr
-   */
+  /*! \see reproc_start */
   REPROC_EXPORT std::error_code
   start(int argc, const char *const *argv,
         const char *working_directory = nullptr) noexcept;
 
   /*!
-  Overload of start for convenient usage from C++.
+  Overload of #start for convenient usage from C++.
 
-  \param[in] args Has the same restrictions as argv in \see reproc_start except
-  that it should not end with NULL (this method allocates a new array which
-  includes the missing NULL value).
-  \param[in] working_directory Optional working directory. Defaults to nullptr.
+  \param[in] args Has the same restrictions as argv in #reproc_start except
+  that it should not end with `NULL` (this method allocates a new array which
+  includes the missing `NULL` value).
+  \param[in] working_directory Optional working directory. Defaults to
+  `nullptr`.
 
-  \return reproc::error \see process_start
+  \return reproc::error
+
+  \see reproc_start
   */
   REPROC_EXPORT std::error_code
   start(const std::vector<std::string> &args,
@@ -79,9 +115,11 @@ public:
                                      unsigned int *bytes_read) noexcept;
 
   /*!
-  Calls \see read until an error occurs or the provided parser returns false.
+  Calls #read until an error occurs or the provided parser returns false.
 
-  /p parser should be a function with the following signature:
+  \tparam Parser
+  \parblock
+  Should be a function with the following signature:
 
   \code{.cpp}
   bool parser(const char *buffer, unsigned int size);
@@ -102,7 +140,7 @@ public:
   });
   \endcode
 
-  This parser reads all the output of the child process into a string.
+  This parser reads the entire output of the child process into a string.
 
   It is also possible to use a class that overloads the call operator as a
   parser. parser.hpp contains built-in parsers that are defined as a class.
@@ -111,8 +149,14 @@ public:
   stream as an error.
 
   For examples of parsers, see parser.hpp.
+  \endparblock
 
-  \return reproc::error \see read except for reproc::error::stream_closed
+  \param stream Stream to read from
+  \param parser Instance of \p Parser
+
+  \return reproc::error
+
+  Possible errors: See #read except for reproc::error::stream_closed
   */
   template <typename Parser>
   std::error_code read(reproc::stream stream, Parser &&parser);

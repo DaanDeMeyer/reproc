@@ -5,9 +5,15 @@
 
 #include <ostream>
 
+/*! \namespace reproc */
 namespace reproc
 {
 
+/*!
+Reads the entire output of a child process into the given string.
+
+\see \ref reproc::process::read
+*/
 class string_parser
 {
   std::string &out_;
@@ -22,6 +28,11 @@ public:
   }
 };
 
+/*!
+Forwards the entire output of a child process to the given output stream.
+
+\see \ref reproc::process::read
+*/
 class ostream_parser
 {
   std::ostream &out_;
