@@ -38,17 +38,20 @@ before_build:
   - call %VCVARSALL% %PLATFORM%
   - cmake .
       -G Ninja
-      -DCMAKE_BUILD_TYPE=Debug
       -DBUILD_SHARED_LIBS=ON
+      -DCMAKE_BUILD_TYPE=Debug
       -DREPROC_BUILD_TESTS=ON
       -DREPROC_BUILD_EXAMPLES=ON
       -DREPROC_BUILD_CXX_WRAPPER=ON
       -DREPROC_CI=ON
-      -DREPROC_TIDY=ON
+      -DREPROC_CLANG_TIDY=ON
       -DREPROC_INSTALL=ON
-      -DREPROC_FORMAT=ON
+      -DREPROC_CLANG_FORMAT=ON
       -DREPROC_ENABLE_W4=ON
 
 build_script: cmake --build .
 
-test_script: cmake --build . --target reproc-run-tests
+test_script:
+  - cmake --build . --target reproc-run-tests
+  - .\examples\git-status >NUL
+  - .\examples\cmake-help >NUL
