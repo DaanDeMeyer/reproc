@@ -12,7 +12,6 @@
   - [Git submodule/vendor](#git-submodulevendor)
   - [Install](#install)
   - [CMake options](#cmake-options)
-- [Usage](#usage)
 - [Documentation](#documentation)
 - [Error handling](#error-handling)
 - [Multithreading](#multithreading)
@@ -203,19 +202,13 @@ Options can be configured when building reproc or before calling
   add_subdirectory(external/reproc)
   ```
 
-## Usage
-
-See [git-status](examples/git-status.c) for an example that uses reproc to print
-the output of `git status`. [cmake-help](examples/cmake-help.cpp) prints the
-output of `cmake --help` using the C++ API. [forward](examples/forward.cpp)
-spawns a child process using the provided command line arguments and prints its
-output.
-
 ## Documentation
 
-API documentation is hosted at <https://daandemeyer.github.io/reproc/>. The
-latest docs can be built by enabling the cmake `REPROC_BUILD_DOCS` option and
-building the `reproc-docs` target. This requires the latest version of
+API documentation and examples can be found at
+<https://daandemeyer.github.io/reproc/>.
+
+The latest docs can be built by enabling the cmake `REPROC_BUILD_DOCS` option
+and building the `reproc-docs` target. This requires the latest version of
 [Doxygen](https://www.stack.nl/~dimitri/doxygen/) to be installed and available
 from the PATH. After building `reproc-docs` the generated documentation can be
 found in the `docs/html` directory of the build directory.
@@ -224,7 +217,7 @@ found in the `docs/html` directory of the build directory.
 mkdir build && cd build
 cmake -DREPROC_BUILD_DOCS=ON ..
 cmake --build . --target reproc-docs
-firefox docs/html/index.html # Any installed browser will work
+firefox docs/html/index.html # Any installed browser should work
 ```
 
 ## Error handling
