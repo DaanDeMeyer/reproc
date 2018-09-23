@@ -6,6 +6,8 @@ jobs:
     steps:
       - checkout
       - run:
+          command: sudo apt-get install apt -y
+      - run:
           command: sudo add-apt-repository ppa:ubuntu-toolchain-r/test
       - run:
           command: sudo deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main
