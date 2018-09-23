@@ -26,10 +26,6 @@
     - [Windows](#windows)
 - [Contributing](#contributing)
 
-## test
-
-[TOC]
-
 ## What is reproc?
 
 Reproc (Redirected Process) is cross-platform library that starts external
