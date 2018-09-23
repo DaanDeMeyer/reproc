@@ -213,9 +213,19 @@ output.
 
 ## Documentation
 
-API documentation can be found in the [header files](include). The two most
-important headers are [reproc.h](include/c/reproc/reproc.h) and
-[reproc.hpp](include/cpp/reproc/reproc.hpp).
+API documentation is hosted at <https://daandemeyer.github.io/reproc/>. The
+latest docs can be built by enabling the cmake `REPROC_BUILD_DOCS` option and
+building the `reproc-docs` target. This requires the latest version of
+[Doxygen](https://www.stack.nl/~dimitri/doxygen/) to be installed and available
+from the PATH. After building `reproc-docs` the generated documentation can be
+found in the `docs/html` directory of the build directory.
+
+```sh
+mkdir build && cd build
+cmake -DREPROC_BUILD_DOCS=ON ..
+cmake --build . --target reproc-docs
+firefox docs/html/index.html # Any installed browser will work
+```
 
 ## Error handling
 
