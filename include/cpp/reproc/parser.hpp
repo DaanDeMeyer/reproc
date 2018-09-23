@@ -3,7 +3,7 @@
 #ifndef REPROC_PARSER_HPP
 #define REPROC_PARSER_HPP
 
-#include <ostream>
+#include <iosfwd>
 
 /*! \namespace reproc */
 namespace reproc
@@ -19,13 +19,9 @@ class string_parser
   std::string &out_;
 
 public:
-  string_parser(std::string &out) noexcept : out_(out) {}
+  string_parser(std::string &out) noexcept;
 
-  bool operator()(const char *buffer, unsigned int size)
-  {
-    out_.append(buffer, size);
-    return true;
-  }
+  bool operator()(const char *buffer, unsigned int size);
 };
 
 /*!
@@ -38,13 +34,9 @@ class ostream_parser
   std::ostream &out_;
 
 public:
-  ostream_parser(std::ostream &out) noexcept : out_(out) {}
+  ostream_parser(std::ostream &out) noexcept;
 
-  bool operator()(const char *buffer, unsigned int size)
-  {
-    out_.write(buffer, size);
-    return true;
-  }
+  bool operator()(const char *buffer, unsigned int size);
 };
 
 } // namespace reproc
