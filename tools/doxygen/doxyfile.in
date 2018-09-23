@@ -1,5 +1,5 @@
 PROJECT_NAME = reproc
-PROJECT_NUMBER = v1.0.0-beta.1
+PROJECT_NUMBER = @PROJECT_VERSION@
 PROJECT_BRIEF = "Cross-platform library that simplifies working with external CLI applications from C and C++"
 
 OPTIMIZE_OUTPUT_FOR_C = YES
