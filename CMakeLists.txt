@@ -453,6 +453,8 @@ if(REPROC_BUILD_DOCS)
     )
 
     if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/cppreference-doxygen-web.tag.xml)
+      # Download tag file to automatically generate links to cppreference from
+      # doxygen.
       file(
         DOWNLOAD
         http://upload.cppreference.com/mwiki/images/f/f8/cppreference-doxygen-web.tag.xml
