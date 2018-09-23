@@ -23,11 +23,13 @@ public:
     switch (static_cast<reproc::error>(error_condition)) {
     // reproc errors
     case reproc::error::wait_timeout:
-      return error_code == reproc::error::wait_timeout;
     case reproc::error::stream_closed:
-      return error_code == reproc::error::stream_closed;
     case reproc::error::partial_write:
-      return error_code == reproc::error::partial_write;
+      // For the reproc errors that are not system errors we just create error
+      // codes with the same value as the error condition so we can just check
+      // if the values are the same
+      return error_code.category() == reproc::error_category() &&
+             error_code.value() == error_condition;
     // system errors
     case reproc::error::not_enough_memory:
       return error_code == std::errc::not_enough_memory;
