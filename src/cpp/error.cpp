@@ -32,8 +32,8 @@ public:
       // code to be in the reproc error category. Look at
       // reproc_error_to_error_code in reproc.cpp to see how the reproc specific
       // error codes are construced.
-      return error_code.category() == reproc::error_category() &&
-             error_code.value() == error_condition;
+      return error_code ==
+             std::error_code(error_condition, reproc::error_category());
 
     // system errors
     // The rest of the reproc errors are all system errors so we can just check
@@ -44,8 +44,7 @@ public:
     case reproc::errc::pipe_limit_reached:
       return error_code == std::errc::too_many_files_open ||
              error_code == std::errc::too_many_files_open_in_system;
-    case reproc::errc::interrupted:
-      return error_code == std::errc::interrupted;
+    case reproc::errc::interrupted: return error_code == std::errc::interrupted;
     case reproc::errc::process_limit_reached:
       return error_code == std::errc::resource_unavailable_try_again;
     case reproc::errc::invalid_unicode:
