@@ -41,7 +41,7 @@ enum class errc {
   symlink_loop,
   /*! #REPROC_FILE_NOT_FOUND */
   file_not_found,
-  /*! #REPROC_WAIT_TIMEOUT */
+  /*! #REPROC_NAME_TOO_LONG */
   name_too_long
 };
 
