@@ -94,7 +94,7 @@ target_link_libraries(myapp reproc::reproc)
 If you're using a CMake version older than 3.11, you can add reproc as a git
 submodule instead:
 
-```bash
+```sh
 # In your application source directory
 mkdir external
 cd external
@@ -147,7 +147,7 @@ using CMake.
 
 First we have to build and install reproc:
 
-```bash
+```sh
 git clone https://github.com/DaanDeMeyer/reproc.git
 cd reproc
 mkdir build
@@ -171,7 +171,7 @@ The install prefix specified when installing reproc might not be in the default
 search path of CMake. If this is the case you can tell CMake where to search for
 reproc as follows:
 
-```bash
+```sh
 cmake -DCMAKE_PREFIX_PATH=<reproc-install-dir> .. # example: /usr/local on Linux
 ```
 
@@ -191,7 +191,7 @@ Options can be configured when building reproc or before calling
 
 - When building (in `<reproc-root-dir>/build` subdirectory):
 
-  ```bash
+  ```sh
   cmake -DREPROC_BUILD_CXX_WRAPPER=ON ..
   ```
 
