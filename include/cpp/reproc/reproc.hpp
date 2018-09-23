@@ -10,6 +10,9 @@
 #include <string>
 #include <vector>
 
+// Forward reproc_type so we don't have to include reproc.h in the header.
+struct reproc_type;
+
 /*! The `reproc` namespace wraps all reproc C++ declarations. reproc::process
 wraps the C api inside a C++ class. reproc::errc improves on #REPROC_ERROR by
 integrating with C++'s std::error_code error handling mechanism. To avoid
@@ -169,7 +172,7 @@ public:
 private:
   reproc::cleanup cleanup_flags_;
   unsigned int timeout_;
-  std::unique_ptr<struct reproc_type> process_;
+  std::unique_ptr<reproc_type> process_;
   bool running_;
 };
 

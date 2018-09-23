@@ -1,9 +1,6 @@
 #include "reproc/reproc.hpp"
 
-namespace reproc
-{
-
-#include <reproc/reproc.h>
+#include "reproc/reproc.h"
 
 static std::error_code reproc_error_to_error_code(REPROC_ERROR error)
 {
@@ -26,6 +23,9 @@ static std::error_code reproc_error_to_error_code(REPROC_ERROR error)
   }
 }
 
+namespace reproc
+{
+
 const unsigned int infinite = REPROC_INFINITE;
 
 reproc::cleanup operator|(reproc::cleanup lhs, reproc::cleanup rhs) noexcept
@@ -36,7 +36,7 @@ reproc::cleanup operator|(reproc::cleanup lhs, reproc::cleanup rhs) noexcept
 
 process::process(reproc::cleanup cleanup_flags, unsigned int timeout)
     : cleanup_flags_(cleanup_flags), timeout_(timeout),
-      process_(new struct reproc_type()), running_(false)
+      process_(new reproc_type()), running_(false)
 {
 }
 
