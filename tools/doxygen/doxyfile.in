@@ -21,7 +21,6 @@ SORT_MEMBER_DOCS = NO
 TAGFILES += "cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/"
 
 USE_MDFILE_AS_MAINPAGE = @CMAKE_CURRENT_LIST_DIR@/tools/doxygen/mainpage.md
-TOC_INCLUDE_HEADINGS = 20
 
 GENERATE_LATEX = NO
 
