@@ -167,8 +167,8 @@ add_library(reproc::reproc ALIAS reproc)
 
 reproc_set_common(reproc C lib)
 
-# Put library files in tests directory on CI so tests.exe finds reproc.dll
-# without having to modify the PATH.
+# Put library files in tests and examples directories on CI so the executables
+# in those directories finds reproc.dll without us having to modify the PATH.
 if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
   add_custom_command(
     TARGET reproc
