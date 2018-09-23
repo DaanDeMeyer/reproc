@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
                           5000);
 
   std::error_code ec = forward.start(argc - 1, argv + 1);
-  if (ec == reproc::error::file_not_found) {
+  if (ec == reproc::errc::file_not_found) {
     std::cerr << "Program not found. Make sure it's available from the PATH";
     return 1;
   } else if (ec) {

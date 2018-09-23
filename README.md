@@ -247,12 +247,12 @@ system error occurred. This means the `reproc_system_error` function is not
 necessary in the C++ API since printing the value of the error code will print
 the system error (in the C API printing the error value only gives you its value
 in `REPROC_ERROR` and not the actual system error value). You can still test
-against these error codes using the `reproc::error` enum:
+against these error codes using the `reproc::errc` error condition enum:
 
 ```c++
 reproc::process;
 std::error_code ec = process.start(...);
-if (ec == reproc::error::unknown_error) {
+if (ec) {
   // Will print the actual system error value from errno or GetLastError() if
   // error is a system error
   std::cerr << ec.value();
@@ -263,7 +263,7 @@ if (ec == reproc::error::unknown_error) {
 ```
 
 Because reproc integrates with `std::error_code` you can also test against
-reproc errors using values from `std::errc`:
+reproc errors using values from the `std::errc` error condition enum:
 
 ```c++
 reproc::process;
