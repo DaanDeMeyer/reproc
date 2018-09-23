@@ -4,7 +4,7 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-# https://cliutils.gitlab.io/modern-cmake/chapters/basics.html
+# Use updated policies on newer versions of CMake
 if(${CMAKE_VERSION} VERSION_LESS 3.12)
     cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 else()
