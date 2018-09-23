@@ -11,7 +11,7 @@
 #include <vector>
 
 /*! The `reproc` namespace wraps all reproc C++ declarations. reproc::process
-wraps the C api inside a C++ class. reproc::error improves on #REPROC_ERROR by
+wraps the C api inside a C++ class. reproc::errc improves on #REPROC_ERROR by
 integrating with C++'s std::error_code error handling mechanism. To avoid
 exposing the C API when using the C++ API all the other enums and constants of
 the C API have a replacement in the `reproc` namespace as well. */
@@ -94,7 +94,7 @@ public:
   \param[in] working_directory Optional working directory. Defaults to
   `nullptr`.
 
-  \return reproc::error
+  \return reproc::errc
 
   \see reproc_start
   */
@@ -154,9 +154,9 @@ public:
   \param stream Stream to read from
   \param parser Instance of \p Parser
 
-  \return reproc::error
+  \return reproc::errc
 
-  Possible errors: See #read except for reproc::error::stream_closed
+  Possible errors: See #read except for reproc::errc::stream_closed
   */
   template <typename Parser>
   std::error_code read(reproc::stream stream, Parser &&parser);
@@ -191,7 +191,7 @@ std::error_code process::read(reproc::stream stream, Parser &&parser)
   }
 
   // The child process closing the stream is not treated as an error
-  if (ec == reproc::error::stream_closed) { return {}; }
+  if (ec == reproc::errc::stream_closed) { return {}; }
 
   return ec;
 }

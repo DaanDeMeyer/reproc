@@ -12,9 +12,8 @@ namespace reproc
 {
 
 /*! \see REPROC_ERROR */
-/* When editing make sure to change the corresponding enum in error.h as
-well */
-enum class error {
+/* When editing make sure to change the corresponding enum in error.h as well */
+enum class errc {
   // reproc errors
 
   /*! #REPROC_WAIT_TIMEOUT */
@@ -43,9 +42,7 @@ enum class error {
   /*! #REPROC_FILE_NOT_FOUND */
   file_not_found,
   /*! #REPROC_WAIT_TIMEOUT */
-  name_too_long,
-  /*! #REPROC_UNKNOWN_ERROR */
-  unknown_error
+  name_too_long
 };
 
 /*! \private */
@@ -53,14 +50,14 @@ REPROC_EXPORT const std::error_category &error_category() noexcept;
 
 /*! \private */
 REPROC_EXPORT std::error_condition
-make_error_condition(reproc::error error) noexcept;
+make_error_condition(reproc::errc error) noexcept;
 
 } // namespace reproc
 
 namespace std
 {
 
-template <> struct is_error_condition_enum<reproc::error> : true_type {
+template <> struct is_error_condition_enum<reproc::errc> : true_type {
 };
 
 } // namespace std
