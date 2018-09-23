@@ -19,7 +19,7 @@ option(REPROC_BUILD_TESTS "Build tests" OFF)
 option(REPROC_BUILD_EXAMPLES "Build examples. Enable REPROC_BUILD_CXX_WRAPPER \
 to build C++ examples." OFF)
 option(REPROC_BUILD_CXX_WRAPPER "Build C++ wrapper" OFF)
-option(REPROC_BUILD_DOCS "Build API documentation" OFF)
+option(REPROC_BUILD_DOCS "Build API documentation with Doxygen" OFF)
 option(REPROC_CI "Add -Werror or equivalent to compiler and clang-tidy" OFF)
 option(REPROC_INSTALL "Generate install target" OFF)
 option(REPROC_CLANG_TIDY "Run clang-tidy as part of the build (requires \
