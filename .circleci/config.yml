@@ -1,0 +1,17 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: ubuntu:trusty
+    steps:
+      - checkout
+      - run:
+          command: sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+      - run:
+          command: sudo deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main
+      - run:
+          command: sudo deb-src http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main
+      - run:
+          command: sudo apt-get update
+      - run:
+          command: sudo apt-get install -y clang-6.0
