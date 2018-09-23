@@ -4,6 +4,7 @@
 #define REPROC_PARSER_HPP
 
 #include <iosfwd>
+#include <string>
 
 /*! \namespace reproc */
 namespace reproc
