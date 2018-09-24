@@ -351,15 +351,6 @@ parallel.
   `reproc_write` will return `REPROC_STREAM_CLOSED` as expected when writing to
   a closed stdin pipe.
 
-- On Windows processes are forcefully terminated with the `ExitProcess` and
-  `TerminateProcess` functions. These functions take an exit status as an
-  argument which will become the exit status of the terminated process. Because
-  any exit status can be passed to the `ExitProcess` and `TerminateProcess`
-  functions there is no cross-platform way to check if a child process exited
-  normally or if it was interrupted by a signal or stopped by a call to
-  `ExitProcess` or `TerminateProcess` (unless you terminate it your own code of
-  course).
-
 ## Design
 
 reproc is designed to be a minimal wrapper around the platform-specific API's
