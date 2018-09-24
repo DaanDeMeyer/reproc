@@ -251,7 +251,10 @@ against these error codes using the `reproc::errc` error condition enum:
 ```c++
 reproc::process;
 std::error_code ec = process.start(...);
-if (ec) {
+if (ec == reproc::errc::file_not_found) {
+  std::cerr << "Executable not found. Make sure it is available from the PATH";
+  return 1;
+} else if (ec) {
   // Will print the actual system error value from errno or GetLastError() if
   // error is a system error
   std::cerr << ec.value();
