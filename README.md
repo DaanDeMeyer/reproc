@@ -505,12 +505,12 @@ mitigate this in two ways:
   need to be inherited by their corresponding child process.
 - Windows Vista added the `STARTUPINFOEXW` structure in which we can put a list
   of handles that should be inherited. Only these handles are inherited by the
-  child process. This again (just like Darwin `posix_spawn`) only stops reproc's
-  processes from inheriting unintended handles. Other code in an application
-  that calls `CreateProcess` without passing a `STARTUPINFOEXW` struct
-  containing the handles it should inherit can still unintentionally inherit
-  handles meant for a reproc child process. reproc uses the `STARTUPINFOEXW`
-  struct if it is available.
+  child process. This again (just like Darwin's `posix_spawn`) only stops
+  reproc's processes from inheriting unintended handles. Other code in an
+  application that calls `CreateProcess` without passing a `STARTUPINFOEXW`
+  struct containing the handles it should inherit can still unintentionally
+  inherit handles meant for a reproc child process. reproc uses the
+  `STARTUPINFOEXW` struct if it is available.
 
 ## Contributing
 
