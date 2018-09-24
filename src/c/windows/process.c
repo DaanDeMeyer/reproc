@@ -171,8 +171,10 @@ REPROC_ERROR process_kill(HANDLE process, unsigned int timeout,
 {
   assert(process);
 
+  // We use 137 as the exit status because it is the same exit status as a
+  // process that is stopped with the SIGKILL signal on POSIX systems.
   SetLastError(0);
-  if (!TerminateProcess(process, 1)) { return REPROC_UNKNOWN_ERROR; }
+  if (!TerminateProcess(process, 137)) { return REPROC_UNKNOWN_ERROR; }
 
   return process_wait(process, timeout, exit_status);
 }
