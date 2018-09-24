@@ -31,7 +31,7 @@ public:
       // To avoid conflicting with other error codes we also require the error
       // code to be in the reproc error category. Look at
       // reproc_error_to_error_code in reproc.cpp to see how the reproc specific
-      // error codes are construced.
+      // error codes are constructed.
       return error_code ==
              std::error_code(error_condition, reproc::error_category());
 
