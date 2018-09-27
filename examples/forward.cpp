@@ -55,11 +55,11 @@ int main(int argc, char *argv[])
   // we close it explicitly.
   forward.close(reproc::stream::in);
 
-  // Pipe child process stdout output to std::cout of parent process
+  // Pipe child process stdout output to std::cout of parent process.
   ec = forward.read(reproc::stream::out, reproc::ostream_parser(std::cout));
   if (ec) { return fail(ec); }
 
-  // Pipe child process stderr output to std::cerr of parent process
+  // Pipe child process stderr output to std::cerr of parent process.
   ec = forward.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
   if (ec) { return fail(ec); }
 

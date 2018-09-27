@@ -24,7 +24,7 @@ REPROC_ERROR fork_exec_redirect(int argc, const char *const *argv,
   assert(stderr_pipe >= 0);
   assert(pid);
 
-  // Predeclare variables so we can use goto
+  // Predeclare variables so we can use goto.
   REPROC_ERROR error = REPROC_SUCCESS;
   pid_t exec_pid = 0;
   int exec_error = 0;
@@ -32,7 +32,7 @@ REPROC_ERROR fork_exec_redirect(int argc, const char *const *argv,
 
   // We create an error pipe to receive pre-exec and exec errors from the child
   // process. See this answer https://stackoverflow.com/a/1586277 for more
-  // information
+  // information.
   int error_pipe_read = 0;
   int error_pipe_write = 0;
   error = pipe_init(&error_pipe_read, &error_pipe_write);
@@ -52,8 +52,8 @@ REPROC_ERROR fork_exec_redirect(int argc, const char *const *argv,
   }
 
   if (exec_pid == 0) {
-    // In child process (Since we're in the child process we can exit on error)
-    // Why _exit? See:
+    // Child process code. Since we're in the child process we can exit on
+    // error. Why _exit? See:
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
 
     errno = 0;
@@ -65,7 +65,7 @@ REPROC_ERROR fork_exec_redirect(int argc, const char *const *argv,
     // always read from the error pipe in the parent process after forking. When
     // read returns the child process will either have errored out (and waiting
     // won't be valid) or will have executed execvp (and as a result setpgid as
-    // well)
+    // well).
     if (setpgid(0, 0) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
@@ -76,8 +76,8 @@ REPROC_ERROR fork_exec_redirect(int argc, const char *const *argv,
       _exit(errno);
     }
 
-    // Redirect stdin, stdout and stderr
-    // _exit ensures open file descriptors (pipes) are closed
+    // Redirect stdin, stdout and stderr.
+    // _exit ensures open file descriptors (pipes) are closed.
     if (dup2(stdin_pipe, STDIN_FILENO) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
@@ -96,26 +96,26 @@ REPROC_ERROR fork_exec_redirect(int argc, const char *const *argv,
       // We might still need the error pipe if execve fails so we don't close
       // it. The error pipe is created with FD_CLOEXEC which results in it being
       // closed automatically on exec which means we don't have to manually
-      // close it for the case that exec succeeds
+      // close it for the case that exec succeeds.
       if (i == error_pipe_write) { continue; }
       close(i);
     }
-    // Ignore file descriptor close errors since we try them all and close sets
-    // errno when an invalid file descriptor is passed
+    // Ignore file descriptor close errors since we try to close all of them and
+    // close sets errno when an invalid file descriptor is passed.
     errno = 0;
 
-    // Replace forked child with process we want to run
-    // Safe cast (execvp doesn't actually change the contents of argv)
+    // Replace forked child with process we want to run.
+    // Safe cast (execvp doesn't actually change the contents of argv).
     execvp(argv[0], (char **) argv);
 
     write(error_pipe_write, &errno, sizeof(errno));
 
-    // Exit if execvp fails
+    // Exit if execvp fails.
     _exit(errno);
   }
 
   // Close write end on parent side so read will read 0 if it is closed on the
-  // child side as well
+  // child side as well.
   pipe_close(&error_pipe_write);
 
   error = pipe_read(error_pipe_read, &exec_error, sizeof(exec_error),
@@ -126,7 +126,7 @@ REPROC_ERROR fork_exec_redirect(int argc, const char *const *argv,
   case REPROC_SUCCESS: break;
   // REPROC_STREAM_CLOSED indicates the execve was succesful (because
   // FD_CLOEXEC kicked in and closed the error_pipe_write fd in the child
-  // process)
+  // process).
   case REPROC_STREAM_CLOSED: break;
   // Conjecture: The chance of REPROC_INTERRUPTED occurring here is really
   // low so we return REPROC_UNKNOWN_ERROR to reduce the error signature of
@@ -144,9 +144,9 @@ REPROC_ERROR fork_exec_redirect(int argc, const char *const *argv,
   }
 
   // If read does not return 0 an error will have occurred in the child process
-  // before or during execve (or an error with read itself (less likely))
+  // before or during execve (or an error with read itself (less likely)).
   if (exec_error != 0) {
-    // Allow retrieving child process errors with reproc_system_error
+    // Allow retrieving child process errors with reproc_system_error.
     errno = exec_error;
 
     switch (exec_error) {
@@ -168,10 +168,10 @@ cleanup:
   pipe_close(&error_pipe_read);
   pipe_close(&error_pipe_write);
 
-  // REPROC_STREAM_CLOSED is not an error in this scenario (see above)
+  // REPROC_STREAM_CLOSED is not an error in this scenario (see above).
   if (error != REPROC_SUCCESS && error != REPROC_STREAM_CLOSED &&
       exec_pid > 0) {
-    // Make sure fork doesn't become a zombie process if error occurred
+    // Make sure fork doesn't become a zombie process if error occurred.
     if (waitpid(exec_pid, NULL, 0) == -1) { return REPROC_UNKNOWN_ERROR; }
     return error;
   }
@@ -227,11 +227,11 @@ REPROC_ERROR fork_timeout(unsigned int milliseconds, pid_t process_group,
     tv.tv_usec = (milliseconds % 1000) * 1000; // leftover ms -> us
 
     // we can't check for errors in select without waiting for the timeout to
-    // expire so we close the error pipe before calling select
+    // expire so we close the error pipe before calling select.
     pipe_close(&error_pipe_write);
 
     // Select with no file descriptors can be used as a makeshift sleep function
-    // (that can still be interrupted)
+    // (that can still be interrupted).
     errno = 0;
     if (select(0, NULL, NULL, NULL, &tv) == -1) { _exit(errno); }
 

@@ -32,7 +32,7 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
     assert(argv[i]);
   }
 
-  // Predeclare every variable so we can use goto
+  // Predeclare every variable so we can use goto.
 
   int child_stdin = 0;
   int child_stdout = 0;
@@ -53,7 +53,7 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
 cleanup:
   // An error has ocurred or the child pipe endpoints have been copied to the
   // the stdin/stdout/stderr streams of the child process. Either way they can
-  // be safely closed in the parent process
+  // be safely closed in the parent process.
   pipe_close(&child_stdin);
   pipe_close(&child_stdout);
   pipe_close(&child_stderr);
@@ -105,7 +105,7 @@ REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
     return pipe_read(process->parent_stderr, buffer, size, bytes_read);
   }
 
-  // Only reachable when compiled without asserts
+  // Only reachable when compiled without asserts.
   return REPROC_UNKNOWN_ERROR;
 }
 
@@ -114,10 +114,11 @@ REPROC_ERROR reproc_stop(struct reproc_type *process, int cleanup_flags,
 {
   assert(process);
 
-  // Don't set to REPROC_SUCCESS so we can check if wait/terminate/kill
-  // succeeded (sets error to REPROC_SUCCESS)
+  // We don't set error to REPROC_SUCCESS so we can check if wait/terminate/kill
+  // succeeded (in which case error is set to REPROC_SUCCESS).
   REPROC_ERROR error = REPROC_WAIT_TIMEOUT;
 
+  // We already did a 0 ms timeout check so we don't do it again.
   if (cleanup_flags & REPROC_WAIT) {
     error = process_wait(process->id, timeout, exit_status);
   }

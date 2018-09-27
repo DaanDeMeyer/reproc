@@ -16,24 +16,24 @@ REPROC_ERROR string_join(const char *const *string_array, int array_length,
     assert(string_array[i]);
   }
 
-  // Determine length of resulting string first
-  size_t string_length = 1; // Count NULL terminator
+  // Determine length of resulting string first.
+  size_t string_length = 1; // Count NULL terminator.
   for (int i = 0; i < array_length; i++) {
     string_length += strlen(string_array[i]);
-    if (i < array_length - 1) { string_length++; } // Count whitespace
+    if (i < array_length - 1) { string_length++; } // Count whitespace.
   }
 
   char *string = malloc(sizeof(char) * string_length);
   if (string == NULL) { return REPROC_NOT_ENOUGH_MEMORY; }
 
-  char *current = string; // Keeps track of where we are in the result string
+  char *current = string; // Keeps track of where we are in the result string.
   for (int i = 0; i < array_length; i++) {
     size_t part_length = strlen(string_array[i]);
     // NOLINTNEXTLINE(clang-analyzer-security.insecureAPI.strcpy)
     strcpy(current, string_array[i]);
     current += part_length;
 
-    // We add a space after every part string except for the last one
+    // We add a space after every part string except for the last one.
     if (i < array_length - 1) {
       *current = ' ';
       current += 1;
@@ -53,7 +53,7 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
   assert(result);
 
   // Determine wstring length (MultiByteToWideChar returns required size if last
-  // two arguments are NULL and 0)
+  // two arguments are NULL and 0).
   SetLastError(0);
   unsigned int wstring_length = (unsigned int)
       MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string, -1, NULL, 0);

@@ -11,7 +11,7 @@
 static unsigned int parse_exit_status(int status)
 {
   // WEXITSTATUS returns a value between [0,256) so casting to unsigned int is
-  // safe
+  // safe.
 
   if (WIFEXITED(status)) { return (unsigned int) WEXITSTATUS(status); }
 
@@ -24,12 +24,12 @@ static REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
 {
   int status = 0;
   errno = 0;
-  // Adding WNOHANG makes waitpid only check and return immediately
+  // Adding WNOHANG makes waitpid only check and return immediately.
   pid_t wait_result = waitpid(pid, &status, WNOHANG);
 
   if (wait_result == 0) { return REPROC_WAIT_TIMEOUT; }
   if (wait_result == -1) {
-    // Ignore EINTR, it shouldn't happen when using WNOHANG
+    // Ignore EINTR, it shouldn't happen when using WNOHANG.
     return REPROC_UNKNOWN_ERROR;
   }
 
@@ -54,7 +54,7 @@ static REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
   return REPROC_SUCCESS;
 }
 
-// See Design section in README.md for an explanation of how this works
+// See Design section in README.md for an explanation of how this works.
 static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
                                  unsigned int *exit_status)
 {
@@ -63,7 +63,7 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
   REPROC_ERROR error = REPROC_SUCCESS;
 
   // Check if process has already exited before starting (expensive) timeout
-  // fork. Return if wait succeeds or error (that isn't a timeout) occurs
+  // fork. Return if wait succeeds or error (that isn't a timeout) occurs.
   error = process_wait(pid, 0, exit_status);
   if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
@@ -74,16 +74,16 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
   // -reproc->pid waits for all processes in the reproc->pid process group
   // which in this case will be the process we want to wait for and the timeout
   // process. waitpid will return the process id of whichever process exits
-  // first
+  // first.
   int status = 0;
   errno = 0;
   pid_t exit_pid = waitpid(-pid, &status, 0);
 
-  // If the timeout process exits first the timeout will have been exceeded
+  // If the timeout process exits first the timeout will have been exceeded.
   if (exit_pid == timeout_pid) { return REPROC_WAIT_TIMEOUT; }
 
   // If the child process exits first we make sure the timeout process is
-  // cleaned up correctly by sending a SIGTERM signal and waiting for it
+  // cleaned up correctly by sending a SIGTERM signal and waiting for it.
   errno = 0;
   if (kill(timeout_pid, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
 
@@ -96,7 +96,7 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
   }
 
   // After cleaning up the timeout process we can check if an error occurred
-  // while waiting for the timeout process/child process
+  // while waiting for the timeout process/child process.
   if (exit_pid == -1) {
     switch (errno) {
     case EINTR: return REPROC_INTERRUPTED;

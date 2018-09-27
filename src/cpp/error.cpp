@@ -21,8 +21,7 @@ public:
       noexcept override
   {
     switch (static_cast<reproc::errc>(error_condition)) {
-    // reproc errors
-    // Use fallthrough because the following three cases are handled identically
+    // reproc errors are handled identically so we use switch fallthrough.
     case reproc::errc::wait_timeout:
     case reproc::errc::stream_closed:
     case reproc::errc::partial_write:
@@ -35,7 +34,6 @@ public:
       return error_code ==
              std::error_code(error_condition, reproc::error_category());
 
-    // system errors
     // The rest of the reproc errors are all system errors so we can just check
     // against the standard error conditions from std which already do all the
     // work for us.
@@ -49,10 +47,11 @@ public:
       return error_code == std::errc::resource_unavailable_try_again;
     case reproc::errc::invalid_unicode:
 #ifdef _WIN32
-      // 1113 == ERROR_NO_UNICODE_TRANSLATION (Windows)
+      // ERROR_NO_UNICODE_TRANSLATION == 1113 (Windows).
       return error_code == std::error_code(1113, std::system_category());
 #else
-      // REPROC_INVALID_UNICODE is Windows specific
+      // REPROC_INVALID_UNICODE is Windows specific so it can't happen on POSIX
+      // systems
       return false;
 #endif
     case reproc::errc::permission_denied:

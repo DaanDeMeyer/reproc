@@ -100,14 +100,14 @@ void pipe_close(int *pipe)
   assert(pipe);
 
   // Do nothing and return success on null pipe (0) so callers don't have to
-  // check each time if a pipe has been closed already
+  // check each time if a pipe has been closed already.
   if (*pipe == 0) { return; }
 
-  // Avoid close errors overriding other system errors
+  // Avoid close errors overriding other system errors.
   int last_system_error = errno;
   close(*pipe);
   errno = last_system_error;
 
-  // Close should not be repeated on error so always set pipe to 0 after close
+  // Close should not be repeated on error so always set pipe to 0 after close.
   *pipe = 0;
 }

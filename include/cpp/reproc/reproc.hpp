@@ -76,7 +76,7 @@ public:
   explicitly yet. */
   REPROC_EXPORT ~process() noexcept;
 
-  // Enforce unique ownership
+  // Enforce unique ownership of process objects.
   process(const process &) = delete;
   process &operator=(const process &) = delete;
 
@@ -154,12 +154,12 @@ public:
   For examples of parsers, see parser.hpp.
   \endparblock
 
-  \param stream Stream to read from
-  \param parser Instance of \p Parser
+  \param stream The stream to read from.
+  \param parser An instance of \p Parser.
 
   \return reproc::errc
 
-  Possible errors: See #read except for reproc::errc::stream_closed
+  Possible errors: See #read except for reproc::errc::stream_closed.
   */
   template <typename Parser>
   std::error_code read(reproc::stream stream, Parser &&parser);
@@ -189,11 +189,11 @@ std::error_code process::read(reproc::stream stream, Parser &&parser)
     ec = read(stream, buffer, BUFFER_SIZE, &bytes_read);
     if (ec) { break; }
 
-    // parser returns false to tell us to stop reading
+    // parser returns false to tell us to stop reading.
     if (!parser(buffer, bytes_read)) { break; }
   }
 
-  // The child process closing the stream is not treated as an error
+  // The child process closing the stream is not treated as an error.
   if (ec == reproc::errc::stream_closed) { return {}; }
 
   return ec;

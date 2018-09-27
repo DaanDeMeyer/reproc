@@ -34,7 +34,7 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
     assert(argv[i]);
   }
 
-  // Predeclare every variable so we can use goto
+  // Predeclare every variable so we can use goto.
 
   HANDLE child_stdin = NULL;
   HANDLE child_stdout = NULL;
@@ -66,16 +66,16 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
   error = pipe_disable_inherit(process->parent_stderr);
   if (error) { goto cleanup; }
 
-  // Join argv to whitespace delimited string as required by CreateProcess
+  // Join argv to whitespace delimited string as required by CreateProcess.
   error = string_join(argv, argc, &command_line_string);
   if (error) { goto cleanup; }
 
-  // Convert UTF-8 to UTF-16 as required by CreateProcessW
+  // Convert UTF-8 to UTF-16 as required by CreateProcessW.
   error = string_to_wstring(command_line_string, &command_line_wstring);
   free(command_line_string); // Not needed anymore
   if (error) { goto cleanup; }
 
-  // Do the same for the working directory string if one was provided
+  // Do the same for the working directory string if one was provided.
   error = working_directory
               ? string_to_wstring(working_directory, &working_directory_wstring)
               : REPROC_SUCCESS;
@@ -91,7 +91,7 @@ cleanup:
   handle_close(&child_stdin);
   handle_close(&child_stdout);
   handle_close(&child_stderr);
-  // Free allocated memory before returning possible error
+  // Free allocated memory before returning possible error.
   free(command_line_wstring);
   free(working_directory_wstring);
 
@@ -142,7 +142,7 @@ REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
     return pipe_read(process->parent_stderr, buffer, size, bytes_read);
   }
 
-  // Only reachable when compiled without asserts
+  // Only reachable when compiled without asserts.
   return REPROC_UNKNOWN_ERROR;
 }
 
@@ -151,11 +151,11 @@ REPROC_ERROR reproc_stop(reproc_type *process, int cleanup_flags,
 {
   assert(process);
 
-  // Don't set to REPROC_SUCCESS so we can check if wait/terminate/kill
-  // succeeded (sets error to REPROC_SUCCESS)
+  // We don't set error to REPROC_SUCCESS so we can check if wait/terminate/kill
+  // succeeded (in which case error is set to REPROC_SUCCESS).
   REPROC_ERROR error = REPROC_WAIT_TIMEOUT;
 
-  // We already did a 0 ms timeout check so we don't do it again
+  // We already did a 0 ms timeout check so we don't do it again.
   if (cleanup_flags & REPROC_WAIT) {
     error = process_wait(process->handle, timeout, exit_status);
   }

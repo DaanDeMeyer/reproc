@@ -5,7 +5,7 @@
 
 #include <wchar.h>
 
-/* Joins all the strings in string_array together delimited by spaces */
+// Joins all the strings in string_array together delimited by spaces.
 REPROC_ERROR string_join(const char *const *string_array, int array_length,
                          char **result);
 

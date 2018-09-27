@@ -13,8 +13,9 @@ static std::error_code reproc_error_to_error_code(REPROC_ERROR error)
   case REPROC_STREAM_CLOSED:
   case REPROC_PARTIAL_WRITE: return { error, reproc::error_category() };
   default:
-    // errno values should have generic_category() but windows errors should
-    // have system_category()
+    // errno values belong to the generic category. However, on Windows we get
+    // Windows specific errors (using GetLastError() instead of errno) which
+    // belong to the system category.
 #ifdef _WIN32
     return { static_cast<int>(reproc_system_error()), std::system_category() };
 #else
@@ -57,7 +58,7 @@ std::error_code process::start(int argc, const char *const *argv,
 std::error_code process::start(const std::vector<std::string> &args,
                                const std::string *working_directory)
 {
-  // Turn args into array of C strings
+  // Turn args into array of C strings.
   auto argv = std::vector<const char *>(args.size() + 1);
 
   for (std::size_t i = 0; i < args.size(); i++) {
@@ -65,10 +66,10 @@ std::error_code process::start(const std::vector<std::string> &args,
   }
   argv[args.size()] = nullptr;
 
-  // We don't expect so many args that an int will insufficient to count them
+  // We don't expect so many args that an int will insufficient to count them.
   auto argc = static_cast<int>(args.size());
 
-  std::error_code error = start(argc, &argv[0] /* std::vector -> C array */,
+  std::error_code error = start(argc, &argv[0] /* std::vector -> C array. */,
                                 working_directory ? working_directory->c_str()
                                                   : nullptr);
 

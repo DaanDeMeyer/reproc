@@ -20,7 +20,7 @@ TEST_CASE("stop")
   REQUIRE(!error);
 
 // Wait to avoid terminating the child process on Windows before it is
-// initialized (which would result in an error window appearing)
+// initialized (which would result in an error window appearing).
 #if defined(_WIN32)
   Sleep(50);
 #endif

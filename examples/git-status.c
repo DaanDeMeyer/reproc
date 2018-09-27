@@ -57,7 +57,7 @@ int main(void)
                         &bytes_read);
     if (error) { break; }
 
-    // +1 to leave space for null terminator
+    // Add 1 to size to leave space for a null terminator.
     char *realloc_result = realloc(output, output_length + bytes_read + 1);
     if (!realloc_result) {
       free(output);
@@ -70,7 +70,7 @@ int main(void)
   }
 
   // Check that the while loop stopped because the output stream of the child
-  // process was closed and not because of another error
+  // process was closed and not because of another error.
   if (error != REPROC_STREAM_CLOSED) {
     free(output);
     goto cleanup;
@@ -80,7 +80,7 @@ int main(void)
   printf("%s", output);
   free(output);
 
-// ; because declaration directly after label is illegal in C
+// Add a ; because declaration directly after label is illegal in C.
 cleanup:;
   // Wait for the process to exit. This should always be done since some systems
   // (POSIX) don't clean up system resources allocated to a child process until

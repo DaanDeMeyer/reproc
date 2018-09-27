@@ -12,7 +12,7 @@ namespace reproc
 {
 
 /*! \see REPROC_ERROR */
-/* When editing make sure to change the corresponding enum in error.h as well */
+// When editing make sure to change the corresponding enum in error.h as well.
 enum class errc {
   // reproc errors
 

@@ -14,7 +14,7 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
   assert(amount >= 0);
   assert(result);
 
-  // Get the required size for the attribute list
+  // Get the required size for the attribute list.
   SIZE_T attribute_list_size = 0;
   SetLastError(0);
   if (!InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size) &&
@@ -32,7 +32,7 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
     return REPROC_UNKNOWN_ERROR;
   }
 
-  // Add the handles to be inherited to the attribute list
+  // Add the handles to be inherited to the attribute list.
   SetLastError(0);
   if (!UpdateProcThreadAttribute(attribute_list, 0,
                                  PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,
@@ -66,7 +66,7 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
   REPROC_ERROR error = REPROC_SUCCESS;
 
   // To ensure no handles other than those necessary are inherited we use the
-  // approach detailed in https://stackoverflow.com/a/2345126
+  // approach detailed in https://stackoverflow.com/a/2345126.
   HANDLE to_inherit[3] = { child_stdin, child_stdout, child_stderr };
 
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
@@ -112,7 +112,7 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
   DeleteProcThreadAttributeList(attribute_list);
 #endif
 
-  // We don't need the handle to the primary thread of the child process
+  // We don't need the handle to the primary thread of the child process.
   handle_close(&info.hThread);
 
   if (!result) {
@@ -141,7 +141,7 @@ REPROC_ERROR process_wait(HANDLE process, unsigned int timeout,
   if (exit_status == NULL) { return REPROC_SUCCESS; }
 
   SetLastError(0);
-  // DWORD == unsigned int so cast is safe
+  // DWORD == unsigned int so cast is safe.
   if (!GetExitCodeProcess(process, (LPDWORD) exit_status)) {
     return REPROC_UNKNOWN_ERROR;
   }
@@ -157,7 +157,7 @@ REPROC_ERROR process_terminate(HANDLE process, unsigned long pid,
   // GenerateConsoleCtrlEvent can only be passed a process group id. This is why
   // we start each child process in its own process group (which has the same id
   // as the child process id) so we can call GenerateConsoleCtrlEvent on single
-  // child processes
+  // child processes.
   SetLastError(0);
   if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pid)) {
     return REPROC_UNKNOWN_ERROR;

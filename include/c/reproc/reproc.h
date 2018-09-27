@@ -57,10 +57,10 @@ Contains flags used to tell reproc how to stop a child process.
 \see reproc_stop
 */
 typedef enum {
-  /*! Wait for the child process to exit on its own */
+  /*! Wait for the child process to exit on its own. */
   REPROC_WAIT = 1 << 0,
   /*! Send `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) and wait for the child
-  process to exit */
+  process to exit. */
   REPROC_TERMINATE = 1 << 1,
   /*! Send `SIGKILL` (POSIX) or call `TerminateProcess` (Windows) and wait for
   the child process to exit. Because `SIGKILL` and `TerminateProcess` do not
@@ -109,7 +109,7 @@ at the end of the array. Must be bigger than or equal to 1.
 
 Example: if argv is ["cmake", "--help", `NULL`] then \p argc is 2.
 \endparblock
-\param[in] working_directory Indicates the working directory for the child
+\param[in] working_directory Indicates the working directory for the child.
 process. If it is `NULL`, the child process runs in the same directory as the
 current process.
 
@@ -294,14 +294,15 @@ If the child process exits normally the exit status of the child process is
 stored in \p exit_status.
 
 Exiting normally is defined as follows for the different platforms:
-- POSIX: The process returned from its main function or called `exit` or `_exit`
-- Windows: The process returned from its `main` or `WinMain` function
+- POSIX: The process returned from its main function or called `exit` or
+`_exit`.
+- Windows: The process returned from its `main` or `WinMain` function.
 
 If the function does not exit normally the following values are stored in \p
 exit_status:
-- POSIX: Number of the signal that terminated the child process
+- POSIX: Number of the signal that terminated the child process.
 - Windows: exit status passed to `ExitProcess` or `TerminateProcess` function
-call that terminated the child process
+call that terminated the child process.
 \endparblock
 \return
 \parblock
