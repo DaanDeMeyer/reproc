@@ -213,24 +213,27 @@ target_compile_definitions(reproc
   PRIVATE $<BUILD_INTERFACE:REPROC_BUILDING>
 )
 
-target_sources(reproc PRIVATE src/c/common.c)
+target_include_directories(reproc PRIVATE src/c/common)
+target_sources(reproc PRIVATE src/c/common/reproc/error.c)
 
 if(WIN32)
   target_include_directories(reproc PRIVATE src/c/windows)
   target_sources(reproc PRIVATE
-    src/c/windows/handle.c
-    src/c/windows/pipe.c
-    src/c/windows/process.c
-    src/c/windows/reproc.c
-    src/c/windows/string_utils.c
+    src/c/windows/reproc/error.c
+    src/c/windows/reproc/handle.c
+    src/c/windows/reproc/pipe.c
+    src/c/windows/reproc/process.c
+    src/c/windows/reproc/reproc.c
+    src/c/windows/reproc/string_utils.c
   )
 elseif(UNIX)
   target_include_directories(reproc PRIVATE src/c/posix)
   target_sources(reproc PRIVATE
-    src/c/posix/fork.c
-    src/c/posix/pipe.c
-    src/c/posix/reproc.c
-    src/c/posix/process.c
+    src/c/posix/reproc/error.c
+    src/c/posix/reproc/fork.c
+    src/c/posix/reproc/pipe.c
+    src/c/posix/reproc/reproc.c
+    src/c/posix/reproc/process.c
   )
 endif()
 

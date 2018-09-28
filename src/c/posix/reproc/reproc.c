@@ -1,8 +1,8 @@
 #include "reproc/reproc.h"
 
-#include "fork.h"
-#include "pipe.h"
-#include "process.h"
+#include "reproc/fork.h"
+#include "reproc/pipe.h"
+#include "reproc/process.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -140,5 +140,3 @@ cleanup:
 
   return error;
 }
-
-unsigned int reproc_system_error(void) { return (unsigned int) errno; }
