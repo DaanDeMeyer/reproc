@@ -3,10 +3,11 @@
 #include <assert.h>
 
 // Ensures pipe is inherited by child process.
-static SECURITY_ATTRIBUTES security_attributes =
-    { .nLength = sizeof(SECURITY_ATTRIBUTES),
-      .bInheritHandle = TRUE,
-      .lpSecurityDescriptor = NULL };
+static SECURITY_ATTRIBUTES security_attributes = {
+  .nLength = sizeof(SECURITY_ATTRIBUTES),
+  .bInheritHandle = TRUE,
+  .lpSecurityDescriptor = NULL
+};
 
 REPROC_ERROR pipe_init(HANDLE *read, HANDLE *write)
 {

@@ -75,13 +75,14 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
 
   creation_flags |= EXTENDED_STARTUPINFO_PRESENT;
 
-  STARTUPINFOEXW extended_startup_info =
-      { .StartupInfo = { .cb = sizeof(extended_startup_info),
-                         .dwFlags = STARTF_USESTDHANDLES,
-                         .hStdInput = child_stdin,
-                         .hStdOutput = child_stdout,
-                         .hStdError = child_stderr },
-        .lpAttributeList = attribute_list };
+  STARTUPINFOEXW extended_startup_info = {
+    .StartupInfo = { .cb = sizeof(extended_startup_info),
+                     .dwFlags = STARTF_USESTDHANDLES,
+                     .hStdInput = child_stdin,
+                     .hStdOutput = child_stdout,
+                     .hStdError = child_stderr },
+    .lpAttributeList = attribute_list
+  };
 
   LPSTARTUPINFOW startup_info_address = &extended_startup_info.StartupInfo;
 #else
