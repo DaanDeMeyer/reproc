@@ -9,22 +9,16 @@ sudo: true
 notifications:
   email: false
 
-env:
-  - REPROC_SANITIZERS=ON
+env: REPROC_SANITIZERS=ON REPROC_COLORED_OUTPUT=ON
 
 matrix:
   fast_finish: true
   include:
     - os: linux
-      env:
-        - CC=gcc
-        - CXX=g++
-        - REPROC_SANITIZERS=OFF
+      env: CC=gcc CXX=g++ REPROC_SANITIZERS=OFF REPROC_COLORED_OUTPUT=OFF
 
     - os: linux
-      env:
-        - CC=clang
-        - CXX=clang++
+      env: CC=clang CXX=clang++
 
     - os: linux
       addons:
@@ -33,9 +27,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-8
-      env:
-        - CC=gcc-8
-        - CXX=g++-8
+      env: CC=gcc-8 CXX=g++-8
 
     - os: linux
       addons:
@@ -45,14 +37,10 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - clang-6.0
-      env:
-        - CC=clang-6.0
-        - CXX=clang++-6.0
+      env: CC=clang-6.0 CXX=clang++-6.0
 
     - os: osx
-      env:
-        - CC=clang
-        - CXX=clang++
+      env: CC=clang CXX=clang++
 
 script:
   - cmake .
@@ -66,7 +54,7 @@ script:
       -DREPROC_INSTALL=ON
       -DREPROC_CLANG_FORMAT=ON
       -DREPROC_SANITIZERS=$REPROC_SANITIZERS
-      -DREPROC_COLORED_OUTPUT=ON
+      -DREPROC_COLORED_OUTPUT=$REPROC_COLORED_OUTPUT
   - cmake --build . -- -j 2
   - cmake --build . --target reproc-run-tests
   - ./examples/git-status > /dev/null

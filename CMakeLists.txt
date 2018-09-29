@@ -104,13 +104,6 @@ else()
     $<$<BOOL:${REPROC_CI}>:-Werror>
   )
 
-  if(REPROC_COLORED_OUTPUT)
-    set(REPROC_COMPILE_OPTIONS ${REPROC_COMPILE_OPTIONS}
-      $<$<CXX_COMPILER_ID:GNU>:-fdiagnostics-color=always>
-      $<$<CXX_COMPILER_ID:Clang>:-fcolor-diagnostics>
-    )
-  endif()
-
   if(REPROC_SANITIZERS)
     set(REPROC_COMPILE_OPTIONS ${REPROC_COMPILE_OPTIONS}
       -fsanitize=address,undefined
@@ -123,6 +116,13 @@ else()
       set(REPROC_LINK_OPTIONS ${REPROC_LINK_OPTIONS} -fuse-ld=gold)
     endif()
   endif()
+endif()
+
+if(REPROC_COLORED_OUTPUT)
+  set(REPROC_COMPILE_OPTIONS ${REPROC_COMPILE_OPTIONS}
+    $<$<CXX_COMPILER_ID:GNU>:-fdiagnostics-color=always>
+    $<$<CXX_COMPILER_ID:Clang>:-fcolor-diagnostics>
+  )
 endif()
 
 # LINK_FLAGS (see reproc_set_common) property expects a string instead of a
