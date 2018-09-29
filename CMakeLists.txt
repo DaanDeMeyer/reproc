@@ -63,6 +63,9 @@ endif()
 
 ### Common development flags ###
 
+# Target used to propagate common flags to all targets defined by reproc
+add_library(reproc-dev-flags INTERFACE)
+
 if(MSVC)
   # See REPROC_ENABLE_W4 option declaration for why we can't just add /W4 as a
   # compile option.
@@ -77,7 +80,7 @@ if(MSVC)
   include(CheckCCompilerFlag)
   check_c_compiler_flag(/permissive- REPROC_HAS_PERMISSIVE)
 
-  set(REPROC_COMPILE_OPTIONS
+  target_compile_options(reproc-dev-flags INTERFACE
     # Silence MSVC compiler version output.
     /nologo
     $<$<BOOL:${REPROC_CI}>:/WX>
@@ -87,15 +90,16 @@ if(MSVC)
     # is not valid for us.
     $<$<C_COMPILER_ID:MSVC>:/wd4204>
   )
-  set(REPROC_LINK_OPTIONS
+
+  target_link_libraries(reproc-dev-flags INTERFACE
     # Silence MSVC linker version output.
-    /nologo
+    -nologo
     # Disable incremental linking to silence warnings when rebuilding reproc
     # after executing ninja -t clean.
-    /INCREMENTAL:NO
+    -INCREMENTAL:NO
   )
 else()
-  set(REPROC_COMPILE_OPTIONS
+  target_compile_options(reproc-dev-flags INTERFACE
     -Wall
     -Wextra
     -pedantic-errors
@@ -105,29 +109,23 @@ else()
   )
 
   if(REPROC_SANITIZERS)
-    set(REPROC_COMPILE_OPTIONS ${REPROC_COMPILE_OPTIONS}
+    target_compile_options(reproc-dev-flags INTERFACE
       -fsanitize=address,undefined
     )
-
-    set(REPROC_LINK_OPTIONS -fsanitize=address,undefined)
-
-    if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
+    target_link_libraries(reproc-dev-flags INTERFACE
+      -fsanitize=address,undefined
       # GCC sanitizers only work when using the gold linker.
-      set(REPROC_LINK_OPTIONS ${REPROC_LINK_OPTIONS} -fuse-ld=gold)
-    endif()
+      $<$<C_COMPILER_ID:GNU>:-fuse-ld=gold>
+    )
   endif()
 endif()
 
 if(REPROC_COLORED_OUTPUT)
-  set(REPROC_COMPILE_OPTIONS ${REPROC_COMPILE_OPTIONS}
+  target_compile_options(reproc-dev-flags INTERFACE
     $<$<CXX_COMPILER_ID:GNU>:-fdiagnostics-color=always>
     $<$<CXX_COMPILER_ID:Clang>:-fcolor-diagnostics>
   )
 endif()
-
-# LINK_FLAGS (see reproc_set_common) property expects a string instead of a
-# list.
-string(REPLACE ";" " " REPROC_LINK_OPTIONS_STRING "${REPROC_LINK_OPTIONS}")
 
 ### Helpers ###
 
@@ -146,18 +144,12 @@ function(reproc_set_common TARGET LANGUAGE OUTPUT_DIRECTORY)
     ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
     LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
   )
-  target_compile_options(${TARGET} PRIVATE ${REPROC_COMPILE_OPTIONS})
 
-  # reproc_set_common is called twice for the reproc target (once for C and once
-  # for C++) which means we have to take care to not add link options twice.
-
-  # Both LINK_FLAGS and REPROC_LINK_OPTIONS_STRING can be empty so we have to
-  # surround them with quotes to avoid CMake syntax errors.
-  get_property(LINK_FLAGS TARGET ${TARGET} PROPERTY LINK_FLAGS)
-  if(NOT "${LINK_FLAGS}" MATCHES "${REPROC_LINK_OPTIONS_STRING}")
-    set_property(TARGET ${TARGET} PROPERTY
-                 LINK_FLAGS "${LINK_FLAGS} ${REPROC_LINK_OPTIONS_STRING}")
-  endif()
+  target_link_libraries(${TARGET} PRIVATE
+    # Avoid error when generating install target (we only need the flags when
+    # building anyway).
+    $<BUILD_INTERFACE:reproc-dev-flags>
+  )
 
   if(REPROC_CLANG_TIDY AND REPROC_CLANG_TIDY_PROGRAM)
     set_target_properties(${TARGET} PROPERTIES
@@ -202,17 +194,10 @@ set_target_properties(reproc PROPERTIES
   SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
-# Silence MSVC Library Manager version output.
-if(MSVC)
-  set_property(TARGET reproc APPEND PROPERTY STATIC_LIBRARY_FLAGS /nologo)
-endif()
-
-# Only use the headers from the repository when building. When installing we
-# want to use the install location of the headers (e.g. /usr/include) as the
-# include directory which is specified later in this file (Install section).
-target_include_directories(reproc PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/c>
-)
+# # Silence MSVC Library Manager version output.
+# if(MSVC)
+#   set_property(TARGET reproc APPEND PROPERTY STATIC_LIBRARY_FLAGS /nologo)
+# endif()
 
 # Used to add visibility modifiers (see include/c/export.h and
 # include/cpp/export.hpp).
@@ -221,11 +206,21 @@ target_compile_definitions(reproc
   PRIVATE $<BUILD_INTERFACE:REPROC_BUILDING>
 )
 
-target_include_directories(reproc PRIVATE src/c/common)
+# Only use the headers from the repository when building. When installing we
+# want to use the install location of the headers (e.g. /usr/include) as the
+# include directory which is specified later in this file (Install section).
+target_include_directories(reproc PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/c>
+)
+target_include_directories(reproc PRIVATE
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/c/common>
+)
 target_sources(reproc PRIVATE src/c/common/reproc/error.c)
 
 if(WIN32)
-  target_include_directories(reproc PRIVATE src/c/windows)
+  target_include_directories(reproc PRIVATE
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/c/windows>
+  )
   target_sources(reproc PRIVATE
     src/c/windows/reproc/error.c
     src/c/windows/reproc/handle.c
@@ -235,7 +230,9 @@ if(WIN32)
     src/c/windows/reproc/string_utils.c
   )
 elseif(UNIX)
-  target_include_directories(reproc PRIVATE src/c/posix)
+  target_include_directories(reproc PRIVATE
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/c/posix>
+  )
   target_sources(reproc PRIVATE
     src/c/posix/reproc/error.c
     src/c/posix/reproc/fork.c
@@ -278,7 +275,7 @@ if(REPROC_BUILD_CXX_WRAPPER)
   reproc_set_common(reproc CXX lib)
 
   target_include_directories(reproc PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/cpp>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/cpp>
   )
   target_sources(reproc PRIVATE
     src/cpp/reproc.cpp
@@ -329,7 +326,7 @@ if(REPROC_BUILD_TESTS)
   add_custom_target(
     reproc-run-tests
     COMMAND $<TARGET_FILE:reproc-tests> --force-colors=true
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
   )
 
   add_dependencies(reproc-run-tests reproc-tests)
@@ -405,21 +402,21 @@ if(REPROC_INSTALL)
 
   include(CMakePackageConfigHelpers)
   write_basic_package_version_file(
-      ${CMAKE_CURRENT_BINARY_DIR}/reproc-config-version.cmake
+      ${PROJECT_BINARY_DIR}/reproc-config-version.cmake
       VERSION ${PROJECT_VERSION}
       COMPATIBILITY AnyNewerVersion
   )
 
   configure_package_config_file(
-      ${CMAKE_CURRENT_LIST_DIR}/tools/cmake/reproc-config.cmake.in
-      ${CMAKE_CURRENT_BINARY_DIR}/reproc-config.cmake
+      ${PROJECT_SOURCE_DIR}/tools/cmake/reproc-config.cmake.in
+      ${PROJECT_BINARY_DIR}/reproc-config.cmake
       INSTALL_DESTINATION ${REPROC_INSTALL_CONFIGDIR}}
   )
 
   install(
       FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/reproc-config.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/reproc-config-version.cmake
+        ${PROJECT_BINARY_DIR}/reproc-config.cmake
+        ${PROJECT_BINARY_DIR}/reproc-config-version.cmake
       DESTINATION ${REPROC_INSTALL_CONFIGDIR}
   )
 
@@ -444,7 +441,7 @@ if(REPROC_CLANG_FORMAT)
     add_custom_target(
       reproc-format
       COMMAND ${REPROC_CLANG_FORMAT_PROGRAM} -i ${REPROC_SOURCES}
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     )
   else()
     message(WARNING "clang-format not found")
@@ -458,24 +455,24 @@ if(REPROC_BUILD_DOCS)
 
   if(DOXYGEN_FOUND)
     configure_file(
-      ${CMAKE_CURRENT_LIST_DIR}/tools/doxygen/doxyfile.in
-      ${CMAKE_CURRENT_BINARY_DIR}/doxyfile
+      ${PROJECT_SOURCE_DIR}/tools/doxygen/doxyfile.in
+      ${PROJECT_BINARY_DIR}/doxyfile
       @ONLY
     )
 
-    if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/cppreference-doxygen-web.tag.xml)
+    if(NOT EXISTS ${PROJECT_BINARY_DIR}/cppreference-doxygen-web.tag.xml)
       # Download tag file to automatically generate links to cppreference from
       # doxygen.
       file(
         DOWNLOAD
         http://upload.cppreference.com/mwiki/images/f/f8/cppreference-doxygen-web.tag.xml
-        ${CMAKE_CURRENT_BINARY_DIR}/cppreference-doxygen-web.tag.xml
+        ${PROJECT_BINARY_DIR}/cppreference-doxygen-web.tag.xml
       )
     endif()
 
     add_custom_target(
       reproc-docs
-      COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile
+      COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doxyfile
     )
   else()
     message(WARNING "doxygen not found")

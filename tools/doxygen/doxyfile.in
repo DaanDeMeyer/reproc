@@ -4,9 +4,9 @@ PROJECT_BRIEF = "Cross-platform library that simplifies working with external CL
 
 OPTIMIZE_OUTPUT_FOR_C = YES
 
-OUTPUT_DIRECTORY = @CMAKE_CURRENT_BINARY_DIR@/docs
-INPUT = @CMAKE_CURRENT_LIST_DIR@/include @CMAKE_CURRENT_LIST_DIR@/examples @CMAKE_CURRENT_LIST_DIR@/tools/doxygen/mainpage.md
-EXAMPLE_PATH = @CMAKE_CURRENT_LIST_DIR@/examples
+OUTPUT_DIRECTORY = @PROJECT_BINARY_DIR@/docs
+INPUT = @PROJECT_SOURCE_DIR@/include @PROJECT_SOURCE_DIR@/examples @PROJECT_SOURCE_DIR@/tools/doxygen/mainpage.md
+EXAMPLE_PATH = @PROJECT_SOURCE_DIR@/examples
 RECURSIVE = YES
 
 ENABLE_PREPROCESSING = YES
@@ -20,6 +20,6 @@ SORT_MEMBER_DOCS = NO
 
 TAGFILES += "cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/"
 
-USE_MDFILE_AS_MAINPAGE = @CMAKE_CURRENT_LIST_DIR@/tools/doxygen/mainpage.md
+USE_MDFILE_AS_MAINPAGE = @PROJECT_SOURCE_DIR@/tools/doxygen/mainpage.md
 
 GENERATE_LATEX = NO
