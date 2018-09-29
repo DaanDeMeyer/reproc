@@ -66,6 +66,7 @@ script:
       -DREPROC_INSTALL=ON
       -DREPROC_CLANG_FORMAT=ON
       -DREPROC_SANITIZERS=$REPROC_SANITIZERS
+      -DREPROC_COLORED_OUTPUT=ON
   - cmake --build . -- -j 2
   - cmake --build . --target reproc-run-tests
   - ./examples/git-status > /dev/null

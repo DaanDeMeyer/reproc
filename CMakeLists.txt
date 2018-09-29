@@ -35,6 +35,7 @@ option(REPROC_SANITIZERS "Compile with sanitizers" OFF)
 # /W4 can be enabled by developers and in CI without forcing it on for users.
 option(REPROC_ENABLE_W4 "Enable /W4 on Windows (modifies CMAKE_C_FLAGS and \
 CMAKE_CXX_FLAGS)" OFF)
+option(REPROC_COLORED_OUTPUT "Force colored output from GCC and Clang")
 
 # C++
 
@@ -102,6 +103,13 @@ else()
     -Wconversion
     $<$<BOOL:${REPROC_CI}>:-Werror>
   )
+
+  if(REPROC_COLORED_OUTPUT)
+    set(REPROC_COMPILE_OPTIONS ${REPROC_COMPILE_OPTIONS}
+      $<$<CXX_COMPILER_ID:GNU>:-fdiagnostics-color=always>
+      $<$<CXX_COMPILER_ID:Clang>:-fcolor-diagnostics>
+    )
+  endif()
 
   if(REPROC_SANITIZERS)
     set(REPROC_COMPILE_OPTIONS ${REPROC_COMPILE_OPTIONS}
