@@ -8,10 +8,13 @@
 - [Features](#features)
 - [Questions](#questions)
 - [Getting started](#getting-started)
-  - [FetchContent](#fetchcontent)
-  - [Git submodule/vendor](#git-submodulevendor)
-  - [Install](#install)
-  - [CMake options](#cmake-options)
+  - [Build reproc as part of your project using CMake](#build-reproc-as-part-of-your-project-using-cmake)
+    - [FetchContent](#fetchcontent)
+    - [Git submodule/vendor](#git-submodulevendor)
+    - [Install](#install)
+    - [CMake options](#cmake-options)
+  - [Install from a Linux binary package](#install-from-a-linux-binary-package)
+    - [Arch Linux](#arch-linux)
 - [Documentation](#documentation)
 - [Error handling](#error-handling)
 - [Multithreading](#multithreading)
@@ -59,11 +62,12 @@ either make an issue or ask questions directly in the reproc
 
 ## Getting started
 
-To use reproc you'll have to compile it first. reproc can either be installed or
-built as part of your project when using CMake. We explain all possible options
-below.
+reproc can either be installed from a binary package or built as part of your
+project when using CMake. All possible options are explained below.
 
-### FetchContent
+### Build reproc as part of your project using CMake
+
+#### FetchContent
 
 If you're using CMake 3.11 or later you can use the
 [FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) API
@@ -89,7 +93,7 @@ add_executable(myapp myapp.c)
 target_link_libraries(myapp reproc::reproc)
 ```
 
-### Git submodule/vendor
+#### Git submodule/vendor
 
 If you're using a CMake version older than 3.11, you can add reproc as a git
 submodule instead:
@@ -137,7 +141,7 @@ add_executable(myapp myapp.c)
 target_link_libraries(myapp reproc::reproc)
 ```
 
-### Install
+#### Install
 
 Installing is the way to go if you want to use reproc with other build systems
 than CMake. After installing you can use your build systems preferred way of
@@ -175,7 +179,7 @@ reproc as follows:
 cmake -DCMAKE_PREFIX_PATH=<reproc-install-dir> .. # example: /usr/local on Linux
 ```
 
-### CMake options
+#### CMake options
 
 reproc supports the following CMake options:
 
@@ -201,6 +205,12 @@ Options can be configured when building reproc or before calling
   set(REPROC_BUILD_CXX_WRAPPER ON CACHE BOOL "" FORCE)
   add_subdirectory(external/reproc)
   ```
+
+### Install from a Linux binary package
+
+#### Arch Linux
+If you're using Arch Linux or any distro derived from it, you can install
+[reproc from AUR](https://aur.archlinux.org/packages/reproc).
 
 ## Documentation
 
