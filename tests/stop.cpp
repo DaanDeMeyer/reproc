@@ -2,7 +2,7 @@
 #include <reproc/reproc.h>
 
 #if defined(_WIN32)
-#include <windows.h>
+#  include <windows.h>
 #endif
 
 // NOLINTNEXTLINE(cert-err58-cpp)

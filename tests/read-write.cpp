@@ -26,8 +26,7 @@ TEST_CASE("read-write")
     REQUIRE(!error);
 
     unsigned int bytes_written = 0;
-    error = reproc_write(&io, message.data(), message_length,
-                         &bytes_written);
+    error = reproc_write(&io, message.data(), message_length, &bytes_written);
     REQUIRE(!error);
 
     reproc_close(&io, REPROC_IN);
@@ -36,8 +35,7 @@ TEST_CASE("read-write")
 
     while (true) {
       unsigned int bytes_read = 0;
-      error = reproc_read(&io, REPROC_OUT, buffer, BUFFER_SIZE,
-                          &bytes_read);
+      error = reproc_read(&io, REPROC_OUT, buffer, BUFFER_SIZE, &bytes_read);
       if (error) { break; }
 
       output.append(buffer, bytes_read);
@@ -58,8 +56,7 @@ TEST_CASE("read-write")
     REQUIRE(!error);
 
     unsigned int bytes_written = 0;
-    error = reproc_write(&io, message.data(), message_length,
-                         &bytes_written);
+    error = reproc_write(&io, message.data(), message_length, &bytes_written);
     REQUIRE(!error);
 
     reproc_close(&io, REPROC_IN);
@@ -68,8 +65,7 @@ TEST_CASE("read-write")
 
     while (true) {
       unsigned int bytes_read = 0;
-      error = reproc_read(&io, REPROC_ERR, buffer, BUFFER_SIZE,
-                          &bytes_read);
+      error = reproc_read(&io, REPROC_ERR, buffer, BUFFER_SIZE, &bytes_read);
       if (error) { break; }
 
       output.append(buffer, bytes_read);

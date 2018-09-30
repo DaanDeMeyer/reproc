@@ -278,9 +278,9 @@ if(REPROC_BUILD_CXX_WRAPPER)
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/cpp>
   )
   target_sources(reproc PRIVATE
-    src/cpp/reproc.cpp
-    src/cpp/error.cpp
-    src/cpp/parser.cpp
+    src/cpp/reproc/reproc.cpp
+    src/cpp/reproc/error.cpp
+    src/cpp/reproc/parser.cpp
   )
 endif()
 
@@ -432,11 +432,13 @@ if(REPROC_CLANG_FORMAT)
     # already manually specify our sources there's no harm in using globbing to
     # gather all source files so we can pass them to clang-format.
     file(GLOB_RECURSE REPROC_SOURCES
-      include/*.[h,c,hpp,cpp]
-      src/*.[h,c,hpp,cpp]
-      tests/*.[h,c,hpp,cpp]
-      examples/*.[h,c,hpp,cpp]
+      include/*
+      src/*
+      tests/*
+      examples/*
     )
+
+    message("${REPROC_SOURCES}")
 
     add_custom_target(
       reproc-format
