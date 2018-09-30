@@ -210,7 +210,7 @@ Options can be configured when building reproc or before calling
 
 #### Arch Linux
 If you're using Arch Linux or any distro derived from it, you can install
-[reproc from AUR](https://aur.archlinux.org/packages/reproc).
+reproc from the [AUR](https://aur.archlinux.org/packages/reproc).
 
 ## Documentation
 
