@@ -7,7 +7,7 @@ static std::error_code reproc_error_to_error_code(REPROC_ERROR error)
   switch (error) {
   case REPROC_SUCCESS: return {};
   // The following three errors are reproc specific and don't have a
-  // corresponding OS error. We instead represent them through an
+  // corresponding OS error. Instead, we represent them through an
   // std::error_code with the same value in the reproc error category.
   case REPROC_WAIT_TIMEOUT:
   case REPROC_STREAM_CLOSED:
