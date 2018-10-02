@@ -438,8 +438,6 @@ if(REPROC_CLANG_FORMAT)
       examples/*
     )
 
-    message("${REPROC_SOURCES}")
-
     add_custom_target(
       reproc-format
       COMMAND ${REPROC_CLANG_FORMAT_PROGRAM} -i ${REPROC_SOURCES}
