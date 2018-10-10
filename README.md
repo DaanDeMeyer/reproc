@@ -30,7 +30,7 @@
 
 ## What is reproc?
 
-Reproc (Redirected Process) is cross-platform library that starts external
+reproc (Redirected Process) is cross-platform library that starts external
 processes from within a C or C++ application, reads/writes to their
 stdin/stdout/stderr streams and waits for them to exit or forcefully stops them.
 
