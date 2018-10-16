@@ -39,20 +39,20 @@ applications.
 
 ## Features
 
-- Start any program from within C or C++ code
+- Start any program from within C or C++ code.
 - Write to its standard input stream and read from its standard output and
-  standard error streams
+  standard error streams.
 - Wait for the program to exit or forcefully stop it yourself. When forcefully
   stopping a process you can optionally allow the process to clean up its
-  resources or immediately stop it
+  resources or immediately stop it.
 - The core library is written in pure C. An optional C++ wrapper with extra
-  features is available for use in C++ applications
-- Zero dependencies
+  features named reproc++ is available for use in C++ applications.
+- Zero dependencies.
 - Multiple installation methods. Either build reproc as part of your project or
-  install it as a shared library
+  install it as a shared library.
 - Care was taken to not leak resources anywhere in the library. See
   [Gotcha's](#gotchas) and [Avoiding resource leaks](##avoiding-resource-leaks)
-  for more information
+  for more information.
 
 ## Questions
 
@@ -187,8 +187,8 @@ reproc supports the following CMake options:
 
   If this option is enabled, a second library (reproc++) will be built
   containing the C++ wrapper code. This library is represented by the reproc++
-  target in CMake. To link against the C++ library instead of the C library in
-  CMake, do the following:
+  target in CMake. After enabling this option and building reproc, link against
+  the C++ library as follows:
 
   ```cmake
   target_link_libraries(myapp reproc::reproc++)
