@@ -1,7 +1,5 @@
 #include "reproc/reproc.h"
 
-const unsigned int REPROC_INFINITE = 0xFFFFFFFF;
-
 const char *reproc_error_to_string(REPROC_ERROR error)
 {
   switch (error) {
