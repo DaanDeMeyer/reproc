@@ -1,9 +1,9 @@
 #include "reproc/reproc.h"
 
-#include "reproc/handle.h"
-#include "reproc/pipe.h"
-#include "reproc/process.h"
-#include "reproc/string_utils.h"
+#include "handle.h"
+#include "pipe.h"
+#include "process.h"
+#include "string_utils.h"
 
 #include <assert.h>
 #include <stdlib.h>

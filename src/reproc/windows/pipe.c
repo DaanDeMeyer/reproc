@@ -1,4 +1,4 @@
-#include "reproc/pipe.h"
+#include "pipe.h"
 
 #include <assert.h>
 

@@ -1,7 +1,7 @@
 /*! \example forward.cpp */
 
-#include <reproc/parser.hpp>
-#include <reproc/reproc.hpp>
+#include <reproc++/parser.hpp>
+#include <reproc++/reproc.hpp>
 
 #include <iostream>
 

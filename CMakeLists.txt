@@ -160,85 +160,85 @@ function(reproc_set_common TARGET LANGUAGE OUTPUT_DIRECTORY)
   endif()
 endfunction()
 
+function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
+  add_library(${TARGET} "")
+  add_library(reproc::${TARGET} ALIAS ${TARGET})
+  reproc_set_common(${TARGET} ${LANGUAGE} ${OUTPUT_DIRECTORY})
+
+  # Put library files in tests and examples directories on CI so the executables
+  # in those directories finds the dll without us having to modify the PATH.
+  if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
+    add_custom_command(
+      TARGET ${TARGET}
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TARGET}> tests
+    )
+    add_custom_command(
+      TARGET ${TARGET}
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TARGET}> examples
+    )
+  endif()
+
+  if(NOT MSVC)
+    target_compile_options(${TARGET} PRIVATE
+      # More or less dllexport/dllimport for GCC and Clang.
+      -fvisibility=hidden
+      # -fvisibility-inlines-hidden is only valid for C++.
+      $<$<STREQUAL:${LANGUAGE},CXX>:-fvisibility-inlines-hidden>
+    )
+  endif()
+
+  set_target_properties(${TARGET} PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+  )
+
+  # Used to add visibility modifiers (see include/reproc/export.h and
+  # include/reproc++/export.hpp).
+  target_compile_definitions(${TARGET}
+    PUBLIC $<$<BOOL:${BUILD_SHARED_LIBS}>:REPROC_SHARED>
+    PRIVATE $<BUILD_INTERFACE:REPROC_BUILDING>
+  )
+endfunction()
+
 ### Library ###
 
-add_library(reproc "")
-add_library(reproc::reproc ALIAS reproc)
-
-reproc_set_common(reproc C lib)
-
-# Put library files in tests and examples directories on CI so the executables
-# in those directories finds reproc.dll without us having to modify the PATH.
-if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
-  add_custom_command(
-    TARGET reproc
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:reproc> tests
-  )
-  add_custom_command(
-    TARGET reproc
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:reproc> examples
-  )
-endif()
-
-if(NOT MSVC)
-  target_compile_options(reproc PRIVATE
-    # More or less dllexport/dllimport for GCC and Clang.
-    -fvisibility=hidden
-  )
-endif()
-
-set_target_properties(reproc PROPERTIES
-  VERSION ${PROJECT_VERSION}
-  SOVERSION ${PROJECT_VERSION_MAJOR}
-)
-
-# # Silence MSVC Library Manager version output.
-# if(MSVC)
-#   set_property(TARGET reproc APPEND PROPERTY STATIC_LIBRARY_FLAGS /nologo)
-# endif()
-
-# Used to add visibility modifiers (see include/c/export.h and
-# include/cpp/export.hpp).
-target_compile_definitions(reproc
-  PUBLIC $<$<BOOL:${BUILD_SHARED_LIBS}>:REPROC_SHARED>
-  PRIVATE $<BUILD_INTERFACE:REPROC_BUILDING>
-)
+reproc_add_library(reproc C lib)
 
 # Only use the headers from the repository when building. When installing we
 # want to use the install location of the headers (e.g. /usr/include) as the
 # include directory which is specified later in this file (Install section).
 target_include_directories(reproc PUBLIC
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/c>
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/reproc>
 )
 target_include_directories(reproc PRIVATE
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/c/common>
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/reproc/common>
 )
-target_sources(reproc PRIVATE src/c/common/reproc/error.c)
+target_sources(reproc PRIVATE src/reproc/common/error.c)
 
 if(WIN32)
   target_include_directories(reproc PRIVATE
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/c/windows>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/reproc/windows>
   )
   target_sources(reproc PRIVATE
-    src/c/windows/reproc/error.c
-    src/c/windows/reproc/handle.c
-    src/c/windows/reproc/pipe.c
-    src/c/windows/reproc/process.c
-    src/c/windows/reproc/reproc.c
-    src/c/windows/reproc/string_utils.c
+    src/reproc/windows/error.c
+    src/reproc/windows/handle.c
+    src/reproc/windows/pipe.c
+    src/reproc/windows/process.c
+    src/reproc/windows/reproc.c
+    src/reproc/windows/string_utils.c
   )
 elseif(UNIX)
   target_include_directories(reproc PRIVATE
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/c/posix>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/reproc/posix>
   )
   target_sources(reproc PRIVATE
-    src/c/posix/reproc/error.c
-    src/c/posix/reproc/fork.c
-    src/c/posix/reproc/pipe.c
-    src/c/posix/reproc/reproc.c
-    src/c/posix/reproc/process.c
+    src/reproc/posix/error.c
+    src/reproc/posix/fork.c
+    src/reproc/posix/pipe.c
+    src/reproc/posix/reproc.c
+    src/reproc/posix/process.c
   )
 endif()
 
@@ -272,15 +272,16 @@ endif()
 ### C++ wrapper ###
 
 if(REPROC_BUILD_CXX_WRAPPER)
-  reproc_set_common(reproc CXX lib)
+  reproc_add_library(reproc++ CXX lib)
 
-  target_include_directories(reproc PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/cpp>
+  target_link_libraries(reproc++ PRIVATE reproc)
+  target_include_directories(reproc++ PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/reproc++>
   )
-  target_sources(reproc PRIVATE
-    src/cpp/reproc/reproc.cpp
-    src/cpp/reproc/error.cpp
-    src/cpp/reproc/parser.cpp
+  target_sources(reproc++ PRIVATE
+    src/reproc++/reproc.cpp
+    src/reproc++/error.cpp
+    src/reproc++/parser.cpp
   )
 endif()
 
@@ -336,14 +337,18 @@ endif()
 
 if(REPROC_BUILD_EXAMPLES)
 
-  set(REPROC_C_EXT c)
-  set(REPROC_CXX_EXT cpp)
-
   function(reproc_add_example TARGET LANGUAGE)
-    add_executable(reproc-${TARGET} examples/${TARGET}.${REPROC_${LANGUAGE}_EXT})
+    add_executable(reproc-${TARGET} "")
     reproc_set_common(reproc-${TARGET} ${LANGUAGE} examples)
 
-    target_link_libraries(reproc-${TARGET} PRIVATE reproc)
+    if(${LANGUAGE} STREQUAL C)
+      target_link_libraries(reproc-${TARGET} PRIVATE reproc)
+      target_sources(reproc-${TARGET} PRIVATE examples/${TARGET}.c)
+    elseif(${LANGUAGE} STREQUAL CXX)
+      target_link_libraries(reproc-${TARGET} PRIVATE reproc++)
+      target_sources(reproc-${TARGET} PRIVATE examples/${TARGET}.cpp)
+    endif()
+
     if(REPROC_SANITIZERS)
       set_target_properties(reproc-${TARGET} PROPERTIES
         # Hack to avoid UBSAN undefined reference errors.
@@ -370,7 +375,7 @@ if(REPROC_INSTALL)
   set(REPROC_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/reproc)
 
   install(
-    TARGETS reproc
+    TARGETS reproc reproc++
     EXPORT reproc-targets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -378,6 +383,10 @@ if(REPROC_INSTALL)
   )
 
   target_include_directories(reproc PUBLIC
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  )
+
+  target_include_directories(reproc++ PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
 
@@ -389,13 +398,13 @@ if(REPROC_INSTALL)
   )
 
   install(
-    DIRECTORY include/c/reproc
+    DIRECTORY include/reproc/reproc
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   )
 
   if(REPROC_BUILD_CXX_WRAPPER)
     install(
-      DIRECTORY include/cpp/reproc
+      DIRECTORY include/reproc++/reproc++
       DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
   endif()

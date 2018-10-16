@@ -1,5 +1,5 @@
-- [C API](\ref reproc.h)
-- [C++ API](\ref reproc)
+- [reproc API](\ref reproc.h)
+- [reproc++ API](\ref reproc)
 - [Examples](examples.html)
 
 Start by looking at the examples and refer to the API documentation for more

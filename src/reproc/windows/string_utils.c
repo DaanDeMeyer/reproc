@@ -1,4 +1,4 @@
-#include "reproc/string_utils.h"
+#include "string_utils.h"
 
 #include <assert.h>
 #include <stdlib.h>

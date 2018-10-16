@@ -1,6 +1,6 @@
-#include "reproc/fork.h"
+#include "fork.h"
 
-#include "reproc/pipe.h"
+#include "pipe.h"
 
 #include <assert.h>
 #include <errno.h>

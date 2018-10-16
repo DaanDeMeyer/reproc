@@ -1,6 +1,6 @@
-#include "reproc/process.h"
+#include "process.h"
 
-#include "reproc/fork.h"
+#include "fork.h"
 
 #include <assert.h>
 #include <errno.h>

@@ -183,7 +183,17 @@ cmake -DCMAKE_PREFIX_PATH=<reproc-install-dir> .. # example: /usr/local on Linux
 
 reproc supports the following CMake options:
 
-- `REPROC_BUILD_CXX_WRAPPER (ON|OFF)`: Build C++ API (default: `OFF`)
+- `REPROC_BUILD_CXX_WRAPPER (ON|OFF)`: Build C++ library (default: `OFF`)
+
+  If this option is enabled, a second library (reproc++) will be built
+  containing the C++ wrapper code. This library is represented by the reproc++
+  target in CMake. To link against the C++ library instead of the C library in
+  CMake, do the following:
+
+  ```cmake
+  target_link_libraries(myapp reproc::reproc++)
+  ```
+
 - `REPROC_BUILD_TESTS (ON|OFF)`: Build tests (default: `OFF`)
 - `REPROC_BUILD_EXAMPLES (ON|OFF)`: Build examples (default: `OFF`)
 - `REPROC_INSTALL (ON|OFF)`: Generate install target (default: `OFF`)
@@ -209,8 +219,9 @@ Options can be configured when building reproc or before calling
 ### Install from a Linux binary package
 
 #### Arch Linux
-If you're using Arch Linux or any distro derived from it, you can install
-reproc from the [AUR](https://aur.archlinux.org/packages/reproc).
+
+If you're using Arch Linux or any distro derived from it, you can install reproc
+from the [AUR](https://aur.archlinux.org/packages/reproc).
 
 ## Documentation
 

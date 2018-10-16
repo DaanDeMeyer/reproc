@@ -1,8 +1,8 @@
 #include "reproc/reproc.h"
 
-#include "reproc/fork.h"
-#include "reproc/pipe.h"
-#include "reproc/process.h"
+#include "fork.h"
+#include "pipe.h"
+#include "process.h"
 
 #include <assert.h>
 #include <errno.h>
