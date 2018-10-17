@@ -160,6 +160,9 @@ function(reproc_set_common TARGET LANGUAGE OUTPUT_DIRECTORY)
   endif()
 endfunction()
 
+include(GNUInstallDirs)
+set(REPROC_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/reproc)
+
 function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
   add_library(${TARGET} "")
   add_library(reproc::${TARGET} ALIAS ${TARGET})
@@ -200,18 +203,35 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
     PUBLIC $<$<BOOL:${BUILD_SHARED_LIBS}>:REPROC_SHARED>
     PRIVATE $<BUILD_INTERFACE:REPROC_BUILDING>
   )
+
+  # Only use the headers from the repository when building. When installing we
+  # want to use the install location of the headers (e.g. /usr/include) as the
+  # include directory instead.
+  target_include_directories(${TARGET} PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/${TARGET}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  )
+
+  if(REPROC_INSTALL)
+    install(
+      TARGETS ${TARGET}
+      EXPORT reproc-targets
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+
+    install(
+      DIRECTORY include/${TARGET}/${TARGET}
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+  endif()
 endfunction()
 
 ### Library ###
 
 reproc_add_library(reproc C lib)
 
-# Only use the headers from the repository when building. When installing we
-# want to use the install location of the headers (e.g. /usr/include) as the
-# include directory which is specified later in this file (Install section).
-target_include_directories(reproc PUBLIC
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/reproc>
-)
 target_include_directories(reproc PRIVATE
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/reproc/common>
 )
@@ -275,9 +295,6 @@ if(REPROC_BUILD_CXX_WRAPPER)
   reproc_add_library(reproc++ CXX lib)
 
   target_link_libraries(reproc++ PRIVATE reproc)
-  target_include_directories(reproc++ PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/reproc++>
-  )
   target_sources(reproc++ PRIVATE
     src/reproc++/reproc.cpp
     src/reproc++/error.cpp
@@ -368,27 +385,9 @@ endif()
 ### Install ###
 
 # Adapted from https://codingnest.com/basic-cmake-part-2/.
+# Per library install commands are executed in reproc_add_library
 
 if(REPROC_INSTALL)
-
-  include(GNUInstallDirs)
-  set(REPROC_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/reproc)
-
-  install(
-    TARGETS reproc reproc++
-    EXPORT reproc-targets
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  )
-
-  target_include_directories(reproc PUBLIC
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-  )
-
-  target_include_directories(reproc++ PUBLIC
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-  )
 
   install(
     EXPORT reproc-targets
@@ -396,18 +395,6 @@ if(REPROC_INSTALL)
     NAMESPACE reproc::
     DESTINATION ${REPROC_INSTALL_CONFIGDIR}
   )
-
-  install(
-    DIRECTORY include/reproc/reproc
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  )
-
-  if(REPROC_BUILD_CXX_WRAPPER)
-    install(
-      DIRECTORY include/reproc++/reproc++
-      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-  endif()
 
   include(CMakePackageConfigHelpers)
   write_basic_package_version_file(
