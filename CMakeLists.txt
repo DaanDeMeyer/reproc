@@ -169,7 +169,7 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
   reproc_set_common(${TARGET} ${LANGUAGE} ${OUTPUT_DIRECTORY})
 
   # Put library files in tests and examples directories on CI so the executables
-  # in those directories finds the dll without us having to modify the PATH.
+  # in those directories find the dll's without us having to modify the PATH.
   if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
     add_custom_command(
       TARGET ${TARGET}
