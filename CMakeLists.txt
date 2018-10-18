@@ -105,6 +105,7 @@ else()
     -pedantic-errors
     -Wshadow
     -Wconversion
+    -Wsign-conversion
     $<$<BOOL:${REPROC_CI}>:-Werror>
   )
 
