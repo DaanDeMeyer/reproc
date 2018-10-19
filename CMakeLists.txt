@@ -1,10 +1,11 @@
 # Every variable is namespaced with REPROC and everything except for the library
 # itself is turned off by default to make reproc easy to use as a CMake
-# subproject with add_subdirectory.
+# subproject with add_subdirectory. All targets are also prefixed with "reproc-"
+# to avoid name collisions.
 
 cmake_minimum_required(VERSION 3.1)
 
-# Use updated policies on newer versions of CMake
+# Use updated policies on newer versions of CMake.
 if(${CMAKE_VERSION} VERSION_LESS 3.12)
     cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 else()
@@ -61,10 +62,7 @@ if(REPROC_CLANG_TIDY)
   endif()
 endif()
 
-### Common development flags ###
-
-# Target used to propagate common flags to all targets defined by reproc
-add_library(reproc-dev-flags INTERFACE)
+### Helpers ###
 
 if(MSVC)
   # See REPROC_ENABLE_W4 option declaration for why we can't just add /W4 as a
@@ -77,97 +75,104 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4" )
   endif()
 
+  # Check for permissive- here to avoid doing the check multiple times in
+  # reproc_set_common.
   include(CheckCCompilerFlag)
   check_c_compiler_flag(/permissive- REPROC_HAS_PERMISSIVE)
-
-  target_compile_options(reproc-dev-flags INTERFACE
-    # Silence MSVC compiler version output.
-    /nologo
-    $<$<BOOL:${REPROC_CI}>:/WX>
-    $<$<BOOL:${REPROC_HAS_PERMISSIVE}>:/permissive->
-    # MSVC reports non-constant initializers as a nonstandard extension but
-    # they've been standardized in C99 and we're targeting C99 so this warning
-    # is not valid for us.
-    $<$<C_COMPILER_ID:MSVC>:/wd4204>
-  )
-
-  target_link_libraries(reproc-dev-flags INTERFACE
-    # Silence MSVC linker version output.
-    -nologo
-    # Disable incremental linking to silence warnings when rebuilding reproc
-    # after executing ninja -t clean.
-    -INCREMENTAL:NO
-  )
-else()
-  target_compile_options(reproc-dev-flags INTERFACE
-    -Wall
-    -Wextra
-    -pedantic-errors
-    -Wshadow
-    -Wconversion
-    -Wsign-conversion
-    $<$<BOOL:${REPROC_CI}>:-Werror>
-  )
-
-  if(REPROC_SANITIZERS)
-    target_compile_options(reproc-dev-flags INTERFACE
-      -fsanitize=address,undefined
-    )
-    target_link_libraries(reproc-dev-flags INTERFACE
-      -fsanitize=address,undefined
-      # GCC sanitizers only work when using the gold linker.
-      $<$<C_COMPILER_ID:GNU>:-fuse-ld=gold>
-    )
-  endif()
 endif()
 
-if(REPROC_COLORED_OUTPUT)
-  target_compile_options(reproc-dev-flags INTERFACE
-    $<$<CXX_COMPILER_ID:GNU>:-fdiagnostics-color=always>
-    $<$<CXX_COMPILER_ID:Clang>:-fcolor-diagnostics>
-  )
-endif()
+include(GNUInstallDirs)
+set(REPROC_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/reproc)
 
-### Helpers ###
-
-set(REPROC_C_STANDARD 99)
-set(REPROC_CXX_STANDARD 11)
-
-function(reproc_set_common TARGET LANGUAGE OUTPUT_DIRECTORY)
+# Encapsulates common configuration for a target.
+function(reproc_set_common TARGET OUTPUT_DIRECTORY)
+  # reproc build output is in its own directory so the output files don't need
+  # to be prefixed (only the actual targets in CMake).
   string(REPLACE "reproc-" "" WITHOUT_PREFIX ${TARGET})
 
   set_target_properties(${TARGET} PROPERTIES
-    ${LANGUAGE}_STANDARD ${REPROC_${LANGUAGE}_STANDARD}
-    ${LANGUAGE}_STANDARD_REQUIRED ON
-    ${LANGUAGE}_EXTENSIONS OFF
     OUTPUT_NAME ${WITHOUT_PREFIX}
+
+    C_STANDARD 99
+    C_STANDARD_REQUIRED ON
+    C_EXTENSIONS OFF
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+
+    # Only one of these is actually used per target but instead of passing the
+    # type of target to the function and setting only the appropriate property
+    # we just set all of them to avoid lots of if checks and an extra function
+    # parameter.
     RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
     ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
     LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
-  )
-
-  target_link_libraries(${TARGET} PRIVATE
-    # Avoid error when generating install target (we only need the flags when
-    # building anyway).
-    $<BUILD_INTERFACE:reproc-dev-flags>
   )
 
   if(REPROC_CLANG_TIDY AND REPROC_CLANG_TIDY_PROGRAM)
     set_target_properties(${TARGET} PROPERTIES
       # REPROC_CLANG_TIDY is a list so we surround it with quotes to pass it as
       # a single argument.
-      ${LANGUAGE}_CLANG_TIDY "${REPROC_CLANG_TIDY_PROGRAM}"
+      C_CLANG_TIDY "${REPROC_CLANG_TIDY_PROGRAM}"
+      CXX_CLANG_TIDY "${REPROC_CLANG_TIDY_PROGRAM}"
+    )
+  endif()
+
+  ### Common development flags (warnings + sanitizers + colors) ###
+
+  if(MSVC)
+    target_compile_options(${TARGET} PRIVATE
+      /nologo # Silence MSVC compiler version output.
+      $<$<BOOL:${REPROC_CI}>:/WX> # -Werror
+      $<$<BOOL:${REPROC_HAS_PERMISSIVE}>:/permissive->
+      # MSVC reports non-constant initializers as a nonstandard extension but
+      # they've been standardized in C99 and we're targeting C99 so this warning
+      # is not valid for us.
+      $<$<C_COMPILER_ID:MSVC>:/wd4204>
+    )
+
+    target_link_libraries(${TARGET} PRIVATE
+      -nologo # Silence MSVC linker version output.
+      # Disable incremental linking to silence warnings when rebuilding reproc
+      # after executing ninja -t clean.
+      -INCREMENTAL:NO
+    )
+  else()
+    target_compile_options(${TARGET} PRIVATE
+      -Wall
+      -Wextra
+      -pedantic-errors
+      -Wshadow
+      -Wconversion
+      -Wsign-conversion
+      $<$<BOOL:${REPROC_CI}>:-Werror>
+    )
+
+    if(REPROC_SANITIZERS)
+      target_compile_options(${TARGET} PRIVATE
+        -fsanitize=address,undefined
+      )
+      target_link_libraries(${TARGET} PRIVATE
+        -fsanitize=address,undefined
+        # GCC sanitizers only work when using the gold linker.
+        $<$<C_COMPILER_ID:GNU>:-fuse-ld=gold>
+      )
+    endif()
+  endif()
+
+  if(REPROC_COLORED_OUTPUT)
+    target_compile_options(${TARGET} PRIVATE
+      $<$<CXX_COMPILER_ID:GNU>:-fdiagnostics-color=always>
+      $<$<CXX_COMPILER_ID:Clang>:-fcolor-diagnostics>
     )
   endif()
 endfunction()
 
-include(GNUInstallDirs)
-set(REPROC_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/reproc)
-
+# Adds a new library and encapsulates common configuration for it.
 function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
   add_library(${TARGET} "")
   add_library(reproc::${TARGET} ALIAS ${TARGET})
-  reproc_set_common(${TARGET} ${LANGUAGE} ${OUTPUT_DIRECTORY})
+  reproc_set_common(${TARGET} ${OUTPUT_DIRECTORY})
 
   # Put library files in tests and examples directories on CI so the executables
   # in those directories find the dll's without us having to modify the PATH.
@@ -193,6 +198,8 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
     )
   endif()
 
+  # Make sure we follow the popular naming convention for shared libraries on
+  # Unix systems.
   set_target_properties(${TARGET} PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
@@ -223,6 +230,10 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
     )
 
     install(
+      # We add one extra level of nesting in the repository's include folder so
+      # we can prevent the compiler from searching in both the reproc and
+      # reproc++ folder but still keep the `#include <reproc/reproc.h>` include
+      # style.
       DIRECTORY include/${TARGET}/${TARGET}
       DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
@@ -285,7 +296,7 @@ elseif(UNIX)
   list(REMOVE_AT CMAKE_REQUIRED_DEFINITIONS -1)
 
   target_compile_definitions(reproc PRIVATE
-    _GNU_SOURCE
+    _GNU_SOURCE # Needed for pipe2 and kill
     $<$<BOOL:${REPROC_PIPE2_FOUND}>:HAS_PIPE2>
   )
 endif()
@@ -306,9 +317,8 @@ endif()
 ### Tests ###
 
 if(REPROC_BUILD_TESTS)
-
   add_executable(reproc-tests "")
-  reproc_set_common(reproc-tests CXX tests)
+  reproc_set_common(reproc-tests tests)
 
   target_link_libraries(reproc-tests PRIVATE reproc)
   target_include_directories(reproc-tests SYSTEM PRIVATE external/doctest)
@@ -324,7 +334,7 @@ if(REPROC_BUILD_TESTS)
 
   function(reproc_add_test_helper TARGET)
     add_executable(reproc-${TARGET} tests/resources/${TARGET}.cpp)
-    reproc_set_common(reproc-${TARGET} CXX tests/resources)
+    reproc_set_common(reproc-${TARGET} tests/resources)
 
     string(TOUPPER ${TARGET} TARGET_UPPER_CASE)
     # Pass paths as compile time parameters so tests can be run from any
@@ -357,7 +367,7 @@ if(REPROC_BUILD_EXAMPLES)
 
   function(reproc_add_example TARGET LANGUAGE)
     add_executable(reproc-${TARGET} "")
-    reproc_set_common(reproc-${TARGET} ${LANGUAGE} examples)
+    reproc_set_common(reproc-${TARGET} examples)
 
     if(${LANGUAGE} STREQUAL C)
       target_link_libraries(reproc-${TARGET} PRIVATE reproc)
@@ -459,7 +469,7 @@ if(REPROC_BUILD_DOCS)
 
     if(NOT EXISTS ${PROJECT_BINARY_DIR}/cppreference-doxygen-web.tag.xml)
       # Download tag file to automatically generate links to cppreference from
-      # doxygen.
+      # Doxygen.
       file(
         DOWNLOAD
         http://upload.cppreference.com/mwiki/images/f/f8/cppreference-doxygen-web.tag.xml
