@@ -15,10 +15,22 @@ matrix:
   fast_finish: true
   include:
     - os: linux
-      env: CC=gcc CXX=g++ REPROC_SANITIZERS=OFF REPROC_COLORED_OUTPUT=OFF
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.8
+      env: CC=gcc-4.8 CXX=g++-4.8 REPROC_SANITIZERS=OFF REPROC_COLORED_OUTPUT=OFF
 
     - os: linux
-      env: CC=clang CXX=clang++
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-3.5
+          packages:
+            - clang-3.5
+      env: CC=clang-3.5 CXX=clang++-3.5
 
     - os: linux
       addons:
