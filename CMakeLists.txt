@@ -16,18 +16,18 @@ project(reproc VERSION 1.0.0 LANGUAGES C)
 
 # Tip: use cmake-gui when contributing to reproc to turn on everything without
 # having to type out all the options by hand (cmake .. && cmake-gui .).
-option(REPROC_BUILD_TESTS "Build tests" OFF)
+option(REPROC_BUILD_TESTS "Build tests")
 option(REPROC_BUILD_EXAMPLES "Build examples. Enable REPROC_BUILD_CXX_WRAPPER \
-to build C++ examples." OFF)
-option(REPROC_BUILD_CXX_WRAPPER "Build C++ wrapper" OFF)
-option(REPROC_BUILD_DOCS "Build API documentation with Doxygen" OFF)
-option(REPROC_CI "Add -Werror or equivalent to compiler and clang-tidy" OFF)
-option(REPROC_INSTALL "Generate install target" OFF)
+to build C++ examples.")
+option(REPROC_BUILD_CXX_WRAPPER "Build C++ wrapper")
+option(REPROC_BUILD_DOCS "Build API documentation with Doxygen")
+option(REPROC_CI "Add -Werror or equivalent to compiler and clang-tidy")
+option(REPROC_INSTALL "Generate install target")
 option(REPROC_CLANG_TIDY "Run clang-tidy as part of the build (requires \
-clang-tidy to be in the PATH)" OFF)
+clang-tidy to be in the PATH)")
 option(REPROC_CLANG_FORMAT "Find clang-format and add target to run it on all \
-source files" OFF)
-option(REPROC_SANITIZERS "Compile with sanitizers" OFF)
+source files")
+option(REPROC_SANITIZERS "Compile with sanitizers")
 # CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default on Windows so
 # when we add /W4 via target_compile_options cl.exe complains that both /W3 and
 # /W4 are passed. We can avoid these warnings by replacing /W3 with /W4 in
@@ -35,7 +35,7 @@ option(REPROC_SANITIZERS "Compile with sanitizers" OFF)
 # since it would add /W4 for every target. To solve this, we add this option so
 # /W4 can be enabled by developers and in CI without forcing it on for users.
 option(REPROC_ENABLE_W4 "Enable /W4 on Windows (modifies CMAKE_C_FLAGS and \
-CMAKE_CXX_FLAGS)" OFF)
+CMAKE_CXX_FLAGS)")
 option(REPROC_COLORED_OUTPUT "Force colored output from GCC and Clang")
 
 # C++
