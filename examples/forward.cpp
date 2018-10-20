@@ -12,6 +12,10 @@ int fail(std::error_code ec)
 }
 
 /*
+See cmake-help for a completely documented C++ example. We only thorougly
+document specifics in this example that are different from what's already been
+said in cmake-help.
+
 Forwards the program arguments to a child process and prints its output on
 stdout.
 
@@ -27,19 +31,21 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  // The destructor calls process::stop with the parameters we pass in the
-  // constructor which saves us from having to make sure the process is always
-  // stopped correctly.
-  //
-  // Any kind of process can be started with forward so we make sure the process
-  // is cleaned up correctly by adding the reproc::cleanup::terminate flag
-  // (sends SIGTERM (POSIX) or CTRL-BREAK (Windows) and waits 5 seconds). We
-  // also add the reproc::cleanup::kill flag which sends SIGKILL (POSIX) or
-  // calls TerminateProcess (Windows) if the process hasn't exited after 5
-  // seconds and waits 5 more seconds.
-  //
-  // Note that the timout value of 5s is a maximum time to wait. If the process
-  // exits earlier than the timeout the destructor will return immediately.
+  /*
+  The destructor calls process::stop with the parameters we pass in the
+  constructor which saves us from having to make sure the process is always
+  stopped correctly.
+
+  Any kind of process can be started with forward so we make sure the process
+  is cleaned up correctly by adding the reproc::cleanup::terminate flag (sends
+  SIGTERM (POSIX) or CTRL-BREAK (Windows) and waits 5 seconds). We also add the
+  reproc::cleanup::kill flag which sends SIGKILL (POSIX) or calls
+  TerminateProcess (Windows) if the process hasn't exited after 5 seconds and
+  waits 5 more seconds.
+
+  Note that the timout value of 5s is a maximum time to wait. If the process
+  exits earlier than the timeout the destructor will return immediately.
+  */
   reproc::process forward(reproc::cleanup::terminate | reproc::cleanup::kill,
                           5000);
 
@@ -64,8 +70,7 @@ int main(int argc, char *argv[])
   ec = forward.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
   if (ec) { return fail(ec); }
 
-  // Call stop ourselves to get the exit_status. See the cmake-help example for
-  // more info.
+  // Call stop ourselves to get the exit_status.
   unsigned int exit_status = 0;
   ec = forward.stop(reproc::cleanup::wait, reproc::infinite, &exit_status);
   if (ec) { return fail(ec); }
