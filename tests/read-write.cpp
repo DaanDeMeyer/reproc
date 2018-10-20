@@ -1,9 +1,9 @@
 #include <doctest.h>
 #include <reproc/reproc.h>
 
+#include <array>
 #include <string>
 
-// NOLINTNEXTLINE(cert-err58-cpp)
 TEST_CASE("read-write")
 {
   reproc_type io;
@@ -12,7 +12,7 @@ TEST_CASE("read-write")
   CAPTURE(error);
 
   static constexpr unsigned int BUFFER_SIZE = 1024;
-  char buffer[BUFFER_SIZE];
+  std::array<char, BUFFER_SIZE> buffer = {};
 
   SUBCASE("stdout")
   {
@@ -20,9 +20,9 @@ TEST_CASE("read-write")
     auto message_length = static_cast<unsigned int>(message.length());
 
     static constexpr unsigned int ARGV_SIZE = 2;
-    const char *argv[ARGV_SIZE] = { STDOUT_PATH, nullptr };
+    std::array<const char *, ARGV_SIZE> argv{ STDOUT_PATH, nullptr };
 
-    error = reproc_start(&io, ARGV_SIZE - 1, argv, nullptr);
+    error = reproc_start(&io, ARGV_SIZE - 1, argv.data(), nullptr);
     REQUIRE(!error);
 
     unsigned int bytes_written = 0;
@@ -35,10 +35,11 @@ TEST_CASE("read-write")
 
     while (true) {
       unsigned int bytes_read = 0;
-      error = reproc_read(&io, REPROC_OUT, buffer, BUFFER_SIZE, &bytes_read);
-      if (error) { break; }
+      error = reproc_read(&io, REPROC_OUT, buffer.data(), BUFFER_SIZE,
+                          &bytes_read);
+      if (error != REPROC_SUCCESS) { break; }
 
-      output.append(buffer, bytes_read);
+      output.append(buffer.data(), bytes_read);
     }
 
     REQUIRE_EQ(output, message);
@@ -50,9 +51,9 @@ TEST_CASE("read-write")
     auto message_length = static_cast<unsigned int>(message.length());
 
     static constexpr unsigned int ARGV_SIZE = 2;
-    const char *argv[ARGV_SIZE] = { STDERR_PATH, nullptr };
+    std::array<const char *, ARGV_SIZE> argv{ STDERR_PATH, nullptr };
 
-    error = reproc_start(&io, ARGV_SIZE - 1, argv, nullptr);
+    error = reproc_start(&io, ARGV_SIZE - 1, argv.data(), nullptr);
     REQUIRE(!error);
 
     unsigned int bytes_written = 0;
@@ -65,10 +66,11 @@ TEST_CASE("read-write")
 
     while (true) {
       unsigned int bytes_read = 0;
-      error = reproc_read(&io, REPROC_ERR, buffer, BUFFER_SIZE, &bytes_read);
-      if (error) { break; }
+      error = reproc_read(&io, REPROC_ERR, buffer.data(), BUFFER_SIZE,
+                          &bytes_read);
+      if (error != REPROC_SUCCESS) { break; }
 
-      output.append(buffer, bytes_read);
+      output.append(buffer.data(), bytes_read);
     }
 
     REQUIRE_EQ(output, message);

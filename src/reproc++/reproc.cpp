@@ -64,12 +64,16 @@ std::error_code process::start(const std::vector<std::string> &args,
   }
   argv[args.size()] = nullptr;
 
-  // We don't expect so many args that an int will insufficient to count them.
+  // We don't expect so many args that an int will be insufficient to count
+  // them.
   auto argc = static_cast<int>(args.size());
+  // std::string * => const char *
+  const char *child_working_directory = working_directory != nullptr
+                                            ? working_directory->c_str()
+                                            : nullptr;
 
-  std::error_code error = start(argc, &argv[0] /* std::vector -> C array. */,
-                                working_directory ? working_directory->c_str()
-                                                  : nullptr);
+  std::error_code error = start(argc, &argv[0] /* std::vector -> C array */,
+                                child_working_directory);
 
   if (!error) { running_ = true; }
 

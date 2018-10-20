@@ -9,6 +9,12 @@
 
 #define BUFFER_SIZE 1024
 
+int fail(REPROC_ERROR error)
+{
+  fprintf(stderr, "%s\n", reproc_error_to_string(error));
+  return (int) error;
+}
+
 // Uses the reproc C API to print the output of git status.
 int main(void)
 {
@@ -25,14 +31,14 @@ int main(void)
   // process. If the working directory is NULL the working directory of the
   // parent process is used.
   error = reproc_start(&git_status, argc, argv, NULL);
+
   if (error == REPROC_FILE_NOT_FOUND) {
     fprintf(stderr, "%s\n",
             "git not found. Make sure it's available from the PATH");
     return 1;
-  } else if (error) {
-    fprintf(stderr, "%s\n", reproc_error_to_string(error));
-    return (int) error;
   }
+
+  if (error) { return fail(error); }
 
   // Close the stdin stream since we're not going to write any input to git.
   // While the example works perfectly without closing stdin we do it here to
@@ -88,10 +94,7 @@ cleanup:;
   unsigned int exit_status = 0;
   error = reproc_stop(&git_status, REPROC_WAIT, REPROC_INFINITE, &exit_status);
 
-  if (error) {
-    fprintf(stderr, "%s\n", reproc_error_to_string(error));
-    return (int) error;
-  }
+  if (error) { return fail(error); }
 
   return (int) exit_status;
 }

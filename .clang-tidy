@@ -3,15 +3,11 @@ Checks:
 '
 *,
 -bugprone-exception-escape,
--cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+-cert-err58-cpp,
 -fuchsia-default-arguments,
 -fuchsia-overloaded-operator,
 -fuchsia-statically-constructed-objects,
 -hicpp-signed-bitwise,
--hicpp-no-array-decay,
--hicpp-multiway-paths-covered,
--readability-implicit-bool-conversion,
--readability-else-after-return,
 -clang-diagnostic-unused-command-line-argument
 '
 ...
