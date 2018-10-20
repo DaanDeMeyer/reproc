@@ -12,7 +12,7 @@ TEST_CASE("read-write")
   CAPTURE(error);
 
   static constexpr unsigned int BUFFER_SIZE = 1024;
-  std::array<char, BUFFER_SIZE> buffer = {};
+  std::array<char, BUFFER_SIZE> buffer = { {} };
 
   SUBCASE("stdout")
   {
