@@ -12,7 +12,7 @@ TEST_CASE("stop")
   reproc_type infinite;
 
   static constexpr unsigned int ARGV_SIZE = 2;
-  std::array<const char *, ARGV_SIZE> argv{ INFINITE_PATH, nullptr };
+  std::array<const char *, ARGV_SIZE> argv{ { INFINITE_PATH, nullptr } };
 
   REPROC_ERROR error = REPROC_SUCCESS;
   CAPTURE(error);

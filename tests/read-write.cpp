@@ -20,7 +20,7 @@ TEST_CASE("read-write")
     auto message_length = static_cast<unsigned int>(message.length());
 
     static constexpr unsigned int ARGV_SIZE = 2;
-    std::array<const char *, ARGV_SIZE> argv{ STDOUT_PATH, nullptr };
+    std::array<const char *, ARGV_SIZE> argv{ { STDOUT_PATH, nullptr } };
 
     error = reproc_start(&io, ARGV_SIZE - 1, argv.data(), nullptr);
     REQUIRE(!error);
@@ -51,7 +51,7 @@ TEST_CASE("read-write")
     auto message_length = static_cast<unsigned int>(message.length());
 
     static constexpr unsigned int ARGV_SIZE = 2;
-    std::array<const char *, ARGV_SIZE> argv{ STDERR_PATH, nullptr };
+    std::array<const char *, ARGV_SIZE> argv{ { STDERR_PATH, nullptr } };
 
     error = reproc_start(&io, ARGV_SIZE - 1, argv.data(), nullptr);
     REQUIRE(!error);
