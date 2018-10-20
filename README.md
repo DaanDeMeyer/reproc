@@ -597,3 +597,16 @@ When making changes:
   option:
 
   `cmake -DREPROC_COLORED_OUTPUT=ON ..`
+
+- Make sure to follow the .editorconfig rules. Most editors have an editorconfig
+  plugin to make this easy.
+- reproc doesn't store a .gitignore file in the repository so everyone can add a
+  custom .gitignore file locally. Example .gitignore file:
+
+  ```txt
+  # Exclude the .gitignore file itself so it isn't pushed to Github.
+  .gitignore
+
+  # Exclude the build directory.
+  build/
+  ```
