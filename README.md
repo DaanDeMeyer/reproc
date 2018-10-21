@@ -310,7 +310,7 @@ If needed, you can also convert `std::error_code` values to exceptions using
 ```c++
 reproc::process;
 std::error_code ec = process.start(...);
-if (ec) { throw std::system_error(ec, "Extra Information"); }
+if (ec) { throw std::system_error(ec, "Unable to start process"); }
 ```
 
 ## Multithreading
