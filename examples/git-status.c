@@ -37,10 +37,10 @@ int main(void)
   the working directory of the parent process is used. */
   error = reproc_start(&git_status, argc, argv, NULL);
 
-  // reproc exposes a single error enum REPROC_ERROR which contains values for
-  // all errors that reproc checks for explicitly. If an unknown error occurs
-  // reproc's functions will return REPROC_UNKNOWN_ERROR. You can get the actual
-  // system error using the reproc_system_error function. 
+  /* reproc exposes a single error enum REPROC_ERROR which contains values for
+  all errors that reproc checks for explicitly. If an unknown error occurs
+  reproc's functions will return REPROC_UNKNOWN_ERROR. You can get the actual
+  system error using the reproc_system_error function. */
   if (error == REPROC_FILE_NOT_FOUND) {
     fprintf(stderr, "%s\n",
             "git not found. Make sure it's available from the PATH");
