@@ -216,9 +216,12 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
   # want to use the install location of the headers (e.g. /usr/include) as the
   # include directory instead.
   target_include_directories(${TARGET} PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/${TARGET}>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
+
+  # Adapted from https://codingnest.com/basic-cmake-part-2/.
+  # Each library is installed separately (with separate config files).
 
   if(REPROC_INSTALL)
     include(GNUInstallDirs)
@@ -233,19 +236,15 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
     )
 
     install(
-      # We add one extra level of nesting in the repository's include folder so
-      # we can prevent the compiler from searching in both the reproc and
-      # reproc++ folder but still keep the `#include <reproc/reproc.h>` include
-      # style.
-      DIRECTORY include/${TARGET}/${TARGET}
-      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-
-    install(
       EXPORT ${TARGET}-targets
       FILE ${TARGET}-targets.cmake
       NAMESPACE reproc::
       DESTINATION ${REPROC_INSTALL_CONFIGDIR}
+    )
+
+    install(
+      DIRECTORY include/${TARGET}
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
 
     include(CMakePackageConfigHelpers)
