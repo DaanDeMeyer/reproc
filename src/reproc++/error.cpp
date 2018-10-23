@@ -51,7 +51,7 @@ public:
       return error_code == std::error_code(1113, std::system_category());
 #else
       // REPROC_INVALID_UNICODE is Windows specific so it can't happen on POSIX
-      // systems
+      // systems.
       return false;
 #endif
     case reproc::errc::permission_denied:
