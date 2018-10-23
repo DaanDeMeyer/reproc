@@ -19,7 +19,7 @@ project(reproc VERSION 1.0.0 LANGUAGES C)
 option(REPROC_BUILD_TESTS "Build tests")
 option(REPROC_BUILD_EXAMPLES "Build examples. Enable REPROC_BUILD_CXX_WRAPPER \
 to build C++ examples.")
-option(REPROC_BUILD_CXX_WRAPPER "Build C++ wrapper")
+option(REPROC_BUILD_CXX_WRAPPER "Build C++ wrapper (reproc++)")
 option(REPROC_BUILD_DOCS "Build API documentation with Doxygen")
 option(REPROC_CI "Add -Werror or equivalent to compiler and clang-tidy")
 option(REPROC_INSTALL "Generate install target")
