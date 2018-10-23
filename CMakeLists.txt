@@ -1,5 +1,5 @@
-# Every variable is namespaced with REPROC and everything except for the library
-# itself is turned off by default to make reproc easy to use as a CMake
+# Every variable is prefixed with REPROC and everything except for the C library
+# (reproc) is turned off by default to make reproc easy to use as a CMake
 # subproject with add_subdirectory. All targets are also prefixed with "reproc-"
 # to avoid name collisions.
 
