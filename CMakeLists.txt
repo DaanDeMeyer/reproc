@@ -18,7 +18,7 @@ project(reproc VERSION 1.0.0 LANGUAGES C)
 # having to type out all the options by hand (cmake .. && cmake-gui .).
 option(REPROC_BUILD_TESTS "Build tests")
 option(REPROC_BUILD_EXAMPLES "Build examples. Enable REPROC_BUILD_CXX_WRAPPER \
-to build C++ examples.")
+to build the C++ examples.")
 option(REPROC_BUILD_CXX_WRAPPER "Build C++ wrapper (reproc++)")
 option(REPROC_BUILD_DOCS "Build API documentation with Doxygen")
 option(REPROC_CI "Add -Werror or equivalent to compiler and clang-tidy")
