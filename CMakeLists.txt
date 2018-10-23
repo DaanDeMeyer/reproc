@@ -12,7 +12,7 @@ else()
   cmake_policy(VERSION 3.12)
 endif()
 
-project(reproc VERSION 1.0.0 LANGUAGES C)
+project(reproc VERSION 2.0.0 LANGUAGES C)
 
 # Tip: use cmake-gui when contributing to reproc to turn on everything without
 # having to type out all the options by hand (cmake .. && cmake-gui .).
