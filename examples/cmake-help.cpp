@@ -21,7 +21,7 @@ int main()
   checks if the process has stopped (A succesfull stop check is required on Unix
   systems for the process to be cleaned up by the OS). If you want to make sure
   the stop check succeeds you'll have to explicitly configure the check using
-  arguments passed to the constructor (as we do here) */
+  arguments passed to the constructor (as we do here). */
 
   /* cmake --help is a short lived command and will always exit on its own so
   waiting indefinitely (reproc::infinite) until it exits on its own
