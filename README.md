@@ -82,16 +82,16 @@ to use reproc in your project.
 include(FetchContent)
 
 FetchContent_Declare(
-  REPROC
+  reproc
   GIT_REPOSITORY https://github.com/DaanDeMeyer/reproc.git
   GIT_TAG        v1.0.0
 )
 
-FetchContent_GetProperties(REPROC)
-if(NOT REPROC_POPULATED)
-  FetchContent_Populate(REPROC)
+FetchContent_GetProperties(reproc)
+if(NOT reproc_POPULATED)
+  FetchContent_Populate(reproc)
   # Configure reproc's build here
-  add_subdirectory(${REPROC_SOURCE_DIR} ${REPROC_BINARY_DIR})
+  add_subdirectory(${reproc_SOURCE_DIR} ${reproc_BINARY_DIR})
 endif()
 
 add_executable(myapp myapp.c)
@@ -199,15 +199,15 @@ elseif(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.11)
   include(FetchContent)
 
   FetchContent_Declare(
-    REPROC
+    reproc
     GIT_REPOSITORY https://github.com/DaanDeMeyer/reproc.git
     GIT_TAG        v1.0.0
   )
 
-  FetchContent_GetProperties(REPROC)
-  if(NOT REPROC_POPULATED)
-    FetchContent_Populate(REPROC)
-    add_subdirectory(${REPROC_SOURCE_DIR} ${REPROC_BINARY_DIR})
+  FetchContent_GetProperties(reproc)
+  if(NOT reproc_POPULATED)
+    FetchContent_Populate(reproc)
+    add_subdirectory(${reproc_SOURCE_DIR} ${reproc_BINARY_DIR})
   endif()
 else()
   # Update or clone reproc git submodule.
