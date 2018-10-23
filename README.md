@@ -184,6 +184,47 @@ reproc as follows:
 cmake -DCMAKE_PREFIX_PATH=<reproc-install-dir> .. # example: /usr/local on Linux
 ```
 
+#### Leave the choice in user's hands
+
+If you're not sure which method to use you can also support multiple methods and
+leave the choice of where to get reproc to the user:
+
+```cmake
+option(USE_SYSTEM_LIBRARIES "Use system installed libraries" OFF)
+
+if(USE_SYSTEM_LIBRARIES)
+  find_package(reproc REQUIRED)
+# VERSION_GREATER_EQUAL requires CMake 3.7 or higher.
+elseif(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.11)
+  include(FetchContent)
+
+  FetchContent_Declare(
+    REPROC
+    GIT_REPOSITORY https://github.com/DaanDeMeyer/reproc.git
+    GIT_TAG        v1.0.0
+  )
+
+  FetchContent_GetProperties(REPROC)
+  if(NOT REPROC_POPULATED)
+    FetchContent_Populate(REPROC)
+    add_subdirectory(${REPROC_SOURCE_DIR} ${REPROC_BINARY_DIR})
+  endif()
+else()
+  # Update or clone reproc git submodule.
+  execute_process(COMMAND git submodule update --init -- external/reproc
+                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+  add_subdirectory(external/reproc)
+endif()
+
+add_executable(myapp myapp.cpp)
+target_link_libraries(myapp reproc::reproc)
+```
+
+The above CMake code uses an installed system if `USE_SYSTEM_LIBRARIES=ON`. If
+`USE_SYSTEM_LIBRARIES=OFF` and the user's CMake version is greater than 3.11, it
+downloads reproc using CMake's `FetchContent` module. If `FetchContent` is not
+available it falls back to git submodules.
+
 #### CMake options
 
 reproc supports the following CMake options:
