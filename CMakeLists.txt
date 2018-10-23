@@ -3,6 +3,7 @@
 # subproject with add_subdirectory. All targets are also prefixed with "reproc-"
 # to avoid name collisions.
 
+# Needed for target_sources.
 cmake_minimum_required(VERSION 3.1)
 
 # Use updated policies on newer versions of CMake.
@@ -168,6 +169,24 @@ function(reproc_set_common TARGET OUTPUT_DIRECTORY)
   endif()
 endfunction()
 
+# CMake by default sets CMAKE_INSTALL_PREFIX to
+# "C:\Program Files (x86)\${PROJECT_NAME}" on Windows which makes
+# find_package(reproc++) fail because of find_package's search rules. To get
+# around this we remove ${PROJECT_NAME} from CMAKE_INSTALL_PREFIX if it hasn't
+# been explicitly set by the user.
+if(WIN32 AND REPROC_INSTALL)
+  # Needed for CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT.
+  cmake_minimum_required(VERSION 3.7)
+
+  if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    get_filename_component(REPROC_CMAKE_INSTALL_PREFIX_WITHOUT_PROJECT_NAME
+                          ${CMAKE_INSTALL_PREFIX} PATH)
+    set(CMAKE_INSTALL_PREFIX
+        ${REPROC_CMAKE_INSTALL_PREFIX_WITHOUT_PROJECT_NAME}
+        CACHE PATH "" FORCE)
+  endif()
+endif()
+
 # Adds a new library and encapsulates common configuration for it.
 function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
   add_library(${TARGET} "")
@@ -217,7 +236,6 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
   # include directory instead.
   target_include_directories(${TARGET} PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
 
   # Adapted from https://codingnest.com/basic-cmake-part-2/.
@@ -227,24 +245,36 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
     include(GNUInstallDirs)
     set(REPROC_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET})
 
+    # Add ${TARGET} to install prefix on Windows because CMake searches for
+    # <prefix>/<name>/... on Windows instead of <prefix>/....
+    if(WIN32)
+      set(REPROC_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}/${TARGET})
+    else()
+      set(REPROC_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+    endif()
+
+    target_include_directories(${TARGET} PUBLIC
+      $<INSTALL_INTERFACE:${REPROC_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}>
+    )
+
     install(
       TARGETS ${TARGET}
       EXPORT ${TARGET}-targets
-      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      RUNTIME DESTINATION ${REPROC_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
+      LIBRARY DESTINATION ${REPROC_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+      ARCHIVE DESTINATION ${REPROC_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
     )
 
     install(
       EXPORT ${TARGET}-targets
       FILE ${TARGET}-targets.cmake
       NAMESPACE reproc::
-      DESTINATION ${REPROC_INSTALL_CONFIGDIR}
+      DESTINATION ${REPROC_INSTALL_PREFIX}/${REPROC_INSTALL_CONFIGDIR}
     )
 
     install(
       DIRECTORY include/${TARGET}
-      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+      DESTINATION ${REPROC_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}
     )
 
     include(CMakePackageConfigHelpers)
@@ -257,14 +287,14 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
     configure_package_config_file(
       ${PROJECT_SOURCE_DIR}/tools/cmake/${TARGET}-config.cmake.in
       ${PROJECT_BINARY_DIR}/${TARGET}-config.cmake
-      INSTALL_DESTINATION ${REPROC_INSTALL_CONFIGDIR}
+      INSTALL_DESTINATION ${REPROC_INSTALL_PREFIX}/${REPROC_INSTALL_CONFIGDIR}
     )
 
     install(
       FILES
         ${PROJECT_BINARY_DIR}/${TARGET}-config.cmake
         ${PROJECT_BINARY_DIR}/${TARGET}-config-version.cmake
-      DESTINATION ${REPROC_INSTALL_CONFIGDIR}
+      DESTINATION ${REPROC_INSTALL_PREFIX}/${REPROC_INSTALL_CONFIGDIR}
     )
   endif()
 endfunction()

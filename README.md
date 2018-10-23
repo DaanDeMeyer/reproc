@@ -261,8 +261,22 @@ reproc supports the following CMake options:
 - `REPROC_BUILD_TESTS (ON|OFF)`: Build tests (default: `OFF`)
 - `REPROC_BUILD_EXAMPLES (ON|OFF)`: Build examples (default: `OFF`)
 - `REPROC_INSTALL (ON|OFF)`: Generate install target (default: `OFF`)
+
+  Note that if you're using the default `CMAKE_INSTALL_PREFIX` on Windows,
+  you'll have to set `REPROC_INSTALL=ON` the first time when running CMake to
+  make sure the install directories are correct (This is because of
+  `CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT` is only true on the first run of
+  CMake in a new build tree).
+
 - `BUILD_SHARED_LIBS (ON|OFF)`: Build reproc as a shared library (default:
   `OFF`)
+
+  Note that when building reproc and reproc++ as shared libraries on Windows
+  that you'll have to make sure reproc.dll and reproc++.dll are available from
+  the PATH to run your application without crashing. Alternatively, you can also
+  copy over the dll's manually to the same directory that your binary resides
+  in. In general, unless you have a good reason not to, use reproc and reproc++
+  as static libraries on Windows.
 
 Options can be configured when building reproc or before calling
 `add_subdirectory`:
