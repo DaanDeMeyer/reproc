@@ -393,7 +393,6 @@ endif()
 ### Examples ###
 
 if(REPROC_BUILD_EXAMPLES)
-
   function(reproc_add_example TARGET LANGUAGE)
     add_executable(reproc-${TARGET} "")
     reproc_set_common(reproc-${TARGET} examples)
