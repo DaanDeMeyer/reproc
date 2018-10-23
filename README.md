@@ -185,7 +185,7 @@ add_executable(myapp myapp.c)
 target_link_libraries(myapp reproc::reproc)
 ```
 
-This only finds the C library. To find reproc++:
+This only finds reproc. To find reproc++:
 
 ```cmake
 find_package(reproc++ REQUIRED)
