@@ -204,7 +204,7 @@ reproc as follows:
 cmake -DCMAKE_PREFIX_PATH=<reproc-install-dir> .. # example: /usr/local on Linux
 ```
 
-#### Leave the choice in user's hands
+#### Leave the choice in the user's hands
 
 If you're not sure which method to use you can also support multiple methods and
 leave the choice of where to get reproc to the user:
