@@ -37,9 +37,9 @@ int main(int argc, char *argv[])
   stopped correctly.
 
   Any kind of process can be started with forward so we make sure the process
-  is cleaned up correctly by adding the reproc::cleanup::terminate flag (sends
-  SIGTERM (POSIX) or CTRL-BREAK (Windows) and waits 5 seconds). We also add the
-  reproc::cleanup::kill flag which sends SIGKILL (POSIX) or calls
+  is cleaned up correctly by adding the reproc::cleanup::terminate flag which
+  sends SIGTERM (POSIX) or CTRL-BREAK (Windows) and waits 5 seconds. We also add
+  the reproc::cleanup::kill flag which sends SIGKILL (POSIX) or calls
   TerminateProcess (Windows) if the process hasn't exited after 5 seconds and
   waits 5 more seconds.
 
