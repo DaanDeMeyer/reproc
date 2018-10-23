@@ -18,14 +18,13 @@ project(reproc VERSION 2.0.0 LANGUAGES C)
 # having to type out all the options by hand (cmake .. && cmake-gui .).
 
 option(REPROC_BUILD_TESTS "Build reproc's tests. Requires C++ compiler.")
-option(REPROC_BUILD_EXAMPLES "Build the examples. Enable \
-REPROC_BUILD_CXX_WRAPPER to build the C++ examples.")
-option(REPROC_BUILD_CXX_WRAPPER "Build reproc++ (C++ wrapper library).")
+option(REPROC_BUILD_EXAMPLES "Build the examples. Enable REPROCXX to build the \
+C++ examples.")
+option(REPROCXX "Build reproc++ (C++ wrapper library).")
 option(REPROC_BUILD_DOCS "Build the API documentation with Doxygen.")
 option(REPROC_CI "Add -Werror or equivalent to the compiler and clang-tidy.")
-option(REPROC_INSTALL "Generate reproc install target. If \
-REPROC_BUILD_CXX_WRAPPER is enabled an install target is also generated for \
-reproc++.")
+option(REPROC_INSTALL "Generate reproc install target. If REPROCXX is enabled \
+an install target is also generated for reproc++.")
 option(REPROC_CLANG_TIDY "Run clang-tidy as part of the build (requires \
 clang-tidy to be in the PATH).")
 option(REPROC_CLANG_FORMAT "Find clang-format and add a target to run it on \
@@ -44,7 +43,7 @@ option(REPROC_COLORED_OUTPUT "Force colored output from GCC and Clang.")
 
 # C++
 
-if(REPROC_BUILD_CXX_WRAPPER OR REPROC_BUILD_TESTS)
+if(REPROCXX OR REPROC_BUILD_TESTS)
   enable_language(CXX)
 endif()
 
@@ -334,7 +333,7 @@ endif()
 
 ### reproc++ Library (C++ wrapper) ###
 
-if(REPROC_BUILD_CXX_WRAPPER)
+if(REPROCXX)
   reproc_add_library(reproc++ CXX lib)
 
   target_link_libraries(reproc++ PRIVATE reproc)
@@ -418,7 +417,7 @@ if(REPROC_BUILD_EXAMPLES)
 
   reproc_add_example(git-status C)
 
-  if(REPROC_BUILD_CXX_WRAPPER)
+  if(REPROCXX)
     reproc_add_example(cmake-help CXX)
     reproc_add_example(forward CXX)
   endif()

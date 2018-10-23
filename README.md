@@ -50,8 +50,9 @@ applications.
 - Wait for the program to exit or forcefully stop it yourself. When forcefully
   stopping a process you can optionally allow the process to clean up its
   resources or immediately stop it.
-- The core library is written in pure C. An optional C++ wrapper with extra
-  features named reproc++ is available for use in C++ applications.
+- The core library (reproc) is written in pure C. An optional C++ wrapper
+  library (reproc++) with extra features is available for use in C++
+  applications.
 - Zero dependencies.
 - Multiple installation methods. Either build reproc as part of your project or
   install it as a shared library.
@@ -66,6 +67,11 @@ either make an issue or ask questions directly in the reproc
 [gitter](https://gitter.im/reproc/Lobby) channel.
 
 ## Getting started
+
+reproc consists out of two libraries: reproc and reproc++. reproc is a C library
+that contains all the low code for interacting with child processes. reproc++
+depends on reproc and adapts its API to an idiomatic C++ API. It also adds a few
+extra's that make working with child processes from C++ easier.
 
 reproc can either be installed from a binary package or built as part of your
 project when using CMake. All possible options are explained below.
@@ -90,7 +96,10 @@ FetchContent_Declare(
 FetchContent_GetProperties(reproc)
 if(NOT reproc_POPULATED)
   FetchContent_Populate(reproc)
-  # Configure reproc's build here
+
+  # Configure reproc's build here. For example, to build reproc++ as well:
+  set(REPROCXX ON CACHE BOOL "" FORCE)
+
   add_subdirectory(${reproc_SOURCE_DIR} ${reproc_BINARY_DIR})
 endif()
 
@@ -229,12 +238,10 @@ available it falls back to git submodules.
 
 reproc supports the following CMake options:
 
-- `REPROC_BUILD_CXX_WRAPPER (ON|OFF)`: Build C++ library (default: `OFF`)
+- `REPROCXX (ON|OFF)`: Build reproc++ (default: `OFF`)
 
-  If this option is enabled, a second library (reproc++) will be built
-  containing the C++ wrapper code. This library is represented by the reproc++
-  target in CMake. After enabling this option and building reproc, link against
-  the C++ library as follows:
+  If this option is enabled, both reproc and reproc++ will be built. After
+  enabling this option and building reproc, link against reproc++ as follows:
 
   ```cmake
   target_link_libraries(myapp reproc::reproc++)
@@ -252,13 +259,13 @@ Options can be configured when building reproc or before calling
 - When building (in `<reproc-root-dir>/build` subdirectory):
 
   ```sh
-  cmake -DREPROC_BUILD_CXX_WRAPPER=ON ..
+  cmake -DREPROCXX=ON ..
   ```
 
 - When using `add_subdirectory`:
 
   ```cmake
-  set(REPROC_BUILD_CXX_WRAPPER ON CACHE BOOL "" FORCE)
+  set(REPROCXX ON CACHE BOOL "" FORCE)
   add_subdirectory(external/reproc)
   ```
 
@@ -600,7 +607,7 @@ When making changes:
 
   ```sh
   cmake -DREPROC_BUILD_TESTS=ON -DREPROC_BUILD_EXAMPLES=ON
-  -DREPROC_BUILD_CXX_WRAPPER=ON .. # In build subdirectory
+  -DREPROCXX=ON .. # In build subdirectory
   ```
 
 - Format your changes with clang-format and run clang-tidy locally since it will
