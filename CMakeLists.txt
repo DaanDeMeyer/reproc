@@ -243,18 +243,18 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
   endif()
 endfunction()
 
-### Library ###
+### reproc Library ###
 
 reproc_add_library(reproc C lib)
 
 target_include_directories(reproc PRIVATE
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/reproc/common>
+  ${PROJECT_SOURCE_DIR}/src/reproc/common>
 )
 target_sources(reproc PRIVATE src/reproc/common/error.c)
 
 if(WIN32)
   target_include_directories(reproc PRIVATE
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/reproc/windows>
+    ${PROJECT_SOURCE_DIR}/src/reproc/windows>
   )
   target_sources(reproc PRIVATE
     src/reproc/windows/error.c
@@ -266,7 +266,7 @@ if(WIN32)
   )
 elseif(UNIX)
   target_include_directories(reproc PRIVATE
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/reproc/posix>
+    ${PROJECT_SOURCE_DIR}/src/reproc/posix>
   )
   target_sources(reproc PRIVATE
     src/reproc/posix/error.c
@@ -304,7 +304,7 @@ elseif(UNIX)
   )
 endif()
 
-### C++ wrapper ###
+### reproc++ Library (C++ wrapper) ###
 
 if(REPROC_BUILD_CXX_WRAPPER)
   reproc_add_library(reproc++ CXX lib)
