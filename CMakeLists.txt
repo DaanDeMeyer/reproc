@@ -16,6 +16,7 @@ project(reproc VERSION 1.0.0 LANGUAGES C)
 
 # Tip: use cmake-gui when contributing to reproc to turn on everything without
 # having to type out all the options by hand (cmake .. && cmake-gui .).
+
 option(REPROC_BUILD_TESTS "Build reproc's tests. Requires C++ compiler.")
 option(REPROC_BUILD_EXAMPLES "Build the examples. Enable \
 REPROC_BUILD_CXX_WRAPPER to build the C++ examples.")
@@ -83,9 +84,6 @@ if(MSVC)
   include(CheckCCompilerFlag)
   check_c_compiler_flag(/permissive- REPROC_HAS_PERMISSIVE)
 endif()
-
-include(GNUInstallDirs)
-set(REPROC_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/reproc)
 
 # Encapsulates common configuration for a target.
 function(reproc_set_common TARGET OUTPUT_DIRECTORY)
@@ -224,9 +222,12 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
   )
 
   if(REPROC_INSTALL)
+    include(GNUInstallDirs)
+    set(REPROC_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET})
+
     install(
       TARGETS ${TARGET}
-      EXPORT reproc-targets
+      EXPORT ${TARGET}-targets
       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -239,6 +240,33 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
       # style.
       DIRECTORY include/${TARGET}/${TARGET}
       DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+
+    install(
+      EXPORT ${TARGET}-targets
+      FILE ${TARGET}-targets.cmake
+      NAMESPACE reproc::
+      DESTINATION ${REPROC_INSTALL_CONFIGDIR}
+    )
+
+    include(CMakePackageConfigHelpers)
+    write_basic_package_version_file(
+      ${PROJECT_BINARY_DIR}/${TARGET}-config-version.cmake
+      VERSION ${PROJECT_VERSION}
+      COMPATIBILITY AnyNewerVersion
+    )
+
+    configure_package_config_file(
+      ${PROJECT_SOURCE_DIR}/tools/cmake/${TARGET}-config.cmake.in
+      ${PROJECT_BINARY_DIR}/${TARGET}-config.cmake
+      INSTALL_DESTINATION ${REPROC_INSTALL_CONFIGDIR}
+    )
+
+    install(
+      FILES
+        ${PROJECT_BINARY_DIR}/${TARGET}-config.cmake
+        ${PROJECT_BINARY_DIR}/${TARGET}-config-version.cmake
+      DESTINATION ${REPROC_INSTALL_CONFIGDIR}
     )
   endif()
 endfunction()
@@ -394,42 +422,6 @@ if(REPROC_BUILD_EXAMPLES)
     reproc_add_example(cmake-help CXX)
     reproc_add_example(forward CXX)
   endif()
-endif()
-
-### Install ###
-
-# Adapted from https://codingnest.com/basic-cmake-part-2/.
-# Per library install commands are executed in reproc_add_library.
-
-if(REPROC_INSTALL)
-
-  install(
-    EXPORT reproc-targets
-    FILE reproc-targets.cmake
-    NAMESPACE reproc::
-    DESTINATION ${REPROC_INSTALL_CONFIGDIR}
-  )
-
-  include(CMakePackageConfigHelpers)
-  write_basic_package_version_file(
-      ${PROJECT_BINARY_DIR}/reproc-config-version.cmake
-      VERSION ${PROJECT_VERSION}
-      COMPATIBILITY AnyNewerVersion
-  )
-
-  configure_package_config_file(
-      ${PROJECT_SOURCE_DIR}/tools/cmake/reproc-config.cmake.in
-      ${PROJECT_BINARY_DIR}/reproc-config.cmake
-      INSTALL_DESTINATION ${REPROC_INSTALL_CONFIGDIR}}
-  )
-
-  install(
-      FILES
-        ${PROJECT_BINARY_DIR}/reproc-config.cmake
-        ${PROJECT_BINARY_DIR}/reproc-config-version.cmake
-      DESTINATION ${REPROC_INSTALL_CONFIGDIR}
-  )
-
 endif()
 
 ### clang-format ###
