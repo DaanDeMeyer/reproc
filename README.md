@@ -185,6 +185,17 @@ add_executable(myapp myapp.c)
 target_link_libraries(myapp reproc::reproc)
 ```
 
+This only finds the C library. To find reproc++:
+
+```cmake
+find_package(reproc++ REQUIRED)
+add_executable(myapp myapp.cpp)
+target_link_libraries(myapp reproc::reproc++)
+```
+
+`find_package(reproc++)` automatically finds reproc as its dependency so there's
+no need for two separate `find_package` calls.
+
 The install prefix specified when installing reproc might not be in the default
 search path of CMake. If this is the case you can tell CMake where to search for
 reproc as follows:
