@@ -18,19 +18,19 @@ project(reproc VERSION 2.0.0 LANGUAGES C)
 # Tip: use cmake-gui when contributing to reproc to turn on everything without
 # having to type out all the options by hand (cmake .. && cmake-gui .).
 
-option(REPROC_BUILD_TESTS "Build reproc's tests. Requires C++ compiler.")
-option(REPROC_BUILD_EXAMPLES "Build the examples. Enable REPROCXX to build the \
+option(REPROC_TESTS "Build reproc's tests. Requires C++ compiler.")
+option(REPROC_EXAMPLES "Build reproc's examples. Enable REPROCXX to build the \
 C++ examples.")
 option(REPROCXX "Build reproc++ (C++ wrapper library).")
-option(REPROC_BUILD_DOCS "Build the API documentation with Doxygen.")
+option(REPROC_DOCS "Build reproc's documentation with Doxygen.")
 option(REPROC_CI "Add -Werror or equivalent to the compiler and clang-tidy.")
-option(REPROC_INSTALL "Generate reproc install target. If REPROCXX is enabled \
-an install target is also generated for reproc++.")
+option(REPROC_INSTALL "Generate reproc's install target. If REPROCXX is \
+enabled an install target is also generated for reproc++.")
 option(REPROC_CLANG_TIDY "Run clang-tidy as part of the build (requires \
 clang-tidy to be in the PATH).")
 option(REPROC_CLANG_FORMAT "Find clang-format and add a target to run it on \
 all source files.")
-option(REPROC_SANITIZERS "Compile reproc with sanitizers. Only works on Unix \
+option(REPROC_SANITIZERS "Build reproc with sanitizers. Only works on Unix \
 systems.")
 # CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default on Windows so
 # when we add /W4 via target_compile_options cl.exe complains that both /W3 and
@@ -44,7 +44,7 @@ option(REPROC_COLORED_OUTPUT "Force colored output from GCC and Clang.")
 
 # C++
 
-if(REPROCXX OR REPROC_BUILD_TESTS)
+if(REPROCXX OR REPROC_TESTS)
   enable_language(CXX)
 endif()
 
@@ -375,7 +375,7 @@ endif()
 
 ### Tests ###
 
-if(REPROC_BUILD_TESTS)
+if(REPROC_TESTS)
   add_executable(reproc-tests "")
   reproc_set_common(reproc-tests tests)
 
@@ -422,7 +422,7 @@ endif()
 
 ### Examples ###
 
-if(REPROC_BUILD_EXAMPLES)
+if(REPROC_EXAMPLES)
   function(reproc_add_example TARGET LANGUAGE)
     add_executable(reproc-${TARGET} "")
     reproc_set_common(reproc-${TARGET} examples)
@@ -484,7 +484,7 @@ endif()
 
 ### Doxygen ###
 
-if(REPROC_BUILD_DOCS)
+if(REPROC_DOCS)
   find_package(Doxygen 1.8.3 REQUIRED)
 
   if(DOXYGEN_FOUND)

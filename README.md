@@ -258,8 +258,8 @@ reproc supports the following CMake options:
   target_link_libraries(myapp reproc::reproc++)
   ```
 
-- `REPROC_BUILD_TESTS (ON|OFF)`: Build tests (default: `OFF`)
-- `REPROC_BUILD_EXAMPLES (ON|OFF)`: Build examples (default: `OFF`)
+- `REPROC_TESTS (ON|OFF)`: Build tests (default: `OFF`)
+- `REPROC_EXAMPLES (ON|OFF)`: Build examples (default: `OFF`)
 - `REPROC_INSTALL (ON|OFF)`: Generate install target (default: `OFF`)
 
   Note that if you're using the default `CMAKE_INSTALL_PREFIX` on Windows,
@@ -306,7 +306,7 @@ from the [AUR](https://aur.archlinux.org/packages/reproc).
 API documentation and examples can be found at
 <https://daandemeyer.github.io/reproc/>.
 
-The latest docs can be built by enabling the cmake `REPROC_BUILD_DOCS` option
+The latest docs can be built by enabling the cmake `REPROC_DOCS` option
 and building the `reproc-docs` target. This requires the latest version of
 [Doxygen](https://www.stack.nl/~dimitri/doxygen/) to be installed and available
 from the PATH. After building `reproc-docs` the generated documentation can be
@@ -314,7 +314,7 @@ found in the `docs/html` directory of the build directory.
 
 ```sh
 mkdir build && cd build
-cmake -DREPROC_BUILD_DOCS=ON ..
+cmake -DREPROC_DOCS=ON ..
 cmake --build . --target reproc-docs
 firefox docs/html/index.html # Any installed browser should work
 ```
@@ -634,7 +634,7 @@ When making changes:
   options:
 
   ```sh
-  cmake -DREPROC_BUILD_TESTS=ON -DREPROC_BUILD_EXAMPLES=ON
+  cmake -DREPROC_TESTS=ON -DREPROC_EXAMPLES=ON
   -DREPROCXX=ON .. # In build subdirectory
   ```
 
