@@ -157,8 +157,8 @@ target_link_libraries(myapp reproc::reproc)
 
 #### Install
 
-Installing is the way to go if you want to use reproc with other build systems
-than CMake. After installing you can use your build systems preferred way of
+Installing is the way to go if you want to use reproc with build systems other
+than CMake. After installing you can use your build system's preferred way of
 finding libraries to find reproc. Refer to your build system's documentation for
 more info. We give an example of how to find an installed version of reproc
 using CMake.
@@ -170,9 +170,9 @@ git clone https://github.com/DaanDeMeyer/reproc.git
 cd reproc
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
-      -DREPROC_INSTALL=ON ..
-# Might need root for this depending on install location
+# Build reproc and reproc++.
+cmake -DCMAKE_BUILD_TYPE=Release -DREPROC_INSTALL=ON -DREPROCXX=ON ..
+# You might need root for this depending on install location.
 cmake --build . --target install
 ```
 
