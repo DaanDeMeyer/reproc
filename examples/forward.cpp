@@ -3,6 +3,7 @@
 #include <reproc++/parser.hpp>
 #include <reproc++/reproc.hpp>
 
+#include <future>
 #include <iostream>
 
 int fail(std::error_code ec)
@@ -52,7 +53,8 @@ int main(int argc, char *argv[])
   std::error_code ec = forward.start(argc - 1, argv + 1);
 
   if (ec == reproc::errc::file_not_found) {
-    std::cerr << "Program not found. Make sure it's available from the PATH";
+    std::cerr << argv[1]
+              << " not found. Make sure it's available from the PATH";
     return 1;
   }
 
@@ -62,17 +64,29 @@ int main(int argc, char *argv[])
   // we close it explicitly.
   forward.close(reproc::stream::in);
 
+  /* To avoid the child process hanging because the error stream is full while
+  we're waiting for output from the output stream or vice-versa we spawn two
+  separate threads to read from both streams at the same time. */
+
   // Pipe child process stdout output to std::cout of parent process.
-  ec = forward.read(reproc::stream::out, reproc::ostream_parser(std::cout));
-  if (ec) { return fail(ec); }
+  auto read_stdout = std::async(std::launch::async, [&forward]() {
+    return forward.read(reproc::stream::out, reproc::ostream_parser(std::cout));
+  });
 
   // Pipe child process stderr output to std::cerr of parent process.
-  ec = forward.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
-  if (ec) { return fail(ec); }
+  auto read_stderr = std::async(std::launch::async, [&forward]() {
+    return forward.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
+  });
 
   // Call stop ourselves to get the exit_status.
   unsigned int exit_status = 0;
   ec = forward.stop(reproc::cleanup::wait, reproc::infinite, &exit_status);
+  if (ec) { return fail(ec); }
+
+  ec = read_stdout.get();
+  if (ec) { return fail(ec); }
+
+  ec = read_stderr.get();
   if (ec) { return fail(ec); }
 
   return static_cast<int>(exit_status);

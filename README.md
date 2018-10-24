@@ -399,6 +399,9 @@ Different threads can read from or write to different streams at the same time.
 This is a valid approach when you want to write to stdin and read from stdout in
 parallel.
 
+Look at the [forward](examples/forward.cpp) example to see an example of working
+with reproc from multiple threads.
+
 ## Gotcha's
 
 - (POSIX) On POSIX a parent process is required to wait on a child process
