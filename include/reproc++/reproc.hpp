@@ -80,8 +80,8 @@ public:
   process(const process &) = delete;
   process &operator=(const process &) = delete;
 
-  REPROC_EXPORT process(process &&other) noexcept = default;
-  REPROC_EXPORT process &operator=(process &&other) noexcept = default;
+  REPROC_EXPORT process(process &&) noexcept = default;
+  REPROC_EXPORT process &operator=(process &&) noexcept = default;
 
   /*! \see reproc_start */
   REPROC_EXPORT std::error_code
