@@ -38,7 +38,7 @@ systems.")
 # CMAKE_CXX_FLAGS but this is intrusive when reproc is used via add_subdirectory
 # since it would add /W4 for every target. To solve this, we add this option so
 # /W4 can be enabled by developers and in CI without forcing it on for users.
-option(REPROC_ENABLE_W4 "Enable /W4 on Windows (modifies CMAKE_C_FLAGS and \
+option(REPROC_W4 "Enable /W4 on Windows (modifies CMAKE_C_FLAGS and \
 CMAKE_CXX_FLAGS).")
 option(REPROC_COLORED_OUTPUT "Force colored output from GCC and Clang.")
 
@@ -69,9 +69,9 @@ endif()
 ### Helpers ###
 
 if(MSVC)
-  # See REPROC_ENABLE_W4 option declaration for why we can't just add /W4 as a
+  # See REPROC_W4 option declaration for why we can't just add /W4 as a
   # compile option.
-  if(REPROC_ENABLE_W4)
+  if(REPROC_W4)
     string(REGEX REPLACE /W[0-4] "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4" )
 

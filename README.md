@@ -672,7 +672,7 @@ When making changes:
 
   `cmake -DREPROC_SANITIZERS=ON ..`
 
-- Enable `/W4` on Windows with `cmake -DREPROC_ENABLE_W4=ON ..`
+- Enable `/W4` on Windows with `cmake -DREPROC_W4=ON ..`
 
 - When adding a new feature, make sure to implement it for both POSIX and
   Windows.
