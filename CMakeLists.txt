@@ -448,10 +448,11 @@ if(REPROC_BUILD_EXAMPLES)
   if(REPROCXX)
     reproc_add_example(cmake-help CXX)
 
-    find_package(Threads REQUIRED)
-
-    reproc_add_example(forward CXX)
-    target_link_libraries(reproc-forward PRIVATE Threads::Threads)
+    find_package(Threads)
+    if(Threads_FOUND)
+      reproc_add_example(forward CXX)
+      target_link_libraries(reproc-forward PRIVATE Threads::Threads)
+    endif()
   endif()
 endif()
 
