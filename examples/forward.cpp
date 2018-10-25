@@ -77,9 +77,12 @@ int main(int argc, char *argv[])
     return forward.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
   });
 
-  // Call stop ourselves to get the exit_status.
+  // Call stop ourselves to get the exit_status. We add reproc::cleanup::wait to
+  // give the process time to write its output before sending SIGTERM.
   unsigned int exit_status = 0;
-  ec = forward.stop(reproc::cleanup::wait, reproc::infinite, &exit_status);
+  ec = forward.stop(reproc::cleanup::wait | reproc::cleanup::terminate |
+                        reproc::cleanup::kill,
+                    5000, &exit_status);
   if (ec) { return fail(ec); }
 
   ec = read_stdout.get();
