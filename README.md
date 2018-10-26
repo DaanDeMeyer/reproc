@@ -51,9 +51,8 @@ applications.
 - Wait for the program to exit or forcefully stop it yourself. When forcefully
   stopping a process you can optionally allow the process to clean up its
   resources or immediately stop it.
-- The core library (reproc) is written in pure C. An optional C++ wrapper
-  library (reproc++) with extra features is available for use in C++
-  applications.
+- The core library (reproc) is written in C. An optional C++ wrapper library
+  (reproc++) with extra features is available for use in C++ applications.
 - Zero dependencies.
 - Multiple installation methods. Either build reproc as part of your project or
   install it as a shared library.
@@ -307,8 +306,8 @@ from the [AUR](https://aur.archlinux.org/packages/reproc).
 API documentation and examples can be found at
 <https://daandemeyer.github.io/reproc/>.
 
-The latest docs can be built by enabling the cmake `REPROC_DOCS` option
-and building the `reproc-docs` target. This requires the latest version of
+The latest docs can be built by enabling the cmake `REPROC_DOCS` option and
+building the `reproc-docs` target. This requires the latest version of
 [Doxygen](https://www.stack.nl/~dimitri/doxygen/) to be installed and available
 from the PATH. After building `reproc-docs` the generated documentation can be
 found in the `docs/html` directory of the build directory.
