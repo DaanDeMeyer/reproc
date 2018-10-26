@@ -534,16 +534,16 @@ Overflow answer.
 
 ### (POSIX) Check if execve call was succesful
 
-reproc uses a fork-exec model to start new child processes on POSIX systems. A
-problem that occured is that reproc needs to differentiate between errors that
-happened before the exec call (which are errors from reproc) and errors after
-the exec call (which are errors from the child process itself). To do this we
-create an extra pipe in the parent procces with the `FD_CLOEXEC` flag set and
-write any errors before and from exec to that pipe. If we then read from the
-error pipe after forking the `read` call will either read 0 which means exec was
-called and the write endpoint was closed (because of the `FD_CLOEXEC` flag) or
-it reads a single integer (errno) which indicates an error occured before or
-during exec.
+reproc uses a fork-exec model to start new child processes on POSIX systems.
+After forking, some setup code is executed before the `execve` call which starts
+the child process. Errors can occur in both the setup code and the `execve`
+call. To retrieve errors that happen after forking, we create an extra pipe in
+the parent procces with the `FD_CLOEXEC` flag set. We write any errors that
+happen in the forked process (that is inherited by the forked process) to that
+pipe. If we then read from the error pipe after forking the `read` call will
+either read 0 which means exec was called and the write endpoint was closed
+(because of the `FD_CLOEXEC` flag) or it reads a single integer (errno) which
+indicates an error occured before or during the call to `execve`.
 
 This solution was inspired by [this](https://stackoverflow.com/a/1586277) Stack
 Overflow answer.
