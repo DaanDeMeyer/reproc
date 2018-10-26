@@ -28,7 +28,7 @@ documentation)**
 - [Design](#design)
   - [Memory allocation](#memory-allocation)
   - [(POSIX) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
-  - [(POSIX) Check if execve call was succesful](#posix-check-if-execve-call-was-succesful)
+  - [(POSIX) Check if execve call was succesful](#posix-retrieve-errors-that-happen-after-forking)
   - [Avoiding resource leaks](#avoiding-resource-leaks)
     - [POSIX](#posix)
     - [Windows](#windows)
@@ -532,7 +532,7 @@ that the timeout value has not been exceeded.
 This solution was inspired by [this](https://stackoverflow.com/a/8020324) Stack
 Overflow answer.
 
-### (POSIX) Check if execve call was succesful
+### (POSIX) Retrieve errors that happen after forking
 
 reproc uses a fork-exec model to start new child processes on POSIX systems.
 After forking, some setup code is executed before the `execve` call which starts
