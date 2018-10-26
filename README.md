@@ -17,6 +17,7 @@ documentation)**
     - [FetchContent](#fetchcontent)
     - [Git submodule/vendor](#git-submodulevendor)
     - [Install](#install)
+    - [Leave the choice in the user's hands](#leave-the-choice-in-the-users-hands)
     - [CMake options](#cmake-options)
   - [Install from a Linux binary package](#install-from-a-linux-binary-package)
     - [Arch Linux](#arch-linux)
