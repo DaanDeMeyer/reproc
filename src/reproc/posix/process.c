@@ -54,6 +54,23 @@ static REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
   return REPROC_SUCCESS;
 }
 
+// Makeshift C lambda (receives its arguments from fork_action).
+static int fork_timeout(const void *data)
+{
+  unsigned int milliseconds = *((const unsigned int *) data);
+
+  struct timeval tv;
+  tv.tv_sec = milliseconds / 1000;           // ms -> s
+  tv.tv_usec = (milliseconds % 1000) * 1000; // leftover ms -> us
+
+  // Select with no file descriptors can be used as a makeshift sleep function
+  // (that can still be interrupted).
+  errno = 0;
+  if (select(0, NULL, NULL, NULL, &tv) == -1) { return errno; }
+
+  return 0;
+}
+
 // See Design section in README.md for an explanation of how this works.
 static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
                                  unsigned int *exit_status)
@@ -67,8 +84,12 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
   error = wait_no_hang(pid, exit_status);
   if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
+  struct fork_options options = {
+    .process_group = pid
+  };
+
   pid_t timeout_pid = 0;
-  error = fork_timeout(timeout, pid, &timeout_pid);
+  error = fork_action(fork_timeout, &timeout, &options, &timeout_pid);
   if (error) { return error; }
 
   // -reproc->pid waits for all processes in the reproc->pid process group
