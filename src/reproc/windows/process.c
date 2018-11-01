@@ -58,9 +58,10 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
   assert(pid);
   assert(handle);
 
-  // Create each process in a new process group so we don't send CTRL-BREAK
-  // signals to more than one child process in process_terminate.
-  DWORD creation_flags = CREATE_NEW_PROCESS_GROUP;
+  // CREATE_NEW_PROCESS_GROUP: Create each process in a new process group so we
+  // don't send CTRL-BREAK signals to more than one child process in process_terminate.
+  // CREATE_NO_WINDOW: Do not show a possible command prompt associated with the command
+  DWORD creation_flags = CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW;
 
 #if defined(HAS_ATTRIBUTE_LIST)
   REPROC_ERROR error = REPROC_SUCCESS;
