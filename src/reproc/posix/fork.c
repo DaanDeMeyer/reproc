@@ -214,7 +214,7 @@ REPROC_ERROR fork_timeout(unsigned int milliseconds, pid_t process_group,
   }
 
   if (timeout_pid == 0) {
-    pipe_close(&error_pipe_read);
+    // Don't close pipes explicitly because _exit takes care of that for us.
 
     errno = 0;
     if (setpgid(0, process_group) == -1) {
@@ -225,10 +225,6 @@ REPROC_ERROR fork_timeout(unsigned int milliseconds, pid_t process_group,
     struct timeval tv;
     tv.tv_sec = milliseconds / 1000;           // ms -> s
     tv.tv_usec = (milliseconds % 1000) * 1000; // leftover ms -> us
-
-    // we can't check for errors in select without waiting for the timeout to
-    // expire so we close the error pipe before calling select.
-    pipe_close(&error_pipe_write);
 
     // Select with no file descriptors can be used as a makeshift sleep function
     // (that can still be interrupted).
