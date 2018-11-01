@@ -47,6 +47,7 @@ REPROC_ERROR fork_action(int (*action)(const void *), const void *data,
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
 
     errno = 0;
+    pipe_close(&error_pipe_read);
 
     /* Normally there might be a race condition if the parent process waits for
     the child process before the child process puts itself in its own process
@@ -98,7 +99,8 @@ REPROC_ERROR fork_action(int (*action)(const void *), const void *data,
     errno = action(data);
     write(error_pipe_write, &errno, sizeof(errno));
 
-    // Exit if execvp fails.
+    pipe_close(&error_pipe_write);
+
     _exit(errno);
   }
 
