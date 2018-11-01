@@ -404,10 +404,10 @@ with reproc from multiple threads.
 
 ## Gotcha's
 
-- (POSIX) On POSIX a parent process is required to wait on a child process
-  (using `reproc_stop`) that has exited before all resources related to that
-  process can be released by the kernel. If the parent doesn't wait on a child
-  process after it exits, the child process becomes a
+- (POSIX) On POSIX a parent process is required to wait on a child process that
+  has exited (using `reproc_stop`) before all resources related to that process
+  can be released by the kernel. If the parent doesn't wait on a child process
+  after it exits, the child process becomes a
   [zombie process](https://en.wikipedia.org/wiki/Zombie_process).
 
 - While `REPROC_TERMINATE` allows the child process to perform cleanup it is up

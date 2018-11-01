@@ -60,16 +60,12 @@ public:
   fails.
 
   Takes arguments that are passed to #stop in the destructor if the process is
-  still running by the time the object is destroyed. The default flags and
-  timeout value only tell the destructor to check if the process has exited.
-  Pass different flags and timeout values if the destructor should wait longer
-  for the process to exit or if the process should be stopped forcefully in the
-  destructor.
+  still running by the time the object is destroyed.
 
   \see reproc_stop
   */
-  REPROC_EXPORT process(reproc::cleanup cleanup_flags = reproc::cleanup::wait,
-                        unsigned int timeout = 0);
+  REPROC_EXPORT process(reproc::cleanup cleanup_flags, unsigned int t1,
+                        unsigned int t2, unsigned int t3);
 
   /*! Frees the allocated memory for the #reproc_type struct and calls #stop
   with the arguments provided in the constructor if #stop hasn't been called
@@ -166,13 +162,17 @@ public:
 
   /*! \see reproc_stop */
   REPROC_EXPORT std::error_code stop(reproc::cleanup cleanup_flags,
-                                     unsigned int timeout,
+                                     unsigned int t1, unsigned int t2,
+                                     unsigned int t3,
                                      unsigned int *exit_status) noexcept;
 
 private:
-  reproc::cleanup cleanup_flags_;
-  unsigned int timeout_;
   std::unique_ptr<reproc_type> process_;
+
+  reproc::cleanup cleanup_flags_;
+  unsigned int t1_;
+  unsigned int t2_;
+  unsigned int t3_;
   bool running_;
 };
 

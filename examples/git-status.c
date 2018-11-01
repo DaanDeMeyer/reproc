@@ -107,7 +107,8 @@ cleanup:;
   (POSIX) don't clean up system resources allocated to a child process until the
   parent process explicitly waits for it after it has exited. */
   unsigned int exit_status = 0;
-  error = reproc_stop(&git_status, REPROC_WAIT, REPROC_INFINITE, &exit_status);
+  error = reproc_stop(&git_status, REPROC_WAIT, REPROC_INFINITE, 0, 0,
+                      &exit_status);
 
   if (error) { return fail(error); }
 

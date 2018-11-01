@@ -28,13 +28,13 @@ TEST_CASE("stop")
 
   SUBCASE("terminate")
   {
-    error = reproc_stop(&infinite, REPROC_TERMINATE, 50, nullptr);
+    error = reproc_stop(&infinite, REPROC_TERMINATE, 50, 0, 0, nullptr);
     REQUIRE(!error);
   }
 
   SUBCASE("kill")
   {
-    error = reproc_stop(&infinite, REPROC_KILL, 50, nullptr);
+    error = reproc_stop(&infinite, REPROC_KILL, 50, 0, 0, nullptr);
     REQUIRE(!error);
   }
 }

@@ -149,7 +149,8 @@ REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
 }
 
 REPROC_ERROR reproc_stop(reproc_type *process, int cleanup_flags,
-                         unsigned int timeout, unsigned int *exit_status)
+                         unsigned int t1, unsigned int t2, unsigned int t3,
+                         unsigned int *exit_status)
 {
   assert(process);
 
@@ -157,22 +158,28 @@ REPROC_ERROR reproc_stop(reproc_type *process, int cleanup_flags,
   // succeeded (in which case error is set to REPROC_SUCCESS).
   REPROC_ERROR error = REPROC_WAIT_TIMEOUT;
 
-  // We already did a 0 ms timeout check so we don't do it again.
+  unsigned int timeout[3] = { t1, t2, t3 };
+  // Keeps track of the first unassigned timeout.
+  unsigned int i = 0;
+
   if (cleanup_flags & REPROC_WAIT) {
-    error = process_wait(process->handle, timeout, exit_status);
+    error = process_wait(process->handle, timeout[i], exit_status);
+    i++;
   }
 
   if (error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
 
   if (cleanup_flags & REPROC_TERMINATE) {
-    error = process_terminate(process->handle, process->id, timeout,
+    error = process_terminate(process->handle, process->id, timeout[i],
                               exit_status);
+    i++;
   }
 
   if (error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
 
   if (cleanup_flags & REPROC_KILL) {
-    error = process_kill(process->handle, timeout, exit_status);
+    error = process_kill(process->handle, timeout[i], exit_status);
+    i++;
   }
 
 cleanup:

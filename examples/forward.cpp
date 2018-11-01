@@ -42,13 +42,13 @@ int main(int argc, char *argv[])
   sends SIGTERM (POSIX) or CTRL-BREAK (Windows) and waits 5 seconds. We also add
   the reproc::cleanup::kill flag which sends SIGKILL (POSIX) or calls
   TerminateProcess (Windows) if the process hasn't exited after 5 seconds and
-  waits 5 more seconds.
+  waits 2 more seconds.
 
   Note that the timout value of 5s is a maximum time to wait. If the process
   exits earlier than the timeout the destructor will return immediately.
   */
   reproc::process forward(reproc::cleanup::terminate | reproc::cleanup::kill,
-                          5000);
+                          5000, 2000, 0);
 
   std::error_code ec = forward.start(argc - 1, argv + 1);
 
@@ -77,12 +77,13 @@ int main(int argc, char *argv[])
     return forward.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
   });
 
-  // Call stop ourselves to get the exit_status. We add reproc::cleanup::wait to
-  // give the process time to write its output before sending SIGTERM.
+  // Call stop ourselves to get the exit_status. We add reproc::cleanup::wait
+  // with a timeout of 10 seconds to give the process time to write its output
+  // before sending SIGTERM.
   unsigned int exit_status = 0;
   ec = forward.stop(reproc::cleanup::wait | reproc::cleanup::terminate |
                         reproc::cleanup::kill,
-                    5000, &exit_status);
+                    10000, 5000, 2000, &exit_status);
   if (ec) { return fail(ec); }
 
   ec = read_stdout.get();

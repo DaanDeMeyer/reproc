@@ -33,15 +33,16 @@ reproc::cleanup operator|(reproc::cleanup lhs, reproc::cleanup rhs) noexcept
                                       static_cast<int>(rhs));
 }
 
-process::process(reproc::cleanup cleanup_flags, unsigned int timeout)
-    : cleanup_flags_(cleanup_flags), timeout_(timeout),
-      process_(new reproc_type()), running_(false)
+process::process(reproc::cleanup cleanup_flags, unsigned int t1,
+                 unsigned int t2, unsigned int t3)
+    : process_(new reproc_type()), cleanup_flags_(cleanup_flags), t1_(t1),
+      t2_(t2), t3_(t3), running_(false)
 {
 }
 
 process::~process() noexcept
 {
-  if (process_ && running_) { stop(cleanup_flags_, timeout_, nullptr); }
+  if (process_ && running_) { stop(cleanup_flags_, t1_, t2_, t3_, nullptr); }
 }
 
 std::error_code process::start(int argc, const char *const *argv,
@@ -103,12 +104,12 @@ std::error_code process::read(reproc::stream stream, void *buffer,
   return reproc_error_to_error_code(error);
 }
 
-std::error_code process::stop(reproc::cleanup cleanup_flags,
-                              unsigned int timeout,
+std::error_code process::stop(reproc::cleanup cleanup_flags, unsigned int t1,
+                              unsigned t2, unsigned int t3,
                               unsigned int *exit_status) noexcept
 {
   REPROC_ERROR error = reproc_stop(process_.get(),
-                                   static_cast<int>(cleanup_flags), timeout,
+                                   static_cast<int>(cleanup_flags), t1, t2, t3,
                                    exit_status);
 
   running_ = false;
