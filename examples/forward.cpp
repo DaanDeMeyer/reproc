@@ -77,9 +77,9 @@ int main(int argc, char *argv[])
     return forward.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
   });
 
-  // Call stop ourselves to get the exit_status. We add reproc::cleanup::wait
-  // with a timeout of 10 seconds to give the process time to write its output
-  // before sending SIGTERM.
+  /* Call stop ourselves to get the exit_status. We add reproc::cleanup::wait
+  with a timeout of 10 seconds to give the process time to write its output
+  before sending SIGTERM. */
   unsigned int exit_status = 0;
   ec = forward.stop(reproc::cleanup::wait | reproc::cleanup::terminate |
                         reproc::cleanup::kill,
