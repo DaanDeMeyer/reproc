@@ -94,7 +94,9 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
 
   LPSTARTUPINFOW startup_info_address = &startup_info;
 #endif
-
+  startup_info_address->dwFlags |= STARTF_USESHOWWINDOW;
+  startup_info_address->wShowWindow = SW_HIDE;
+  
   PROCESS_INFORMATION info;
 
   // Child processes inherit error mode of their parents. To avoid child
