@@ -14,7 +14,7 @@ TEST_CASE("stop")
   static constexpr unsigned int ARGV_SIZE = 2;
   std::array<const char *, ARGV_SIZE> argv{ { INFINITE_PATH, nullptr } };
 
-  REPROC_ERROR error = REPROC_SUCCESS;
+  int error = REPROC_SUCCESS;
   CAPTURE(error);
 
   error = reproc_start(&infinite, ARGV_SIZE - 1, argv.data(), nullptr);

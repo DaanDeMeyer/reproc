@@ -8,7 +8,7 @@ TEST_CASE("read-write")
 {
   reproc_type io;
 
-  REPROC_ERROR error = REPROC_SUCCESS;
+  int error = REPROC_SUCCESS;
   CAPTURE(error);
 
   static constexpr unsigned int BUFFER_SIZE = 1024;
