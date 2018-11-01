@@ -47,7 +47,6 @@ REPROC_ERROR fork_action(int (*action)(const void *), const void *data,
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
 
     errno = 0;
-    pipe_close(&error_pipe_read);
 
     /* Normally there might be a race condition if the parent process waits for
     the child process before the child process puts itself in its own process
@@ -95,11 +94,16 @@ REPROC_ERROR fork_action(int (*action)(const void *), const void *data,
     // close sets errno when an invalid file descriptor is passed.
     errno = 0;
 
+    // Close error pipe early if the for is a timeout fork so the calling
+    // process doesn't block waiting for the entire timeout to expire.
+    if (options->is_timeout_fork) { pipe_close(&error_pipe_write); }
+
     // Finally, call passed makeshift lambda.
     errno = action(data);
-    write(error_pipe_write, &errno, sizeof(errno));
 
-    pipe_close(&error_pipe_write);
+    if (!options->is_timeout_fork) {
+      write(error_pipe_write, &errno, sizeof(errno));
+    }
 
     _exit(errno);
   }

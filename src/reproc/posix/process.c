@@ -85,7 +85,8 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
   if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   struct fork_options options = {
-    .process_group = pid
+    .process_group = pid,
+    .is_timeout_fork = true
   };
 
   pid_t timeout_pid = 0;
