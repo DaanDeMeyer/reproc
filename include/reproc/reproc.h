@@ -34,7 +34,10 @@ struct reproc_type {
 };
 #endif
 
-typedef struct reproc_type reproc_type; // _t is reserved by POSIX
+// _t suffix is reserved by POSIX so we can't use 'reproc_t' and 'reproc' is
+// used as a namespace in reproc++ so we fallback to 'reproc_type' as the struct
+// and typedef name.
+typedef struct reproc_type reproc_type;
 
 /*!
 Stream identifiers used to indicate which stream to close or read from.
