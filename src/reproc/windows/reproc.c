@@ -51,19 +51,11 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
   // inheritance of the parent pipe handles to lower the chance of other
   // CreateProcess calls (outside of this library) unintentionally inheriting
   // these handles.
-  error = pipe_init(&child_stdin, &process->parent_stdin);
+  error = pipe_init(&child_stdin, true, &process->parent_stdin, false);
   if (error) { goto cleanup; }
-  error = pipe_disable_inherit(process->parent_stdin);
+  error = pipe_init(&process->parent_stdout, false, &child_stdout, true);
   if (error) { goto cleanup; }
-
-  error = pipe_init(&process->parent_stdout, &child_stdout);
-  if (error) { goto cleanup; }
-  error = pipe_disable_inherit(process->parent_stdout);
-  if (error) { goto cleanup; }
-
-  error = pipe_init(&process->parent_stderr, &child_stderr);
-  if (error) { goto cleanup; }
-  error = pipe_disable_inherit(process->parent_stderr);
+  error = pipe_init(&process->parent_stderr, false, &child_stderr, true);
   if (error) { goto cleanup; }
 
   // Join argv to whitespace delimited string as required by CreateProcess.
@@ -81,8 +73,14 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
               : REPROC_SUCCESS;
   if (error) { goto cleanup; }
 
-  error = process_create(command_line_wstring, working_directory_wstring,
-                         child_stdin, child_stdout, child_stderr, &process->id,
+  struct process_options options = {
+    .working_directory = working_directory_wstring,
+    .stdin_handle = child_stdin,
+    .stdout_handle = child_stdout,
+    .stderr_handle = child_stderr
+  };
+
+  error = process_create(command_line_wstring, &options, &process->id,
                          &process->handle);
 
 cleanup:

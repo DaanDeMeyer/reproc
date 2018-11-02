@@ -47,14 +47,12 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
 }
 #endif
 
-REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
-                            HANDLE child_stdin, HANDLE child_stdout,
-                            HANDLE child_stderr, DWORD *pid, HANDLE *handle)
+REPROC_ERROR process_create(wchar_t *command_line,
+                            struct process_options *options, DWORD *pid,
+                            HANDLE *handle)
 {
   assert(command_line);
-  assert(child_stdin);
-  assert(child_stdout);
-  assert(child_stderr);
+  assert(options);
   assert(pid);
   assert(handle);
 
@@ -67,10 +65,15 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
 
   // To ensure no handles other than those necessary are inherited we use the
   // approach detailed in https://stackoverflow.com/a/2345126.
-  HANDLE to_inherit[3] = { child_stdin, child_stdout, child_stderr };
+  HANDLE to_inherit[3];
+  int i = 0; // to_inherit_size
+
+  if (options->stdin_handle) { to_inherit[i++] = options->stdin_handle; }
+  if (options->stdout_handle) { to_inherit[i++] = options->stdout_handle; }
+  if (options->stderr_handle) { to_inherit[i++] = options->stderr_handle; }
 
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
-  error = handle_inherit_list_create(to_inherit, 3, &attribute_list);
+  error = handle_inherit_list_create(to_inherit, i, &attribute_list);
   if (error) { return error; }
 
   creation_flags |= EXTENDED_STARTUPINFO_PRESENT;
@@ -78,9 +81,9 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
   STARTUPINFOEXW extended_startup_info = {
     .StartupInfo = { .cb = sizeof(extended_startup_info),
                      .dwFlags = STARTF_USESTDHANDLES,
-                     .hStdInput = child_stdin,
-                     .hStdOutput = child_stdout,
-                     .hStdError = child_stderr },
+                     .hStdInput = options->stdin_handle,
+                     .hStdOutput = options->stdout_handle,
+                     .hStdError = options->stderr_handle },
     .lpAttributeList = attribute_list
   };
 
@@ -110,7 +113,7 @@ REPROC_ERROR process_create(wchar_t *command_line, wchar_t *working_directory,
 
   SetLastError(0);
   BOOL result = CreateProcessW(NULL, command_line, NULL, NULL, TRUE,
-                               creation_flags, NULL, working_directory,
+                               creation_flags, NULL, options->working_directory,
                                startup_info_address, &info);
 
   SetErrorMode(previous_error_mode);

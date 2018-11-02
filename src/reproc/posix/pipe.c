@@ -37,35 +37,6 @@ REPROC_ERROR pipe_init(int *read, int *write)
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR pipe_write(int pipe, const void *buffer, unsigned int to_write,
-                        unsigned int *bytes_written)
-{
-  assert(buffer);
-  assert(bytes_written);
-
-  *bytes_written = 0;
-
-  errno = 0;
-  ssize_t error = write(pipe, buffer, to_write);
-
-  if (error == -1) {
-    switch (errno) {
-    case EPIPE: return REPROC_STREAM_CLOSED;
-    case EINTR: return REPROC_INTERRUPTED;
-    default: return REPROC_UNKNOWN_ERROR;
-    }
-  }
-
-  // If error is not -1 it is actually the amount of bytes written
-  // Safe cast since we can't really have written more bytes than to_write which
-  // is an unsigned int
-  *bytes_written = (unsigned int) error;
-
-  if (*bytes_written != to_write) { return REPROC_PARTIAL_WRITE; }
-
-  return REPROC_SUCCESS;
-}
-
 REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
                        unsigned int *bytes_read)
 {
@@ -91,6 +62,35 @@ REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
   // Safe cast since size is an unsigned int and read will not read more bytes
   // than the buffer size
   *bytes_read = (unsigned int) error;
+
+  return REPROC_SUCCESS;
+}
+
+REPROC_ERROR pipe_write(int pipe, const void *buffer, unsigned int to_write,
+                        unsigned int *bytes_written)
+{
+  assert(buffer);
+  assert(bytes_written);
+
+  *bytes_written = 0;
+
+  errno = 0;
+  ssize_t error = write(pipe, buffer, to_write);
+
+  if (error == -1) {
+    switch (errno) {
+    case EPIPE: return REPROC_STREAM_CLOSED;
+    case EINTR: return REPROC_INTERRUPTED;
+    default: return REPROC_UNKNOWN_ERROR;
+    }
+  }
+
+  // If error is not -1 it is actually the amount of bytes written
+  // Safe cast since we can't really have written more bytes than to_write which
+  // is an unsigned int
+  *bytes_written = (unsigned int) error;
+
+  if (*bytes_written != to_write) { return REPROC_PARTIAL_WRITE; }
 
   return REPROC_SUCCESS;
 }
