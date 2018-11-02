@@ -1,5 +1,6 @@
 #include "reproc/reproc.h"
 
+#include "fd.h"
 #include "pipe.h"
 #include "process.h"
 
@@ -13,9 +14,9 @@ static void reproc_destroy(reproc_type *process)
 {
   assert(process);
 
-  pipe_close(&process->parent_stdin);
-  pipe_close(&process->parent_stdout);
-  pipe_close(&process->parent_stderr);
+  fd_close(&process->parent_stdin);
+  fd_close(&process->parent_stdout);
+  fd_close(&process->parent_stderr);
 }
 
 // Makeshift C lambda (receives its arguments from process_create).
@@ -78,9 +79,9 @@ cleanup:
   // An error has ocurred or the child pipe endpoints have been copied to the
   // the stdin/stdout/stderr streams of the child process. Either way they can
   // be safely closed in the parent process.
-  pipe_close(&child_stdin);
-  pipe_close(&child_stdout);
-  pipe_close(&child_stderr);
+  fd_close(&child_stdin);
+  fd_close(&child_stdout);
+  fd_close(&child_stderr);
 
   if (error) {
     reproc_destroy(process);
@@ -106,9 +107,9 @@ void reproc_close(struct reproc_type *process, REPROC_STREAM stream)
   assert(process);
 
   switch (stream) {
-  case REPROC_IN: pipe_close(&process->parent_stdin); break;
-  case REPROC_OUT: pipe_close(&process->parent_stdout); break;
-  case REPROC_ERR: pipe_close(&process->parent_stderr); break;
+  case REPROC_IN: fd_close(&process->parent_stdin); break;
+  case REPROC_OUT: fd_close(&process->parent_stdout); break;
+  case REPROC_ERR: fd_close(&process->parent_stderr); break;
   default: assert(0); // Reaching default case indicates logic error.
   }
 }

@@ -11,6 +11,4 @@ REPROC_ERROR pipe_write(int pipe, const void *buffer, unsigned int to_write,
 REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
                        unsigned int *bytes_read);
 
-void pipe_close(int *pipe);
-
 #endif

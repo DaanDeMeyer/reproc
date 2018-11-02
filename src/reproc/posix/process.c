@@ -1,5 +1,6 @@
 #include "process.h"
 
+#include "fd.h"
 #include "pipe.h"
 
 #include <assert.h>
@@ -95,7 +96,7 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *data,
 
     // Closing the error pipe write end will unblock the pipe_read call in the
     // parent process which allows it to continue executing.
-    if (options->return_early) { pipe_close(&error_pipe_write); }
+    if (options->return_early) { fd_close(&error_pipe_write); }
 
     // Finally, call passed makeshift lambda.
     errno = 0;
@@ -112,13 +113,13 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *data,
 
   // Close write end on parent side so read will read 0 if it is closed on the
   // child side as well.
-  pipe_close(&error_pipe_write);
+  fd_close(&error_pipe_write);
 
   // Blocks until an error is reported from the child process or the write end
   // of the pipe in the child process is closed.
   error = pipe_read(error_pipe_read, &child_error, sizeof(child_error),
                     &bytes_read);
-  pipe_close(&error_pipe_read);
+  fd_close(&error_pipe_read);
 
   switch (error) {
   case REPROC_SUCCESS: break;
@@ -162,8 +163,8 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *data,
   }
 
 cleanup:
-  pipe_close(&error_pipe_read);
-  pipe_close(&error_pipe_write);
+  fd_close(&error_pipe_read);
+  fd_close(&error_pipe_write);
 
   // REPROC_STREAM_CLOSED is not an error in this scenario (see above).
   if (error != REPROC_SUCCESS && error != REPROC_STREAM_CLOSED &&

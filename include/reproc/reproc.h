@@ -311,7 +311,7 @@ If the process does not exit normally the following values are stored in \p
 exit_status:
 - POSIX: Number of the signal that terminated the child process.
 - Windows: exit status passed to the `ExitProcess` or `TerminateProcess`
-function call that terminated the child process. 
+function call that terminated the child process.
 \endparblock
 
 \return
