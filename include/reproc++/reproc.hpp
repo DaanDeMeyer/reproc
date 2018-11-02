@@ -32,7 +32,7 @@ enum class stream {
 };
 
 /*! \see REPROC_INFINITE */
-extern const unsigned int infinite;
+REPROC_EXPORT extern const unsigned int infinite;
 
 /*! \see REPROC_CLEANUP */
 enum class cleanup {
