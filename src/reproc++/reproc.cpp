@@ -27,6 +27,8 @@ static std::error_code reproc_error_to_error_code(REPROC_ERROR error)
 namespace reproc
 {
 
+const unsigned int infinite = 0xFFFFFFFF;
+
 reproc::cleanup operator|(reproc::cleanup lhs, reproc::cleanup rhs) noexcept
 {
   return static_cast<reproc::cleanup>(static_cast<int>(lhs) |

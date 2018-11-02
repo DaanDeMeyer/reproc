@@ -306,7 +306,10 @@ reproc_add_library(reproc C lib)
 target_include_directories(reproc PRIVATE
   ${PROJECT_SOURCE_DIR}/src/reproc/common>
 )
-target_sources(reproc PRIVATE src/reproc/common/error.c)
+target_sources(reproc PRIVATE
+  src/reproc/common/error.c
+  src/reproc/common/infinite.c
+)
 
 if(WIN32)
   target_include_directories(reproc PRIVATE

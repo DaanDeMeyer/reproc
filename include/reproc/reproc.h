@@ -74,7 +74,7 @@ typedef enum {
 } REPROC_CLEANUP;
 
 /*! Tells a function that takes a timeout value to wait indefinitely. */
-static const unsigned int REPROC_INFINITE = 0xFFFFFFFF;
+extern const unsigned int REPROC_INFINITE;
 
 /*!
 Starts the process specified by \p argv in the given working directory and

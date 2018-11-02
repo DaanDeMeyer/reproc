@@ -32,7 +32,7 @@ enum class stream {
 };
 
 /*! \see REPROC_INFINITE */
-static const unsigned int infinite = 0xFFFFFFFF;
+extern const unsigned int infinite;
 
 /*! \see REPROC_CLEANUP */
 enum class cleanup {
