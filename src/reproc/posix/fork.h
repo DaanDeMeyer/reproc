@@ -19,8 +19,10 @@ struct fork_options {
   // will create a new process group with the same value as the new child
   // process' pid).
   pid_t process_group;
-  // timeout forks need special handling.
-  bool is_timeout_fork;
+  // Don't wait for action to complete in the child process before returning
+  // from fork_action. Returning early also results in errors from action not
+  // being reported.
+  bool return_early;
 };
 
 /*

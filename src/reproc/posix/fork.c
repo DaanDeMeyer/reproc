@@ -92,16 +92,18 @@ REPROC_ERROR fork_action(int (*action)(const void *), const void *data,
     }
     // Ignore file descriptor close errors since we try to close all of them and
     // close sets errno when an invalid file descriptor is passed.
-    errno = 0;
 
-    // Close error pipe early if the for is a timeout fork so the calling
-    // process doesn't block waiting for the entire timeout to expire.
-    if (options->is_timeout_fork) { pipe_close(&error_pipe_write); }
+    // Closing the error pipe write end will unblock the pipe_read call in the
+    // parent process which allows it to continue executing.
+    if (options->return_early) { pipe_close(&error_pipe_write); }
 
     // Finally, call passed makeshift lambda.
+    errno = 0;
     errno = action(data);
 
-    if (!options->is_timeout_fork) {
+    // If we didn't return early the error pipe write end is still open and we
+    // can use it to report an optional error from action.
+    if (!options->return_early) {
       write(error_pipe_write, &errno, sizeof(errno));
     }
 

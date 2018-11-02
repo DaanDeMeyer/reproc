@@ -68,7 +68,7 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
     // We put the child process in its own process group which is needed by
     // reproc_stop (see reproc_stop for extra information).
     .process_group = 0,
-    .is_timeout_fork = false
+    .return_early = false
   };
 
   // Fork the child process and call exec.

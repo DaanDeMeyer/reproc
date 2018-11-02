@@ -85,8 +85,12 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
   if (error != REPROC_WAIT_TIMEOUT) { return error; }
 
   struct fork_options options = {
+    // waitpid supports waiting for the first process that exits in a process
+    // group. To take advantage of this we put the timeout fork in the same
+    // process group as the process we're waiting for.
     .process_group = pid,
-    .is_timeout_fork = true
+    // Return early so fork_action doesn't block until the timeout has expired.
+    .return_early = true
   };
 
   pid_t timeout_pid = 0;
