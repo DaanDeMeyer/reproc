@@ -102,7 +102,7 @@ REPROC_ERROR reproc_write(reproc_type *process, const void *buffer,
   return pipe_write(process->parent_stdin, buffer, to_write, bytes_written);
 }
 
-void reproc_close(struct reproc_type *process, REPROC_STREAM stream)
+void reproc_close(reproc_type *process, REPROC_STREAM stream)
 {
   assert(process);
 
@@ -136,7 +136,7 @@ REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
   return REPROC_UNKNOWN_ERROR;
 }
 
-REPROC_ERROR reproc_stop(struct reproc_type *process, int cleanup_flags,
+REPROC_ERROR reproc_stop(reproc_type *process, int cleanup_flags,
                          unsigned int t1, unsigned int t2, unsigned int t3,
                          unsigned int *exit_status)
 {
