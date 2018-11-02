@@ -137,7 +137,7 @@ REPROC_ERROR fork_action(int (*action)(const void *), const void *data,
   }
 
   // If read does not return 0 an error will have occurred in the child process
-  // before or during execve (or an error with read itself (less likely)).
+  // (or with read itself (less likely)).
   if (child_error != 0) {
     // Allow retrieving child process errors with reproc_system_error.
     errno = child_error;
