@@ -1,6 +1,5 @@
 #include "reproc/reproc.h"
 
-#include "fork.h"
 #include "pipe.h"
 #include "process.h"
 
@@ -19,12 +18,12 @@ static void reproc_destroy(reproc_type *process)
   pipe_close(&process->parent_stderr);
 }
 
-// Makeshift C lambda (receives its arguments from fork_action).
-static int fork_exec(const void *data)
+// Makeshift C lambda (receives its arguments from process_create).
+static int exec_process(const void *data)
 {
   const char *const *argv = data;
 
-  // Replace forked child with process we want to run.
+  // Replace forked process with the process specified in argv.
   // Safe cast (execvp doesn't actually change the contents of argv).
   if (execvp(argv[0], (char **) argv) == -1) { return errno; }
 
@@ -60,7 +59,7 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
   error = pipe_init(&process->parent_stderr, &child_stderr);
   if (error) { goto cleanup; }
 
-  struct fork_options options = {
+  struct process_options options = {
     .working_directory = working_directory,
     .stdin_fd = child_stdin,
     .stdout_fd = child_stdout,
@@ -68,11 +67,12 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
     // We put the child process in its own process group which is needed by
     // reproc_stop (see reproc_stop for extra information).
     .process_group = 0,
+    // Don't return early to make sure we receive errors reported by execve.
     .return_early = false
   };
 
-  // Fork the child process and call exec.
-  error = fork_action(fork_exec, argv, &options, &process->id);
+  // Fork a child process and call exec.
+  error = process_create(exec_process, argv, &options, &process->id);
 
 cleanup:
   // An error has ocurred or the child pipe endpoints have been copied to the

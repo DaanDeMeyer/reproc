@@ -326,7 +326,6 @@ elseif(UNIX)
   )
   target_sources(reproc PRIVATE
     src/reproc/posix/error.c
-    src/reproc/posix/fork.c
     src/reproc/posix/pipe.c
     src/reproc/posix/reproc.c
     src/reproc/posix/process.c
