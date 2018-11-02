@@ -1,5 +1,5 @@
-#ifndef REPROC_C_WINDOWS_PIPE_H
-#define REPROC_C_WINDOWS_PIPE_H
+#ifndef REPROC_WINDOWS_PIPE_H
+#define REPROC_WINDOWS_PIPE_H
 
 #include "reproc/error.h"
 

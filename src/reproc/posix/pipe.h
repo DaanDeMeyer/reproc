@@ -1,5 +1,5 @@
-#ifndef REPROC_C_POSIX_PIPE_H
-#define REPROC_C_POSIX_PIPE_H
+#ifndef REPROC_POSIX_PIPE_H
+#define REPROC_POSIX_PIPE_H
 
 #include "reproc/error.h"
 
