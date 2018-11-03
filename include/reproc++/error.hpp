@@ -19,30 +19,34 @@ enum class errc {
   /*! #REPROC_WAIT_TIMEOUT */
   wait_timeout = 1,
   /*! #REPROC_STREAM_CLOSED */
-  stream_closed,
+  stream_closed = 2,
   /*! #REPROC_PARTIAL_WRITE */
-  partial_write,
+  partial_write = 3,
 
   // system errors
 
   /*! #REPROC_NOT_ENOUGH_MEMORY */
-  not_enough_memory,
+  not_enough_memory = 4,
   /*! #REPROC_PIPE_LIMIT_REACHED */
-  pipe_limit_reached,
+  pipe_limit_reached = 5,
   /*! #REPROC_INTERRUPTED */
-  interrupted,
+  interrupted = 6,
   /*! #REPROC_PROCESS_LIMIT_REACHED */
-  process_limit_reached,
+  process_limit_reached = 7,
   /*! #REPROC_INVALID_UNICODE */
-  invalid_unicode,
+  invalid_unicode = 8,
   /*! #REPROC_PERMISSION_DENIED */
-  permission_denied,
+  permission_denied = 9,
   /*! #REPROC_SYMLINK_LOOP */
-  symlink_loop,
+  symlink_loop = 10,
   /*! #REPROC_FILE_NOT_FOUND */
-  file_not_found,
+  file_not_found = 11,
   /*! #REPROC_NAME_TOO_LONG */
-  name_too_long
+  name_too_long = 12,
+  /*! #REPROC_ARGS_TOO_LONG */
+  args_too_long = 13,
+  /*! #REPROC_NOT_EXECUTABLE */
+  not_executable = 14
 };
 
 /*! \private */

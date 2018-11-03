@@ -18,50 +18,50 @@ if (error) { return error; } // Only executes if reproc_read returns an error
 typedef enum {
   /*! Indicates a library call was successful. All library function return this
   value if no error occurs. */
-  REPROC_SUCCESS,
+  REPROC_SUCCESS = 0,
 
   // reproc errors (do not correspond to a system error)
 
   /*! A timeout value passed to a function expired. */
-  REPROC_WAIT_TIMEOUT,
+  REPROC_WAIT_TIMEOUT = 1,
   /*! The child process closed one of its streams (and in case of
   stdout/stderr all of the data from that stream has been read). */
-  REPROC_STREAM_CLOSED,
+  REPROC_STREAM_CLOSED = 2,
   /*! Only part of the buffer was written to the stdin of the child process. */
-  REPROC_PARTIAL_WRITE,
+  REPROC_PARTIAL_WRITE = 3,
 
   // system errors (correspond to a system error)
 
   /*! A memory allocation in the library code failed (Windows only) or the
   underlying system did not have enough memory to execute a system call. */
-  REPROC_NOT_ENOUGH_MEMORY,
+  REPROC_NOT_ENOUGH_MEMORY = 4,
   /*! The current or child process was not allowed to create any more pipes. */
-  REPROC_PIPE_LIMIT_REACHED,
+  REPROC_PIPE_LIMIT_REACHED = 5,
   /*! A waiting system call (read, write, wait, ...) was interrupted by the
   system. */
-  REPROC_INTERRUPTED,
+  REPROC_INTERRUPTED = 6,
   /*! The current process was not allowed to spawn any more child processes. */
-  REPROC_PROCESS_LIMIT_REACHED,
+  REPROC_PROCESS_LIMIT_REACHED = 7,
   /*! One of the UTF-8 strings passed to the library did not contain
   valid unicode. */
-  REPROC_INVALID_UNICODE,
+  REPROC_INVALID_UNICODE = 8,
   /*! The current process does not have permission to execute the program. */
-  REPROC_PERMISSION_DENIED,
+  REPROC_PERMISSION_DENIED = 9,
   /*! Too many symlinks were encountered while looking for the program. */
-  REPROC_SYMLINK_LOOP,
+  REPROC_SYMLINK_LOOP = 10,
   /*! The program or working directory was not found. */
-  REPROC_FILE_NOT_FOUND,
+  REPROC_FILE_NOT_FOUND = 11,
   /*! The given name was too long (most systems have path length limits). */
-  REPROC_NAME_TOO_LONG,
+  REPROC_NAME_TOO_LONG = 12,
   /*! The given argument list was too long (some systems limit the size of argv.
    */
-  REPROC_ARGS_TOO_LONG,
+  REPROC_ARGS_TOO_LONG = 13,
   /*! The system does not support executing the given binary. */
-  REPROC_NOT_EXECUTABLE,
+  REPROC_NOT_EXECUTABLE = 14,
   /*! Unlike POSIX, Windows does not include information about exactly which
   errors can occur in its documentation. If an error occurs that is not known
   functions will return #REPROC_UNKNOWN_ERROR. */
-  REPROC_UNKNOWN_ERROR,
+  REPROC_UNKNOWN_ERROR = 15,
 } REPROC_ERROR;
 
 #ifdef __cplusplus
