@@ -31,6 +31,21 @@ static int exec_process(const void *data)
   return 0;
 }
 
+static REPROC_ERROR exec_map_error(int error)
+{
+  switch(error) {
+    case E2BIG: return REPROC_ARGS_TOO_LONG;
+    case EACCES: return REPROC_PERMISSION_DENIED;
+    case EINVAL: return REPROC_NOT_EXECUTABLE;
+    case ELOOP: return REPROC_SYMLINK_LOOP;
+    case ENAMETOOLONG: return REPROC_NAME_TOO_LONG;
+    case ENOENT: return REPROC_FILE_NOT_FOUND;
+    case ENOTDIR: return REPROC_FILE_NOT_FOUND;
+    case ENOMEM: return REPROC_NOT_ENOUGH_MEMORY;
+    default: return REPROC_UNKNOWN_ERROR;
+  }
+}
+
 REPROC_ERROR reproc_start(reproc_type *process, int argc,
                           const char *const *argv,
                           const char *working_directory)
@@ -74,6 +89,7 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
 
   // Fork a child process and call exec.
   error = process_create(exec_process, argv, &options, &process->id);
+  if (error == REPROC_UNKNOWN_ERROR) { error = exec_map_error(errno); }
 
 cleanup:
   // An error has ocurred or the child pipe endpoints have been copied to the

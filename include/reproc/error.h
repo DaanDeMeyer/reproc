@@ -53,6 +53,11 @@ typedef enum {
   REPROC_FILE_NOT_FOUND,
   /*! The given name was too long (most systems have path length limits). */
   REPROC_NAME_TOO_LONG,
+  /*! The given argument list was too long (some systems limit the size of argv.
+   */
+  REPROC_ARGS_TOO_LONG,
+  /*! The system does not support executing the given binary. */
+  REPROC_NOT_EXECUTABLE,
   /*! Unlike POSIX, Windows does not include information about exactly which
   errors can occur in its documentation. If an error occurs that is not known
   functions will return #REPROC_UNKNOWN_ERROR. */

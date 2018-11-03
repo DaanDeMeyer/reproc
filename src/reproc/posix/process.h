@@ -26,9 +26,11 @@ struct process_options {
 };
 
 /* Creates child process and calls action with data in the child process. The
-process id of the new child process is assigned to pid. */
-REPROC_ERROR process_create(int (*action)(const void *), const void *data,
-                            struct process_options *options, pid_t *pid);
+process id of the new child process is assigned to pid. map_error is used to
+translate errno values returned from action to REPROC_ERROR values. */
+REPROC_ERROR
+process_create(int (*action)(const void *), const void *data,
+               struct process_options *options, pid_t *pid);
 
 REPROC_ERROR process_wait(pid_t pid, unsigned int timeout,
                           unsigned int *exit_status);

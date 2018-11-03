@@ -151,11 +151,9 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *data,
     case EACCES: error = REPROC_PERMISSION_DENIED; break;
     case EPERM: error = REPROC_PERMISSION_DENIED; break;
     case ELOOP: error = REPROC_SYMLINK_LOOP; break;
-    case ENOMEM: error = REPROC_NOT_ENOUGH_MEMORY; break;
+    case ENAMETOOLONG: error = REPROC_NAME_TOO_LONG; break;
     case ENOENT: error = REPROC_FILE_NOT_FOUND; break;
     case ENOTDIR: error = REPROC_FILE_NOT_FOUND; break;
-    case EMFILE: error = REPROC_PIPE_LIMIT_REACHED; break;
-    case ENAMETOOLONG: error = REPROC_NAME_TOO_LONG; break;
     case EINTR: error = REPROC_INTERRUPTED; break;
     default: error = REPROC_UNKNOWN_ERROR; break;
     }
@@ -243,6 +241,15 @@ static int timeout_process(const void *data)
   return 0;
 }
 
+static REPROC_ERROR timeout_map_error(int error)
+{
+  switch(error) {
+    case EINTR: return REPROC_INTERRUPTED;
+    case ENOMEM: return REPROC_NOT_ENOUGH_MEMORY;
+    default: return REPROC_UNKNOWN_ERROR;
+  }
+}
+
 // See Design section in README.md for an explanation of how this works.
 static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
                                  unsigned int *exit_status)
@@ -268,6 +275,7 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
 
   pid_t timeout_pid = 0;
   error = process_create(timeout_process, &timeout, &options, &timeout_pid);
+  if (error == REPROC_UNKNOWN_ERROR) { error = timeout_map_error(errno); }
   if (error) { return error; }
 
   // -reproc->pid waits for all processes in the reproc->pid process group
