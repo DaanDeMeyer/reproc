@@ -156,6 +156,7 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *data,
     case ENOTDIR: error = REPROC_FILE_NOT_FOUND; break;
     case EMFILE: error = REPROC_PIPE_LIMIT_REACHED; break;
     case ENAMETOOLONG: error = REPROC_NAME_TOO_LONG; break;
+    case EINTR: error = REPROC_INTERRUPTED; break;
     default: error = REPROC_UNKNOWN_ERROR; break;
     }
 
