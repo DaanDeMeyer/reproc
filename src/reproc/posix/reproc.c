@@ -33,18 +33,18 @@ static int exec_process(const void *data)
 
 static REPROC_ERROR exec_map_error(int error)
 {
-  switch(error) {
-    case E2BIG: return REPROC_ARGS_TOO_LONG;
-    case EACCES: return REPROC_PERMISSION_DENIED;
-    case ELOOP: return REPROC_SYMLINK_LOOP;
-    case EMFILE: return REPROC_PROCESS_LIMIT_REACHED;
-    case ENAMETOOLONG: return REPROC_NAME_TOO_LONG;
-    case ENOENT: return REPROC_FILE_NOT_FOUND;
-    case ENOTDIR: return REPROC_FILE_NOT_FOUND;
-    case ENOEXEC: return REPROC_NOT_EXECUTABLE;
-    case ENOMEM: return REPROC_NOT_ENOUGH_MEMORY;
-    case EPERM: return REPROC_PERMISSION_DENIED;
-    default: return REPROC_UNKNOWN_ERROR;
+  switch (error) {
+  case E2BIG: return REPROC_ARGS_TOO_LONG;
+  case EACCES: return REPROC_PERMISSION_DENIED;
+  case ELOOP: return REPROC_SYMLINK_LOOP;
+  case EMFILE: return REPROC_PROCESS_LIMIT_REACHED;
+  case ENAMETOOLONG: return REPROC_NAME_TOO_LONG;
+  case ENOENT: return REPROC_FILE_NOT_FOUND;
+  case ENOTDIR: return REPROC_FILE_NOT_FOUND;
+  case ENOEXEC: return REPROC_NOT_EXECUTABLE;
+  case ENOMEM: return REPROC_NOT_ENOUGH_MEMORY;
+  case EPERM: return REPROC_PERMISSION_DENIED;
+  default: return REPROC_UNKNOWN_ERROR;
   }
 }
 
@@ -125,10 +125,10 @@ void reproc_close(reproc_type *process, REPROC_STREAM stream)
   assert(process);
 
   switch (stream) {
-  case REPROC_IN: fd_close(&process->parent_stdin); break;
-  case REPROC_OUT: fd_close(&process->parent_stdout); break;
-  case REPROC_ERR: fd_close(&process->parent_stderr); break;
-  default: assert(0); // Reaching default case indicates logic error.
+  case REPROC_IN: fd_close(&process->parent_stdin); return;
+  case REPROC_OUT: fd_close(&process->parent_stdout); return;
+  case REPROC_ERR: fd_close(&process->parent_stderr); return;
+  default: assert(0); return;
   }
 }
 
@@ -142,16 +142,14 @@ REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
   assert(bytes_read);
 
   switch (stream) {
-  case REPROC_IN: break;
   case REPROC_OUT:
     return pipe_read(process->parent_stdout, buffer, size, bytes_read);
   case REPROC_ERR:
     return pipe_read(process->parent_stderr, buffer, size, bytes_read);
-  default: assert(0); // Reaching default case indicates logic error.
+  default:
+    // Only reachable when compiled without asserts
+    return REPROC_UNKNOWN_ERROR;
   }
-
-  // Only reachable when compiled without asserts.
-  return REPROC_UNKNOWN_ERROR;
 }
 
 REPROC_ERROR reproc_stop(reproc_type *process, int cleanup_flags,

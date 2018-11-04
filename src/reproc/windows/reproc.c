@@ -117,10 +117,10 @@ void reproc_close(reproc_type *process, REPROC_STREAM stream)
   assert(process);
 
   switch (stream) {
-  case REPROC_IN: handle_close(&process->parent_stdin); break;
-  case REPROC_OUT: handle_close(&process->parent_stdout); break;
-  case REPROC_ERR: handle_close(&process->parent_stderr); break;
-  default: assert(0); // Reaching default case indicates logic error.
+  case REPROC_IN: handle_close(&process->parent_stdin); return;
+  case REPROC_OUT: handle_close(&process->parent_stdout); return;
+  case REPROC_ERR: handle_close(&process->parent_stderr); return;
+  default: assert(0); return; // Reaching default case indicates logic error.
   }
 }
 
@@ -134,16 +134,14 @@ REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
   assert(bytes_read);
 
   switch (stream) {
-  case REPROC_IN: break;
   case REPROC_OUT:
     return pipe_read(process->parent_stdout, buffer, size, bytes_read);
   case REPROC_ERR:
     return pipe_read(process->parent_stderr, buffer, size, bytes_read);
-  default: assert(0); // Reaching default case indicates logic error.
+  default:
+    // Only reachable when compiled without asserts.
+    return REPROC_UNKNOWN_ERROR;
   }
-
-  // Only reachable when compiled without asserts.
-  return REPROC_UNKNOWN_ERROR;
 }
 
 REPROC_ERROR reproc_stop(reproc_type *process, int cleanup_flags,
