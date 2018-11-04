@@ -44,7 +44,8 @@ public:
              error_code == std::errc::too_many_files_open_in_system;
     case reproc::errc::interrupted: return error_code == std::errc::interrupted;
     case reproc::errc::process_limit_reached:
-      return error_code == std::errc::resource_unavailable_try_again;
+      return error_code == std::errc::resource_unavailable_try_again ||
+             error_code == std::errc::too_many_files_open;
     case reproc::errc::invalid_unicode:
 #ifdef _WIN32
       // ERROR_NO_UNICODE_TRANSLATION == 1113 (Windows).
@@ -55,13 +56,18 @@ public:
       return false;
 #endif
     case reproc::errc::permission_denied:
-      return error_code == std::errc::permission_denied;
+      return error_code == std::errc::permission_denied ||
+             error_code == std::errc::operation_not_permitted;
     case reproc::errc::symlink_loop:
       return error_code == std::errc::too_many_symbolic_link_levels;
     case reproc::errc::file_not_found:
       return error_code == std::errc::no_such_file_or_directory;
     case reproc::errc::name_too_long:
       return error_code == std::errc::filename_too_long;
+    case reproc::errc::args_too_long:
+      return error_code == std::errc::argument_list_too_long;
+    case reproc::errc::not_executable:
+      return error_code == std::errc::executable_format_error;
     default: return false;
     }
   }

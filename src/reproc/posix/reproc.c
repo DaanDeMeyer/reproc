@@ -36,12 +36,14 @@ static REPROC_ERROR exec_map_error(int error)
   switch(error) {
     case E2BIG: return REPROC_ARGS_TOO_LONG;
     case EACCES: return REPROC_PERMISSION_DENIED;
-    case EINVAL: return REPROC_NOT_EXECUTABLE;
     case ELOOP: return REPROC_SYMLINK_LOOP;
+    case EMFILE: return REPROC_PROCESS_LIMIT_REACHED;
     case ENAMETOOLONG: return REPROC_NAME_TOO_LONG;
     case ENOENT: return REPROC_FILE_NOT_FOUND;
     case ENOTDIR: return REPROC_FILE_NOT_FOUND;
+    case ENOEXEC: return REPROC_NOT_EXECUTABLE;
     case ENOMEM: return REPROC_NOT_ENOUGH_MEMORY;
+    case EPERM: return REPROC_PERMISSION_DENIED;
     default: return REPROC_UNKNOWN_ERROR;
   }
 }

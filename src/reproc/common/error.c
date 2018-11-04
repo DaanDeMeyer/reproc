@@ -16,7 +16,10 @@ const char *reproc_error_to_string(REPROC_ERROR error)
   case REPROC_SYMLINK_LOOP: return "symlink loop";
   case REPROC_FILE_NOT_FOUND: return "file not found";
   case REPROC_NAME_TOO_LONG: return "name too long";
-  case REPROC_UNKNOWN_ERROR:
-  default: return "unknown error";
+  case REPROC_ARGS_TOO_LONG: return "args too long";
+  case REPROC_NOT_EXECUTABLE: return "not executable";
+  case REPROC_UNKNOWN_ERROR: return "unknown error";
   }
+
+  return "unknown error";
 }
