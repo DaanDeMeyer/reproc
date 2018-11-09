@@ -13,7 +13,13 @@ else()
   cmake_policy(VERSION 3.12)
 endif()
 
-project(reproc VERSION 2.0.0 LANGUAGES C)
+project(reproc
+  VERSION 2.0.0
+  DESCRIPTION "Cross-platform (C99/C++11) library that simplifies working with \
+external CLI applications from C and C++"
+  HOMEPAGE_URL https://github.com/DaanDeMeyer/reproc
+  LANGUAGES C
+)
 
 # Tip: use cmake-gui when contributing to reproc to turn on everything without
 # having to type out all the options by hand (cmake .. && cmake-gui .).
@@ -242,9 +248,6 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
   # Each library is installed separately (with separate config files).
 
   if(REPROC_INSTALL)
-    include(GNUInstallDirs)
-    set(REPROC_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET})
-
     # Add ${TARGET} to install prefix on Windows because CMake searches for
     # <prefix>/<name>/... on Windows instead of <prefix>/....
     if(WIN32)
@@ -256,6 +259,9 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
     target_include_directories(${TARGET} PUBLIC
       $<INSTALL_INTERFACE:${REPROC_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}>
     )
+
+    include(GNUInstallDirs)
+    set(REPROC_INSTALL_CMAKECONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET})
 
     install(
       TARGETS ${TARGET}
@@ -269,7 +275,7 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
       EXPORT ${TARGET}-targets
       FILE ${TARGET}-targets.cmake
       NAMESPACE reproc::
-      DESTINATION ${REPROC_INSTALL_PREFIX}/${REPROC_INSTALL_CONFIGDIR}
+      DESTINATION ${REPROC_INSTALL_PREFIX}/${REPROC_INSTALL_CMAKECONFIGDIR}
     )
 
     install(
@@ -285,16 +291,32 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
     )
 
     configure_package_config_file(
-      ${PROJECT_SOURCE_DIR}/tools/cmake/${TARGET}-config.cmake.in
-      ${PROJECT_BINARY_DIR}/${TARGET}-config.cmake
-      INSTALL_DESTINATION ${REPROC_INSTALL_PREFIX}/${REPROC_INSTALL_CONFIGDIR}
+        ${PROJECT_SOURCE_DIR}/tools/cmake/${TARGET}-config.cmake.in
+        ${PROJECT_BINARY_DIR}/${TARGET}-config.cmake
+      INSTALL_DESTINATION
+        ${REPROC_INSTALL_PREFIX}/${REPROC_INSTALL_CMAKECONFIGDIR}
     )
 
     install(
       FILES
         ${PROJECT_BINARY_DIR}/${TARGET}-config.cmake
         ${PROJECT_BINARY_DIR}/${TARGET}-config-version.cmake
-      DESTINATION ${REPROC_INSTALL_PREFIX}/${REPROC_INSTALL_CONFIGDIR}
+      DESTINATION ${REPROC_INSTALL_PREFIX}/${REPROC_INSTALL_CMAKECONFIGDIR}
+    )
+
+    ### pkg-config ###
+
+    set(REPROC_INSTALL_PKGCONFIGDIR ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/tools/cmake/${TARGET}.pc.in
+      ${PROJECT_BINARY_DIR}/${TARGET}.pc
+      @ONLY
+    )
+
+    install(
+      FILES ${PROJECT_BINARY_DIR}/${TARGET}.pc
+      DESTINATION ${REPROC_INSTALL_PREFIX}/${REPROC_INSTALL_PKGCONFIGDIR}
     )
   endif()
 endfunction()
