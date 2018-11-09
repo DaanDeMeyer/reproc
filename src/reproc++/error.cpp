@@ -68,8 +68,9 @@ public:
       return error_code == std::errc::argument_list_too_long;
     case reproc::errc::not_executable:
       return error_code == std::errc::executable_format_error;
-    default: return false;
     }
+
+    return false;
   }
 };
 
