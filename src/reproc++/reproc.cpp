@@ -2,6 +2,8 @@
 
 #include "reproc/reproc.h"
 
+#include <array>
+
 static std::error_code reproc_error_to_error_code(REPROC_ERROR error)
 {
   switch (error) {
