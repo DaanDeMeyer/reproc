@@ -13,13 +13,7 @@ else()
   cmake_policy(VERSION 3.12)
 endif()
 
-project(reproc
-  VERSION 2.0.0
-  DESCRIPTION "Cross-platform (C99/C++11) library that simplifies working with \
-external CLI applications from C and C++"
-  HOMEPAGE_URL https://github.com/DaanDeMeyer/reproc
-  LANGUAGES C
-)
+project(reproc VERSION 2.0.0 LANGUAGES C)
 
 # Tip: use cmake-gui when contributing to reproc to turn on everything without
 # having to type out all the options by hand (cmake .. && cmake-gui .).

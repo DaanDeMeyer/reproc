@@ -1,6 +1,6 @@
 Name: reproc++
-Description: @PROJECT_DESCRIPTION@
-URL: @PROJECT_HOMEPAGE_URL@
+Description: "Cross-platform (C99/C++11) library that simplifies working with external CLI applications from C and C++"
+URL: https://github.com/DaanDeMeyer/reproc
 Version: @PROJECT_VERSION@
 Requires.private: reproc = @PROJECT_VERSION@
 Cflags: -I@REPROC_INSTALL_PREFIX@/@CMAKE_INSTALL_INCLUDEDIR@
