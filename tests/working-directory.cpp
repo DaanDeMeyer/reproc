@@ -21,4 +21,6 @@ TEST_CASE("working-directory")
   error = reproc_wait(&noop, REPROC_INFINITE, &exit_status);
   REQUIRE(!error);
   REQUIRE((exit_status == 0));
+
+  reproc_destroy(&noop);
 }

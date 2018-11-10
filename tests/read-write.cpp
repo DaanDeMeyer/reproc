@@ -80,4 +80,6 @@ TEST_CASE("read-write")
   error = reproc_wait(&io, REPROC_INFINITE, &exit_status);
   REQUIRE(!error);
   REQUIRE((exit_status == 0));
+
+  reproc_destroy(&io);
 }

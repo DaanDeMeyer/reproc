@@ -37,4 +37,6 @@ TEST_CASE("stop")
     error = reproc_kill(&infinite, 50, nullptr);
     REQUIRE(!error);
   }
+
+  reproc_destroy(&infinite);
 }
