@@ -14,21 +14,15 @@ int fail(std::error_code ec)
 // Uses reproc++ to print CMake's help page.
 int main()
 {
-  /* A child process is managed by the process class. We can pass parameters to
-  the constructor that will be passed to process::stop in the destructor.
-  Calling process::stop in the destructor makes sure we don't forget to stop the
-  process when the object is destroyed. See the REPROC_CLEANUP enum
-  documentation (from the reproc C API) for more information on what each of the
-  flags from reproc::cleanup does. */
+  /* A child process is managed by the process class. We can pass function
+  pointers of process stop methods (process::wait, process::terminate and
+  process::kill) to its constructor which will be called in its destructor to
+  stop the process if it is still running. */
 
   /* cmake --help is a short lived command and will always exit on its own so
-  waiting indefinitely (reproc::infinite) until it exits on its own
-  (reproc::cleanup::wait) is sufficient to make sure the process is always
-  stopped and cleaned up. The two zero values are extra timeout parameters that
-  are only used if more than one flag is passed (e.g. reproc::cleanup::wait |
-  reproc::cleanup::terminate, the second timeout parameter would then be used as
-  the timeout value for reproc::cleanup::terminate). */
-  reproc::process cmake_help(reproc::cleanup::wait, reproc::infinite, 0, 0);
+  waiting indefinitely until it exits on its own is sufficient to make sure the
+  process is always stopped and cleaned up. */
+  reproc::process cmake_help(reproc::wait, reproc::infinite);
 
   /* Args are not passed to the constructor so they don't have to be stored in
   the process class. While the C API requires the args to end with a NULL
@@ -74,14 +68,14 @@ int main()
   documentation of process::read also provides more information on the
   requirements a parser should fulfill. */
 
-  /* Even if we pass cleanup parameters to the constructor, we can still call
-  stop ourselves. This allows us to retrieve the exit status of the process
-  which is hard to get if the process is stopped in the destructor. The process
-  class has logic to prevent stop from being called in the destructor if it has
-  already been called by the user. */
+  /* Even if we pass stop parameters to the constructor, we can still call the
+  individual methods ourselves. This allows us to retrieve the exit status of
+  the process which is hard to get if the process is stopped in the destructor.
+  The process class has logic to prevent the stop methods from being called in
+  the destructor if it the process has already been stopped before the
+  destructor is called. */
   unsigned int exit_status = 0;
-  ec = cmake_help.stop(reproc::cleanup::wait, reproc::infinite, 0, 0,
-                       &exit_status);
+  ec = cmake_help.wait(reproc::infinite, &exit_status);
   if (ec) { return fail(ec); }
 
   return static_cast<int>(exit_status);

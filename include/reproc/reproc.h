@@ -20,17 +20,17 @@ struct reproc_type {
   unsigned long id;
   // void * = HANDLE
   void *handle;
-  void *parent_stdin;
-  void *parent_stdout;
-  void *parent_stderr;
+  void *in;
+  void *out;
+  void *err;
 };
 #else
 struct reproc_type {
   /*! \privatesection */
   int id;
-  int parent_stdin;
-  int parent_stdout;
-  int parent_stderr;
+  int in;
+  int out;
+  int err;
 };
 #endif
 
@@ -54,25 +54,6 @@ typedef enum {
   REPROC_ERR
 } REPROC_STREAM;
 
-/*!
-Contains flags used to tell reproc how to stop a child process.
-
-\see reproc_stop
-*/
-typedef enum {
-  /*! Wait for the child process to exit on its own. */
-  REPROC_WAIT = 1 << 0,
-  /*! Send `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) and wait for the child
-  process to exit. */
-  REPROC_TERMINATE = 1 << 1,
-  /*! Send `SIGKILL` (POSIX) or call `TerminateProcess` (Windows) and wait for
-  the child process to exit. Because `SIGKILL` and `TerminateProcess` do not
-  allow the child process to clean up its resources this flag should only be
-  used if the #REPROC_TERMINATE flag is not sufficient to stop a child process.
-  */
-  REPROC_KILL = 1 << 2
-} REPROC_CLEANUP;
-
 /*! Tells a function that takes a timeout value to wait indefinitely. */
 REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
 
@@ -84,9 +65,10 @@ If this function does not return an error the child process actually starts
 executing and can be inspected using the operating system's tools for process
 inspection (e.g. ps on Linux).
 
-Every successful call to this function should be followed by a call to
-#reproc_stop. If an error occurs all allocated resources are cleaned up before
-the function returns.
+Every successful call to this function should be followed by a successful call
+to #reproc_wait and a call to #reproc_destroy. If an error occurs during
+#reproc_start all allocated resources are cleaned up before the function
+returns.
 
 \param[in,out] process Cannot be `NULL`.
 
@@ -255,98 +237,78 @@ REPROC_EXPORT REPROC_ERROR reproc_read(reproc_type *process,
                                        unsigned int *bytes_read);
 
 /*!
-Tries to stop the child process according to the flags specified by \p
-cleanup_flags and cleans up the resources allocated for the child process.
+Waits \p timeout milliseconds for the child process to exit.
 
-Note that the parent process has to observe that the child process has exited
-before the remaining resources that are managed by the kernel are completely
-cleaned up. Always make sure the combination of \p cleanup_flags and \p t1,t2,t3
-stops the child process completely and allows the function to observe its exit
-so that all kernel managed resources of the child process are correctly cleaned
-up.
-
-Regardless of whether this function observes that the child process has exited
-or not, it cleans up all associated resources that are not managed by the
-kernel. As a result, this function can only be called **once** per child
-process.
+If the child process exits before the timeout expires the exit status is stored
+in \p exit_status.
 
 \param[in,out] process Cannot be `NULL`.
-
-\param[in] cleanup_flags Indicate which actions should be performed to stop
-the process. This parameter takes a combination of flags from the
-#REPROC_CLEANUP enum. Flags can be combined with a bitwise OR.
-
-\param[in] t1,t2,t3
+\param[in] timeout
 \parblock
-Parameters containing a timeout value for each flag in \p cleanup_flags. Each
-value specifies the amount of milliseconds to wait after the corresponding step
-in stopping the process.
+Amount of milliseconds to wait for the child process to exit.
 
-Values from \p t1,t2,t3 are assigned to enabled flags in the following order:
-
-1. #REPROC_WAIT
-2. #REPROC_TERMINATE
-3. #REPROC_KILL
-
-(If only one flag is specified only \p t1 is used, if two flags are specified \p
-t1 and \p t2 are used, ...)
-
-If a value is 0 the function will only check if the process is still running
+If \p timeout is 0 the function will only check if the process is still running
 without waiting after the corresponding step.
 
-If a value is #REPROC_INFINITE the function will wait indefinitely after the
-corresponding step for the child process to exit.
+If \p timeout is #REPROC_INFINITE the function will wait indefinitely for the
+child process to exit.
 \endparblock
 
-\param[out] exit_status
-\parblock Optional output parameter used to store the exit status of the child
-process.
-
-If the child process exits normally the exit status of the child process is
-stored in \p exit_status.
-
-Exiting normally is defined as follows for the different platforms:
-- POSIX: The process returned from its main function or called `exit` or
-`_exit`.
-- Windows: The process returned from its `main` or `WinMain` function.
-
-If the process does not exit normally the following values are stored in \p
-exit_status:
-- POSIX: Number of the signal that terminated the child process.
-- Windows: exit status passed to the `ExitProcess` or `TerminateProcess`
-function call that terminated the child process.
-\endparblock
+\param[out] Optional output parameter used to store the exit status of the child
+process
 
 \return
 \parblock
 #REPROC_ERROR
 
-Possible errors when \p t1,t2,t3 are all #REPROC_INFINITE:
-- #REPROC_INTERRUPTED
-
-Possible errors when \p t1,t2,t3 are all 0:
-- #REPROC_WAIT_TIMEOUT
-
-Possible errors when one of \p t1,t2,t3 is not 0 or #REPROC_INFINITE:
+Possible errors when \p timeout is 0 or #REPROC_INFINITE:
 - #REPROC_INTERRUPTED
 - #REPROC_WAIT_TIMEOUT
+
+Extra possible errors when \p timeout is not 0 or #REPROC_INFINITE (POSIX only):
 - #REPROC_PROCESS_LIMIT_REACHED
 - #REPROC_NOT_ENOUGH_MEMORY
-\endparblock
 
-Example: if \p cleanup_flags is #REPROC_WAIT | #REPROC_KILL and \p t1,t2,t3
-are `10000, 5000, 3000` the function will first wait for 10 seconds for the
-child process to exit on its own. If the child process hasn't exited by then,
-the function will send the `SIGTERM` signal (POSIX) or the `CTRL-BREAK` signal
-(Windows) to the child process and wait 5 more seconds for the child process to
-exit. If the child process is still running after waiting the
-#REPROC_WAIT_TIMEOUT error is returned. Only two flags are specified so \p t3 is
-ignored.
 */
-REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_type *process, int cleanup_flags,
-                                       unsigned int t1, unsigned int t2,
-                                       unsigned int t3,
+REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_type *process,
+                                       unsigned int timeout,
                                        unsigned int *exit_status);
+
+/*!
+Sends the `SIGTERM` signal (POSIX) or the `CTRL-BREAK` signal (Windows) to the
+child process and calls #reproc_wait with the given arguments.
+
+\return Return value of #reproc_wait.
+
+\see reproc_wait
+*/
+REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_type *process,
+                                            unsigned int timeout,
+                                            unsigned int *exit_status);
+
+/*!
+Sends the `SIGKILL` signal to the child process (POSIX) or calls
+`TerminateProcess` (Windows) on the child process and calls #reproc_wait with
+the given arguments.
+
+If the child process exits before the timeout expires the exit status stored in
+\p exit_status will be 137 (value of SIGKILL signal).
+
+\return Return value of #reproc_wait.
+
+\see reproc_wait
+*/
+REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_type *process,
+                                       unsigned int timeout,
+                                       unsigned int *exit_status);
+
+/*!
+Frees all allocated resources stored in \p process. Should only be called after
+the process has exited.
+
+\param process Cannot be `NULL`.
+*/
+REPROC_EXPORT void reproc_destroy(reproc_type *process);
 
 #ifdef __cplusplus
 }

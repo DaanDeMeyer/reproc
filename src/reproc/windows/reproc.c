@@ -9,17 +9,6 @@
 #include <stdlib.h>
 #include <windows.h>
 
-static void reproc_destroy(reproc_type *process)
-{
-  assert(process);
-
-  handle_close(&process->handle);
-
-  handle_close(&process->parent_stdin);
-  handle_close(&process->parent_stdout);
-  handle_close(&process->parent_stderr);
-}
-
 REPROC_ERROR reproc_start(reproc_type *process, int argc,
                           const char *const *argv,
                           const char *working_directory)
@@ -51,11 +40,11 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
   // inheritance of the parent pipe handles to lower the chance of other
   // CreateProcess calls (outside of this library) unintentionally inheriting
   // these handles.
-  error = pipe_init(&child_stdin, true, &process->parent_stdin, false);
+  error = pipe_init(&child_stdin, true, &process->in, false);
   if (error) { goto cleanup; }
-  error = pipe_init(&process->parent_stdout, false, &child_stdout, true);
+  error = pipe_init(&process->out, false, &child_stdout, true);
   if (error) { goto cleanup; }
-  error = pipe_init(&process->parent_stderr, false, &child_stderr, true);
+  error = pipe_init(&process->err, false, &child_stderr, true);
   if (error) { goto cleanup; }
 
   // Join argv to whitespace delimited string as required by CreateProcess.
@@ -105,11 +94,11 @@ REPROC_ERROR reproc_write(reproc_type *process, const void *buffer,
                           unsigned int to_write, unsigned int *bytes_written)
 {
   assert(process);
-  assert(process->parent_stdin);
+  assert(process->in);
   assert(buffer);
   assert(bytes_written);
 
-  return pipe_write(process->parent_stdin, buffer, to_write, bytes_written);
+  return pipe_write(process->in, buffer, to_write, bytes_written);
 }
 
 void reproc_close(reproc_type *process, REPROC_STREAM stream)
@@ -117,9 +106,9 @@ void reproc_close(reproc_type *process, REPROC_STREAM stream)
   assert(process);
 
   switch (stream) {
-  case REPROC_IN: handle_close(&process->parent_stdin); return;
-  case REPROC_OUT: handle_close(&process->parent_stdout); return;
-  case REPROC_ERR: handle_close(&process->parent_stderr); return;
+  case REPROC_IN: handle_close(&process->in); return;
+  case REPROC_OUT: handle_close(&process->out); return;
+  case REPROC_ERR: handle_close(&process->err); return;
   }
 
   assert(0);
@@ -137,51 +126,46 @@ REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
   switch (stream) {
   case REPROC_IN: break;
   case REPROC_OUT:
-    return pipe_read(process->parent_stdout, buffer, size, bytes_read);
+    return pipe_read(process->out, buffer, size, bytes_read);
   case REPROC_ERR:
-    return pipe_read(process->parent_stderr, buffer, size, bytes_read);
+    return pipe_read(process->err, buffer, size, bytes_read);
   }
 
   assert(0);
   return REPROC_UNKNOWN_ERROR;
 }
 
-REPROC_ERROR reproc_stop(reproc_type *process, int cleanup_flags,
-                         unsigned int t1, unsigned int t2, unsigned int t3,
+REPROC_ERROR reproc_wait(reproc_type *process, unsigned int timeout,
                          unsigned int *exit_status)
 {
   assert(process);
 
-  // We don't set error to REPROC_SUCCESS so we can check if wait/terminate/kill
-  // succeeded (in which case error is set to REPROC_SUCCESS).
-  REPROC_ERROR error = REPROC_WAIT_TIMEOUT;
+  return process_wait(process->handle, timeout, exit_status);
+}
 
-  unsigned int timeout[3] = { t1, t2, t3 };
-  // Keeps track of the first unassigned timeout.
-  unsigned int i = 0;
+REPROC_ERROR reproc_terminate(reproc_type *process, unsigned int timeout,
+                              unsigned int *exit_status)
+{
+  assert(process);
 
-  if (cleanup_flags & REPROC_WAIT) {
-    error = process_wait(process->handle, timeout[i], exit_status);
-    i++;
-  }
+  return process_terminate(process->handle, process->id, timeout, exit_status);
+}
 
-  if (error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
+REPROC_ERROR reproc_kill(reproc_type *process, unsigned int timeout,
+                         unsigned int *exit_status)
+{
+  assert(process);
 
-  if (cleanup_flags & REPROC_TERMINATE) {
-    error = process_terminate(process->handle, process->id, timeout[i],
-                              exit_status);
-    i++;
-  }
+  return process_kill(process->handle, timeout, exit_status);
+}
 
-  if (error != REPROC_WAIT_TIMEOUT) { goto cleanup; }
+void reproc_destroy(reproc_type *process)
+{
+  assert(process);
 
-  if (cleanup_flags & REPROC_KILL) {
-    error = process_kill(process->handle, timeout[i], exit_status);
-    i++;
-  }
+  handle_close(&process->handle);
 
-cleanup:
-  reproc_destroy(process);
-
-  return error;
+  handle_close(&process->in);
+  handle_close(&process->out);
+  handle_close(&process->err);
 }

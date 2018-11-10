@@ -29,22 +29,31 @@ namespace reproc
 
 const unsigned int infinite = 0xFFFFFFFF;
 
-reproc::cleanup operator|(reproc::cleanup lhs, reproc::cleanup rhs) noexcept
+process::process(cleanup c1, unsigned int t1)
+    : process(c1, t1, reproc::none, 0, reproc::none, 0)
 {
-  return static_cast<reproc::cleanup>(static_cast<int>(lhs) |
-                                      static_cast<int>(rhs));
 }
 
-process::process(reproc::cleanup cleanup_flags, unsigned int t1,
-                 unsigned int t2, unsigned int t3)
-    : process_(new reproc_type()), cleanup_flags_(cleanup_flags), t1_(t1),
-      t2_(t2), t3_(t3), running_(false)
+process::process(cleanup c1, unsigned int t1, cleanup c2, unsigned int t2)
+    : process(c1, t1, c2, t2, reproc::none, 0)
+{
+}
+
+process::process(cleanup c1, unsigned int t1, cleanup c2, unsigned int t2,
+                 cleanup c3, unsigned int t3)
+    : process_(new reproc_type()), running_(false), c1_(c1), t1_(t1), c2_(c2),
+      t2_(t2), c3_(c3), t3_(t3)
 {
 }
 
 process::~process() noexcept
 {
-  if (process_ && running_) { stop(cleanup_flags_, t1_, t2_, t3_, nullptr); }
+  // No cleanup is required if the object has been moved from.
+  if (!process_) { return; }
+
+  if (running_) { stop(c1_, t1_, c2_, t2_, c3_, t3_, nullptr); }
+
+  reproc_destroy(process_.get());
 }
 
 std::error_code process::start(int argc, const char *const *argv,
@@ -53,7 +62,11 @@ std::error_code process::start(int argc, const char *const *argv,
   REPROC_ERROR error = reproc_start(process_.get(), argc, argv,
                                     working_directory);
 
-  return reproc_error_to_error_code(error);
+  std::error_code ec = reproc_error_to_error_code(error);
+
+  if (!ec) { running_ = true; }
+
+  return ec;
 }
 
 std::error_code process::start(const std::vector<std::string> &args,
@@ -75,12 +88,10 @@ std::error_code process::start(const std::vector<std::string> &args,
                                             ? working_directory->c_str()
                                             : nullptr;
 
-  std::error_code error = start(argc, &argv[0] /* std::vector -> C array */,
-                                child_working_directory);
+  std::error_code ec = start(argc, &argv[0] /* std::vector -> C array */,
+                             child_working_directory);
 
-  if (!error) { running_ = true; }
-
-  return error;
+  return ec;
 }
 
 void process::close(reproc::stream stream) noexcept
@@ -106,17 +117,81 @@ std::error_code process::read(reproc::stream stream, void *buffer,
   return reproc_error_to_error_code(error);
 }
 
-std::error_code process::stop(reproc::cleanup cleanup_flags, unsigned int t1,
-                              unsigned t2, unsigned int t3,
-                              unsigned int *exit_status) noexcept
+std::error_code process::stop(cleanup c1, unsigned int t1,
+                              unsigned int *exit_status)
 {
-  REPROC_ERROR error = reproc_stop(process_.get(),
-                                   static_cast<int>(cleanup_flags), t1, t2, t3,
-                                   exit_status);
+  return stop(c1, t1, reproc::none, 0, reproc::none, 0, exit_status);
+}
 
-  running_ = false;
+std::error_code process::stop(cleanup c1, unsigned int t1, cleanup c2,
+                              unsigned int t2, unsigned int *exit_status)
+{
+  return stop(c1, t1, c2, t2, reproc::none, 0, exit_status);
+}
 
-  return reproc_error_to_error_code(error);
+std::error_code process::stop(cleanup c1, unsigned int t1, cleanup c2,
+                              unsigned int t2, cleanup c3, unsigned int t3,
+                              unsigned int *exit_status)
+{
+  std::array<std::pair<cleanup, unsigned int>, 3> config = {
+    { { c1, t1 }, { c2, t2 }, { c3, t3 } }
+  };
+
+  // We don't set error to REPROC_SUCCESS so we can check if
+  // wait/terminate/kill succeeded (in which case error is set to
+  // REPROC_SUCCESS).
+  std::error_code ec = reproc_error_to_error_code(REPROC_WAIT_TIMEOUT);
+
+  for (const auto &pair : config) {
+    cleanup method = pair.first;
+    unsigned int timeout = pair.second;
+
+    switch (method) {
+    case reproc::none: break;
+    case reproc::wait: ec = wait(timeout, exit_status); break;
+    case reproc::terminate: ec = terminate(timeout, exit_status); break;
+    case reproc::kill: ec = kill(timeout, exit_status); break;
+    default: break;
+    }
+
+    if (ec != reproc::errc::wait_timeout) { break; }
+  }
+
+  return ec;
+}
+
+std::error_code process::wait(unsigned int timeout, unsigned int *exit_status)
+{
+  REPROC_ERROR error = reproc_wait(process_.get(), timeout, exit_status);
+
+  std::error_code ec = reproc_error_to_error_code(error);
+
+  if (!ec) { running_ = false; }
+
+  return ec;
+}
+
+std::error_code process::terminate(unsigned int timeout,
+                                   unsigned int *exit_status)
+{
+  REPROC_ERROR error = reproc_terminate(process_.get(), timeout, exit_status);
+
+  std::error_code ec = reproc_error_to_error_code(error);
+
+  if (!ec) { running_ = false; }
+
+  return ec;
+}
+
+std::error_code process::kill(unsigned int timeout, unsigned int *exit_status)
+{
+  REPROC_ERROR error = reproc_kill(process_.get(), timeout, exit_status);
+
+  std::error_code ec = reproc_error_to_error_code(error);
+
+  if (!ec) { running_ = false; }
+
+  return ec;
 }
 
 } // namespace reproc

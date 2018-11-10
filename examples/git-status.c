@@ -15,7 +15,7 @@ int fail(REPROC_ERROR error)
   return (int) error;
 }
 
-// Uses the reproc C API to print the output of git status.
+// Uses reproc to print the output of git status.
 int main(void)
 {
   // reproc_type stores necessary information between calls to the reproc C API.
@@ -28,8 +28,8 @@ int main(void)
   int argc = 2;
   const char *argv[3] = { "git", "status", NULL };
 
-  // Most of the C API functions return a value from REPROC_ERROR to indicate if
-  // an error occurred. If no error occurred REPROC_SUCCESS is returned.
+  // Most of reproc's API functions return a value from REPROC_ERROR to indicate
+  // if an error occurred. If no error occurred REPROC_SUCCESS is returned.
   REPROC_ERROR error = REPROC_SUCCESS;
 
   /* reproc_start takes a child process instance (reproc_type), argc, argv and
@@ -38,9 +38,9 @@ int main(void)
   error = reproc_start(&git_status, argc, argv, NULL);
 
   /* reproc exposes a single error enum REPROC_ERROR which contains values for
-  all errors that reproc checks for explicitly. If an unknown error occurs
-  reproc's functions will return REPROC_UNKNOWN_ERROR. You can get the actual
-  system error using the reproc_system_error function. */
+  all system errors that reproc checks for explicitly. If an unknown error
+  occurs reproc's functions will return REPROC_UNKNOWN_ERROR. You can get the
+  actual system error using the reproc_system_error function. */
   if (error == REPROC_FILE_NOT_FOUND) {
     fprintf(stderr, "%s\n",
             "git not found. Make sure it's available from the PATH");
@@ -79,10 +79,7 @@ int main(void)
     mind. Add 1 to size to leave space for the null terminator which isn't
     included in output_length. */
     char *realloc_result = realloc(output, output_length + bytes_read + 1);
-    if (!realloc_result) {
-      free(output);
-      goto cleanup;
-    }
+    if (!realloc_result) { goto cleanup; }
     output = realloc_result;
 
     // Copy new data into result buffer
@@ -92,23 +89,28 @@ int main(void)
 
   // Check that the while loop stopped because the output stream of the child
   // process was closed and not because of any other error.
-  if (error != REPROC_STREAM_CLOSED) {
-    free(output);
-    goto cleanup;
-  }
+  if (error != REPROC_STREAM_CLOSED) { goto cleanup; }
 
   output[output_length] = '\0';
   printf("%s", output);
+
+cleanup:
   free(output);
 
-// Add a ; because declaration directly after label is illegal in C.
-cleanup:;
   /* Wait for the process to exit. This should always be done since some systems
   (POSIX) don't clean up system resources allocated to a child process until the
   parent process explicitly waits for it after it has exited. */
   unsigned int exit_status = 0;
-  error = reproc_stop(&git_status, REPROC_WAIT, REPROC_INFINITE, 0, 0,
-                      &exit_status);
+  error = reproc_wait(&git_status, REPROC_INFINITE, &exit_status);
+
+  // git status will always exit on its own so calling reproc_terminate or
+  // reproc_kill is not necessary.
+
+  /* Clean up the resources allocated to the child process. Calling this
+  function before calling reproc_wait (or reproc_terminate/reproc_kill)
+  successfully will result in a resource leak on POSIX systems. See the Gotcha's
+  section in the readme for more information. */
+  reproc_destroy(&git_status);
 
   if (error) { return fail(error); }
 

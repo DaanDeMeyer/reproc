@@ -34,19 +34,16 @@ enum class stream {
 /*! \see REPROC_INFINITE */
 REPROC_EXPORT extern const unsigned int infinite;
 
-/*! \see REPROC_CLEANUP */
-enum class cleanup {
-  /*! #REPROC_WAIT */
-  wait = 1 << 0,
-  /*! #REPROC_TERMINATE */
-  terminate = 1 << 1,
-  /*! #REPROC_KILL */
-  kill = 1 << 2
+enum cleanup {
+  /*! Do nothing. */
+  none = 0,
+  /*! \see #process::wait */
+  wait = 1,
+  /*! \see #process::terminate */
+  terminate = 2,
+  /*! \see #process::kill */
+  kill = 3
 };
-
-/*! Used to combine multiple flags from reproc::cleanup. */
-REPROC_EXPORT reproc::cleanup operator|(reproc::cleanup lhs,
-                                        reproc::cleanup rhs) noexcept;
 
 /*! Improves on reproc's C API by wrapping it in a class. Aside from methods
 that mimick the C API it also adds configurable RAII and several methods that
@@ -55,21 +52,37 @@ class process
 {
 
 public:
-  /*! Allocates memory for the #reproc_type struct. Throws std::bad_alloc if
+  /*!
+  Allocates memory for the #reproc_type struct. Throws std::bad_alloc if
   allocating memory for the #reproc_type struct of the underlying C library
   fails.
 
-  Takes arguments that are passed to #stop in the destructor if the process is
-  still running by the time the object is destroyed.
+  The given arguments are passed to #stop in the destructor if the process is
+  still running.
 
-  \see reproc_stop
+  Example:
+
+  \code{.cpp}
+  reproc::process example(reproc::wait, 10000, reproc::terminate, 5000);
+  \endcode
+
+  If the child process is still running when example's destructor is called, it
+  will first wait 10 seconds for the child process to exit on its own before
+  sending `SIGTERM` (POSIX) or `CTRL-BREAK` Windows and waiting 5 more seconds
+  for the child process to exit.
+
+  By default the destructor waits indefinitely for the child process to exit.
   */
-  REPROC_EXPORT process(reproc::cleanup cleanup_flags, unsigned int t1,
-                        unsigned int t2, unsigned int t3);
+  REPROC_EXPORT process(cleanup c1 = reproc::wait,
+                        unsigned int t1 = reproc::infinite);
 
-  /*! Frees the allocated memory for the #reproc_type struct and calls #stop
-  with the arguments provided in the constructor if #stop hasn't been called
-  explicitly yet. */
+  REPROC_EXPORT process(cleanup c1, unsigned int t1, cleanup c2, unsigned t2);
+
+  REPROC_EXPORT process(cleanup c1, unsigned int t1, cleanup c2, unsigned t2,
+                        cleanup c3, unsigned int t3);
+
+  /*! Calls #stop with the arguments provided in the constructor if the child
+  process is still running and frees all allocated resources. */
   REPROC_EXPORT ~process() noexcept;
 
   // Enforce unique ownership of process objects.
@@ -160,20 +173,55 @@ public:
   template <typename Parser>
   std::error_code read(reproc::stream stream, Parser &&parser);
 
-  /*! \see reproc_stop */
-  REPROC_EXPORT std::error_code stop(reproc::cleanup cleanup_flags,
-                                     unsigned int t1, unsigned int t2,
+  /*!
+  Simplifies calling combinations of #wait, #terminate and #kill.
+
+  Example:
+
+  Wait 10 seconds for the child process to exit on its own before sending
+  `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) and waiting 5 more seconds for the
+  child process to exit.
+
+  \code{.cpp}
+  std::error_code ec = process.stop(reproc::wait, 10000,
+                                    reproc::terminate, 5000);
+  \endcode
+
+  Call #wait, #terminate and #kill directly if you need extra logic such as
+  logging between calls.
+  */
+  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1,
+                                     unsigned int *exit_status);
+  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1, cleanup c2,
+                                     unsigned int t2,
+                                     unsigned int *exit_status);
+  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1, cleanup c2,
+                                     unsigned int t2, cleanup c3,
                                      unsigned int t3,
-                                     unsigned int *exit_status) noexcept;
+                                     unsigned int *exit_status);
+
+  /*! \see reproc_wait */
+  REPROC_EXPORT std::error_code wait(unsigned int timeout,
+                                     unsigned int *exit_status);
+
+  /*! \see reproc_terminate */
+  REPROC_EXPORT std::error_code terminate(unsigned int timeout,
+                                          unsigned int *exit_status);
+
+  /*! \see reproc_kill */
+  REPROC_EXPORT std::error_code kill(unsigned int timeout,
+                                     unsigned int *exit_status);
 
 private:
   std::unique_ptr<reproc_type> process_;
-
-  reproc::cleanup cleanup_flags_;
-  unsigned int t1_;
-  unsigned int t2_;
-  unsigned int t3_;
   bool running_;
+
+  cleanup c1_;
+  unsigned int t1_;
+  cleanup c2_;
+  unsigned int t2_;
+  cleanup c3_;
+  unsigned int t3_;
 };
 
 template <typename Parser>
