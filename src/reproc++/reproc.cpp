@@ -120,20 +120,21 @@ std::error_code process::read(reproc::stream stream, void *buffer,
 }
 
 std::error_code process::stop(cleanup c1, unsigned int t1,
-                              unsigned int *exit_status)
+                              unsigned int *exit_status) noexcept
 {
   return stop(c1, t1, reproc::none, 0, reproc::none, 0, exit_status);
 }
 
 std::error_code process::stop(cleanup c1, unsigned int t1, cleanup c2,
-                              unsigned int t2, unsigned int *exit_status)
+                              unsigned int t2,
+                              unsigned int *exit_status) noexcept
 {
   return stop(c1, t1, c2, t2, reproc::none, 0, exit_status);
 }
 
 std::error_code process::stop(cleanup c1, unsigned int t1, cleanup c2,
                               unsigned int t2, cleanup c3, unsigned int t3,
-                              unsigned int *exit_status)
+                              unsigned int *exit_status) noexcept
 {
   std::array<std::pair<cleanup, unsigned int>, 3> config = {
     { { c1, t1 }, { c2, t2 }, { c3, t3 } }
@@ -162,7 +163,8 @@ std::error_code process::stop(cleanup c1, unsigned int t1, cleanup c2,
   return ec;
 }
 
-std::error_code process::wait(unsigned int timeout, unsigned int *exit_status)
+std::error_code process::wait(unsigned int timeout,
+                              unsigned int *exit_status) noexcept
 {
   REPROC_ERROR error = reproc_wait(process_.get(), timeout, exit_status);
 
@@ -174,7 +176,7 @@ std::error_code process::wait(unsigned int timeout, unsigned int *exit_status)
 }
 
 std::error_code process::terminate(unsigned int timeout,
-                                   unsigned int *exit_status)
+                                   unsigned int *exit_status) noexcept
 {
   REPROC_ERROR error = reproc_terminate(process_.get(), timeout, exit_status);
 
@@ -185,7 +187,8 @@ std::error_code process::terminate(unsigned int timeout,
   return ec;
 }
 
-std::error_code process::kill(unsigned int timeout, unsigned int *exit_status)
+std::error_code process::kill(unsigned int timeout,
+                              unsigned int *exit_status) noexcept
 {
   REPROC_ERROR error = reproc_kill(process_.get(), timeout, exit_status);
 

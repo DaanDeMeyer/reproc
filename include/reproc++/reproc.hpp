@@ -191,26 +191,26 @@ public:
   logging between calls.
   */
   REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1,
-                                     unsigned int *exit_status);
+                                     unsigned int *exit_status) noexcept;
   REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1, cleanup c2,
                                      unsigned int t2,
-                                     unsigned int *exit_status);
+                                     unsigned int *exit_status) noexcept;
   REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1, cleanup c2,
                                      unsigned int t2, cleanup c3,
                                      unsigned int t3,
-                                     unsigned int *exit_status);
+                                     unsigned int *exit_status) noexcept;
 
   /*! \see reproc_wait */
   REPROC_EXPORT std::error_code wait(unsigned int timeout,
-                                     unsigned int *exit_status);
+                                     unsigned int *exit_status) noexcept;
 
   /*! \see reproc_terminate */
   REPROC_EXPORT std::error_code terminate(unsigned int timeout,
-                                          unsigned int *exit_status);
+                                          unsigned int *exit_status) noexcept;
 
   /*! \see reproc_kill */
   REPROC_EXPORT std::error_code kill(unsigned int timeout,
-                                     unsigned int *exit_status);
+                                     unsigned int *exit_status) noexcept;
 
 private:
   std::unique_ptr<reproc_type> process_;
