@@ -9,7 +9,7 @@ sudo: true
 notifications:
   email: false
 
-env: REPROC_SANITIZERS=ON REPROC_COLORED_OUTPUT=ON
+env: REPROC_SANITIZERS=ON
 
 matrix:
   fast_finish: true
@@ -20,9 +20,9 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-4.8
-      # GCC 4.8 doesn't support sanitizers or colored output.
-      env: CC=gcc-4.8 CXX=g++-4.8 REPROC_SANITIZERS=OFF REPROC_COLORED_OUTPUT=OFF
+            - g++-4.9
+      # GCC 4.9 doesn't support sanitizers.
+      env: CC=gcc-4.9 CXX=g++-4.9 REPROC_SANITIZERS=OFF
 
     - os: linux
       addons:
@@ -67,7 +67,6 @@ script:
       -DREPROC_INSTALL=ON
       -DREPROC_FORMAT=ON
       -DREPROC_SANITIZERS=$REPROC_SANITIZERS
-      -DREPROC_COLORED_OUTPUT=$REPROC_COLORED_OUTPUT
   - cmake --build . -- -j 2
   - cmake --build . --target reproc-run-tests
   # Make sure examples don't crash or return a non-zero exit code.

@@ -680,12 +680,6 @@ When making changes:
   also test the new feature.
 - Make sure to update the relevant documentation if needed or write new
   documentation.
-- By default the output from the Ninja generator isn't colored. To get colored
-  output when using the Ninja generator, enable the `REPROC_COLORED_OUTPUT`
-  option:
-
-  `cmake -DREPROC_COLORED_OUTPUT=ON ..`
-
 - Make sure to follow the .editorconfig rules. Most editors have an editorconfig
   plugin to make this easy.
 - reproc doesn't store a .gitignore file in the repository so everyone can add a

@@ -37,7 +37,6 @@ option(REPROC_FORMAT "Find clang-format and add a target (reproc-format) \
 to run it on all source files.")
 option(REPROC_SANITIZERS "Build reproc with sanitizers. Only works on UNIX \
 systems.")
-option(REPROC_COLORED_OUTPUT "Force colored output from GCC and Clang.")
 
 # Enable C++ support if needed.
 if(REPROCXX OR REPROC_TESTS)
@@ -164,12 +163,11 @@ function(reproc_set_common TARGET OUTPUT_DIRECTORY)
     endif()
   endif()
 
-  if(REPROC_COLORED_OUTPUT)
-    target_compile_options(${TARGET} PRIVATE
-      $<$<CXX_COMPILER_ID:GNU>:-fdiagnostics-color=always>
-      $<$<CXX_COMPILER_ID:Clang>:-fcolor-diagnostics>
-    )
-  endif()
+  target_compile_options(${TARGET} PRIVATE
+    $<$<CXX_COMPILER_ID:GNU>:-fdiagnostics-color>
+    $<$<CXX_COMPILER_ID:Clang>:-fcolor-diagnostics>
+  )
+
 endfunction()
 
 # CMake by default sets CMAKE_INSTALL_PREFIX to
