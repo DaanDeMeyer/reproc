@@ -3,7 +3,7 @@
 #ifndef REPROC_ERROR_H
 #define REPROC_ERROR_H
 
-#include "export.h"
+#include "reproc/export.h"
 
 /*!
 Error enum. Contains all errors that may be returned from reproc's API. Because

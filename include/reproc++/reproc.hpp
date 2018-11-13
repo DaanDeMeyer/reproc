@@ -3,8 +3,8 @@
 #ifndef REPROC_HPP
 #define REPROC_HPP
 
-#include "error.hpp"
-#include "export.hpp"
+#include "reproc++/error.hpp"
+#include "reproc++/export.hpp"
 
 #include <memory>
 #include <string>

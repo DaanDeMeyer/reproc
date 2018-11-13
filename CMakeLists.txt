@@ -211,14 +211,33 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
     )
   endif()
 
-  if(NOT MSVC)
-    target_compile_options(${TARGET} PRIVATE
-      # More or less dllexport/dllimport for GCC and Clang.
-      -fvisibility=hidden
-      # -fvisibility-inlines-hidden is only valid for C++.
-      $<$<STREQUAL:${LANGUAGE},CXX>:-fvisibility-inlines-hidden>
-    )
+  # Enable -fvisibility=hidden and -fvisibility-inlines-hidden
+  set_target_properties(${TARGET} PROPERTIES
+    C_VISIBILITY_PRESET hidden
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN true
+  )
+
+  if(${LANGUAGE} STREQUAL C)
+    set(HEADER_EXT h)
+  else()
+    set(HEADER_EXT hpp)
   endif()
+  string(TOUPPER ${HEADER_EXT} HEADER_EXT_UPPER)
+
+  set(GENERATED_HEADERS_DIR ${PROJECT_BINARY_DIR}/generated/include)
+
+  # Generate export headers. We generate export headers using CMake since
+  # different export files are required depending on whether reproc is a shared
+  # or static library and we can't determine whether reproc is a shared or
+  # static library in the export header itself without requiring the user to add
+  # a #define to his source files which we want to avoid.
+  include(GenerateExportHeader)
+  generate_export_header(${TARGET}
+    BASE_NAME REPROC
+    EXPORT_FILE_NAME ${GENERATED_HEADERS_DIR}/${TARGET}/export.${HEADER_EXT}
+    INCLUDE_GUARD_NAME REPROC_EXPORT_${HEADER_EXT_UPPER}
+  )
 
   # Make sure we follow the popular naming convention for shared libraries on
   # Unix systems.
@@ -227,18 +246,14 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
     SOVERSION ${PROJECT_VERSION_MAJOR}
   )
 
-  # Used to add visibility modifiers (see include/reproc/export.h and
-  # include/reproc++/export.hpp).
-  target_compile_definitions(${TARGET}
-    PUBLIC $<$<BOOL:${BUILD_SHARED_LIBS}>:REPROC_SHARED>
-    PRIVATE $<BUILD_INTERFACE:REPROC_BUILDING>
-  )
-
   # Only use the headers from the repository when building. When installing we
   # want to use the install location of the headers (e.g. /usr/include) as the
   # include directory instead.
   target_include_directories(${TARGET} PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:
+      ${PROJECT_SOURCE_DIR}/include
+      ${GENERATED_HEADERS_DIR}
+    >
   )
 
   # Adapted from https://codingnest.com/basic-cmake-part-2/.
@@ -277,6 +292,11 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
 
     install(
       DIRECTORY include/${TARGET}
+      DESTINATION ${REPROC_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}
+    )
+
+    install(
+      DIRECTORY ${GENERATED_HEADERS_DIR}/${TARGET}
       DESTINATION ${REPROC_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}
     )
 

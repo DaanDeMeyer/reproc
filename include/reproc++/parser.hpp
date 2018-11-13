@@ -3,7 +3,7 @@
 #ifndef REPROC_PARSER_HPP
 #define REPROC_PARSER_HPP
 
-#include "export.hpp"
+#include "reproc++/export.hpp"
 
 #include <iosfwd>
 #include <string>
