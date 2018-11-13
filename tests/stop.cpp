@@ -26,6 +26,12 @@ TEST_CASE("stop")
   Sleep(50);
 #endif
 
+  SUBCASE("wait")
+  {
+    error = reproc_wait(&infinite, 50, nullptr);
+    REQUIRE(error == REPROC_WAIT_TIMEOUT);
+  }
+
   SUBCASE("terminate")
   {
     error = reproc_terminate(&infinite, 50, nullptr);
