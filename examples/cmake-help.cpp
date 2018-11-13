@@ -26,8 +26,8 @@ int main()
 
   /* Args are not passed to the constructor so they don't have to be stored in
   the process class. While the C API requires the args to end with a NULL
-  value, the process class start method that takes a vector of std::string
-  takes care of converting the vector into the form expected by the C API
+  value, the process class has a start method that takes a vector of std::string
+  and takes care of converting the vector into the array expected by the C API
   (including adding the NULL value at the end). */
   std::vector<std::string> args = { "cmake", "--help" };
 
