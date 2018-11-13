@@ -37,10 +37,10 @@ install:
 before_build:
   # Set MSVC's enviroment variables.
   - call %VCVARSALL% %PLATFORM%
+  # Build shared so CI verifies all the necessary symbols are exported from
+  # the dll's.
   - cmake .
       -G Ninja
-      # Build shared so CI verifies all the necessary symbols are exported from
-      # the dll's.
       -DBUILD_SHARED_LIBS=ON
       -DCMAKE_BUILD_TYPE=Debug
       -DREPROC_TESTS=ON
