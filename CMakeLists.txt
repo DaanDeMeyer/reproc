@@ -31,9 +31,9 @@ enabled reproc++ is also added to the install target.")
 ### Developer Options ###
 
 option(REPROC_CI "Add -Werror or equivalent to the compiler and clang-tidy.")
-option(REPROC_CLANG_TIDY "Run clang-tidy as part of the build (requires \
+option(REPROC_TIDY "Run clang-tidy as part of the build (requires \
 clang-tidy to be in the PATH).")
-option(REPROC_CLANG_FORMAT "Find clang-format and add a target (reproc-format) \
+option(REPROC_FORMAT "Find clang-format and add a target (reproc-format) \
 to run it on all source files.")
 option(REPROC_SANITIZERS "Build reproc with sanitizers. Only works on UNIX \
 systems.")
@@ -46,7 +46,7 @@ endif()
 
 ### clang-tidy ###
 
-if(REPROC_CLANG_TIDY)
+if(REPROC_TIDY)
   # CMake added clang-tidy support in CMake 3.6.
   cmake_minimum_required(VERSION 3.6)
   find_program(REPROC_CLANG_TIDY_PROGRAM clang-tidy)
@@ -113,10 +113,10 @@ function(reproc_set_common TARGET OUTPUT_DIRECTORY)
     LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
   )
 
-  if(REPROC_CLANG_TIDY AND REPROC_CLANG_TIDY_PROGRAM)
+  if(REPROC_TIDY AND REPROC_CLANG_TIDY_PROGRAM)
     set_target_properties(${TARGET} PROPERTIES
-      # REPROC_CLANG_TIDY is a list so we surround it with quotes to pass it as
-      # a single argument.
+      # REPROC_CLANG_TIDY_PROGRAM is a list so we surround it with quotes to
+      # pass it as a single argument.
       C_CLANG_TIDY "${REPROC_CLANG_TIDY_PROGRAM}"
       CXX_CLANG_TIDY "${REPROC_CLANG_TIDY_PROGRAM}"
     )
@@ -499,7 +499,7 @@ endif()
 
 ### clang-format ###
 
-if(REPROC_CLANG_FORMAT)
+if(REPROC_FORMAT)
   find_program(REPROC_CLANG_FORMAT_PROGRAM clang-format)
 
   if(REPROC_CLANG_FORMAT_PROGRAM)
