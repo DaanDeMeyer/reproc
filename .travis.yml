@@ -21,6 +21,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-4.8
+      # GCC 4.8 doesn't support sanitizers or colored output.
       env: CC=gcc-4.8 CXX=g++-4.8 REPROC_SANITIZERS=OFF REPROC_COLORED_OUTPUT=OFF
 
     - os: linux
@@ -69,5 +70,6 @@ script:
       -DREPROC_COLORED_OUTPUT=$REPROC_COLORED_OUTPUT
   - cmake --build . -- -j 2
   - cmake --build . --target reproc-run-tests
+  # Make sure examples don't crash or return a non-zero exit code.
   - ./examples/git-status > /dev/null
   - ./examples/cmake-help > /dev/null

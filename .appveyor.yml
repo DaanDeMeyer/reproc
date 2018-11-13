@@ -35,9 +35,12 @@ install:
   - ps: scoop install ninja
 
 before_build:
+  # Set MSVC's enviroment variables.
   - call %VCVARSALL% %PLATFORM%
   - cmake .
       -G Ninja
+      # Build shared so CI verifies all the necessary symbols are exported from
+      # the dll's.
       -DBUILD_SHARED_LIBS=ON
       -DCMAKE_BUILD_TYPE=Debug
       -DREPROC_TESTS=ON
@@ -54,5 +57,6 @@ build_script: cmake --build .
 
 test_script:
   - cmake --build . --target reproc-run-tests
+  # Make sure examples don't crash or return a non-zero exit code.
   - .\examples\git-status >NUL
   - .\examples\cmake-help >NUL
