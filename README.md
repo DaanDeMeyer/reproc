@@ -159,9 +159,11 @@ target_link_libraries(myapp reproc::reproc)
 
 Installing is the way to go if you want to use reproc with build systems other
 than CMake. After installing you can use your build system's preferred way of
-finding libraries to find reproc. Refer to your build system's documentation for
-more info. We give an example of how to find an installed version of reproc
-using CMake.
+finding libraries to find reproc. pkg-config files are installed alongside
+reproc that can be used to find reproc by any build system that supports
+pkg-config. Refer to your build system's documentation for more information.
+
+We give an example of how to find an installed version of reproc using CMake.
 
 First we have to build and install reproc:
 
