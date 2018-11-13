@@ -339,9 +339,6 @@ endfunction()
 
 reproc_add_library(reproc C lib)
 
-target_include_directories(reproc PRIVATE
-  ${PROJECT_SOURCE_DIR}/src/reproc/common>
-)
 target_sources(reproc PRIVATE
   src/reproc/common/error.c
   src/reproc/common/infinite.c
@@ -349,9 +346,6 @@ target_sources(reproc PRIVATE
 )
 
 if(WIN32)
-  target_include_directories(reproc PRIVATE
-    ${PROJECT_SOURCE_DIR}/src/reproc/windows>
-  )
   target_sources(reproc PRIVATE
     src/reproc/windows/error.c
     src/reproc/windows/handle.c
@@ -361,15 +355,12 @@ if(WIN32)
     src/reproc/windows/string_utils.c
   )
 elseif(UNIX)
-  target_include_directories(reproc PRIVATE
-    ${PROJECT_SOURCE_DIR}/src/reproc/posix>
-  )
   target_sources(reproc PRIVATE
     src/reproc/posix/error.c
     src/reproc/posix/fd.c
     src/reproc/posix/pipe.c
-    src/reproc/posix/reproc.c
     src/reproc/posix/process.c
+    src/reproc/posix/reproc.c
   )
 endif()
 
