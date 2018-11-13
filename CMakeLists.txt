@@ -211,7 +211,7 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
     )
   endif()
 
-  # Enable -fvisibility=hidden and -fvisibility-inlines-hidden
+  # Enable -fvisibility=hidden and -fvisibility-inlines-hidden.
   set_target_properties(${TARGET} PROPERTIES
     C_VISIBILITY_PRESET hidden
     CXX_VISIBILITY_PRESET hidden
@@ -239,7 +239,7 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
   )
 
   # Make sure we follow the popular naming convention for shared libraries on
-  # Unix systems.
+  # UNIX systems.
   set_target_properties(${TARGET} PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
