@@ -135,10 +135,8 @@ REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
 
   switch (stream) {
   case REPROC_IN: break;
-  case REPROC_OUT:
-    return pipe_read(process->out, buffer, size, bytes_read);
-  case REPROC_ERR:
-    return pipe_read(process->err, buffer, size, bytes_read);
+  case REPROC_OUT: return pipe_read(process->out, buffer, size, bytes_read);
+  case REPROC_ERR: return pipe_read(process->err, buffer, size, bytes_read);
   }
 
   assert(0);
