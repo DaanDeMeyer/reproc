@@ -41,14 +41,14 @@ before_build:
   # the dll's.
   - cmake .
       -G Ninja
-      -DBUILD_SHARED_LIBS=ON
       -DCMAKE_BUILD_TYPE=Debug
+      -DBUILD_SHARED_LIBS=ON
+      -DREPROCXX=ON
       -DREPROC_TESTS=ON
       -DREPROC_EXAMPLES=ON
-      -DREPROCXX=ON
+      -DREPROC_INSTALL=ON
       -DREPROC_CI=ON
       -DREPROC_TIDY=ON
-      -DREPROC_INSTALL=ON
       -DREPROC_FORMAT=ON
 
 build_script: cmake --build .

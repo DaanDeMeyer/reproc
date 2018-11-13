@@ -9,8 +9,6 @@ sudo: true
 notifications:
   email: false
 
-env: REPROC_SANITIZERS=ON
-
 matrix:
   fast_finish: true
   include:
@@ -57,16 +55,16 @@ matrix:
 
 script:
   - cmake .
-      -DBUILD_SHARED_LIBS=ON
       -DCMAKE_BUILD_TYPE=Debug
+      -DBUILD_SHARED_LIBS=ON
+      -DREPROCXX=ON
       -DREPROC_TESTS=ON
       -DREPROC_EXAMPLES=ON
-      -DREPROCXX=ON
+      -DREPROC_INSTALL=ON
       -DREPROC_CI=ON
       -DREPROC_TIDY=ON
-      -DREPROC_INSTALL=ON
       -DREPROC_FORMAT=ON
-      -DREPROC_SANITIZERS=$REPROC_SANITIZERS
+      -DREPROC_SANITIZERS=ON
   - cmake --build . -- -j 2
   - cmake --build . --target reproc-run-tests
   # Make sure examples don't crash or return a non-zero exit code.
