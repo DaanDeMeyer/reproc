@@ -345,6 +345,7 @@ target_include_directories(reproc PRIVATE
 target_sources(reproc PRIVATE
   src/reproc/common/error.c
   src/reproc/common/infinite.c
+  src/reproc/common/reproc.c
 )
 
 if(WIN32)

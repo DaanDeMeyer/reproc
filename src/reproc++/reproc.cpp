@@ -32,12 +32,12 @@ namespace reproc
 const unsigned int infinite = 0xFFFFFFFF;
 
 process::process(cleanup c1, unsigned int t1)
-    : process(c1, t1, reproc::none, 0, reproc::none, 0)
+    : process(c1, t1, reproc::noop, 0, reproc::noop, 0)
 {
 }
 
 process::process(cleanup c1, unsigned int t1, cleanup c2, unsigned int t2)
-    : process(c1, t1, c2, t2, reproc::none, 0)
+    : process(c1, t1, c2, t2, reproc::noop, 0)
 {
 }
 
@@ -119,50 +119,6 @@ std::error_code process::read(reproc::stream stream, void *buffer,
   return reproc_error_to_error_code(error);
 }
 
-std::error_code process::stop(cleanup c1, unsigned int t1,
-                              unsigned int *exit_status) noexcept
-{
-  return stop(c1, t1, reproc::none, 0, reproc::none, 0, exit_status);
-}
-
-std::error_code process::stop(cleanup c1, unsigned int t1, cleanup c2,
-                              unsigned int t2,
-                              unsigned int *exit_status) noexcept
-{
-  return stop(c1, t1, c2, t2, reproc::none, 0, exit_status);
-}
-
-std::error_code process::stop(cleanup c1, unsigned int t1, cleanup c2,
-                              unsigned int t2, cleanup c3, unsigned int t3,
-                              unsigned int *exit_status) noexcept
-{
-  std::array<std::pair<cleanup, unsigned int>, 3> config = {
-    { { c1, t1 }, { c2, t2 }, { c3, t3 } }
-  };
-
-  // We don't set error to REPROC_SUCCESS so we can check if
-  // wait/terminate/kill succeeded (in which case error is set to
-  // REPROC_SUCCESS).
-  std::error_code ec = reproc_error_to_error_code(REPROC_WAIT_TIMEOUT);
-
-  for (const auto &pair : config) {
-    cleanup method = pair.first;
-    unsigned int timeout = pair.second;
-
-    switch (method) {
-    case reproc::none: break;
-    case reproc::wait: ec = wait(timeout, exit_status); break;
-    case reproc::terminate: ec = terminate(timeout, exit_status); break;
-    case reproc::kill: ec = kill(timeout, exit_status); break;
-    default: break;
-    }
-
-    if (ec != reproc::errc::wait_timeout) { break; }
-  }
-
-  return ec;
-}
-
 std::error_code process::wait(unsigned int timeout,
                               unsigned int *exit_status) noexcept
 {
@@ -191,6 +147,36 @@ std::error_code process::kill(unsigned int timeout,
                               unsigned int *exit_status) noexcept
 {
   REPROC_ERROR error = reproc_kill(process_.get(), timeout, exit_status);
+
+  std::error_code ec = reproc_error_to_error_code(error);
+
+  if (!ec) { running_ = false; }
+
+  return ec;
+}
+
+std::error_code process::stop(cleanup c1, unsigned int t1,
+                              unsigned int *exit_status) noexcept
+{
+  return stop(c1, t1, reproc::noop, 0, reproc::noop, 0, exit_status);
+}
+
+std::error_code process::stop(cleanup c1, unsigned int t1, cleanup c2,
+                              unsigned int t2,
+                              unsigned int *exit_status) noexcept
+{
+  return stop(c1, t1, c2, t2, reproc::noop, 0, exit_status);
+}
+
+std::error_code process::stop(cleanup c1, unsigned int t1, cleanup c2,
+                              unsigned int t2, cleanup c3, unsigned int t3,
+                              unsigned int *exit_status) noexcept
+{
+  REPROC_ERROR error = reproc_stop(process_.get(),
+                                   static_cast<REPROC_CLEANUP>(c1), t1,
+                                   static_cast<REPROC_CLEANUP>(c2), t2,
+                                   static_cast<REPROC_CLEANUP>(c3), t3,
+                                   exit_status);
 
   std::error_code ec = reproc_error_to_error_code(error);
 

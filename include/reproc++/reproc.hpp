@@ -24,19 +24,20 @@ namespace reproc
 /*! \see REPROC_STREAM */
 enum class stream {
   /*! #REPROC_IN */
-  in,
+  in = 0,
   /*! #REPROC_OUT */
-  out,
+  out = 1,
   /*! #REPROC_ERR */
-  err
+  err = 2
 };
 
 /*! \see REPROC_INFINITE */
 REPROC_EXPORT extern const unsigned int infinite;
 
+/*! \see #process::stop */
 enum cleanup {
   /*! Do nothing. */
-  none = 0,
+  noop = 0,
   /*! \see #process::wait */
   wait = 1,
   /*! \see #process::terminate */
@@ -173,33 +174,6 @@ public:
   template <typename Parser>
   std::error_code read(reproc::stream stream, Parser &&parser);
 
-  /*!
-  Simplifies calling combinations of #wait, #terminate and #kill.
-
-  Example:
-
-  Wait 10 seconds for the child process to exit on its own before sending
-  `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) and waiting 5 more seconds for the
-  child process to exit.
-
-  \code{.cpp}
-  std::error_code ec = process.stop(reproc::wait, 10000,
-                                    reproc::terminate, 5000);
-  \endcode
-
-  Call #wait, #terminate and #kill directly if you need extra logic such as
-  logging between calls.
-  */
-  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1,
-                                     unsigned int *exit_status) noexcept;
-  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1, cleanup c2,
-                                     unsigned int t2,
-                                     unsigned int *exit_status) noexcept;
-  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1, cleanup c2,
-                                     unsigned int t2, cleanup c3,
-                                     unsigned int t3,
-                                     unsigned int *exit_status) noexcept;
-
   /*! \see reproc_wait */
   REPROC_EXPORT std::error_code wait(unsigned int timeout,
                                      unsigned int *exit_status) noexcept;
@@ -210,6 +184,17 @@ public:
 
   /*! \see reproc_kill */
   REPROC_EXPORT std::error_code kill(unsigned int timeout,
+                                     unsigned int *exit_status) noexcept;
+
+  /*! \see reproc_stop */
+  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1,
+                                     unsigned int *exit_status) noexcept;
+  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1, cleanup c2,
+                                     unsigned int t2,
+                                     unsigned int *exit_status) noexcept;
+  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1, cleanup c2,
+                                     unsigned int t2, cleanup c3,
+                                     unsigned int t3,
                                      unsigned int *exit_status) noexcept;
 
 private:

@@ -47,12 +47,24 @@ Stream identifiers used to indicate which stream to close or read from.
 */
 typedef enum {
   /*! stdin */
-  REPROC_IN,
+  REPROC_IN = 0,
   /*! stdout */
-  REPROC_OUT,
+  REPROC_OUT = 1,
   /*! stderr */
-  REPROC_ERR
+  REPROC_ERR = 2
 } REPROC_STREAM;
+
+typedef enum {
+  /*! noop (no operation) */
+  REPROC_NOOP = 0,
+  /*! \see reproc_wait */
+  REPROC_WAIT = 1,
+  /*! \see reproc_terminate */
+  REPROC_TERMINATE = 2,
+  /*! \see reproc_kill */
+  REPROC_KILL = 3
+} REPROC_CLEANUP;
+
 
 /*! Tells a function that takes a timeout value to wait indefinitely. */
 REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
@@ -300,6 +312,32 @@ If the child process exits before the timeout expires the exit status stored in
 */
 REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_type *process,
                                        unsigned int timeout,
+                                       unsigned int *exit_status);
+
+/*!
+Simplifies calling combinations of #reproc_wait, #reproc_terminate and
+#reproc_kill.
+
+Example:
+
+Wait 10 seconds for the child process to exit on its own before sending
+`SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) and waiting 5 more seconds for the
+child process to exit.
+
+\code{.c}
+REPROC_ERROR error = reproc_stop(process,
+                                 REPROC_WAIT, 10000,
+                                 REPROC_TERMINATE, 5000,
+                                 REPROC_NOOP, 0);
+\endcode
+
+Call #reproc_wait, #reproc_terminate and #reproc_kill directly if you need extra
+logic such as logging between calls.
+*/
+REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
+                                       unsigned int t1, REPROC_CLEANUP c2,
+                                       unsigned int t2, REPROC_CLEANUP c3,
+                                       unsigned int t3,
                                        unsigned int *exit_status);
 
 /*!
