@@ -3,10 +3,6 @@
 
 #include <array>
 
-#if defined(_WIN32)
-#  include <windows.h>
-#endif
-
 TEST_CASE("stop")
 {
   reproc_type infinite;
