@@ -20,17 +20,8 @@ TEST_CASE("stop")
   error = reproc_start(&infinite, ARGV_SIZE - 1, argv.data(), nullptr);
   REQUIRE(!error);
 
-// Wait to avoid terminating the child process on Windows before it is
-// initialized (which would result in an error window appearing).
-#if defined(_WIN32)
-  Sleep(50);
-#endif
-
-  SUBCASE("wait")
-  {
-    error = reproc_wait(&infinite, 50, nullptr);
-    REQUIRE(error == REPROC_WAIT_TIMEOUT);
-  }
+  error = reproc_wait(&infinite, 50, nullptr);
+  REQUIRE(error == REPROC_WAIT_TIMEOUT);
 
   SUBCASE("terminate")
   {
