@@ -236,7 +236,6 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
   generate_export_header(${TARGET}
     BASE_NAME REPROC
     EXPORT_FILE_NAME ${GENERATED_HEADERS_DIR}/${TARGET}/export.${HEADER_EXT}
-    INCLUDE_GUARD_NAME REPROC_EXPORT_${HEADER_EXT_UPPER}
   )
 
   # Make sure we follow the popular naming convention for shared libraries on
