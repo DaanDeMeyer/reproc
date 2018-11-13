@@ -28,7 +28,6 @@ REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
       error = reproc_terminate(process, timeout, exit_status);
       break;
     case REPROC_KILL: error = reproc_kill(process, timeout, exit_status); break;
-    default: break;
     }
 
     if (error != REPROC_WAIT_TIMEOUT) { break; }
