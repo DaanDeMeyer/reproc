@@ -50,7 +50,6 @@ before_build:
       -DREPROC_CLANG_TIDY=ON
       -DREPROC_INSTALL=ON
       -DREPROC_CLANG_FORMAT=ON
-      -DREPROC_W4=ON
       -DREPROC_COLORED_OUTPUT=ON
 
 build_script: cmake --build .

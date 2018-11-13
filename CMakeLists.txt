@@ -18,32 +18,28 @@ project(reproc VERSION 2.0.0 LANGUAGES C)
 # Tip: use cmake-gui when contributing to reproc to turn on everything without
 # having to type out all the options by hand (cmake .. && cmake-gui .).
 
+### User Options ###
+
+option(REPROCXX "Build reproc++ (C++ wrapper library).")
 option(REPROC_TESTS "Build reproc's tests. Requires C++ compiler.")
 option(REPROC_EXAMPLES "Build reproc's examples. Enable REPROCXX to build the \
-C++ examples.")
-option(REPROCXX "Build reproc++ (C++ wrapper library).")
+reproc++ examples.")
 option(REPROC_DOCS "Build reproc's documentation with Doxygen.")
-option(REPROC_CI "Add -Werror or equivalent to the compiler and clang-tidy.")
 option(REPROC_INSTALL "Generate reproc's install target. If REPROCXX is \
-enabled an install target is also generated for reproc++.")
+enabled reproc++ is also added to the install target.")
+
+### Developer Options ###
+
+option(REPROC_CI "Add -Werror or equivalent to the compiler and clang-tidy.")
 option(REPROC_CLANG_TIDY "Run clang-tidy as part of the build (requires \
 clang-tidy to be in the PATH).")
-option(REPROC_CLANG_FORMAT "Find clang-format and add a target to run it on \
-all source files.")
-option(REPROC_SANITIZERS "Build reproc with sanitizers. Only works on Unix \
+option(REPROC_CLANG_FORMAT "Find clang-format and add a target (reproc-format) \
+to run it on all source files.")
+option(REPROC_SANITIZERS "Build reproc with sanitizers. Only works on UNIX \
 systems.")
-# CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default on Windows so
-# when we add /W4 via target_compile_options cl.exe complains that both /W3 and
-# /W4 are passed. We can avoid these warnings by replacing /W3 with /W4 in
-# CMAKE_CXX_FLAGS but this is intrusive when reproc is used via add_subdirectory
-# since it would add /W4 for every target. To solve this, we add this option so
-# /W4 can be enabled by developers and in CI without forcing it on for users.
-option(REPROC_W4 "Enable /W4 on Windows (modifies CMAKE_C_FLAGS and \
-CMAKE_CXX_FLAGS).")
 option(REPROC_COLORED_OUTPUT "Force colored output from GCC and Clang.")
 
-# C++
-
+# Enable C++ support if needed.
 if(REPROCXX OR REPROC_TESTS)
   enable_language(CXX)
 endif()
@@ -68,15 +64,22 @@ endif()
 
 ### Helpers ###
 
+# Check if reproc is included via add_subdirectory.
+get_directory_property(REPROC_IS_SUBDIRECTORY PARENT_DIRECTORY)
+
 if(MSVC)
-  # See REPROC_W4 option declaration for why we can't just add /W4 as a
-  # compile option.
-  if(REPROC_W4)
+  # CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default on Windows so
+  # when we add /W4 via target_compile_options cl.exe complains that both /W3
+  # and /W4 are passed. We can avoid these warnings by replacing /W3 with /W4 in
+  # CMAKE_CXX_FLAGS but this is intrusive when reproc is used via
+  # add_subdirectory since it would add /W4 to every target. To solve this, we
+  # only add /W4 when reproc is not included with add_subdirectory.
+  if(NOT REPROC_IS_SUBDIRECTORY)
     string(REGEX REPLACE /W[0-4] "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4" )
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")
 
     string(REGEX REPLACE /W[0-4] "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4" )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
   endif()
 
   # Check for permissive- here to avoid doing the check multiple times in
@@ -193,8 +196,8 @@ function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
   add_library(reproc::${TARGET} ALIAS ${TARGET})
   reproc_set_common(${TARGET} ${OUTPUT_DIRECTORY})
 
-  # Put library files in tests and examples directories on CI so the executables
-  # in those directories find the dll's without us having to modify the PATH.
+  # Put dll's in tests and examples directories on CI so the executables in
+  # those directories find the dll's without us having to modify the PATH.
   if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
     add_custom_command(
       TARGET ${TARGET}
