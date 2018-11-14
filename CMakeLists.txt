@@ -189,10 +189,10 @@ if(WIN32 AND REPROC_INSTALL)
 endif()
 
 # Adds a new library and encapsulates common configuration for it.
-function(reproc_add_library TARGET LANGUAGE OUTPUT_DIRECTORY)
+function(reproc_add_library TARGET LANGUAGE)
   add_library(${TARGET} "")
   add_library(reproc::${TARGET} ALIAS ${TARGET})
-  reproc_set_common(${TARGET} ${OUTPUT_DIRECTORY})
+  reproc_set_common(${TARGET} lib)
 
   # Put dll's in tests and examples directories on CI so the executables in
   # those directories find the dll's without us having to modify the PATH.
@@ -337,7 +337,7 @@ endfunction()
 
 ### reproc Library ###
 
-reproc_add_library(reproc C lib)
+reproc_add_library(reproc C)
 
 target_sources(reproc PRIVATE
   src/reproc/common/error.c
@@ -394,7 +394,7 @@ endif()
 ### reproc++ Library (C++ wrapper) ###
 
 if(REPROCXX)
-  reproc_add_library(reproc++ CXX lib)
+  reproc_add_library(reproc++ CXX)
 
   target_link_libraries(reproc++ PRIVATE reproc)
   target_sources(reproc++ PRIVATE
