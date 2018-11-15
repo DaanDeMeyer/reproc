@@ -12,7 +12,8 @@ namespace reproc
 {
 
 /*! \see REPROC_ERROR */
-// When editing make sure to change the corresponding enum in error.h as well.
+// When changing this enum make sure to change the corresponding enum in error.h
+// as well.
 enum class errc {
   // reproc errors
 
@@ -61,6 +62,7 @@ make_error_condition(reproc::errc error) noexcept;
 namespace std
 {
 
+/*! \private */
 template <> struct is_error_condition_enum<reproc::errc> : true_type {
 };
 

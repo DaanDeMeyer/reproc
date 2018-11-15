@@ -90,6 +90,25 @@ cleanup:
   return REPROC_SUCCESS;
 }
 
+REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
+                         void *buffer, unsigned int size,
+                         unsigned int *bytes_read)
+{
+  assert(process);
+  assert(stream != REPROC_IN);
+  assert(buffer);
+  assert(bytes_read);
+
+  switch (stream) {
+  case REPROC_IN: break;
+  case REPROC_OUT: return pipe_read(process->out, buffer, size, bytes_read);
+  case REPROC_ERR: return pipe_read(process->err, buffer, size, bytes_read);
+  }
+
+  assert(0);
+  return REPROC_UNKNOWN_ERROR;
+}
+
 REPROC_ERROR reproc_write(reproc_type *process, const void *buffer,
                           unsigned int to_write, unsigned int *bytes_written)
 {
@@ -112,25 +131,6 @@ void reproc_close(reproc_type *process, REPROC_STREAM stream)
   }
 
   assert(0);
-}
-
-REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
-                         void *buffer, unsigned int size,
-                         unsigned int *bytes_read)
-{
-  assert(process);
-  assert(stream != REPROC_IN);
-  assert(buffer);
-  assert(bytes_read);
-
-  switch (stream) {
-  case REPROC_IN: break;
-  case REPROC_OUT: return pipe_read(process->out, buffer, size, bytes_read);
-  case REPROC_ERR: return pipe_read(process->err, buffer, size, bytes_read);
-  }
-
-  assert(0);
-  return REPROC_UNKNOWN_ERROR;
 }
 
 REPROC_ERROR reproc_wait(reproc_type *process, unsigned int timeout,

@@ -10,14 +10,15 @@
 #include <string>
 #include <vector>
 
-// Forward reproc_type so we don't have to include reproc.h in the header.
+// Forward declare reproc_type so we don't have to include reproc.h in the
+// header.
 struct reproc_type;
 
-/*! The `reproc` namespace wraps all reproc C++ declarations. reproc::process
-wraps the C api inside a C++ class. reproc::errc improves on #REPROC_ERROR by
+/*! The `reproc` namespace wraps all reproc++ declarations. reproc::process
+wraps reproc's API inside a C++ class. reproc::errc improves on #REPROC_ERROR by
 integrating with C++'s std::error_code error handling mechanism. To avoid
-exposing the C API when using the C++ API all the other enums and constants of
-the C API have a replacement in the `reproc` namespace as well. */
+exposing reproc's API when using reproc++ all the other enums and constants of
+reproc have a replacement in reproc++ as well. */
 namespace reproc
 {
 
@@ -34,21 +35,21 @@ enum class stream {
 /*! \see REPROC_INFINITE */
 REPROC_EXPORT extern const unsigned int infinite;
 
-/*! \see #process::stop */
+/*! \see process::stop */
 enum cleanup {
-  /*! Do nothing. */
+  /*! Do nothing (no operation). */
   noop = 0,
-  /*! \see #process::wait */
+  /*! \ref process::wait */
   wait = 1,
-  /*! \see #process::terminate */
+  /*! \ref process::terminate */
   terminate = 2,
-  /*! \see #process::kill */
+  /*! \ref process::kill */
   kill = 3
 };
 
-/*! Improves on reproc's C API by wrapping it in a class. Aside from methods
-that mimick the C API it also adds configurable RAII and several methods that
-reduce the boilerplate required when using reproc from idiomatic C++ code. */
+/*! Improves on reproc's API by wrapping it in a class. Aside from methods that
+mimick reproc's API it also adds configurable RAII and several methods that
+reduce the boilerplate required to use reproc from idiomatic C++ code. */
 class process
 {
 
@@ -69,7 +70,7 @@ public:
 
   If the child process is still running when example's destructor is called, it
   will first wait 10 seconds for the child process to exit on its own before
-  sending `SIGTERM` (POSIX) or `CTRL-BREAK` Windows and waiting 5 more seconds
+  sending `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) and waiting 5 more seconds
   for the child process to exit.
 
   By default the destructor waits indefinitely for the child process to exit.
@@ -86,7 +87,8 @@ public:
   process is still running and frees all allocated resources. */
   REPROC_EXPORT ~process() noexcept;
 
-  // Enforce unique ownership of process objects.
+  // Enforce unique ownership of child processes.
+
   process(const process &) = delete;
   process &operator=(const process &) = delete;
 
@@ -107,20 +109,11 @@ public:
   \param[in] working_directory Optional working directory. Defaults to
   `nullptr`.
 
-  \return reproc::errc
-
   \see reproc_start
   */
   REPROC_EXPORT std::error_code
   start(const std::vector<std::string> &args,
         const std::string *working_directory = nullptr);
-
-  /*! \see reproc_write */
-  REPROC_EXPORT std::error_code write(const void *buffer, unsigned int to_write,
-                                      unsigned int *bytes_written) noexcept;
-
-  /*! \see reproc_close */
-  REPROC_EXPORT void close(reproc::stream stream) noexcept;
 
   /*! \see reproc_read */
   REPROC_EXPORT std::error_code read(reproc::stream stream, void *buffer,
@@ -164,15 +157,20 @@ public:
   For examples of parsers, see parser.hpp.
   \endparblock
 
-  \param stream The stream to read from.
-  \param parser An instance of \p Parser.
-
-  \return reproc::errc
+  \param[in] stream The stream to read from.
+  \param[in] parser An instance of \p Parser.
 
   Possible errors: See #read except for reproc::errc::stream_closed.
   */
   template <typename Parser>
   std::error_code read(reproc::stream stream, Parser &&parser);
+
+  /*! \see reproc_write */
+  REPROC_EXPORT std::error_code write(const void *buffer, unsigned int to_write,
+                                      unsigned int *bytes_written) noexcept;
+
+  /*! \see reproc_close */
+  REPROC_EXPORT void close(reproc::stream stream) noexcept;
 
   /*! \see reproc_wait */
   REPROC_EXPORT std::error_code wait(unsigned int timeout,
@@ -187,14 +185,18 @@ public:
                                      unsigned int *exit_status) noexcept;
 
   /*! \see reproc_stop */
-  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1,
-                                     unsigned int *exit_status) noexcept;
-  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1, cleanup c2,
-                                     unsigned int t2,
-                                     unsigned int *exit_status) noexcept;
   REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1, cleanup c2,
                                      unsigned int t2, cleanup c3,
                                      unsigned int t3,
+                                     unsigned int *exit_status) noexcept;
+
+  /*! Overload of #stop with \p c3 set to #noop and \p t3 set to 0. */
+  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1, cleanup c2,
+                                     unsigned int t2,
+                                     unsigned int *exit_status) noexcept;
+  /*! Overload of #stop with \p c2 and c3 set to #noop and \p t2 and \p t3 set
+  to 0. */
+  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1,
                                      unsigned int *exit_status) noexcept;
 
 private:

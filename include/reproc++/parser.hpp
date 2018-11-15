@@ -15,7 +15,7 @@ namespace reproc
 /*!
 Reads the entire output of a child process into the given string.
 
-\see \ref reproc::process::read
+\see \ref process::read
 */
 class string_parser
 {
@@ -30,7 +30,7 @@ public:
 /*!
 Forwards the entire output of a child process to the given output stream.
 
-\see \ref reproc::process::read
+\see \ref process::read
 */
 class ostream_parser
 {
