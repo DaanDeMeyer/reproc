@@ -1,3 +1,3 @@
 # Versions
 
-- doctest: 2.0
+- doctest: 2.0.1
