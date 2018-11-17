@@ -22,7 +22,6 @@ static REPROC_ERROR pipe_disable_inherit(HANDLE pipe)
   return REPROC_SUCCESS;
 }
 
-
 REPROC_ERROR pipe_init(HANDLE *read, bool inherit_read, HANDLE *write,
                        bool inherit_write)
 {

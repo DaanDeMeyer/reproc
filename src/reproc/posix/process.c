@@ -243,10 +243,10 @@ static int timeout_process(const void *data)
 
 static REPROC_ERROR timeout_map_error(int error)
 {
-  switch(error) {
-    case EINTR: return REPROC_INTERRUPTED;
-    case ENOMEM: return REPROC_NOT_ENOUGH_MEMORY;
-    default: return REPROC_UNKNOWN_ERROR;
+  switch (error) {
+  case EINTR: return REPROC_INTERRUPTED;
+  case ENOMEM: return REPROC_NOT_ENOUGH_MEMORY;
+  default: return REPROC_UNKNOWN_ERROR;
   }
 }
 
