@@ -1,7 +1,7 @@
 /*! \example cmake-help.cpp */
 
-#include <reproc++/parser.hpp>
 #include <reproc++/reproc.hpp>
+#include <reproc++/sink.hpp>
 
 #include <iostream>
 
@@ -50,23 +50,22 @@ int main()
 
   std::string output;
 
-  /* string_parser reads the child process output into the given string. It
-  keeps reading until an error occurs or the output stream of the child process
-  is closed. */
-  ec = cmake_help.read(reproc::stream::out, reproc::string_parser(output));
+  /* drain reads from the stream until it is closed or an error occurs. By
+  providing it with a string sink all output is stored in our output string. */
+  ec = cmake_help.drain(reproc::stream::out, reproc::string_sink(output));
   if (ec) { return fail(ec); }
 
   std::cout << output << std::flush;
 
-  // You can also pass an ostream_parser to write the output directly to an
+  // You can also pass an ostream sink to write the output directly to an
   // output stream such as std::cerr.
-  ec = cmake_help.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
+  ec = cmake_help.drain(reproc::stream::err, reproc::ostream_sink(std::cerr));
   if (ec) { return fail(ec); }
 
-  /* It's easy to define your own parsers as well. Take a look at parser.cpp in
-  the repository to see how string_parser and ostream_parser are defined. The
-  documentation of process::read also provides more information on the
-  requirements a parser should fulfill. */
+  /* It's easy to define your own sinks as well. Take a look at sink.cpp in
+  the repository to see how string_sink and ostream_sink are defined. The
+  documentation of process::drain also provides more information on the
+  requirements a sink should fulfill. */
 
   /* Even if we pass stop parameters to the constructor, we can still call the
   individual methods ourselves. This allows us to retrieve the exit status of

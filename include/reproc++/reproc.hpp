@@ -121,49 +121,50 @@ public:
                                      unsigned int *bytes_read) noexcept;
 
   /*!
-  Calls #read until an error occurs or the provided parser returns false.
+  Calls #read until the provided parser returns false or an error occurs. \p
+  parser receives the output after each read.
+
+  \p parser is always called once with an empty string to give the parser the
+  chance to process all output from the previous call to #read one by one.
 
   \tparam Parser
   \parblock
-  Should be a function with the following signature:
+  \p Parser should have the following signature:
 
   \code{.cpp}
   bool parser(const char *buffer, unsigned int size);
   \endcode
-
-  The parser receives the buffer after each read so it can be appended to the
-  final result. One way to make a parser is to use a lambda:
-
-  \code{.cpp}
-  reproc::process process;
-  process.start(...)
-
-  std::string output;
-  process.read(reproc::stream::cout,
-               [&output](const char *buffer, unsigned int size) {
-    output.append(buffer, size);
-    return true;
-  });
-  \endcode
-
-  This parser reads the entire output of the child process into a string.
-
-  It is also possible to use a class that overloads the call operator as a
-  parser. parser.hpp contains built-in parsers that are defined as a class.
-
-  Note that this method does not report the child process closing the output
-  stream as an error.
-
-  For examples of parsers, see parser.hpp.
   \endparblock
 
   \param[in] stream The stream to read from.
   \param[in] parser An instance of \p Parser.
-
-  Possible errors: See #read except for reproc::errc::stream_closed.
   */
   template <typename Parser>
   std::error_code read(reproc::stream stream, Parser &&parser);
+
+  /*!
+  Calls #read until the stream is closed or an error occurs. \p sink receives
+  the output after each read.
+
+  Note that this method does not report the output stream being closed as an
+  error.
+
+  \tparam Sink
+  \parblock
+  \p Sink should have the following signature:
+
+  \code{.cpp}
+  void sink(const char *buffer, unsigned int size);
+  \endcode
+
+  For examples of sinks, see sink.hpp
+  \endparblock
+
+  \param[in] stream The stream to read from.
+  \param[in] sink An instance of \p Sink.
+  */
+  template <typename Sink>
+  std::error_code drain(reproc::stream stream, Sink &&sink);
 
   /*! \see reproc_write */
   REPROC_EXPORT std::error_code write(const void *buffer, unsigned int to_write,
@@ -209,12 +210,18 @@ private:
   unsigned int t2_;
   cleanup c3_;
   unsigned int t3_;
+
+  static constexpr unsigned int BUFFER_SIZE = 1024;
 };
 
 template <typename Parser>
 std::error_code process::read(reproc::stream stream, Parser &&parser)
 {
-  static constexpr unsigned int BUFFER_SIZE = 1024;
+  /* A single call to read might contain multiple messages. By always calling
+  the parser once with no data before reading, we give the parser the chance to
+  process all previous output one by one before reading from the child process
+  again. */
+  if (!parser("", 0)) { return {}; }
 
   char buffer[BUFFER_SIZE];
   std::error_code ec;
@@ -226,6 +233,23 @@ std::error_code process::read(reproc::stream stream, Parser &&parser)
 
     // parser returns false to tell us to stop reading.
     if (!parser(buffer, bytes_read)) { break; }
+  }
+
+  return ec;
+}
+
+template <typename Sink>
+std::error_code process::drain(reproc::stream stream, Sink &&sink)
+{
+  char buffer[BUFFER_SIZE];
+  std::error_code ec;
+
+  while (true) {
+    unsigned int bytes_read = 0;
+    ec = read(stream, buffer, BUFFER_SIZE, &bytes_read);
+    if (ec) { break; }
+
+    sink(buffer, bytes_read);
   }
 
   // The child process closing the stream is not treated as an error.

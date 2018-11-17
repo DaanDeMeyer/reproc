@@ -12,21 +12,20 @@ int fail(std::error_code ec)
   return 1;
 }
 
-// Expands upon reproc++'s string parser by locking the given mutex before
+// Expands upon reproc++'s string sink by locking the given mutex before
 // appending new output to the given string.
-class thread_safe_string_parser
+class thread_safe_string_sink
 {
 public:
-  thread_safe_string_parser(std::string &out, std::mutex &mutex)
+  thread_safe_string_sink(std::string &out, std::mutex &mutex)
       : out_(out), mutex_(mutex)
   {
   }
 
-  bool operator()(const char *buffer, unsigned int size)
+  void operator()(const char *buffer, unsigned int size)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     out_.append(buffer, size);
-    return true;
   }
 
 private:
@@ -57,8 +56,8 @@ int main(int argc, char *argv[])
 
   auto read_async = std::async(std::launch::async, [&background, &output,
                                                     &mutex]() {
-    thread_safe_string_parser parser(output, mutex);
-    return background.read(reproc::stream::out, parser);
+    thread_safe_string_sink sink(output, mutex);
+    return background.drain(reproc::stream::out, sink);
   });
 
   // Show new output every 2 seconds.

@@ -1,7 +1,7 @@
 /*! \example forward.cpp */
 
-#include <reproc++/parser.hpp>
 #include <reproc++/reproc.hpp>
+#include <reproc++/sink.hpp>
 
 #include <future>
 #include <iostream>
@@ -67,13 +67,13 @@ int main(int argc, char *argv[])
   separate threads to read from both streams at the same time. */
 
   // Pipe child process stdout output to std::cout of parent process.
-  auto read_stdout = std::async(std::launch::async, [&forward]() {
-    return forward.read(reproc::stream::out, reproc::ostream_parser(std::cout));
+  auto drain_stdout = std::async(std::launch::async, [&forward]() {
+    return forward.drain(reproc::stream::out, reproc::ostream_sink(std::cout));
   });
 
   // Pipe child process stderr output to std::cerr of parent process.
-  auto read_stderr = std::async(std::launch::async, [&forward]() {
-    return forward.read(reproc::stream::err, reproc::ostream_parser(std::cerr));
+  auto drain_stderr = std::async(std::launch::async, [&forward]() {
+    return forward.drain(reproc::stream::err, reproc::ostream_sink(std::cerr));
   });
 
   /* Call stop ourselves to get the exit_status. We add reproc::wait with a
@@ -84,10 +84,10 @@ int main(int argc, char *argv[])
                     2000, &exit_status);
   if (ec) { return fail(ec); }
 
-  ec = read_stdout.get();
+  ec = drain_stdout.get();
   if (ec) { return fail(ec); }
 
-  ec = read_stderr.get();
+  ec = drain_stderr.get();
   if (ec) { return fail(ec); }
 
   return static_cast<int>(exit_status);

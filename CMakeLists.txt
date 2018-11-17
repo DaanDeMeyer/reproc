@@ -400,7 +400,7 @@ if(REPROCXX)
   target_sources(reproc++ PRIVATE
     src/reproc++/reproc.cpp
     src/reproc++/error.cpp
-    src/reproc++/parser.cpp
+    src/reproc++/sink.cpp
   )
 endif()
 

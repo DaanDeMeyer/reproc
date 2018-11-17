@@ -96,9 +96,14 @@ std::error_code process::start(const std::vector<std::string> &args,
   return ec;
 }
 
-void process::close(reproc::stream stream) noexcept
+std::error_code process::read(reproc::stream stream, void *buffer,
+                              unsigned int size,
+                              unsigned int *bytes_read) noexcept
 {
-  return reproc_close(process_.get(), static_cast<REPROC_STREAM>(stream));
+  REPROC_ERROR error = reproc_read(process_.get(),
+                                   static_cast<REPROC_STREAM>(stream), buffer,
+                                   size, bytes_read);
+  return reproc_error_to_error_code(error);
 }
 
 std::error_code process::write(const void *buffer, unsigned int to_write,
@@ -109,14 +114,9 @@ std::error_code process::write(const void *buffer, unsigned int to_write,
   return reproc_error_to_error_code(error);
 }
 
-std::error_code process::read(reproc::stream stream, void *buffer,
-                              unsigned int size,
-                              unsigned int *bytes_read) noexcept
+void process::close(reproc::stream stream) noexcept
 {
-  REPROC_ERROR error = reproc_read(process_.get(),
-                                   static_cast<REPROC_STREAM>(stream), buffer,
-                                   size, bytes_read);
-  return reproc_error_to_error_code(error);
+  return reproc_close(process_.get(), static_cast<REPROC_STREAM>(stream));
 }
 
 std::error_code process::wait(unsigned int timeout,
