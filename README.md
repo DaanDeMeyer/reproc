@@ -174,17 +174,25 @@ mkdir build
 cd build
 # Build reproc and reproc++.
 cmake -DCMAKE_BUILD_TYPE=Release -DREPROC_INSTALL=ON -DREPROCXX=ON ..
-# You might need root for this depending on install location.
-cmake --build . --target install
 ```
 
 By default on 64-bit systems, CMake installs reproc's library files to the
 `lib64` subdirectory of the install prefix. On some distro's (such as Arch
 Linux) the files should be installed to the `lib` subdirectory instead. To
-accomplish this, Add the following CMake option:
+accomplish this, add the following CMake option:
 
 ```sh
 cmake -DCMAKE_INSTALL_LIBDIR=lib ..
+```
+
+We can now build and install reproc:
+
+```sh
+# Build reproc and reproc++.
+cmake --build .
+# Install reproc and reproc++ . You might need root for this depending on
+# install location.
+cmake --build . --target install
 ```
 
 After installing reproc you can use `find_package` in the root CMakeLists.txt
