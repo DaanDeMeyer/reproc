@@ -46,6 +46,12 @@ int main(int argc, char *argv[])
   reproc::process background(reproc::terminate, 5000, reproc::kill, 2000);
 
   std::error_code ec = background.start(argc - 1, argv + 1);
+
+  if (ec == reproc::errc::file_not_found) {
+    std::cerr << "Program not found. Make sure it's available from the PATH.";
+    return 1;
+  }
+
   if (ec) { return fail(ec); }
 
   /* We need a lock along with the output string to prevent the main thread and
