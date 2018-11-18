@@ -56,9 +56,6 @@ applications.
 - Zero dependencies.
 - Multiple installation methods. Either build reproc as part of your project or
   install it as a shared library.
-- Care was taken to not leak resources anywhere in the library. See
-  [Gotcha's](#gotchas) and [Avoiding resource leaks](#avoiding-resource-leaks)
-  for more information.
 
 ## Questions
 
