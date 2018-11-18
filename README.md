@@ -178,6 +178,15 @@ cmake -DCMAKE_BUILD_TYPE=Release -DREPROC_INSTALL=ON -DREPROCXX=ON ..
 cmake --build . --target install
 ```
 
+By default on 64-bit systems, CMake installs reproc's library files to the
+`lib64` subdirectory of the install prefix. On some distro's (such as Arch
+Linux) the files should be installed to the `lib` subdirectory instead. To
+accomplish this, Add the following CMake option:
+
+```sh
+cmake -DCMAKE_INSTALL_LIBDIR=lib ..
+```
+
 After installing reproc you can use `find_package` in the root CMakeLists.txt
 file of your application to find reproc:
 
@@ -643,13 +652,13 @@ When making changes:
 - Format your changes with clang-format and run clang-tidy locally since it will
   run in CI as well.
 
-  If the `REPROC_FORMAT` CMake option is enabled, the reproc-format target
-  is added that formats all reproc source files with clang-format.
+  If the `REPROC_FORMAT` CMake option is enabled, the reproc-format target is
+  added that formats all reproc source files with clang-format.
 
   Example usage: `cmake --build build --target reproc-format`
 
-  If the `REPROC_TIDY` CMake option is enabled, CMake will run clang-tidy
-  on all reproc source files while building.
+  If the `REPROC_TIDY` CMake option is enabled, CMake will run clang-tidy on all
+  reproc source files while building.
 
   If CMake can't find clang-format or clang-tidy you can tell it where to look:
 
