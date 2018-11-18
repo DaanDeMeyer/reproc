@@ -368,15 +368,15 @@ reproc::process;
 std::error_code ec = process.start(...);
 
 if (ec == reproc::errc::file_not_found) {
-  std::cerr << "Executable not found. Make sure it is available from the PATH";
+  std::cerr << "Executable not found. Make sure it is available from the PATH.";
   return 1;
 }
 
 if (ec) {
   // Will print the actual system error value from errno or GetLastError() if
-  // error is a system error
+  // error is a system error.
   std::cerr << ec.value();
-  // You can also print a string representation of the error
+  // You can also print a string representation of the error.
   std::cerr << ec.message();
   return 1;
 }
@@ -407,9 +407,9 @@ if (ec) { throw std::system_error(ec, "Unable to start process"); }
 Guidelines for using a reproc child process from multiple threads:
 
 - Don't wait for or stop the same child process from multiple threads at the
-  same time
+  same time.
 - Don't read from or write to the same stream of the same child process from
-  multiple threads at the same time
+  multiple threads at the same time.
 
 Different threads can read from or write to different streams at the same time.
 This is a valid approach when you want to write to stdin and read from stdout in

@@ -43,7 +43,7 @@ int main(void)
   actual system error using the reproc_system_error function. */
   if (error == REPROC_FILE_NOT_FOUND) {
     fprintf(stderr, "%s\n",
-            "git not found. Make sure it's available from the PATH");
+            "git not found. Make sure it's available from the PATH.");
     return 1;
   }
 
