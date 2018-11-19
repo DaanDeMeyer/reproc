@@ -161,11 +161,10 @@ if (error != REPROC_STREAM_CLOSED) { return error; }
 // Do something with the output
 \endcode
 
-Remember that this function reads bytes and not strings. It is up to the user
-to add a null terminator to \p buffer after reading if he wants to use \p buffer
-as a null terminated string after the function returns. However, this is easily
-accomplished as long as we make sure to leave space for the null terminator in
-the buffer when reading:
+Remember that this function reads bytes and not strings. A null terminator has
+to be added to \p buffer after reading to be able to use \p buffer as a null
+terminated string. This is easily accomplished as long as we make sure to leave
+space for the null terminator in the buffer when reading:
 
 \code{.c}
 unsigned int bytes_read = 0;
@@ -208,7 +207,7 @@ block until the requested amount of bytes have been written to the pipe so
 this function should only rarely succeed without writing the full amount of
 bytes requested.
 
-(POSIX) Writing to a closed stdin pipe by default terminates the parent process
+(POSIX) By default, writing to a closed stdin pipe terminates the parent process
 with the `SIGPIPE` signal. #reproc_write will only return #REPROC_STREAM_CLOSED
 if this signal is ignored by the parent process.
 
