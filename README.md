@@ -266,89 +266,9 @@ with reproc from multiple threads.
   `reproc_wait` to stop working as expected. Read the Notes section of the
   `waitpid` man page for more information.
 
-## Design
+## Avoiding resource leaks
 
-reproc is designed to be a minimal wrapper around the platform-specific API's
-for starting a process, interacting with its standard streams and finally
-terminating it. In this section we explain some design decisions as well as how
-some parts of reproc work under the hood.
-
-### Memory allocation
-
-reproc aims to do as few dynamic memory allocations as possible in its own code
-(not counting allocations that happen in system calls). As of this moment,
-dynamic memory allocation in reproc is only done on Windows:
-
-- When converting the array of program arguments to a single string as required
-  by the `CreateProcess` function.
-- When converting UTF-8 strings to UTF-16 (Windows Unicode functions take UTF-16
-  strings as arguments).
-
-Both these allocations happen in `process_start` and are freed before the
-function returns.
-
-I have not found a way to avoid allocating memory while keeping a uniform
-cross-platform API for both POSIX and Windows. (Windows `CreateProcessW`
-requires a single UTF-16 string of arguments delimited by spaces while POSIX
-`execvp` requires an array of UTF-8 string arguments). Since reproc's API takes
-child process arguments as an array of UTF-8 strings we have to allocate memory
-to convert the array into a single UTF-16 string on Windows.
-
-reproc uses the standard `malloc` and `free` functions to allocate and free
-memory. However, providing support for custom allocators should be
-straightforward. If you need them, please open an issue.
-
-In reproc++, functions/methods that directly map to reproc API function do not
-do any extra allocations. Convenience functions/methods that do not appear in
-reproc's API might do extra allocations in order to convert their arguments to
-the format expected by reproc's API.
-
-### (POSIX) Waiting on child process with timeout
-
-I did not find a counterpart for the Windows `WaitForSingleObject` function
-which can be used to wait until a process exits or the provided timeout expires.
-POSIX has a similar function `waitpid` but this function does not support
-specifying a timeout value.
-
-To support waiting with a timeout value on POSIX, each process is put in its own
-process group with the same id as the process id with a call to `setpgid` after
-forking the process. When calling the `reproc_stop` function with a timeout
-value between 0 and `REPROC_INFINITE`, a timeout process is forked which we put
-in the same process group as the process we want to wait for with the same
-`setpgid` function and puts itself to sleep for the requested amount of time
-(timeout value) before exiting. We then call the `waitpid` function in the main
-process but instead of passing the process id of the process we want to wait for
-we pass the negative value of the process id. Passing a negative value for the
-process id to `waitpid` instructs it to wait for all processes in the process
-group of the absolute value of the passed negative value. In our case it will
-wait for both the timeout process we started and the process we actually want to
-wait for. If `waitpid` returns the process id of the timeout process we know the
-timeout value has been exceeded. If `waitpid` returns the process id of the
-process we want to wait for we know it has exited before the timeout process and
-that the timeout value has not been exceeded.
-
-This solution was inspired by [this](https://stackoverflow.com/a/8020324) Stack
-Overflow answer.
-
-### (POSIX) Retrieve errors that happen after forking
-
-reproc uses a fork-exec model to start new child processes on POSIX systems.
-After forking, some setup code is executed before the `execve` call which starts
-the child process. Errors can occur in both the setup code and the `execve`
-call. To retrieve errors that happen after forking, we create an extra pipe in
-the parent procces with the `FD_CLOEXEC` flag set. We write any errors that
-happen in the forked process (that is inherited by the forked process) to that
-pipe. If we then read from the error pipe after forking the `read` call will
-either read 0 which means exec was called and the write endpoint was closed
-(because of the `FD_CLOEXEC` flag) or it reads a single integer (errno) which
-indicates an error occured before or during the call to `execve`.
-
-This solution was inspired by [this](https://stackoverflow.com/a/1586277) Stack
-Overflow answer.
-
-### Avoiding resource leaks
-
-#### POSIX
+### POSIX
 
 On POSIX systems, by default file descriptors are inherited by child processes
 when calling `execve`. To prevent unintended leaking of file descriptors to
@@ -396,7 +316,7 @@ process since only the file descriptors up to the latest resource limit are
 closed. Of course, this only happens if the application manually lowers the
 resource limit.
 
-#### Windows
+### Windows
 
 On Windows the `CreatePipe` function receives a flag as part of its arguments
 that specifies if the returned handles can be inherited by child processes or
