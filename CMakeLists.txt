@@ -517,7 +517,7 @@ if(REPROC_FORMAT)
     )
 
     add_custom_target(
-      reproc-format
+      reproc-format ALL
       COMMAND ${REPROC_CLANG_FORMAT_PROGRAM} -i ${REPROC_SOURCES}
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     )
