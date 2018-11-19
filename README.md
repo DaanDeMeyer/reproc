@@ -128,12 +128,6 @@ reproc's build can be configured using the following CMake options:
 - `REPROC_INSTALL`: Generate install target (default: `ON` unless reproc is
   built as a static library using `add_subdirectory`).
 
-  Note that if you're using CMake's default `CMAKE_INSTALL_PREFIX` on Windows,
-  you'll have to set `REPROC_INSTALL=ON` the first time when running CMake to
-  make sure the install directories are correct (This is because of
-  `CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT` is only true on the first run of
-  CMake in a new build tree).
-
 ## Documentation
 
 API documentation and examples can be found at
