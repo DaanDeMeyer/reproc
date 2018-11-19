@@ -15,6 +15,9 @@ endif()
 
 project(reproc VERSION 2.0.0 LANGUAGES C)
 
+# Check if reproc is included via add_subdirectory.
+get_directory_property(REPROC_IS_SUBDIRECTORY PARENT_DIRECTORY)
+
 # Tip: use cmake-gui when contributing to reproc to turn on everything without
 # having to type out all the options by hand (cmake .. && cmake-gui .).
 
@@ -25,8 +28,16 @@ option(REPROC_TESTS "Build reproc's tests. Requires C++ compiler.")
 option(REPROC_EXAMPLES "Build reproc's examples. Enable REPROCXX to build the \
 reproc++ examples.")
 option(REPROC_DOCS "Build reproc's documentation with Doxygen.")
-option(REPROC_INSTALL "Generate reproc's install target. If REPROCXX is \
-enabled reproc++ is also added to the install target.")
+
+if(REPROC_IS_SUBDIRECTORY AND NOT BUILD_SHARED_LIBS)
+  # Don't generate the install target if reproc is built from source as a static
+  # library.
+  option(REPROC_INSTALL "Generate reproc's install target. If REPROCXX is \
+  enabled reproc++ is also added to the install target." OFF)
+else()
+  option(REPROC_INSTALL "Generate reproc's install target. If REPROCXX is \
+  enabled reproc++ is also added to the install target." ON)
+endif()
 
 ### Developer Options ###
 
@@ -62,9 +73,6 @@ if(REPROC_TIDY)
 endif()
 
 ### Helpers ###
-
-# Check if reproc is included via add_subdirectory.
-get_directory_property(REPROC_IS_SUBDIRECTORY PARENT_DIRECTORY)
 
 if(MSVC)
   # CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default on Windows so
