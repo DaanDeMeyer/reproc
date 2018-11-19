@@ -17,13 +17,9 @@ documentation)**
 - [Error handling](#error-handling)
 - [Multithreading](#multithreading)
 - [Gotcha's](#gotchas)
-- [Design](#design)
-  - [Memory allocation](#memory-allocation)
-  - [(POSIX) Waiting on child process with timeout](#posix-waiting-on-child-process-with-timeout)
-  - [(POSIX) Check if execve call was succesful](#posix-retrieve-errors-that-happen-after-forking)
-  - [Avoiding resource leaks](#avoiding-resource-leaks)
-    - [POSIX](#posix)
-    - [Windows](#windows)
+- [Avoiding resource leaks](#avoiding-resource-leaks)
+  - [POSIX](#posix)
+  - [Windows](#windows)
 - [Contributing](#contributing)
 
 ## What is reproc?
