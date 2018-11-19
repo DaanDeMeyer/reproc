@@ -549,7 +549,7 @@ if(REPROC_DOCS)
     endif()
 
     add_custom_target(
-      reproc-docs
+      reproc-docs ALL
       COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doxyfile
     )
   else()
