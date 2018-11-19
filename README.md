@@ -154,31 +154,30 @@ your browser to view the documentation.
 
 ## Error handling
 
-Most functions in the reproc C API return `REPROC_ERROR`. The `REPROC_ERROR`
-represents all possible errors that can occur when calling reproc functions. Not
-all errors apply to each function so the documentation includes a section
-detailing which errors can occur in each function. One error that can be
+Most functions in reproc's API return `REPROC_ERROR`. The `REPROC_ERROR` enum
+represents all possible errors that can occur when calling reproc API functions.
+Not all errors apply to each function so the documentation of each function
+includes a section detailing which errors can occur. One error that can be
 returned by each function that returns `REPROC_ERROR` is `REPROC_UNKNOWN_ERROR`.
 `REPROC_UNKNOWN_ERROR` is necessary because the documentation of the underlying
 system calls reproc uses doesn't always detail what errors occur in which
 circumstances (Windows is especially bad here).
 
-To get more information when a reproc function returns `REPROC_UNKNOWN_ERROR`
-reproc provides the `reproc_system_error` function that returns the actual
-system error. Use this function to retrieve the actual system error and file an
-issue with the system error and the reproc function that returned it. With this
-information an extra value can be added to `REPROC_ERROR` and you'll be able to
-check against this value instead of having to check against
-`REPROC_UNKNOWN_ERROR`.
+To get more information when a reproc API function returns
+`REPROC_UNKNOWN_ERROR` reproc provides the `reproc_system_error` function that
+returns the actual system error. Use this function to retrieve the actual system
+error and file an issue with the system error and the reproc function that
+returned it. With this information an extra value can be added to `REPROC_ERROR`
+and you'll be able to check against this value instead of having to check
+against `REPROC_UNKNOWN_ERROR`.
 
-In the C++ API reproc's errors integrate with the C++ standard library error
-codes (`std::error_code` and `std::error_condition`). All functions in the C++
-API return `std::error_code` values that represent the actual system error if a
-system error occurred. This means the `reproc_system_error` function is not
-necessary in the C++ API since printing the value of the error code will print
-the system error (in the C API printing the error value only gives you its value
-in `REPROC_ERROR` and not the actual system error value). You can still test
-against these error codes using the `reproc::errc` error condition enum:
+reproc++'s API integrates with the C++ standard library error codes mechanism
+(`std::error_code` and `std::error_condition`). All functions in reproc++'s API
+return `std::error_code` values that contain the actual system error that
+occurred. This means the `reproc_system_error` function is not necessary in
+reproc++ since the returned error codes stores the actual system error instead
+of the enum value in `REPROC_ERROR`. You can still test against these error
+codes using the `reproc::errc` error condition enum:
 
 ```c++
 reproc::process;
@@ -199,8 +198,8 @@ if (ec) {
 }
 ```
 
-Because reproc integrates with `std::error_code` you can also test against
-reproc errors using values from the `std::errc` error condition enum:
+Because reproc++ integrates with `std::error_code` you can also test against
+reproc++ errors using values from the `std::errc` error condition enum:
 
 ```c++
 reproc::process;
@@ -238,68 +237,42 @@ with reproc from multiple threads.
 ## Gotcha's
 
 - (POSIX) On POSIX a parent process is required to wait on a child process that
-  has exited (using `reproc_stop`) before all resources related to that process
+  has exited (using `reproc_wait`) before all resources related to that process
   can be released by the kernel. If the parent doesn't wait on a child process
   after it exits, the child process becomes a
   [zombie process](https://en.wikipedia.org/wiki/Zombie_process).
 
-- While `REPROC_TERMINATE` allows the child process to perform cleanup it is up
+- While `reproc_terminate` allows the child process to perform cleanup it is up
   to the child process to correctly clean up after itself. reproc only sends a
   termination signal to the child process. The child process itself is
   responsible for cleaning up its own child processes and other resources.
 
-- When using `REPROC_KILL` the child process does not receive a chance to
+- When using `reproc_kill` the child process does not receive a chance to
   perform cleanup which could result in resources being leaked. Chief among
   these leaks is that the child process will not be able to stop its own child
-  processes. Always let a child process exit normally or try to stop it with
-  `REPROC_TERMINATE` before calling `REPROC_KILL`.
+  processes. Always try to let a child process exit normally by calling
+  `reproc_terminate` before calling `reproc_kill`.
 
-- (Windows) `REPROC_KILL` is not guaranteed to kill a child process on Windows.
-  For more information, read the Remarks section in the documentation of the
-  `TerminateProcess` function that reproc uses to kill child processes on
-  Windows.
+- (Windows) `reproc_kill` is not guaranteed to kill a child process immediately
+  on Windows. For more information, read the Remarks section in the
+  documentation of the Windows `TerminateProcess` function that reproc uses to
+  kill child processes on Windows.
 
-- (Windows) Immediately stopping a process (using either `REPROC_TERMINATE` or
-  `REPROC_KILL`) after starting it on Windows might result in an error window
-  with error code `0xc0000142` popping up. The error code indicates that the
-  process was terminated before it was fully initialized. This problem shouldn't
-  pop up with normal use of the library since most of the time you'll want to
-  read/write to the process or wait until it exits normally.
-
-  If someone runs into this problem, reproc's tests mitigate it by sleeping a
-  few milliseconds before terminating the child process.
-
-- File descriptors/handles created by reproc can leak to child processes not
-  spawned by reproc if the application is multithreaded. This is not the case on
-  systems that support the `pipe2` system call (Linux 2.6+ and newer BSD's).
-
-  See [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
-
-- (POSIX) On POSIX platforms, file descriptors above the file descriptor
-  resource limit (obtained with `sysconf(_SC_OPEN_MAX)`) and without the
-  `FD_CLOEXEC` flag set are leaked into child processes created by reproc.
-
-  Note that in multithreaded applications immediately setting the `FD_CLOEXEC`
-  with `fcntl` after creating a file descriptor can still insufficient to avoid
-  leaks.
-
-  See [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
-
-- (Windows < Vista) File descriptors that are not marked not inheritable with
-  `SetHandleInformation` will leak into reproc child processes.
-
-  Note that the same `FD_CLOEXEC` caveat as mentioned above applies. In
-  multithreaded applications there is a split moment after calling `CreatePipe`
-  but before calling `SetHandleInformation` that a handle can still be inherited
-  by reproc child processes.
-
-  See [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
+- While reproc tries its very best to avoid leaking file descriptors into child
+  processes, there are scenario's where it can't guarantee no file descriptors
+  will be leaked to child processes. See
+  [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
 
 - (POSIX) Writing to a closed stdin pipe of a child process will crash the
   parent process with the `SIGPIPE` signal. To avoid this the `SIGPIPE` signal
   has to be ignored in the parent process. If the `SIGPIPE` signal is ignored
   `reproc_write` will return `REPROC_STREAM_CLOSED` as expected when writing to
   a closed stdin pipe.
+
+- (POSIX) ignoring the `SIGCHLD` signal by setting its disposition to `SIG_IGN`
+  changes the behaviour of the `waitpid` system call which will cause
+  `reproc_wait` to stop working as expected. Read the Notes section of the
+  `waitpid` man page for more information.
 
 ## Design
 
@@ -312,7 +285,7 @@ some parts of reproc work under the hood.
 
 reproc aims to do as few dynamic memory allocations as possible in its own code
 (not counting allocations that happen in system calls). As of this moment,
-dynamic memory allocation in the C library is only done on Windows:
+dynamic memory allocation in reproc is only done on Windows:
 
 - When converting the array of program arguments to a single string as required
   by the `CreateProcess` function.
@@ -329,14 +302,14 @@ requires a single UTF-16 string of arguments delimited by spaces while POSIX
 child process arguments as an array of UTF-8 strings we have to allocate memory
 to convert the array into a single UTF-16 string on Windows.
 
-The reproc C code uses the standard `malloc` and `free` functions to allocate
-and free memory. However, providing support for custom allocators should be
+reproc uses the standard `malloc` and `free` functions to allocate and free
+memory. However, providing support for custom allocators should be
 straightforward. If you need them, please open an issue.
 
-In the C++ API, functions/methods that directly map to functions of the C API do
-not do any extra allocations. Convenience functions/methods that do not appear
-in the C API might do extra allocations in order to convert their arguments to
-the format expected by the C API.
+In reproc++, functions/methods that directly map to reproc API function do not
+do any extra allocations. Convenience functions/methods that do not appear in
+reproc's API might do extra allocations in order to convert their arguments to
+the format expected by reproc's API.
 
 ### (POSIX) Waiting on child process with timeout
 
@@ -467,17 +440,15 @@ When making changes:
   options:
 
   ```sh
-  cmake -DREPROC_TESTS=ON -DREPROC_EXAMPLES=ON
-  -DREPROCXX=ON .. # In build subdirectory
+  cmake -DREPROCXX=ON -DREPROC_TESTS=ON -DREPROC_EXAMPLES=ON ..
   ```
 
 - Format your changes with clang-format and run clang-tidy locally since it will
   run in CI as well.
 
   If the `REPROC_FORMAT` CMake option is enabled, the reproc-format target is
-  added that formats all reproc source files with clang-format.
-
-  Example usage: `cmake --build build --target reproc-format`
+  added that formats all reproc source files with clang-format. reproc-format is
+  added to the `ALL` target so it will automatically run while building.
 
   If the `REPROC_TIDY` CMake option is enabled, CMake will run clang-tidy on all
   reproc source files while building.
