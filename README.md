@@ -98,10 +98,9 @@ manager. reproc is available in the following package repositories:
 
 After installing reproc to the system your build system will have to find it.
 reproc provides both CMake config files and pkg-config files to simplify finding
-a system installed version of reproc using CMake and pkg-config
-respectively. Note that reproc and reproc++ are separate libraries and as a
-result have separate config files as well. Make sure to search for the one you
-need.
+a system installed version of reproc using CMake and pkg-config respectively.
+Note that reproc and reproc++ are separate libraries and as a result have
+separate config files as well. Make sure to search for the one you need.
 
 Find a system installed reproc using CMake:
 
@@ -226,7 +225,8 @@ Different threads can read from or write to different streams at the same time.
 This is a valid approach when you want to write to stdin and read from stdout in
 parallel.
 
-Look at the [forward](examples/forward.cpp) example to see an example of working
+Look at the [forward](examples/forward.cpp) and
+[background](examples/background.cpp) examples to see examples of how to work
 with reproc from multiple threads.
 
 ## Gotcha's
