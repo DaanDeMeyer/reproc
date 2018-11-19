@@ -331,7 +331,7 @@ mitigate this in two ways:
 
 - We call `SetHandleInformation` after `CreatePipe` for the handles that should
   not be inherited by any process to lower the chance of them accidentally being
-  inherited (just like with `fnctl` if `µipe2` is not available). This only
+  inherited (just like with `fnctl` if `pipe2` is not available). This only
   works for half of the endpoints created (the ones intended to be used by the
   parent process) since the endpoints intended to be used by the child actually
   need to be inherited by their corresponding child process.
