@@ -43,6 +43,11 @@ stdin/stdout/stderr streams and waits for them to exit or forcefully stops them.
 The main use case is working with command line tools from within C or C++
 applications.
 
+reproc consists out of two libraries: reproc and reproc++. reproc is a C library
+that contains all the low code for interacting with child processes. reproc++
+depends on reproc and adapts its API to an idiomatic C++ API. It also adds a few
+extra's that make working with child processes from C++ easier.
+
 ## Features
 
 - Start any program from within C or C++ code.
@@ -63,277 +68,89 @@ If you have any questions after reading the readme and documentation you can
 either make an issue or ask questions directly in the reproc
 [gitter](https://gitter.im/reproc/Lobby) channel.
 
-## Getting started
+## Retrieving reproc
 
-reproc consists out of two libraries: reproc and reproc++. reproc is a C library
-that contains all the low code for interacting with child processes. reproc++
-depends on reproc and adapts its API to an idiomatic C++ API. It also adds a few
-extra's that make working with child processes from C++ easier.
+There are multiple ways to get reproc into your project. One way is to build
+reproc as part of your project using CMake. To do this, we first have to get the
+reproc source code into the project. This can be done using any of the following
+options:
 
-reproc can either be installed from a binary package or built as part of your
-project when using CMake. All possible options are explained below.
+- If you're using CMake 3.11 or later you can use the CMake `FetchContent` API
+  to use reproc in your project. See
+  <https://cliutils.gitlab.io/modern-cmake/chapters/projects/fetch.html> for an
+  example.
+- Another option is to include reproc's repository as a git submodule.
+  <https://cliutils.gitlab.io/modern-cmake/chapters/projects/submodule.html>
+  provides more information.
+- A very simple solution is to just include reproc's source code in your
+  repository. You can download a zip of the source code without the git history
+  and add it to your repository in a separate directory (reproc itself uses the
+  `external` directory).
 
-### Build reproc as part of your project using CMake
-
-#### FetchContent
-
-If you're using CMake 3.11 or later you can use the
-[FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) API
-to use reproc in your project.
-
-```cmake
-include(FetchContent)
-
-FetchContent_Declare(
-  reproc
-  GIT_REPOSITORY https://github.com/DaanDeMeyer/reproc.git
-  GIT_TAG        v2.0.0-beta.2
-)
-
-FetchContent_GetProperties(reproc)
-if(NOT reproc_POPULATED)
-  FetchContent_Populate(reproc)
-
-  # Configure reproc's build here. For example, to build reproc++ as well:
-  set(REPROCXX ON CACHE BOOL "" FORCE)
-
-  add_subdirectory(${reproc_SOURCE_DIR} ${reproc_BINARY_DIR})
-endif()
-
-add_executable(myapp myapp.c)
-target_link_libraries(myapp reproc::reproc)
-```
-
-#### Git submodule/vendor
-
-If you're using a CMake version older than 3.11, you can add reproc as a git
-submodule instead:
-
-```sh
-# In your application source directory
-mkdir external
-cd external
-git submodule add https://github.com/DaanDeMeyer/reproc.git
-# Checkout a specific commit. This is usually a commit that corresponds to a
-# Github release.
-cd reproc
-git checkout v2.0.0-beta.2 # Replace with latest commit or release tag
-cd ../..
-# Commit the result
-git add .gitmodules external
-git commit -m "Added reproc as a Git submodule"
-```
-
-The repository now has to be cloned with `git clone --recursive` instead of the
-usual `git clone` to make sure all git submodules are pulled in as well.
-`git submodule update --init` can be used to clone the git submodule in existing
-clones of the repository.
-
-We recommend against tracking the master branch when using git submodules
-(instead of tracking a specific commit). This will result in the latest commit
-being pulled in each time the submodule is cloned or updated. This can easily
-lead to a different commits of reproc being used in separate clones of the
-repository which could result in errors.
-
-Updating the submodule is as simple as going into the submodule's root
-directory, running `git checkout master` followed by `git pull` and checking out
-the commit/release you want to update to.
-
-If you're not using git you can download a zip/tar of the source code from
-Github and manually put the code in a directory. To update you overwrite the
-directory with the contents of an updated zip/tar from Github.
-
-You can now call `add_subdirectory` in the root CMakeLists.txt file of your
-application:
+After including reproc's source code in your project, it can be built from the
+root CMakeLists.txt file as follows:
 
 ```cmake
+add_subdirectory(<path-to-reproc>)
+```
+
+Options can be specified before calling `add_subdirectory`:
+
+```cmake
+set(REPROCXX ON CACHE BOOL "" FORCE)
 add_subdirectory(external/reproc)
-add_executable(myapp myapp.c)
-target_link_libraries(myapp reproc::reproc)
 ```
 
-#### Install
+You can also depend on a system installed version of reproc. You can either
+build and install reproc to your system yourself or install reproc via a package
+manager. reproc is available in the following package repositories:
 
-Installing is the way to go if you want to use reproc with build systems other
-than CMake. After installing you can use your build system's preferred way of
-finding libraries to find reproc. pkg-config files are installed alongside
-reproc that can be used to find reproc by any build system that supports
-pkg-config. Refer to your build system's documentation for more information.
+- Arch User Repository (<https://aur.archlinux.org/packages/reproc>)
+- Vcpkg (<https://github.com/Microsoft/vcpkg>)
 
-We give an example of how to find an installed version of reproc using CMake.
+After installing reproc to the system your build system will have to find it.
+reproc provides both CMake config files and pkg-config files to simplify finding
+a system installed version of reproc using CMake (`find_package`) and pkg-config
+respectively. Note that reproc and reproc++ are separate libraries and as a
+result have separate config files as well. Make sure to search for the one you
+need.
 
-First we have to build and install reproc:
-
-```sh
-git clone https://github.com/DaanDeMeyer/reproc.git
-cd reproc
-mkdir build
-cd build
-# Build reproc and reproc++.
-cmake -DCMAKE_BUILD_TYPE=Release -DREPROC_INSTALL=ON -DREPROCXX=ON ..
-```
-
-By default on 64-bit systems, CMake installs reproc's library files to the
-`lib64` subdirectory of the install prefix. On some distro's (such as Arch
-Linux) the files should be installed to the `lib` subdirectory instead. To
-accomplish this, add the following CMake option:
-
-```sh
-cmake -DCMAKE_INSTALL_LIBDIR=lib ..
-```
-
-We can now build and install reproc:
-
-```sh
-# Build reproc and reproc++.
-cmake --build .
-# Install reproc and reproc++ . You might need root for this depending on
-# install location.
-cmake --build . --target install
-```
-
-After installing reproc you can use `find_package` in the root CMakeLists.txt
-file of your application to find reproc:
+After building reproc as part of your project or finding a system installed
+reproc, you can link against it from within your CMakeLists.txt file as follows:
 
 ```cmake
-find_package(reproc REQUIRED)
-add_executable(myapp myapp.c)
-target_link_libraries(myapp reproc::reproc)
+target_link_libraries(myapp reproc::reproc) # Link against reproc.
+target_link_libraries(myapp reproc::reproc++) # Link against reproc++.
 ```
 
-This only finds reproc. To find reproc++:
+## CMake options
 
-```cmake
-find_package(reproc++ REQUIRED)
-add_executable(myapp myapp.cpp)
-target_link_libraries(myapp reproc::reproc++)
-```
+reproc's build can be configured using the following CMake options:
 
-`find_package(reproc++)` automatically finds reproc as its dependency so there's
-no need for two separate `find_package` calls.
+- `REPROCXX`: Build reproc++ (default: `OFF`).
+- `REPROC_TESTS`: Build tests (default: `OFF`).
+- `REPROC_EXAMPLES`: Build examples (default: `OFF`).
+- `REPROC_DOCS`: Build docs (default: `OFF`).
+- `REPROC_INSTALL`: Generate install target (default: `ON` unless reproc is
+  built as a static library using `add_subdirectory`).
 
-The install prefix specified when installing reproc might not be in the default
-search path of CMake. If this is the case you can tell CMake where to search for
-reproc as follows:
-
-```sh
-cmake -DCMAKE_PREFIX_PATH=<reproc-install-dir> .. # example: /usr/local on Linux
-```
-
-#### Leave the choice in the user's hands
-
-If you're not sure which method to use you can also support multiple methods and
-leave the choice of where to get reproc to the user:
-
-```cmake
-option(USE_SYSTEM_LIBRARIES "Use system installed libraries" OFF)
-
-if(USE_SYSTEM_LIBRARIES)
-  find_package(reproc REQUIRED)
-# VERSION_GREATER_EQUAL requires CMake 3.7 or higher.
-elseif(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.11)
-  include(FetchContent)
-
-  FetchContent_Declare(
-    reproc
-    GIT_REPOSITORY https://github.com/DaanDeMeyer/reproc.git
-    GIT_TAG        v2.0.0-beta.2
-  )
-
-  FetchContent_GetProperties(reproc)
-  if(NOT reproc_POPULATED)
-    FetchContent_Populate(reproc)
-    add_subdirectory(${reproc_SOURCE_DIR} ${reproc_BINARY_DIR})
-  endif()
-else()
-  # Update or clone reproc git submodule.
-  execute_process(COMMAND git submodule update --init -- external/reproc
-                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-  add_subdirectory(external/reproc)
-endif()
-
-add_executable(myapp myapp.cpp)
-target_link_libraries(myapp reproc::reproc)
-```
-
-The above CMake code uses an installed system if `USE_SYSTEM_LIBRARIES=ON`. If
-`USE_SYSTEM_LIBRARIES=OFF` and the user's CMake version is greater than 3.11, it
-downloads reproc using CMake's `FetchContent` module. If `FetchContent` is not
-available it falls back to git submodules.
-
-#### CMake options
-
-reproc supports the following CMake options:
-
-- `REPROCXX (ON|OFF)`: Build reproc++ (default: `OFF`)
-
-  If this option is enabled, both reproc and reproc++ will be built. After
-  enabling this option and building reproc, link against reproc++ as follows:
-
-  ```cmake
-  target_link_libraries(myapp reproc::reproc++)
-  ```
-
-- `REPROC_TESTS (ON|OFF)`: Build tests (default: `OFF`)
-- `REPROC_EXAMPLES (ON|OFF)`: Build examples (default: `OFF`)
-- `REPROC_INSTALL (ON|OFF)`: Generate install target (default: `OFF`)
-
-  Note that if you're using the default `CMAKE_INSTALL_PREFIX` on Windows,
+  Note that if you're using CMake's default `CMAKE_INSTALL_PREFIX` on Windows,
   you'll have to set `REPROC_INSTALL=ON` the first time when running CMake to
   make sure the install directories are correct (This is because of
   `CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT` is only true on the first run of
   CMake in a new build tree).
-
-- `BUILD_SHARED_LIBS (ON|OFF)`: Build reproc as a shared library (default:
-  `OFF`)
-
-  Note that when building reproc and reproc++ as shared libraries on Windows
-  that you'll have to make sure reproc.dll and reproc++.dll are available from
-  the PATH to run your application without crashing. Alternatively, you can also
-  copy over the dll's manually to the same directory that your binary resides
-  in. In general, unless you have a good reason not to, use reproc and reproc++
-  as static libraries on Windows.
-
-Options can be configured when building reproc or before calling
-`add_subdirectory`:
-
-- When building (in `<reproc-root-dir>/build` subdirectory):
-
-  ```sh
-  cmake -DREPROCXX=ON ..
-  ```
-
-- When using `add_subdirectory`:
-
-  ```cmake
-  set(REPROCXX ON CACHE BOOL "" FORCE)
-  add_subdirectory(external/reproc)
-  ```
-
-### Install from a Linux binary package
-
-#### Arch Linux
-
-If you're using Arch Linux or any distro derived from it, you can install reproc
-from the [AUR](https://aur.archlinux.org/packages/reproc).
 
 ## Documentation
 
 API documentation and examples can be found at
 <https://daandemeyer.github.io/reproc/>.
 
-The latest docs can be built by enabling the cmake `REPROC_DOCS` option and
-building the `reproc-docs` target. This requires the latest version of
+The latest documentation can be built by enabling the cmake `REPROC_DOCS`
+option. This requires the latest version of
 [Doxygen](https://www.stack.nl/~dimitri/doxygen/) to be installed and available
-from the PATH. After building `reproc-docs` the generated documentation can be
-found in the `docs/html` directory of the build directory.
-
-```sh
-mkdir build && cd build
-cmake -DREPROC_DOCS=ON ..
-cmake --build . --target reproc-docs
-firefox docs/html/index.html # Any installed browser should work
-```
+from the PATH. After building the generated documentation can be found in the
+`docs/html` directory of the build directory. Open `docs/html/index.html` in
+your browser to view the documentation.
 
 ## Error handling
 
