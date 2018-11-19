@@ -64,7 +64,7 @@ reproc source code into the project. This can be done using any of the following
 options:
 
 - If you're using CMake 3.11 or later you can use the CMake `FetchContent` API
-  to use reproc in your project. See
+  to download reproc when running CMake. See
   <https://cliutils.gitlab.io/modern-cmake/chapters/projects/fetch.html> for an
   example.
 - Another option is to include reproc's repository as a git submodule.
@@ -98,10 +98,17 @@ manager. reproc is available in the following package repositories:
 
 After installing reproc to the system your build system will have to find it.
 reproc provides both CMake config files and pkg-config files to simplify finding
-a system installed version of reproc using CMake (`find_package`) and pkg-config
+a system installed version of reproc using CMake and pkg-config
 respectively. Note that reproc and reproc++ are separate libraries and as a
 result have separate config files as well. Make sure to search for the one you
 need.
+
+Find a system installed reproc using CMake:
+
+```cmake
+find_package(reproc) # Find reproc.
+find_package(reproc++) # Find reproc++.
+```
 
 After building reproc as part of your project or finding a system installed
 reproc, you can link against it from within your CMakeLists.txt file as follows:
