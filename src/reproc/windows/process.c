@@ -4,7 +4,7 @@
 #include <assert.h>
 
 #if defined(HAS_ATTRIBUTE_LIST)
-#  include <stdlib.h>
+#include <stdlib.h>
 
 REPROC_ERROR
 static handle_inherit_list_create(HANDLE *handles, int amount,

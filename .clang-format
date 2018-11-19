@@ -10,4 +10,3 @@ Cpp11BracedListStyle: false
 PenaltyBreakAssignment: 100
 PenaltyBreakBeforeFirstCallParameter: 100
 SpaceAfterCStyleCast: true
-IndentPPDirectives: AfterHash
