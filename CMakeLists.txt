@@ -42,10 +42,8 @@ endif()
 ### Developer Options ###
 
 option(REPROC_CI "Add -Werror or equivalent to the compiler and clang-tidy.")
-option(REPROC_TIDY "Run clang-tidy as part of the build (requires \
-clang-tidy to be in the PATH).")
-option(REPROC_FORMAT "Find clang-format and add a target (reproc-format) \
-to run it on all source files.")
+option(REPROC_TIDY "Run clang-tidy during the build.")
+option(REPROC_FORMAT "Run clang-format during the build.")
 option(REPROC_SANITIZERS "Build reproc with sanitizers. Only works on UNIX \
 systems.")
 
