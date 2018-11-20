@@ -125,8 +125,8 @@ reproc's build can be configured using the following CMake options:
 - `REPROC_TESTS`: Build tests (default: `OFF`).
 - `REPROC_EXAMPLES`: Build examples (default: `OFF`).
 - `REPROC_DOCS`: Build docs (default: `OFF`).
-- `REPROC_INSTALL`: Generate install target (default: `ON` unless reproc is
-  built as a static library using `add_subdirectory`).
+- `REPROC_INSTALL`: Add reproc to the install target (default: `ON` unless
+  reproc is built as a static library using `add_subdirectory`).
 
 ## Documentation
 

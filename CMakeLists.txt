@@ -30,12 +30,12 @@ reproc++ examples.")
 option(REPROC_DOCS "Build reproc's documentation with Doxygen.")
 
 if(REPROC_IS_SUBDIRECTORY AND NOT BUILD_SHARED_LIBS)
-  # Don't generate the install target if reproc is built from source as a static
-  # library.
-  option(REPROC_INSTALL "Generate reproc's install target. If REPROCXX is \
+  # Don't add reproc to the install target if reproc is built from within
+  # another project as a static library.
+  option(REPROC_INSTALL "Add reproc to the install target. If REPROCXX is \
   enabled reproc++ is also added to the install target." OFF)
 else()
-  option(REPROC_INSTALL "Generate reproc's install target. If REPROCXX is \
+  option(REPROC_INSTALL "Add reproc to the install target. If REPROCXX is \
   enabled reproc++ is also added to the install target." ON)
 endif()
 
