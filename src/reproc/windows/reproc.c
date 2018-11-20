@@ -47,7 +47,7 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
   error = pipe_init(&process->err, false, &child_stderr, true);
   if (error) { goto cleanup; }
 
-  // Join argv to whitespace delimited string as required by CreateProcess.
+  // Join argv to a whitespace delimited string as required by CreateProcess.
   error = string_join(argv, argc, &command_line_string);
   if (error) { goto cleanup; }
 
@@ -78,16 +78,15 @@ cleanup:
   handle_close(&child_stdin);
   handle_close(&child_stdout);
   handle_close(&child_stderr);
-  // Free allocated memory before returning possible error.
+
   free(command_line_wstring);
   free(working_directory_wstring);
 
   if (error) {
     reproc_destroy(process);
-    return error;
   }
 
-  return REPROC_SUCCESS;
+  return error;
 }
 
 REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,

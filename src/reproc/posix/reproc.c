@@ -95,10 +95,9 @@ cleanup:
 
   if (error) {
     reproc_destroy(process);
-    return error;
   }
 
-  return REPROC_SUCCESS;
+  return error;
 }
 
 REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,

@@ -56,8 +56,8 @@ REPROC_ERROR process_create(wchar_t *command_line,
   assert(pid);
   assert(handle);
 
-  // Create each process in a new process group so we don't send CTRL-BREAK
-  // signals to more than one child process in process_terminate.
+  // Create each child process in a new process group so we don't send
+  // CTRL-BREAK signals to more than one child process in process_terminate.
   DWORD creation_flags = CREATE_NEW_PROCESS_GROUP;
 
 #if defined(HAS_ATTRIBUTE_LIST)
@@ -106,7 +106,7 @@ REPROC_ERROR process_create(wchar_t *command_line,
 
   PROCESS_INFORMATION info;
 
-  // Child processes inherit error mode of their parents. To avoid child
+  // Child processes inherit the error mode of their parents. To avoid child
   // processes creating error dialogs we set our error mode to not create error
   // dialogs temporarily.
   DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
@@ -151,7 +151,7 @@ REPROC_ERROR process_wait(HANDLE process, unsigned int timeout,
   if (exit_status == NULL) { return REPROC_SUCCESS; }
 
   SetLastError(0);
-  // DWORD == unsigned int so cast is safe.
+  // DWORD == unsigned int so the cast is safe.
   if (!GetExitCodeProcess(process, (LPDWORD) exit_status)) {
     return REPROC_UNKNOWN_ERROR;
   }
@@ -164,10 +164,10 @@ REPROC_ERROR process_terminate(HANDLE process, unsigned long pid,
 {
   assert(process);
 
-  // GenerateConsoleCtrlEvent can only be passed a process group id. This is why
-  // we start each child process in its own process group (which has the same id
-  // as the child process id) so we can call GenerateConsoleCtrlEvent on single
-  // child processes.
+  // GenerateConsoleCtrlEvent can only be called on a process group. To call
+  // GenerateConsoleCtrlEvent on a single child process it has to be put in its
+  // own process group (which is exactly what we did when starting the child
+  // process).
   SetLastError(0);
   if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pid)) {
     return REPROC_UNKNOWN_ERROR;

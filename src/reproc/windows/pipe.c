@@ -3,13 +3,15 @@
 
 #include <assert.h>
 
-// Ensures pipe is inherited by child process.
+// Ensures both endpoints of the pipe are inherited by the child process.
 static SECURITY_ATTRIBUTES security_attributes = {
   .nLength = sizeof(SECURITY_ATTRIBUTES),
   .bInheritHandle = TRUE,
   .lpSecurityDescriptor = NULL
 };
 
+// Disables a single endpoint of a pipe from being inherited by the child
+// process.
 static REPROC_ERROR pipe_disable_inherit(HANDLE pipe)
 {
   assert(pipe);
@@ -58,7 +60,7 @@ REPROC_ERROR pipe_read(HANDLE pipe, void *buffer, unsigned int size,
   assert(bytes_read);
 
   SetLastError(0);
-  // Cast is valid since DWORD = unsigned int on Windows.
+  // The cast is safe since DWORD == unsigned int on Windows.
   // ReadFile always sets bytes_read to 0 so we don't do it ourselves.
   if (!ReadFile(pipe, buffer, size, (LPDWORD) bytes_read, NULL)) {
     switch (GetLastError()) {
@@ -79,7 +81,7 @@ REPROC_ERROR pipe_write(HANDLE pipe, const void *buffer, unsigned int to_write,
   assert(bytes_written);
 
   SetLastError(0);
-  // Cast is valid since DWORD = unsigned int on Windows.
+  // The cast is safe since DWORD == unsigned int on Windows.
   // WriteFile always sets bytes_written to 0 so we don't do it ourselves.
   if (!WriteFile(pipe, buffer, to_write, (LPDWORD) bytes_written, NULL)) {
     switch (GetLastError()) {
