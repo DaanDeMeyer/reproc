@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
   std::mutex mutex;
 
   auto drain_async = std::async(std::launch::async, [&background, &output,
-                                                    &mutex]() {
+                                                     &mutex]() {
     thread_safe_string_sink sink(output, mutex);
     return background.drain(reproc::stream::out, sink);
   });

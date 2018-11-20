@@ -1,4 +1,4 @@
-# reproc <!-- omit in toc -->
+# reproc
 
 **Be sure to select the git tag corresponding to the version you're using to get
 the correct documentation. (For example:
@@ -48,7 +48,7 @@ extra's that make working with child processes from C++ easier.
   (reproc++) with extra features is available for use in C++ applications.
 - Zero dependencies.
 - Multiple installation methods. Either build reproc as part of your project or
-  install it as a shared library.
+  use a system installed version of reproc.
 
 ## Questions
 
@@ -102,7 +102,7 @@ a system installed version of reproc using CMake and pkg-config respectively.
 Note that reproc and reproc++ are separate libraries and as a result have
 separate config files as well. Make sure to search for the one you need.
 
-Find a system installed reproc using CMake:
+To find a system installation of reproc using CMake:
 
 ```cmake
 find_package(reproc) # Find reproc.
@@ -130,7 +130,7 @@ reproc's build can be configured using the following CMake options:
 
 ## Documentation
 
-API documentation and examples can be found at
+API documentation and examples for the latest stable version can be found at
 <https://daandemeyer.github.io/reproc/>.
 
 The latest documentation can be built by enabling the cmake `REPROC_DOCS`
@@ -177,23 +177,12 @@ if (ec == reproc::errc::file_not_found) {
 }
 
 if (ec) {
-  // Will print the actual system error value from errno or GetLastError() if
-  // error is a system error.
-  std::cerr << ec.value();
+  // Will print the actual system error value from errno or GetLastError() if a
+  // system error occurred.
+  std::cerr << ec.value() << std::endl;
   // You can also print a string representation of the error.
   std::cerr << ec.message();
   return 1;
-}
-```
-
-Because reproc++ integrates with `std::error_code` you can also test against
-reproc++ errors using values from the `std::errc` error condition enum:
-
-```c++
-reproc::process;
-std::error_code ec = process.start(...);
-if (ec == std::errc::not_enough_memory) {
-  // handle error
 }
 ```
 
@@ -248,7 +237,7 @@ with reproc from multiple threads.
   kill child processes on Windows.
 
 - While reproc tries its very best to avoid leaking file descriptors into child
-  processes, there are scenario's where it can't guarantee no file descriptors
+  processes, there are scenarios where it can't guarantee no file descriptors
   will be leaked to child processes. See
   [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
 
