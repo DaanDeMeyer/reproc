@@ -19,8 +19,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-4.9
-      # GCC 4.9 doesn't support sanitizers.
-      env: CC=gcc-4.9 CXX=g++-4.9 REPROC_SANITIZERS=OFF
+      env: CC=gcc-4.9 CXX=g++-4.9
 
     - os: linux
       addons:
