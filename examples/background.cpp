@@ -60,14 +60,14 @@ int main(int argc, char *argv[])
   std::string output;
   std::mutex mutex;
 
-  auto read_async = std::async(std::launch::async, [&background, &output,
+  auto drain_async = std::async(std::launch::async, [&background, &output,
                                                     &mutex]() {
     thread_safe_string_sink sink(output, mutex);
     return background.drain(reproc::stream::out, sink);
   });
 
   // Show new output every 2 seconds.
-  while (read_async.wait_for(std::chrono::seconds(2)) !=
+  while (drain_async.wait_for(std::chrono::seconds(2)) !=
          std::future_status::ready) {
     std::lock_guard<std::mutex> lock(mutex);
     std::cout << output;
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
   std::cout << output;
 
   // Check if any errors occurred in the background thread.
-  ec = read_async.get();
+  ec = drain_async.get();
   if (ec) { return fail(ec); }
 
   /* Only the background thread has stopped by this point. We can't be certain
