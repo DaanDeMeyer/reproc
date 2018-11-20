@@ -43,6 +43,12 @@ and prints its output on stdout.
 */
 int main(int argc, char *argv[])
 {
+  if (argc <= 1) {
+    std::cerr << "No arguments provided. Example usage: "
+              << "./background cmake --help";
+    return 1;
+  }
+
   reproc::process background(reproc::terminate, 5000, reproc::kill, 2000);
 
   std::error_code ec = background.start(argc - 1, argv + 1);
