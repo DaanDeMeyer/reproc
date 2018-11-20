@@ -35,8 +35,8 @@ public:
              std::error_code(error_condition, reproc::error_category());
 
     // The rest of the reproc errors are all system errors so we can just check
-    // against the standard error conditions from std which already do all the
-    // work for us.
+    // against the standard error conditions from std which do all the work for
+    // us.
     case reproc::errc::not_enough_memory:
       return error_code == std::errc::not_enough_memory;
     case reproc::errc::pipe_limit_reached:

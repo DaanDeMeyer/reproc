@@ -12,8 +12,8 @@ REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
   REPROC_CLEANUP operations[3] = { c1, c2, c3 };
   unsigned int timeouts[3] = { t1, t2, t3 };
 
-  // We don't set error to REPROC_SUCCESS so we can check if
-  // wait/terminate/kill succeeded (in which case error is set to
+  // We don't set error to REPROC_SUCCESS so we can check if reproc_wait,
+  // reproc_terminate or reproc_kill succeeded (in which case error is set to
   // REPROC_SUCCESS).
   REPROC_ERROR error = REPROC_WAIT_TIMEOUT;
 

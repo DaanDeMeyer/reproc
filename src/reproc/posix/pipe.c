@@ -13,8 +13,7 @@ REPROC_ERROR pipe_init(int *read, int *write)
   int pipefd[2];
 
   errno = 0;
-  // See chapter in Design section in the readme about preventing file
-  // descriptor leaks for a detailed explanation
+  // See avoiding resource leaks section in readme for a detailed explanation.
 #if defined(HAS_PIPE2)
   int result = pipe2(pipefd, O_CLOEXEC);
 #else
@@ -30,7 +29,7 @@ REPROC_ERROR pipe_init(int *read, int *write)
     }
   }
 
-  // Assign file descriptors if pipe() call was succesful
+  // Assign file descriptors if pipe() call was succesfull.
   *read = pipefd[0];
   *write = pipefd[1];
 
@@ -49,7 +48,7 @@ REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
   ssize_t error = read(pipe, buffer, size);
 
   // read is different from write in that it returns 0 to indicate the other end
-  // of the pipe was closed instead of setting errno to EPIPE
+  // of the pipe was closed instead of setting errno to EPIPE.
   if (error == 0) { return REPROC_STREAM_CLOSED; }
   if (error == -1) {
     switch (errno) {
@@ -58,9 +57,9 @@ REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
     }
   }
 
-  // If error is not -1 or 0 it is actually the amount of bytes read
-  // Safe cast since size is an unsigned int and read will not read more bytes
-  // than the buffer size
+  // If error is not -1 or 0 it represents the amount of bytes read.
+  // The cast is safe since size is an unsigned int and read will not read more
+  // bytes than the buffer size.
   *bytes_read = (unsigned int) error;
 
   return REPROC_SUCCESS;
@@ -85,9 +84,9 @@ REPROC_ERROR pipe_write(int pipe, const void *buffer, unsigned int to_write,
     }
   }
 
-  // If error is not -1 it is actually the amount of bytes written
-  // Safe cast since we can't really have written more bytes than to_write which
-  // is an unsigned int
+  // If error is not -1 it represents the amount of bytes written.
+  // The cast is safe since it's impossible to write more bytes than to_write
+  // which is an unsigned int.
   *bytes_written = (unsigned int) error;
 
   if (*bytes_written != to_write) { return REPROC_PARTIAL_WRITE; }

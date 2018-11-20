@@ -25,9 +25,8 @@ struct process_options {
   bool return_early;
 };
 
-/* Creates child process and calls action with data in the child process. The
-process id of the new child process is assigned to pid. map_error is used to
-translate errno values returned from action to REPROC_ERROR values. */
+/* Creates a child process and calls action with data in the child process. The
+process id of the new child process is assigned to pid. */
 REPROC_ERROR
 process_create(int (*action)(const void *), const void *data,
                struct process_options *options, pid_t *pid);

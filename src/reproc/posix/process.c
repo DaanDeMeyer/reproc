@@ -3,6 +3,8 @@
 #include "fd.h"
 #include "pipe.h"
 
+#include <reproc/reproc.h>
+
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
@@ -194,7 +196,8 @@ static REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
 {
   int status = 0;
   errno = 0;
-  // Adding WNOHANG makes waitpid only check and return immediately.
+  // Adding WNOHANG makes waitpid only check if the child process is still
+  // running without waiting.
   pid_t wait_result = waitpid(pid, &status, WNOHANG);
 
   if (wait_result == 0) { return REPROC_WAIT_TIMEOUT; }
@@ -250,7 +253,6 @@ static REPROC_ERROR timeout_map_error(int error)
   }
 }
 
-// See Design section in README.md for an explanation of how this works.
 static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
                                  unsigned int *exit_status)
 {
@@ -289,18 +291,9 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
   // If the timeout process exits first the timeout will have been exceeded.
   if (exit_pid == timeout_pid) { return REPROC_WAIT_TIMEOUT; }
 
-  // If the child process exits first we make sure the timeout process is
-  // cleaned up correctly by sending a SIGTERM signal and waiting for it.
-  errno = 0;
-  if (kill(timeout_pid, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
-
-  errno = 0;
-  if (waitpid(timeout_pid, NULL, 0) == -1) {
-    switch (errno) {
-    case EINTR: return REPROC_INTERRUPTED;
-    default: return REPROC_UNKNOWN_ERROR;
-    }
-  }
+  // If the child process exits first we clean up the timeout process.
+  error = process_terminate(timeout_pid, REPROC_INFINITE, NULL);
+  if (error) { return error; }
 
   // After cleaning up the timeout process we can check if an error occurred
   // while waiting for the timeout process/child process.
@@ -321,7 +314,7 @@ REPROC_ERROR process_wait(pid_t pid, unsigned int timeout,
 {
   if (timeout == 0) { return wait_no_hang(pid, exit_status); }
 
-  if (timeout == 0xFFFFFFFF) { return wait_infinite(pid, exit_status); }
+  if (timeout == REPROC_INFINITE) { return wait_infinite(pid, exit_status); }
 
   return wait_timeout(pid, timeout, exit_status);
 }
