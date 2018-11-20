@@ -159,10 +159,10 @@ function(reproc_set_common TARGET OUTPUT_DIRECTORY)
 
     if(REPROC_SANITIZERS)
       target_compile_options(${TARGET} PRIVATE
-        -fsanitize=address,undefined
+        -fsanitize=address,leak,undefined
       )
       target_link_libraries(${TARGET} PRIVATE
-        -fsanitize=address,undefined
+        -fsanitize=address,leak,undefined
         # GCC sanitizers only work when using the gold linker.
         $<$<C_COMPILER_ID:GNU>:-fuse-ld=gold>
       )
