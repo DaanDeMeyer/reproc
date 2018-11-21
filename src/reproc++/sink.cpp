@@ -1,4 +1,4 @@
-#include "reproc++/sink.hpp"
+#include <reproc++/sink.hpp>
 
 #include <ostream>
 

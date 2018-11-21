@@ -1,6 +1,6 @@
-#include "reproc/reproc.h"
+#include <reproc/reproc.h>
 
-#include "assert.h"
+#include <assert.h>
 
 REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
                          unsigned int t1, REPROC_CLEANUP c2, unsigned int t2,

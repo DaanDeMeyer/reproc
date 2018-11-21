@@ -1,7 +1,7 @@
 #ifndef REPROC_POSIX_PROCESS_H
 #define REPROC_POSIX_PROCESS_H
 
-#include "reproc/error.h"
+#include <reproc/error.h>
 
 #include <stdbool.h>
 #include <sys/types.h>

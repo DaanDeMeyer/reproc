@@ -1,6 +1,6 @@
-#include "reproc++/error.hpp"
+#include <reproc++/error.hpp>
 
-#include "reproc/error.h"
+#include <reproc/error.h>
 
 #include <string>
 

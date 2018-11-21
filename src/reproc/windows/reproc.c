@@ -1,4 +1,4 @@
-#include "reproc/reproc.h"
+#include <reproc/reproc.h>
 
 #include "handle.h"
 #include "pipe.h"

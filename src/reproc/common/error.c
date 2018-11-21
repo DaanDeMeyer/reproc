@@ -1,4 +1,4 @@
-#include "reproc/reproc.h"
+#include <reproc/reproc.h>
 
 const char *reproc_error_to_string(REPROC_ERROR error)
 {

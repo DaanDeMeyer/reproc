@@ -1,4 +1,4 @@
-#include "reproc/error.h"
+#include <reproc/error.h>
 
 #include <errno.h>
 

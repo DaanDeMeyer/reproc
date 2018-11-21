@@ -1,6 +1,6 @@
-#include "reproc++/reproc.hpp"
+#include <reproc++/reproc.hpp>
 
-#include "reproc/reproc.h"
+#include <reproc/reproc.h>
 
 #include <array>
 
