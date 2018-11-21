@@ -292,7 +292,9 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
   if (exit_pid == timeout_pid) { return REPROC_WAIT_TIMEOUT; }
 
   // If the child process exits first we clean up the timeout process.
-  error = process_terminate(timeout_pid, REPROC_INFINITE, NULL);
+  error = process_terminate(timeout_pid);
+  if (error) { return error; }
+  error = process_wait(timeout_pid, REPROC_INFINITE, NULL);
   if (error) { return error; }
 
   // After cleaning up the timeout process we can check if an error occurred
@@ -319,20 +321,18 @@ REPROC_ERROR process_wait(pid_t pid, unsigned int timeout,
   return wait_timeout(pid, timeout, exit_status);
 }
 
-REPROC_ERROR process_terminate(pid_t pid, unsigned int timeout,
-                               unsigned int *exit_status)
+REPROC_ERROR process_terminate(pid_t pid)
 {
   errno = 0;
   if (kill(pid, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
 
-  return process_wait(pid, timeout, exit_status);
+  return REPROC_SUCCESS;
 }
 
-REPROC_ERROR process_kill(pid_t pid, unsigned int timeout,
-                          unsigned int *exit_status)
+REPROC_ERROR process_kill(pid_t pid)
 {
   errno = 0;
   if (kill(pid, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
 
-  return process_wait(pid, timeout, exit_status);
+  return REPROC_SUCCESS;
 }

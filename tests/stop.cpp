@@ -21,15 +21,18 @@ TEST_CASE("stop")
 
   SUBCASE("terminate")
   {
-    error = reproc_terminate(&infinite, 50, nullptr);
+    error = reproc_terminate(&infinite);
     REQUIRE(!error);
   }
 
   SUBCASE("kill")
   {
-    error = reproc_kill(&infinite, 50, nullptr);
+    error = reproc_kill(&infinite);
     REQUIRE(!error);
   }
+
+  error = reproc_wait(&infinite, 50, nullptr);
+  REQUIRE(!error);
 
   reproc_destroy(&infinite);
 }

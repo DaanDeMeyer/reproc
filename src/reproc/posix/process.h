@@ -34,10 +34,8 @@ process_create(int (*action)(const void *), const void *data,
 REPROC_ERROR process_wait(pid_t pid, unsigned int timeout,
                           unsigned int *exit_status);
 
-REPROC_ERROR process_terminate(pid_t pid, unsigned int timeout,
-                               unsigned int *exit_status);
+REPROC_ERROR process_terminate(pid_t pid);
 
-REPROC_ERROR process_kill(pid_t pid, unsigned int timeout,
-                          unsigned int *exit_status);
+REPROC_ERROR process_kill(pid_t pid);
 
 #endif

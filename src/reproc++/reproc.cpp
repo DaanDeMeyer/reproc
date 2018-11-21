@@ -134,11 +134,9 @@ std::error_code process::wait(reproc::milliseconds timeout,
   return ec;
 }
 
-std::error_code process::terminate(reproc::milliseconds timeout,
-                                   unsigned int *exit_status) noexcept
+std::error_code process::terminate() noexcept
 {
-  REPROC_ERROR error = reproc_terminate(process_.get(), timeout.count(),
-                                        exit_status);
+  REPROC_ERROR error = reproc_terminate(process_.get());
 
   std::error_code ec = reproc_error_to_error_code(error);
 
@@ -147,11 +145,9 @@ std::error_code process::terminate(reproc::milliseconds timeout,
   return ec;
 }
 
-std::error_code process::kill(reproc::milliseconds timeout,
-                              unsigned int *exit_status) noexcept
+std::error_code process::kill() noexcept
 {
-  REPROC_ERROR error = reproc_kill(process_.get(), timeout.count(),
-                                   exit_status);
+  REPROC_ERROR error = reproc_kill(process_.get());
 
   std::error_code ec = reproc_error_to_error_code(error);
 

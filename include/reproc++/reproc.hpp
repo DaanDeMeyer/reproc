@@ -182,12 +182,10 @@ public:
                                      unsigned int *exit_status) noexcept;
 
   /*! \see reproc_terminate */
-  REPROC_EXPORT std::error_code terminate(reproc::milliseconds timeout,
-                                          unsigned int *exit_status) noexcept;
+  REPROC_EXPORT std::error_code terminate() noexcept;
 
   /*! \see reproc_kill */
-  REPROC_EXPORT std::error_code kill(reproc::milliseconds timeout,
-                                     unsigned int *exit_status) noexcept;
+  REPROC_EXPORT std::error_code kill() noexcept;
 
   /*! \see reproc_stop */
   REPROC_EXPORT std::error_code stop(cleanup c1, reproc::milliseconds t1,

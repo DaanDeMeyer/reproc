@@ -20,10 +20,8 @@ REPROC_ERROR process_create(wchar_t *command_line,
 REPROC_ERROR process_wait(HANDLE process, unsigned int timeout,
                           unsigned int *exit_status);
 
-REPROC_ERROR process_terminate(HANDLE process, unsigned long pid,
-                               unsigned int timeout, unsigned int *exit_status);
+REPROC_ERROR process_terminate(HANDLE process, unsigned long pid);
 
-REPROC_ERROR process_kill(HANDLE process, unsigned int timeout,
-                          unsigned int *exit_status);
+REPROC_ERROR process_kill(HANDLE process);
 
 #endif

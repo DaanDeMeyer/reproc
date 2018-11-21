@@ -159,8 +159,7 @@ REPROC_ERROR process_wait(HANDLE process, unsigned int timeout,
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR process_terminate(HANDLE process, unsigned long pid,
-                               unsigned int timeout, unsigned int *exit_status)
+REPROC_ERROR process_terminate(HANDLE process, unsigned long pid)
 {
   assert(process);
 
@@ -173,11 +172,10 @@ REPROC_ERROR process_terminate(HANDLE process, unsigned long pid,
     return REPROC_UNKNOWN_ERROR;
   }
 
-  return process_wait(process, timeout, exit_status);
+  return REPROC_SUCCESS;
 }
 
-REPROC_ERROR process_kill(HANDLE process, unsigned int timeout,
-                          unsigned int *exit_status)
+REPROC_ERROR process_kill(HANDLE process)
 {
   assert(process);
 
@@ -186,5 +184,5 @@ REPROC_ERROR process_kill(HANDLE process, unsigned int timeout,
   SetLastError(0);
   if (!TerminateProcess(process, 137)) { return REPROC_UNKNOWN_ERROR; }
 
-  return process_wait(process, timeout, exit_status);
+  return REPROC_SUCCESS;
 }

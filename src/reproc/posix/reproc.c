@@ -149,20 +149,18 @@ REPROC_ERROR reproc_wait(reproc_type *process, unsigned int timeout,
   return process_wait(process->id, timeout, exit_status);
 }
 
-REPROC_ERROR reproc_terminate(reproc_type *process, unsigned int timeout,
-                              unsigned int *exit_status)
+REPROC_ERROR reproc_terminate(reproc_type *process)
 {
   assert(process);
 
-  return process_terminate(process->id, timeout, exit_status);
+  return process_terminate(process->id);
 }
 
-REPROC_ERROR reproc_kill(reproc_type *process, unsigned int timeout,
-                         unsigned int *exit_status)
+REPROC_ERROR reproc_kill(reproc_type *process)
 {
   assert(process);
 
-  return process_kill(process->id, timeout, exit_status);
+  return process_kill(process->id);
 }
 
 void reproc_destroy(reproc_type *process)

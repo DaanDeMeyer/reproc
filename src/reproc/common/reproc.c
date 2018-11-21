@@ -22,14 +22,16 @@ REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
     unsigned int timeout = timeouts[i];
 
     switch (operation) {
-    case REPROC_NOOP: break;
-    case REPROC_WAIT: error = reproc_wait(process, timeout, exit_status); break;
-    case REPROC_TERMINATE:
-      error = reproc_terminate(process, timeout, exit_status);
-      break;
-    case REPROC_KILL: error = reproc_kill(process, timeout, exit_status); break;
+    case REPROC_NOOP: continue;
+    case REPROC_WAIT: break;
+    case REPROC_TERMINATE: error = reproc_terminate(process); break;
+    case REPROC_KILL: error = reproc_kill(process); break;
     }
 
+    // Stop if reproc_terminate or reproc_kill returned an error.
+    if (error != REPROC_SUCCESS && error != REPROC_WAIT_TIMEOUT) { break; }
+
+    error = reproc_wait(process, timeout, exit_status);
     if (error != REPROC_WAIT_TIMEOUT) { break; }
   }
 

@@ -78,9 +78,9 @@ running and can be inspected using the operating system's tools for process
 inspection (e.g. ps on Linux).
 
 Every successful call to this function should be followed by a successful call
-to #reproc_wait, #reproc_terminate or #reproc_kill and a call to
-#reproc_destroy. If an error occurs during #reproc_start all allocated resources
-are cleaned up before #reproc_start returns and no further action is required.
+to #reproc_wait or #reproc_stop and a call to #reproc_destroy. If an error
+occurs during #reproc_start all allocated resources are cleaned up before
+#reproc_start returns and no further action is required.
 
 \param[in,out] process Cannot be `NULL`.
 \param[in] argv
@@ -294,45 +294,37 @@ REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_type *process,
 
 /*!
 Sends the `SIGTERM` signal (POSIX) or the `CTRL-BREAK` signal (Windows) to the
-child process and calls #reproc_wait with the given arguments.
+child process. Remember that a successfull call to reproc_wait (and
+reproc_destroy) is required to make sure the child process is completely cleaned
+up.
 
-Should not be called after one of #reproc_wait, #reproc_terminate, #reproc_kill
-or #reproc_stop has returned #REPROC_SUCCESS for that child process.
+Should not be called after #reproc_wait or #reproc_stop has returned
+#REPROC_SUCCESS for that child process.
 
-\return Return value of #reproc_wait.
-
-\see reproc_wait
+\return #REPROC_ERROR
 */
-REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_type *process,
-                                            unsigned int timeout,
-                                            unsigned int *exit_status);
+REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_type *process);
 
 /*!
 Sends the `SIGKILL` signal to the child process (POSIX) or calls
-`TerminateProcess` (Windows) on the child process and calls #reproc_wait with
-the given arguments.
+`TerminateProcess` (Windows) on the child process. Remember that a successfull
+call to reproc_wait (and reproc_destroy) is required to make sure the child
+process is completely cleaned up.
 
-If the child process exits before the timeout expires the exit status stored in
-\p exit_status will be 137 (value of SIGKILL signal).
+Should not be called after #reproc_wait or #reproc_stop has returned
+#REPROC_SUCCESS for that child process.
 
-Should not be called after one of #reproc_wait, #reproc_terminate, #reproc_kill
-or #reproc_stop has returned #REPROC_SUCCESS for that child process.
-
-\return Return value of #reproc_wait.
-
-\see reproc_wait
+\return #REPROC_ERROR
 */
-REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_type *process,
-                                       unsigned int timeout,
-                                       unsigned int *exit_status);
+REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_type *process);
 
 /*!
 Simplifies calling combinations of #reproc_wait, #reproc_terminate and
-#reproc_kill. The given steps are executed in the order they were given until
-one of the steps succeeds or returns an error (except a timeout error).
+#reproc_kill. The function executes each specified step and waits until the
+corresponding timeout expires before continuing with the next step.
 
-Should not be called after one of #reproc_wait, #reproc_terminate, #reproc_kill
-or #reproc_stop has returned #REPROC_SUCCESS for that child process.
+Should not be called after #reproc_wait or #reproc_stop has returned
+#REPROC_SUCCESS for that child process.
 
 Example:
 
@@ -358,7 +350,6 @@ with the value in #REPROC_CLEANUP and the associated timeout.
 process.
 
 \return #REPROC_ERROR \see reproc_wait
-
 */
 REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
                                        unsigned int t1, REPROC_CLEANUP c2,
