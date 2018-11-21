@@ -46,8 +46,12 @@ int main(int argc, char *argv[])
 
   Note that the timout values are maximum wait times. If the process exits
   earlier the destructor will return immediately.
+
+  Also note that C++14 has chrono literals which allows
+  std::chrono::milliseconds(5000) to be replaced with 5000ms.
   */
-  reproc::process forward(reproc::terminate, 5000, reproc::kill, 2000);
+  reproc::process forward(reproc::terminate, std::chrono::milliseconds(5000),
+                          reproc::kill, std::chrono::milliseconds(2000));
 
   std::error_code ec = forward.start(argc - 1, argv + 1);
 
@@ -80,8 +84,10 @@ int main(int argc, char *argv[])
   timeout of 10 seconds to give the process time to write its output before
   sending SIGTERM. */
   unsigned int exit_status = 0;
-  ec = forward.stop(reproc::wait, 10000, reproc::terminate, 5000, reproc::kill,
-                    2000, &exit_status);
+  ec = forward.stop(reproc::wait, std::chrono::milliseconds(10000),
+                    reproc::terminate, std::chrono::milliseconds(5000),
+                    reproc::kill, std::chrono::milliseconds(2000),
+                    &exit_status);
   if (ec) { return fail(ec); }
 
   ec = drain_stdout.get();

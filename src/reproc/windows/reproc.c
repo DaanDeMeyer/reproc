@@ -82,9 +82,7 @@ cleanup:
   free(command_line_wstring);
   free(working_directory_wstring);
 
-  if (error) {
-    reproc_destroy(process);
-  }
+  if (error) { reproc_destroy(process); }
 
   return error;
 }

@@ -93,9 +93,7 @@ cleanup:
   fd_close(&child_stdout);
   fd_close(&child_stderr);
 
-  if (error) {
-    reproc_destroy(process);
-  }
+  if (error) { reproc_destroy(process); }
 
   return error;
 }

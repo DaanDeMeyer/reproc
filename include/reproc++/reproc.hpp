@@ -6,6 +6,7 @@
 #include "reproc++/error.hpp"
 #include "reproc++/export.hpp"
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
@@ -32,8 +33,9 @@ enum class stream {
   err = 2
 };
 
+using milliseconds = std::chrono::duration<unsigned int, std::milli>;
 /*! \see REPROC_INFINITE */
-REPROC_EXPORT extern const unsigned int infinite;
+REPROC_EXPORT extern const reproc::milliseconds infinite;
 
 /*! \see process::stop */
 enum cleanup {
@@ -76,12 +78,14 @@ public:
   By default the destructor waits indefinitely for the child process to exit.
   */
   REPROC_EXPORT process(cleanup c1 = reproc::wait,
-                        unsigned int t1 = reproc::infinite);
+                        reproc::milliseconds t1 = reproc::infinite);
 
-  REPROC_EXPORT process(cleanup c1, unsigned int t1, cleanup c2, unsigned t2);
+  REPROC_EXPORT process(cleanup c1, reproc::milliseconds t1, cleanup c2,
+                        reproc::milliseconds t2);
 
-  REPROC_EXPORT process(cleanup c1, unsigned int t1, cleanup c2, unsigned t2,
-                        cleanup c3, unsigned int t3);
+  REPROC_EXPORT process(cleanup c1, reproc::milliseconds t1, cleanup c2,
+                        reproc::milliseconds t2, cleanup c3,
+                        reproc::milliseconds t3);
 
   /*! Calls #stop with the arguments provided in the constructor if the child
   process is still running and frees all allocated resources. */
@@ -174,30 +178,30 @@ public:
   REPROC_EXPORT void close(reproc::stream stream) noexcept;
 
   /*! \see reproc_wait */
-  REPROC_EXPORT std::error_code wait(unsigned int timeout,
+  REPROC_EXPORT std::error_code wait(reproc::milliseconds timeout,
                                      unsigned int *exit_status) noexcept;
 
   /*! \see reproc_terminate */
-  REPROC_EXPORT std::error_code terminate(unsigned int timeout,
+  REPROC_EXPORT std::error_code terminate(reproc::milliseconds timeout,
                                           unsigned int *exit_status) noexcept;
 
   /*! \see reproc_kill */
-  REPROC_EXPORT std::error_code kill(unsigned int timeout,
+  REPROC_EXPORT std::error_code kill(reproc::milliseconds timeout,
                                      unsigned int *exit_status) noexcept;
 
   /*! \see reproc_stop */
-  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1, cleanup c2,
-                                     unsigned int t2, cleanup c3,
-                                     unsigned int t3,
+  REPROC_EXPORT std::error_code stop(cleanup c1, reproc::milliseconds t1,
+                                     cleanup c2, reproc::milliseconds t2,
+                                     cleanup c3, reproc::milliseconds t3,
                                      unsigned int *exit_status) noexcept;
 
   /*! Overload of #stop with \p c3 set to #noop and \p t3 set to 0. */
-  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1, cleanup c2,
-                                     unsigned int t2,
+  REPROC_EXPORT std::error_code stop(cleanup c1, reproc::milliseconds t1,
+                                     cleanup c2, reproc::milliseconds t2,
                                      unsigned int *exit_status) noexcept;
   /*! Overload of #stop with \p c2 and c3 set to #noop and \p t2 and \p t3 set
   to 0. */
-  REPROC_EXPORT std::error_code stop(cleanup c1, unsigned int t1,
+  REPROC_EXPORT std::error_code stop(cleanup c1, reproc::milliseconds t1,
                                      unsigned int *exit_status) noexcept;
 
 private:
@@ -205,11 +209,11 @@ private:
   bool running_;
 
   cleanup c1_;
-  unsigned int t1_;
+  reproc::milliseconds t1_;
   cleanup c2_;
-  unsigned int t2_;
+  reproc::milliseconds t2_;
   cleanup c3_;
-  unsigned int t3_;
+  reproc::milliseconds t3_;
 
   static constexpr unsigned int BUFFER_SIZE = 1024;
 };

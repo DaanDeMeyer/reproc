@@ -49,7 +49,8 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  reproc::process background(reproc::terminate, 5000, reproc::kill, 2000);
+  reproc::process background(reproc::terminate, std::chrono::milliseconds(5000),
+                             reproc::kill, std::chrono::milliseconds(2000));
 
   std::error_code ec = background.start(argc - 1, argv + 1);
 
@@ -93,7 +94,8 @@ int main(int argc, char *argv[])
   we're running (the child process to run is determined by the user) we send a
   SIGTERM signal and SIGKILL if necessary (or the Windows equivalents). */
   unsigned int exit_status;
-  ec = background.stop(reproc::terminate, 5000, reproc::kill, 2000,
+  ec = background.stop(reproc::terminate, std::chrono::milliseconds(5000),
+                       reproc::kill, std::chrono::milliseconds(2000),
                        &exit_status);
   if (ec) { return fail(ec); }
 
