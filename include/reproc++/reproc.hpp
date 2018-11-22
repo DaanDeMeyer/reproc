@@ -3,8 +3,8 @@
 #ifndef REPROC_HPP
 #define REPROC_HPP
 
-#include "reproc++/error.hpp"
-#include "reproc++/export.hpp"
+#include <reproc++/error.hpp>
+#include <reproc++/export.hpp>
 
 #include <chrono>
 #include <memory>

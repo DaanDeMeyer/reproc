@@ -3,7 +3,7 @@
 #ifndef REPROC_SINK_HPP
 #define REPROC_SINK_HPP
 
-#include "reproc++/export.hpp"
+#include <reproc++/export.hpp>
 
 #include <iosfwd>
 #include <string>

@@ -3,7 +3,7 @@
 #ifndef REPROC_ERROR_HPP
 #define REPROC_ERROR_HPP
 
-#include "reproc++/export.hpp"
+#include <reproc++/export.hpp>
 
 #include <system_error>
 

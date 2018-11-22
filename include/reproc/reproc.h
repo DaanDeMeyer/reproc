@@ -3,8 +3,8 @@
 #ifndef REPROC_H
 #define REPROC_H
 
-#include "reproc/error.h"
-#include "reproc/export.h"
+#include <reproc/error.h>
+#include <reproc/export.h>
 
 #ifdef __cplusplus
 extern "C" {
