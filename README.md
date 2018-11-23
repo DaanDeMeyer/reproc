@@ -13,6 +13,7 @@ documentation)**
 - [Features](#features)
 - [Questions](#questions)
 - [Retrieving reproc](#retrieving-reproc)
+- [Dependencies](#dependencies)
 - [Documentation](#documentation)
 - [Error handling](#error-handling)
 - [Multithreading](#multithreading)
@@ -46,7 +47,6 @@ extra's that make working with child processes from C++ easier.
   resources or immediately stop it.
 - The core library (reproc) is written in C. An optional C++ wrapper library
   (reproc++) with extra features is available for use in C++ applications.
-- Zero dependencies.
 - Multiple installation methods. Either build reproc as part of your project or
   use a system installed version of reproc.
 
@@ -116,6 +116,12 @@ reproc, you can link against it from within your CMakeLists.txt file as follows:
 target_link_libraries(myapp reproc::reproc) # Link against reproc.
 target_link_libraries(myapp reproc::reproc++) # Link against reproc++.
 ```
+
+## Dependencies
+
+reproc has a single dependency on pthreads on POSIX systems. However, the
+dependency is included both in reproc's CMake config and pkg-config files so it
+should be picked up by your build system automatically.
 
 ## CMake options
 
