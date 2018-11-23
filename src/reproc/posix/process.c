@@ -55,7 +55,7 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *data,
       goto cleanup;
     }
 
-    child_pid = vfork();
+    child_pid = vfork(); // NOLINT
 
     if (child_pid == 0) {
       // vfork succeeded and we're in the child process. This block contains all

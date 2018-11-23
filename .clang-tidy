@@ -4,7 +4,6 @@ Checks:
 *,
 -bugprone-exception-escape,
 -cert-err58-cpp,
--clang-analyzer-security.insecureAPI.vfork,
 -clang-diagnostic-unused-command-line-argument,
 -fuchsia-default-arguments,
 -fuchsia-overloaded-operator,
