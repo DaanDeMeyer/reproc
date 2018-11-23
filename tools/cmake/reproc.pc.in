@@ -4,4 +4,5 @@ URL: https://github.com/DaanDeMeyer/reproc
 Version: @PROJECT_VERSION@
 Cflags: -I@REPROC_INSTALL_PREFIX@/@CMAKE_INSTALL_INCLUDEDIR@
 Libs: -L@REPROC_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@ -lreproc
+Libs.private: @CMAKE_THREAD_LIBS_INIT@
 

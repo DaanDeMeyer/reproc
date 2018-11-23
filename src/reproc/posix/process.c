@@ -7,6 +7,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <pthread.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -32,25 +33,82 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *data,
   error = pipe_init(&error_pipe_read, &error_pipe_write);
   if (error) { goto cleanup; }
 
-  errno = 0;
-  child_pid = fork();
+  if (options->vfork) {
+    /* The code inside this block is based on code written by a Redhat employee.
+    The original code along with detailed comments can be found here:
+    https://bugzilla.redhat.com/attachment.cgi?id=941229. */
 
-  if (child_pid == -1) {
-    switch (errno) {
-    case EAGAIN: error = REPROC_PROCESS_LIMIT_REACHED; break;
-    case ENOMEM: error = REPROC_NOT_ENOUGH_MEMORY; break;
-    default: error = REPROC_UNKNOWN_ERROR; break;
+    // Copyright (c) 2014 Red Hat Inc.
+
+    struct sigaction newsa, oldsa;
+    sigset_t signal_mask, old_signal_mask, empty_mask;
+
+    // Block all signals before executing vfork.
+
+    if (sigfillset(&signal_mask) == -1) {
+      error = REPROC_UNKNOWN_ERROR;
+      goto cleanup;
     }
 
-    goto cleanup;
+    if (pthread_sigmask(SIG_BLOCK, &signal_mask, &old_signal_mask) == -1) {
+      error = REPROC_UNKNOWN_ERROR;
+      goto cleanup;
+    }
+
+    child_pid = vfork();
+
+    if (child_pid == 0) {
+      // vfork succeeded and we're in the child process. This block contains all
+      // vfork specific child process code.
+
+      // Reset all signals that are not ignored to SIG_DFL.
+
+      if (sigemptyset(&empty_mask) == -1) {
+        write(error_pipe_write, &errno, sizeof(errno));
+        _exit(errno);
+      }
+
+      newsa.sa_handler = SIG_DFL;
+      newsa.sa_mask = empty_mask;
+      newsa.sa_flags = 0;
+      newsa.sa_restorer = 0;
+
+      for (int i = 0; i < NSIG; i++) {
+        if (sigaction(i, NULL, &oldsa) == -1 || oldsa.sa_handler == SIG_IGN ||
+            oldsa.sa_handler == SIG_DFL) {
+          continue;
+        }
+
+        if (sigaction(i, &newsa, NULL) == -1 && errno != EINVAL) {
+          write(error_pipe_write, &errno, sizeof(errno));
+          _exit(errno);
+        }
+      }
+
+      // Restore the old signal mask.
+
+      if (pthread_sigmask(SIG_SETMASK, &old_signal_mask, NULL) != 0) {
+        write(error_pipe_write, &errno, sizeof(errno));
+        _exit(errno);
+      }
+    } else {
+      // In the parent process we restore the old signal mask regardless of
+      // whether vfork succeeded or not.
+      if (pthread_sigmask(SIG_SETMASK, &old_signal_mask, NULL) != 0) {
+        goto cleanup;
+      }
+    }
+  } else {
+    child_pid = fork();
   }
+
+  // The rest of the code is identical regardless of whether fork or vfork was
+  // used.
 
   if (child_pid == 0) {
     // Child process code. Since we're in the child process we can exit on
     // error. Why _exit? See:
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
-
-    errno = 0;
 
     /* Normally there might be a race condition if the parent process waits for
     the child process before the child process puts itself in its own process
@@ -101,16 +159,25 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *data,
     if (options->return_early) { fd_close(&error_pipe_write); }
 
     // Finally, call passed makeshift lambda.
-    errno = 0;
-    errno = action(data);
+    int action_error = action(data);
 
     // If we didn't return early the error pipe write end is still open and we
     // can use it to report an optional error from action.
     if (!options->return_early) {
-      write(error_pipe_write, &errno, sizeof(errno));
+      write(error_pipe_write, &action_error, sizeof(action_error));
     }
 
-    _exit(errno);
+    _exit(action_error);
+  }
+
+  if (child_pid == -1) {
+    switch (errno) {
+    case EAGAIN: error = REPROC_PROCESS_LIMIT_REACHED; break;
+    case ENOMEM: error = REPROC_NOT_ENOUGH_MEMORY; break;
+    default: error = REPROC_UNKNOWN_ERROR; break;
+    }
+
+    goto cleanup;
   }
 
   // Close write end on parent side so read will read 0 if it is closed on the
@@ -270,7 +337,12 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
     .process_group = pid,
     // Return early so process_create doesn't block until the timeout has
     // expired.
-    .return_early = true
+    .return_early = true,
+    // Don't vfork because when vfork is used the parent process is suspended
+    // until the child process calls exec or _exit. This prevents it from
+    // waiting until a process exits until the timeout has expired which defeats
+    // the purpose of the timeout process.
+    .vfork = false
   };
 
   pid_t timeout_pid = 0;

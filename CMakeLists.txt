@@ -345,7 +345,13 @@ endfunction()
 
 ### reproc Library ###
 
+# reproc_add_library generates the pkg-config file immediately. reproc's
+# pkg-config file requires CMAKE_THREAD_LIBS_INIT to be defined so we find
+# threads before calling reproc_add_library.
+find_package(Threads REQUIRED)
+
 reproc_add_library(reproc C)
+target_link_libraries(reproc PRIVATE Threads::Threads)
 
 target_sources(reproc PRIVATE
   src/reproc/common/error.c

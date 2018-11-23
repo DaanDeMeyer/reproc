@@ -1,6 +1,6 @@
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
-find_dependency(reproc @PROJECT_VERSION@)
+find_dependency(reproc @PROJECT_VERSION@ REQUIRED)
 
 include(${CMAKE_CURRENT_LIST_DIR}/reproc++-targets.cmake)

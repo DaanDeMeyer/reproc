@@ -78,7 +78,8 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
     // wait_timeout in process.c (see wait_timeout for extra information).
     .process_group = 0,
     // Don't return early to make sure we receive errors reported by execve.
-    .return_early = false
+    .return_early = false,
+    .vfork = true
   };
 
   // Fork a child process and call exec.

@@ -23,6 +23,7 @@ struct process_options {
   // from process_create. Returning early also results in errors from action not
   // being reported.
   bool return_early;
+  bool vfork;
 };
 
 /* Creates a child process and calls action with data in the child process. The
