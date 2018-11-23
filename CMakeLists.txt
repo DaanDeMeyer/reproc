@@ -551,6 +551,7 @@ if(REPROC_DOCS)
     add_custom_target(
       reproc-docs ALL
       COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doxyfile
+      COMMENT "Building docs"
     )
   else()
     message(WARNING "doxygen not found")

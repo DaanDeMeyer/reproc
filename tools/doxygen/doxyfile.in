@@ -2,6 +2,9 @@ PROJECT_NAME = reproc
 PROJECT_NUMBER = @PROJECT_VERSION@
 PROJECT_BRIEF = "Cross-platform library that simplifies working with external CLI applications from C and C++"
 
+QUIET = YES
+WARN_IF_UNDOCUMENTED = NO
+
 OPTIMIZE_OUTPUT_FOR_C = YES
 
 OUTPUT_DIRECTORY = @PROJECT_BINARY_DIR@/docs
