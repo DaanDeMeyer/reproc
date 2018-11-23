@@ -260,10 +260,15 @@ with reproc from multiple threads.
   `reproc_write` will return `REPROC_STREAM_CLOSED` as expected when writing to
   a closed stdin pipe.
 
-- (POSIX) ignoring the `SIGCHLD` signal by setting its disposition to `SIG_IGN`
+- (POSIX) Ignoring the `SIGCHLD` signal by setting its disposition to `SIG_IGN`
   changes the behavior of the `waitpid` system call which will cause
   `reproc_wait` to stop working as expected. Read the Notes section of the
   `waitpid` man page for more information.
+
+- (POSIX) Don't call any `set*id` functions when a call to `reproc_start` is in
+  progress. This is necessary because `reproc_start` uses `vfork` under the
+  hood. See <http://ewontfix.com/7/> for more information on why calling
+  `set*id` functions when `vfork` is in progress is dangerous.
 
 ## Avoiding resource leaks
 
