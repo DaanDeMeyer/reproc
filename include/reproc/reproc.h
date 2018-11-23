@@ -272,8 +272,8 @@ running without waiting.
 If \p timeout is #REPROC_INFINITE the function will wait indefinitely for the
 child process to exit.
 \endparblock
-\param[out] Optional output parameter used to store the exit status of the child
-process.
+\param[out] exit_status Optional output parameter used to store the exit status
+of the child process.
 
 \return
 \parblock
@@ -346,8 +346,8 @@ logic such as logging between calls.
 \param[in] c1,c2,c3 Instruct `reproc_stop` to execute the function associated
 with the value in #REPROC_CLEANUP and the associated timeout.
 \param[in] t1,t2,t3 Associated timeout values for \p c1, \p c2 and \p c3.
-\param[out] Optional output parameter used to store the exit status of the child
-process.
+\param[out] exit_status Optional output parameter used to store the exit status
+of the child process.
 
 \return #REPROC_ERROR \see reproc_wait
 */
