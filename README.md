@@ -16,7 +16,7 @@ documentation)**
 - [Documentation](#documentation)
 - [Error handling](#error-handling)
 - [Multithreading](#multithreading)
-- [Gotcha's](#gotchas)
+- [Gotchas](#gotchas)
 - [Avoiding resource leaks](#avoiding-resource-leaks)
   - [POSIX](#posix)
   - [Windows](#windows)
@@ -128,6 +128,13 @@ reproc's build can be configured using the following CMake options:
 - `REPROC_INSTALL`: Add reproc to the install target (default: `ON` unless
   reproc is built as a static library using `add_subdirectory`).
 
+The `THREADS_PREFER_PTHREAD_FLAG` option influences how pthreads are linked to
+reproc. It is disabled by default but CMake recommends to enable it. reproc
+doesn't change it itself because it is a global option and changing it might
+impact the build outside of reproc's CMakeLists.txt. See
+[this](https://stackoverflow.com/questions/23250863/difference-between-pthread-and-lpthread-while-compiling)
+post for more information on the different ways to link pthreads.
+
 ## Documentation
 
 API documentation and examples for the latest stable version can be found at
@@ -212,7 +219,7 @@ Look at the [forward](examples/forward.cpp) and
 [background](examples/background.cpp) examples to see examples of how to work
 with reproc from multiple threads.
 
-## Gotcha's
+## Gotchas
 
 - (POSIX) On POSIX a parent process is required to wait on a child process that
   has exited (using `reproc_wait`) before all resources related to that process
@@ -248,7 +255,7 @@ with reproc from multiple threads.
   a closed stdin pipe.
 
 - (POSIX) ignoring the `SIGCHLD` signal by setting its disposition to `SIG_IGN`
-  changes the behaviour of the `waitpid` system call which will cause
+  changes the behavior of the `waitpid` system call which will cause
   `reproc_wait` to stop working as expected. Read the Notes section of the
   `waitpid` man page for more information.
 
@@ -369,7 +376,7 @@ When making changes:
   compile and run the tests on the platforms you don't have access to.
 
   Tests will be compiled with sanitizers in CI so make sure to not introduce any
-  leaks or undefined behaviour. Enable compiling with sanitizers locally as
+  leaks or undefined behavior. Enable compiling with sanitizers locally as
   follows:
 
   `cmake -DREPROC_SANITIZERS=ON ..`
