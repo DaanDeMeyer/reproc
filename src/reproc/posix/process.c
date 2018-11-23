@@ -195,7 +195,6 @@ static unsigned int parse_exit_status(int status)
 static REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
 {
   int status = 0;
-  errno = 0;
   // Adding WNOHANG makes waitpid only check if the child process is still
   // running without waiting.
   pid_t wait_result = waitpid(pid, &status, WNOHANG);
@@ -214,7 +213,7 @@ static REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
 static REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
 {
   int status = 0;
-  errno = 0;
+
   if (waitpid(pid, &status, 0) == -1) {
     switch (errno) {
     case EINTR: return REPROC_INTERRUPTED;
@@ -238,7 +237,6 @@ static int timeout_process(const void *data)
 
   // Select with no file descriptors can be used as a makeshift sleep function
   // (that can still be interrupted).
-  errno = 0;
   if (select(0, NULL, NULL, NULL, &tv) == -1) { return errno; }
 
   return 0;
@@ -285,7 +283,6 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
   // process. waitpid will return the process id of whichever process exits
   // first.
   int status = 0;
-  errno = 0;
   pid_t exit_pid = waitpid(-pid, &status, 0);
 
   // If the timeout process exits first the timeout will have been exceeded.
@@ -323,7 +320,6 @@ REPROC_ERROR process_wait(pid_t pid, unsigned int timeout,
 
 REPROC_ERROR process_terminate(pid_t pid)
 {
-  errno = 0;
   if (kill(pid, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
 
   return REPROC_SUCCESS;
@@ -331,7 +327,6 @@ REPROC_ERROR process_terminate(pid_t pid)
 
 REPROC_ERROR process_kill(pid_t pid)
 {
-  errno = 0;
   if (kill(pid, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
 
   return REPROC_SUCCESS;

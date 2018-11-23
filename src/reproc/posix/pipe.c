@@ -12,7 +12,6 @@ REPROC_ERROR pipe_init(int *read, int *write)
 
   int pipefd[2];
 
-  errno = 0;
   // See avoiding resource leaks section in readme for a detailed explanation.
 #if defined(HAS_PIPE2)
   int result = pipe2(pipefd, O_CLOEXEC);
@@ -44,7 +43,6 @@ REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
 
   *bytes_read = 0;
 
-  errno = 0;
   ssize_t error = read(pipe, buffer, size);
 
   // read is different from write in that it returns 0 to indicate the other end
@@ -73,7 +71,6 @@ REPROC_ERROR pipe_write(int pipe, const void *buffer, unsigned int to_write,
 
   *bytes_written = 0;
 
-  errno = 0;
   ssize_t error = write(pipe, buffer, to_write);
 
   if (error == -1) {
