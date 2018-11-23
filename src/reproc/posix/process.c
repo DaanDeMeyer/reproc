@@ -40,17 +40,17 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *data,
 
     // Copyright (c) 2014 Red Hat Inc.
 
-    struct sigaction newsa, oldsa;
-    sigset_t signal_mask, old_signal_mask, empty_mask;
-
     // Block all signals before executing vfork.
 
-    if (sigfillset(&signal_mask) == -1) {
+    sigset_t all_blocked;
+    sigset_t old_mask;
+
+    if (sigfillset(&all_blocked) == -1) {
       error = REPROC_UNKNOWN_ERROR;
       goto cleanup;
     }
 
-    if (pthread_sigmask(SIG_BLOCK, &signal_mask, &old_signal_mask) == -1) {
+    if (pthread_sigmask(SIG_BLOCK, &all_blocked, &old_mask) == -1) {
       error = REPROC_UNKNOWN_ERROR;
       goto cleanup;
     }
@@ -63,15 +63,15 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *data,
 
       // Reset all signals that are not ignored to SIG_DFL.
 
+      sigset_t empty_mask;
+
       if (sigemptyset(&empty_mask) == -1) {
         write(error_pipe_write, &errno, sizeof(errno));
         _exit(errno);
       }
 
-      newsa.sa_handler = SIG_DFL;
-      newsa.sa_mask = empty_mask;
-      newsa.sa_flags = 0;
-      newsa.sa_restorer = 0;
+      struct sigaction oldsa;
+      struct sigaction newsa = { .sa_handler = SIG_DFL, .sa_mask = empty_mask };
 
       for (int i = 0; i < NSIG; i++) {
         if (sigaction(i, NULL, &oldsa) == -1 || oldsa.sa_handler == SIG_IGN ||
@@ -87,16 +87,14 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *data,
 
       // Restore the old signal mask.
 
-      if (pthread_sigmask(SIG_SETMASK, &old_signal_mask, NULL) != 0) {
+      if (pthread_sigmask(SIG_SETMASK, &old_mask, NULL) != 0) {
         write(error_pipe_write, &errno, sizeof(errno));
         _exit(errno);
       }
     } else {
       // In the parent process we restore the old signal mask regardless of
       // whether vfork succeeded or not.
-      if (pthread_sigmask(SIG_SETMASK, &old_signal_mask, NULL) != 0) {
-        goto cleanup;
-      }
+      if (pthread_sigmask(SIG_SETMASK, &old_mask, NULL) != 0) { goto cleanup; }
     }
   } else {
     child_pid = fork();
