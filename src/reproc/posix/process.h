@@ -27,7 +27,8 @@ struct process_options {
 };
 
 /* Creates a child process and calls action with data in the child process. The
-process id of the new child process is assigned to pid. */
+process id of the new child process is assigned to pid. If vfork is enabled,
+make sure any code executed within action is within the constraints of vfork. */
 REPROC_ERROR
 process_create(int (*action)(const void *), const void *data,
                struct process_options *options, pid_t *pid);
