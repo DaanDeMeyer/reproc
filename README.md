@@ -150,8 +150,8 @@ The latest documentation can be built by enabling the cmake `REPROC_DOCS`
 option. This requires the latest version of
 [Doxygen](https://www.stack.nl/~dimitri/doxygen/) to be installed and available
 from the PATH. After building the generated documentation can be found in the
-`docs/html` directory of the build directory. Open `docs/html/index.html` in
-your browser to view the documentation.
+`docs` subdirectory of the build directory. Open `docs/index.html` in your
+browser to view the documentation.
 
 ## Error handling
 
