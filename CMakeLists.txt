@@ -424,6 +424,7 @@ if(REPROC_TESTS)
 
   target_link_libraries(reproc-tests PRIVATE reproc)
   target_include_directories(reproc-tests SYSTEM PRIVATE external/doctest)
+  set_target_properties(reproc-tests PROPERTIES OUTPUT_NAME reproc)
 
   target_sources(reproc-tests PRIVATE
     tests/impl.cpp
