@@ -506,7 +506,9 @@ if(REPROC_EXAMPLES)
       add_custom_command(
         TARGET reproc++
         POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:reproc> examples/reproc++
+        COMMAND ${CMAKE_COMMAND} -E copy
+          $<TARGET_FILE:reproc++>
+          examples/reproc++
       )
     endif()
   endif()
