@@ -412,16 +412,6 @@ if(REPROC_TESTS)
     tests/reproc/working-directory.cpp
   )
 
-  # Make sure Windows finds the reproc dll.
-  if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
-    add_custom_command(
-      TARGET reproc
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:reproc> tests
-      COMMENT "Copying reproc.dll to tests"
-    )
-  endif()
-
   ### Helper programs ###
 
   function(reproc_add_test_helper TARGET)
@@ -479,16 +469,6 @@ if(REPROC_EXAMPLES)
 
   reproc_add_example(git-status C)
 
-  # Make sure Windows finds the reproc dll.
-  if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
-    add_custom_command(
-      TARGET reproc
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:reproc> examples/reproc
-      COMMENT "Copying reproc.dll to examples/reproc"
-    )
-  endif()
-
   if(REPROCXX)
     reproc_add_example(cmake-help CXX)
 
@@ -501,18 +481,6 @@ if(REPROC_EXAMPLES)
       target_link_libraries(reproc-background PRIVATE Threads::Threads)
     else()
       message(WARNING "Threads not found. Not building all examples.")
-    endif()
-
-    # Make sure Windows finds the reproc++ dll.
-    if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
-      add_custom_command(
-        TARGET reproc++
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-          $<TARGET_FILE:reproc++>
-          examples/reproc++
-        COMMENT "Copying reproc++.dll to examples/reproc++"
-      )
     endif()
   endif()
 endif()
