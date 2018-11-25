@@ -16,7 +16,6 @@ static REPROC_ERROR pipe_disable_inherit(HANDLE pipe)
 {
   assert(pipe);
 
-  SetLastError(0);
   if (!SetHandleInformation(pipe, HANDLE_FLAG_INHERIT, 0)) {
     return REPROC_UNKNOWN_ERROR;
   }
@@ -30,7 +29,6 @@ REPROC_ERROR pipe_init(HANDLE *read, bool inherit_read, HANDLE *write,
   assert(read);
   assert(write);
 
-  SetLastError(0);
   if (!CreatePipe(read, write, &security_attributes, 0)) {
     return REPROC_UNKNOWN_ERROR;
   }
@@ -59,7 +57,6 @@ REPROC_ERROR pipe_read(HANDLE pipe, void *buffer, unsigned int size,
   assert(buffer);
   assert(bytes_read);
 
-  SetLastError(0);
   // The cast is safe since DWORD == unsigned int on Windows.
   // ReadFile always sets bytes_read to 0 so we don't do it ourselves.
   if (!ReadFile(pipe, buffer, size, (LPDWORD) bytes_read, NULL)) {
@@ -80,7 +77,6 @@ REPROC_ERROR pipe_write(HANDLE pipe, const void *buffer, unsigned int to_write,
   assert(buffer);
   assert(bytes_written);
 
-  SetLastError(0);
   // The cast is safe since DWORD == unsigned int on Windows.
   // WriteFile always sets bytes_written to 0 so we don't do it ourselves.
   if (!WriteFile(pipe, buffer, to_write, (LPDWORD) bytes_written, NULL)) {

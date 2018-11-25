@@ -54,7 +54,6 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
 
   // Determine wstring length (MultiByteToWideChar returns the required size if
   // its last two arguments are NULL and 0).
-  SetLastError(0);
   unsigned int wstring_length = (unsigned int)
       MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string, -1, NULL, 0);
 
@@ -71,7 +70,6 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
   // Now that we pass our allocated string and its length as the last two
   // arguments instead of NULL and 0 MultiByteToWideChar will actually perform
   // the conversion.
-  SetLastError(0);
   int written = MultiByteToWideChar(CP_UTF8, 0, string, -1, wstring,
                                     wstring_length);
   if (written == 0) {

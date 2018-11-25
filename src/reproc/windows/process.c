@@ -16,7 +16,6 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
 
   // Get the required size for the attribute list.
   SIZE_T attribute_list_size = 0;
-  SetLastError(0);
   if (!InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size) &&
       GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
     return REPROC_UNKNOWN_ERROR;
@@ -25,7 +24,6 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = malloc(attribute_list_size);
   if (!attribute_list) { return REPROC_NOT_ENOUGH_MEMORY; }
 
-  SetLastError(0);
   if (!InitializeProcThreadAttributeList(attribute_list, 1, 0,
                                          &attribute_list_size)) {
     free(attribute_list);
@@ -33,7 +31,6 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
   }
 
   // Add the handles to be inherited to the attribute list.
-  SetLastError(0);
   if (!UpdateProcThreadAttribute(attribute_list, 0,
                                  PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,
                                  amount * sizeof(HANDLE), NULL, NULL)) {
@@ -111,7 +108,6 @@ REPROC_ERROR process_create(wchar_t *command_line,
   // dialogs temporarily.
   DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
 
-  SetLastError(0);
   BOOL result = CreateProcessW(NULL, command_line, NULL, NULL, TRUE,
                                creation_flags, NULL, options->working_directory,
                                startup_info_address, &info);
@@ -143,14 +139,12 @@ REPROC_ERROR process_wait(HANDLE process, unsigned int timeout,
 {
   assert(process);
 
-  SetLastError(0);
   DWORD wait_result = WaitForSingleObject(process, timeout);
   if (wait_result == WAIT_TIMEOUT) { return REPROC_WAIT_TIMEOUT; }
   if (wait_result == WAIT_FAILED) { return REPROC_UNKNOWN_ERROR; }
 
   if (exit_status == NULL) { return REPROC_SUCCESS; }
 
-  SetLastError(0);
   // DWORD == unsigned int so the cast is safe.
   if (!GetExitCodeProcess(process, (LPDWORD) exit_status)) {
     return REPROC_UNKNOWN_ERROR;
@@ -167,7 +161,6 @@ REPROC_ERROR process_terminate(HANDLE process, unsigned long pid)
   // GenerateConsoleCtrlEvent on a single child process it has to be put in its
   // own process group (which is exactly what we did when starting the child
   // process).
-  SetLastError(0);
   if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pid)) {
     return REPROC_UNKNOWN_ERROR;
   }
@@ -181,7 +174,6 @@ REPROC_ERROR process_kill(HANDLE process)
 
   // We use 137 as the exit status because it is the same exit status as a
   // process that is stopped with the SIGKILL signal on POSIX systems.
-  SetLastError(0);
   if (!TerminateProcess(process, 137)) { return REPROC_UNKNOWN_ERROR; }
 
   return REPROC_SUCCESS;
