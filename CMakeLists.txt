@@ -18,9 +18,6 @@ project(reproc VERSION 2.0.0 LANGUAGES C)
 # Check if reproc is included via add_subdirectory.
 get_directory_property(REPROC_IS_SUBDIRECTORY PARENT_DIRECTORY)
 
-# Tip: use cmake-gui when contributing to reproc to turn on everything without
-# having to type out all the options by hand (cmake .. && cmake-gui .).
-
 ### User Options ###
 
 option(REPROCXX "Build reproc++ (C++ wrapper library).")
