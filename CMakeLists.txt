@@ -88,13 +88,13 @@ if(MSVC)
   endif()
 
   # Check for permissive- here to avoid doing the check multiple times in
-  # reproc_set_common.
+  # reproc_add_common.
   include(CheckCCompilerFlag)
   check_c_compiler_flag(/permissive- REPROC_HAS_PERMISSIVE)
 endif()
 
 # Encapsulates common configuration for a target.
-function(reproc_set_common TARGET OUTPUT_DIRECTORY)
+function(reproc_add_common TARGET OUTPUT_DIRECTORY)
   # reproc build output is in its own directory so the output files don't need
   # to be prefixed (only the actual targets in CMake).
   string(REPLACE "reproc-" "" WITHOUT_PREFIX ${TARGET})
@@ -200,7 +200,7 @@ endif()
 function(reproc_add_library TARGET LANGUAGE)
   add_library(${TARGET} "")
   add_library(reproc::${TARGET} ALIAS ${TARGET})
-  reproc_set_common(${TARGET} lib)
+  reproc_add_common(${TARGET} lib)
 
   # Put dll's in tests and examples directories on CI so the executables in
   # those directories find the dll's without us having to modify the PATH.
@@ -422,7 +422,7 @@ endif()
 
 if(REPROC_TESTS)
   add_executable(reproc-tests "")
-  reproc_set_common(reproc-tests tests)
+  reproc_add_common(reproc-tests tests)
 
   target_link_libraries(reproc-tests PRIVATE reproc)
   target_include_directories(reproc-tests SYSTEM PRIVATE external/doctest)
@@ -438,7 +438,7 @@ if(REPROC_TESTS)
 
   function(reproc_add_test_helper TARGET)
     add_executable(reproc-${TARGET} tests/resources/${TARGET}.cpp)
-    reproc_set_common(reproc-${TARGET} tests/resources)
+    reproc_add_common(reproc-${TARGET} tests/resources)
 
     string(TOUPPER ${TARGET} TARGET_UPPER_CASE)
     # Pass paths as compile time parameters so tests can be run from any
@@ -470,7 +470,7 @@ endif()
 if(REPROC_EXAMPLES)
   function(reproc_add_example TARGET LANGUAGE)
     add_executable(reproc-${TARGET} "")
-    reproc_set_common(reproc-${TARGET} examples)
+    reproc_add_common(reproc-${TARGET} examples)
 
     if(${LANGUAGE} STREQUAL C)
       target_link_libraries(reproc-${TARGET} PRIVATE reproc)
