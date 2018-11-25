@@ -195,21 +195,6 @@ function(reproc_add_library TARGET LANGUAGE)
   add_library(reproc::${TARGET} ALIAS ${TARGET})
   reproc_add_common(${TARGET} lib)
 
-  # Put dll's in tests and examples directories on CI so the executables in
-  # those directories find the dll's without us having to modify the PATH.
-  if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
-    add_custom_command(
-      TARGET ${TARGET}
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TARGET}> tests
-    )
-    add_custom_command(
-      TARGET ${TARGET}
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TARGET}> examples
-    )
-  endif()
-
   # Enable -fvisibility=hidden and -fvisibility-inlines-hidden.
   set_target_properties(${TARGET} PROPERTIES
     C_VISIBILITY_PRESET hidden
@@ -427,6 +412,15 @@ if(REPROC_TESTS)
     tests/reproc/working-directory.cpp
   )
 
+  # Make sure Windows finds the reproc dll.
+  if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
+    add_custom_command(
+      TARGET reproc
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:reproc> tests
+    )
+  endif()
+
   ### Helper programs ###
 
   function(reproc_add_test_helper TARGET)
@@ -484,6 +478,15 @@ if(REPROC_EXAMPLES)
 
   reproc_add_example(git-status C)
 
+  # Make sure Windows finds the reproc dll.
+  if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
+    add_custom_command(
+      TARGET reproc
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:reproc> examples/reproc
+    )
+  endif()
+
   if(REPROCXX)
     reproc_add_example(cmake-help CXX)
 
@@ -496,6 +499,15 @@ if(REPROC_EXAMPLES)
       target_link_libraries(reproc-background PRIVATE Threads::Threads)
     else()
       message(WARNING "Threads not found. Not building all examples.")
+    endif()
+
+    # Make sure Windows finds the reproc dll.
+    if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
+      add_custom_command(
+        TARGET reproc++
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:reproc> examples/reproc++
+      )
     endif()
   endif()
 endif()
