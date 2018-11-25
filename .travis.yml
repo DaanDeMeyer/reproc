@@ -11,6 +11,9 @@ notifications:
 
 matrix:
   fast_finish: true
+
+matrix:
+  fast_finish: true
   include:
     - os: linux
       addons:
