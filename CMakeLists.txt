@@ -173,7 +173,6 @@ function(reproc_add_common TARGET OUTPUT_DIRECTORY)
     $<$<CXX_COMPILER_ID:GNU>:-fdiagnostics-color>
     $<$<CXX_COMPILER_ID:Clang>:-fcolor-diagnostics>
   )
-
 endfunction()
 
 # CMake by default sets CMAKE_INSTALL_PREFIX to
