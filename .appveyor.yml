@@ -37,9 +37,11 @@ install:
 before_build:
   # Set MSVC's enviroment variables.
   - call %VCVARSALL% %PLATFORM%
+  - mkdir build
+  - cd build
   # Build reproc as a shared library so CI verifies all the necessary symbols
   # are exported from the dll's.
-  - cmake .
+  - cmake ..
       -G Ninja
       -DCMAKE_BUILD_TYPE=Debug
       -DBUILD_SHARED_LIBS=ON

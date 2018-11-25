@@ -53,7 +53,9 @@ matrix:
       env: CC=clang CXX=clang++
 
 script:
-  - cmake .
+  - mkdir build
+  - cd build
+  - cmake ..
       -DCMAKE_BUILD_TYPE=Debug
       -DBUILD_SHARED_LIBS=ON
       -DREPROCXX=ON
