@@ -67,5 +67,5 @@ script:
   - cmake --build . -- -j 2
   - cmake --build . --target reproc-run-tests
   # Make sure examples don't crash or return a non-zero exit code.
-  - ./examples/git-status > /dev/null
-  - ./examples/cmake-help > /dev/null
+  - ./examples/reproc/git-status > /dev/null
+  - ./examples/reproc++/cmake-help > /dev/null

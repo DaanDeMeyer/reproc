@@ -56,5 +56,5 @@ build_script: cmake --build .
 test_script:
   - cmake --build . --target reproc-run-tests
   # Make sure examples don't crash or return a non-zero exit code.
-  - .\examples\git-status >NUL
-  - .\examples\cmake-help >NUL
+  - .\examples\reproc\git-status >NUL
+  - .\examples\reproc++\cmake-help >NUL
