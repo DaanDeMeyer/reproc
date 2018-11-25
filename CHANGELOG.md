@@ -2,13 +2,7 @@
 
 ## 3.0.0
 
-- reproc++ now takes timeouts as `std::chrono::duration` values (more specific
-  `reproc::milliseconds`) instead of unsigned ints.
-
-  Taking the `reproc::milliseconds` type explains a lot more about the expected
-  argument than taking an unsigned int. C++14 also added chrono literals which
-  make constructing `reproc::milliseconds` values a lot more concise
-  (`reproc::milliseconds(2000)` => `2000ms`).
+### reproc
 
 - `reproc_terminate` and `reproc_kill` don't call `reproc_wait` internally
   anymore. `reproc_stop` has been changed to call `reproc_wait` after calling
@@ -34,3 +28,13 @@
 
   A dependency on pthreads had to be added in order to safely use `vfork` (we
   needed access to `pthread_sigmask`).
+
+### reproc++
+
+- reproc++ now takes timeouts as `std::chrono::duration` values (more specific
+  `reproc::milliseconds`) instead of unsigned ints.
+
+  Taking the `reproc::milliseconds` type explains a lot more about the expected
+  argument than taking an unsigned int. C++14 also added chrono literals which
+  make constructing `reproc::milliseconds` values a lot more concise
+  (`reproc::milliseconds(2000)` => `2000ms`).
