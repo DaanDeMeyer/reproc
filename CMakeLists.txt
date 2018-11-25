@@ -474,10 +474,10 @@ if(REPROC_EXAMPLES)
 
     if(${LANGUAGE} STREQUAL C)
       target_link_libraries(reproc-${TARGET} PRIVATE reproc)
-      target_sources(reproc-${TARGET} PRIVATE examples/${TARGET}.c)
+      target_sources(reproc-${TARGET} PRIVATE examples/reproc/${TARGET}.c)
     elseif(${LANGUAGE} STREQUAL CXX)
       target_link_libraries(reproc-${TARGET} PRIVATE reproc++)
-      target_sources(reproc-${TARGET} PRIVATE examples/${TARGET}.cpp)
+      target_sources(reproc-${TARGET} PRIVATE examples/reproc++/${TARGET}.cpp)
     endif()
 
     if(REPROC_SANITIZERS)
