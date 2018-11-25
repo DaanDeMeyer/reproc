@@ -22,9 +22,9 @@ class string_sink
   std::string &out_;
 
 public:
-  REPROC_EXPORT string_sink(std::string &out) noexcept;
+  REPROCXX_EXPORT string_sink(std::string &out) noexcept;
 
-  REPROC_EXPORT void operator()(const char *buffer, unsigned int size);
+  REPROCXX_EXPORT void operator()(const char *buffer, unsigned int size);
 };
 
 /*!
@@ -37,9 +37,9 @@ class ostream_sink
   std::ostream &out_;
 
 public:
-  REPROC_EXPORT ostream_sink(std::ostream &out) noexcept;
+  REPROCXX_EXPORT ostream_sink(std::ostream &out) noexcept;
 
-  REPROC_EXPORT void operator()(const char *buffer, unsigned int size);
+  REPROCXX_EXPORT void operator()(const char *buffer, unsigned int size);
 };
 
 } // namespace reproc

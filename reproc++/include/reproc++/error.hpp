@@ -51,10 +51,10 @@ enum class errc {
 };
 
 /*! \private */
-REPROC_EXPORT const std::error_category &error_category() noexcept;
+REPROCXX_EXPORT const std::error_category &error_category() noexcept;
 
 /*! \private */
-REPROC_EXPORT std::error_condition
+REPROCXX_EXPORT std::error_condition
 make_error_condition(reproc::errc error) noexcept;
 
 } // namespace reproc

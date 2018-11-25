@@ -60,10 +60,11 @@ build_script: cmake --build .
 
 before_test:
   # Make sure tests and examples can find the reproc and reproc++ dll's.
-  - set PATH=%APPVEYOR_BUILD_FOLDER%/build/lib;%PATH%
+  - set PATH=%APPVEYOR_BUILD_FOLDER%/build/reproc/lib;%PATH%
+  - set PATH=%APPVEYOR_BUILD_FOLDER%/build/reproc++/lib;%PATH%
 
 test_script:
   - cmake --build . --target reproc-run-tests
   # Make sure examples don't crash or return a non-zero exit code.
-  - .\examples\reproc\git-status >NUL
-  - .\examples\reproc++\cmake-help >NUL
+  - .\reproc\examples\git-status >NUL
+  - .\reproc++\examples\\cmake-help >NUL
