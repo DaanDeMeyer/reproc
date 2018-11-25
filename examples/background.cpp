@@ -95,8 +95,7 @@ int main(int argc, char *argv[])
   SIGTERM signal and SIGKILL if necessary (or the Windows equivalents). */
   unsigned int exit_status;
   ec = background.stop(reproc::terminate, reproc::milliseconds(5000),
-                       reproc::kill, reproc::milliseconds(2000),
-                       &exit_status);
+                       reproc::kill, reproc::milliseconds(2000), &exit_status);
   if (ec) { return fail(ec); }
 
   return static_cast<int>(exit_status);
