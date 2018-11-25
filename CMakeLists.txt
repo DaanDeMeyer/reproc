@@ -228,7 +228,6 @@ function(reproc_add_library TARGET LANGUAGE)
   else()
     set(HEADER_EXT hpp)
   endif()
-  string(TOUPPER ${HEADER_EXT} HEADER_EXT_UPPER)
 
   set(GENERATED_HEADERS_DIR ${PROJECT_BINARY_DIR}/generated/include)
 
