@@ -504,6 +504,7 @@ if(REPROC_FORMAT)
     add_custom_target(
       reproc-format ALL
       COMMAND ${REPROC_CLANG_FORMAT_PROGRAM} -i ${REPROC_SOURCES}
+      COMMENT "Formatting source files"
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     )
   else()
