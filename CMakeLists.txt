@@ -69,26 +69,21 @@ endif()
 
 ### Helpers ###
 
-if(MSVC)
-  # CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default on Windows so
-  # when we add /W4 via target_compile_options cl.exe complains that both /W3
-  # and /W4 are passed. We can avoid these warnings by replacing /W3 with /W4 in
-  # CMAKE_CXX_FLAGS but this is intrusive when reproc is used via
-  # add_subdirectory since it would add /W4 to every target. To solve this, we
-  # only add /W4 when reproc is not included with add_subdirectory.
-  if(NOT REPROC_IS_SUBDIRECTORY)
-    string(REGEX REPLACE /W[0-4] "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")
+# CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default on Windows so
+# when we add /W4 via target_compile_options cl.exe complains that both /W3 and
+# /W4 are passed. We can avoid these warnings by replacing /W3 with /W4 in
+# CMAKE_CXX_FLAGS but this is intrusive when reproc is used via add_subdirectory
+# since it would add /W4 to every target. To solve this, we only add /W4 when
+# reproc is not included with add_subdirectory.
+if(MSVC AND NOT REPROC_IS_SUBDIRECTORY)
+  string(REGEX REPLACE /W[0-4] "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")
 
-    string(REGEX REPLACE /W[0-4] "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  endif()
-
-  # Check for permissive- here to avoid doing the check multiple times in
-  # reproc_add_common.
-  include(CheckCCompilerFlag)
-  check_c_compiler_flag(/permissive- REPROC_HAS_PERMISSIVE)
+  string(REGEX REPLACE /W[0-4] "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 endif()
+
+include(CheckCCompilerFlag)
 
 # Encapsulates common configuration for a target.
 function(reproc_add_common TARGET OUTPUT_DIRECTORY)
@@ -127,6 +122,8 @@ function(reproc_add_common TARGET OUTPUT_DIRECTORY)
   ### Common development flags (warnings + sanitizers + colors) ###
 
   if(MSVC)
+    check_c_compiler_flag(/permissive- REPROC_HAS_PERMISSIVE)
+
     target_compile_options(${TARGET} PRIVATE
       /nologo # Silence MSVC compiler version output.
       $<$<BOOL:${REPROC_CI}>:/WX> # -Werror
