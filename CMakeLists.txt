@@ -418,6 +418,7 @@ if(REPROC_TESTS)
       TARGET reproc
       POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:reproc> tests
+      COMMENT "Copying reproc.dll to tests"
     )
   endif()
 
@@ -484,6 +485,7 @@ if(REPROC_EXAMPLES)
       TARGET reproc
       POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:reproc> examples/reproc
+      COMMENT "Copying reproc.dll to examples/reproc"
     )
   endif()
 
@@ -501,7 +503,7 @@ if(REPROC_EXAMPLES)
       message(WARNING "Threads not found. Not building all examples.")
     endif()
 
-    # Make sure Windows finds the reproc dll.
+    # Make sure Windows finds the reproc++ dll.
     if(REPROC_CI AND BUILD_SHARED_LIBS AND WIN32)
       add_custom_command(
         TARGET reproc++
@@ -509,6 +511,7 @@ if(REPROC_EXAMPLES)
         COMMAND ${CMAKE_COMMAND} -E copy
           $<TARGET_FILE:reproc++>
           examples/reproc++
+        COMMENT "Copying reproc++.dll to examples/reproc++"
       )
     endif()
   endif()
