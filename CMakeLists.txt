@@ -427,9 +427,9 @@ if(REPROC_TESTS)
 
   target_sources(reproc-tests PRIVATE
     tests/impl.cpp
-    tests/read-write.cpp
-    tests/stop.cpp
-    tests/working-directory.cpp
+    tests/reproc/read-write.cpp
+    tests/reproc/stop.cpp
+    tests/reproc/working-directory.cpp
   )
 
   ### Helper programs ###
