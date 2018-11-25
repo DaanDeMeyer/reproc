@@ -469,21 +469,22 @@ endif()
 if(REPROC_EXAMPLES)
   function(reproc_add_example TARGET LANGUAGE)
     add_executable(reproc-${TARGET} "")
-    reproc_add_common(reproc-${TARGET} examples)
 
     if(${LANGUAGE} STREQUAL C)
+      reproc_add_common(reproc-${TARGET} examples/reproc)
       target_link_libraries(reproc-${TARGET} PRIVATE reproc)
       target_sources(reproc-${TARGET} PRIVATE examples/reproc/${TARGET}.c)
+
+      if(REPROC_SANITIZERS)
+        set_target_properties(reproc-${TARGET} PROPERTIES
+          # Hack to avoid UBSAN undefined reference errors.
+          LINKER_LANGUAGE CXX
+        )
+      endif()
     elseif(${LANGUAGE} STREQUAL CXX)
+      reproc_add_common(reproc-${TARGET} examples/reproc++)
       target_link_libraries(reproc-${TARGET} PRIVATE reproc++)
       target_sources(reproc-${TARGET} PRIVATE examples/reproc++/${TARGET}.cpp)
-    endif()
-
-    if(REPROC_SANITIZERS)
-      set_target_properties(reproc-${TARGET} PROPERTIES
-        # Hack to avoid UBSAN undefined reference errors.
-        LINKER_LANGUAGE CXX
-      )
     endif()
   endfunction()
 
