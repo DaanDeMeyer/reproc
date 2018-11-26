@@ -12,6 +12,8 @@ notifications:
 matrix:
   fast_finish: true
 
+env: REPROC_TIDY=ON REPROC_FORMAT=ON
+
 matrix:
   fast_finish: true
   include:
@@ -53,7 +55,7 @@ matrix:
       env: CC=clang-7 CXX=clang++-7
 
     - os: osx
-      env: CC=clang CXX=clang++
+      env: CC=clang CXX=clang++ REPROC_TIDY=OFF REPROC_FORMAT=OFF
 
 script:
   - mkdir build
