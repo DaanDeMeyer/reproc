@@ -68,8 +68,8 @@ script:
       -DREPROC_EXAMPLES=ON
       -DREPROC_INSTALL=ON
       -DREPROC_CI=ON
-      -DREPROC_TIDY=ON
-      -DREPROC_FORMAT=ON
+      -DREPROC_TIDY=$REPROC_TIDY
+      -DREPROC_FORMAT=$REPROC_FORMAT
       -DREPROC_SANITIZERS=ON
   - cmake --build . -- -j 2
   - cmake --build . --target reproc-run-tests
