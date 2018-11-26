@@ -42,20 +42,6 @@ if(${PNU}_TIDY)
   endif()
 endif()
 
-# CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default on Windows so
-# when we add /W4 via target_compile_options cl.exe complains that both /W3 and
-# /W4 are passed. We can avoid these warnings by replacing /W3 with /W4 in
-# CMAKE_CXX_FLAGS but this is intrusive when a project is used via
-# add_subdirectory since it would add /W4 to every target. To solve this, we
-# only add /W4 when the project is not included with add_subdirectory.
-if(MSVC AND NOT ${PNU}_IS_SUBDIRECTORY)
-  string(REGEX REPLACE /W[0-4] "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")
-
-  string(REGEX REPLACE /W[0-4] "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-endif()
-
 include(CheckCCompilerFlag)
 
 # Encapsulates common configuration for a target.
@@ -85,6 +71,31 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   ### Common development flags (warnings + sanitizers + colors) ###
 
   if(MSVC)
+    # CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default on Windows
+    # so when we add /W4 via target_compile_options cl.exe complains that both
+    # /W3 and /W4 are passed. We can avoid these warnings by replacing /W3 with
+    # /W4 in CMAKE_CXX_FLAGS but this is intrusive when a project is used via
+    # add_subdirectory since it would add /W4 to every target. To solve this, we
+    # only add /W4 when the project is not included with add_subdirectory.
+
+    if(NOT ${PNU}_IS_SUBDIRECTORY)
+      # CMAKE_C_FLAGS and CMAKE_CXX_FLAGS only get their default values if they
+      # haven't been modified yet when the respective language is enabled in
+      # CMake. We check to see if they have been set so we don't prevent them
+      # from taking their default values if their corresponding language is
+      # enabled after calling cddm_add_library has been called for the first
+      # time.
+      if(CMAKE_C_FLAGS)
+        string(REGEX REPLACE /W[0-4] "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")
+      endif()
+
+      if(CMAKE_CXX_FLAGS)
+        string(REGEX REPLACE /W[0-4] "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+      endif()
+    endif()
+
     check_c_compiler_flag(/permissive- ${PNU}_HAS_PERMISSIVE)
 
     target_compile_options(${TARGET} PRIVATE
