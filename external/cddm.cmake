@@ -179,6 +179,11 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
 
   set(GENERATED_HEADERS_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/include)
 
+  # CMake's GenerateExportHeader only recently learned to support C projects.
+  if(${CMAKE_VERSION} VERSION_LESS 3.10)
+    enable_language(CXX)
+  endif()
+
   # Generate export headers. We generate export headers using CMake since
   # different export files are required depending on whether a library is shared
   # or static and we can't determine whether a library is shared or static from
