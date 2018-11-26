@@ -181,7 +181,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   set(GENERATED_HEADERS_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/include)
 
   # CMake's GenerateExportHeader only recently learned to support C projects.
-  if(${CMAKE_VERSION} VERSION_LESS 3.10)
+  if(${CMAKE_VERSION} VERSION_LESS 3.12)
     enable_language(CXX)
   endif()
 
