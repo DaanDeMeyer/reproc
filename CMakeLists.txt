@@ -19,13 +19,6 @@ include(${PROJECT_SOURCE_DIR}/external/cddm.cmake)
 
 option(REPROCXX "Build reproc++.")
 
-if(REPROC_DOCS)
-  configure_file(
-    tools/doxygen/doxyfile.in
-    doxyfile
-  )
-endif()
-
 add_subdirectory(reproc)
 
 if(REPROCXX)
