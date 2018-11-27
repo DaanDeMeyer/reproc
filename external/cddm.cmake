@@ -22,7 +22,6 @@ endif()
 option(${PNU}_CI "Add -Werror or equivalent to the compiler and \
 clang-tidy.")
 option(${PNU}_TIDY "Run clang-tidy during the build.")
-option(${PNU}_FORMAT "Run clang-format during the build.")
 option(${PNU}_SANITIZERS "Build with sanitizers. Only works on \
 UNIX systems.")
 
@@ -304,26 +303,6 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
     )
   endif()
 endfunction()
-
-if(${PNU}_FORMAT)
-  find_program(${PNU}_CLANG_FORMAT_PROGRAM clang-format)
-
-  if(${PNU}_CLANG_FORMAT_PROGRAM)
-    # CMake discourages globbing for specifying source files but since we
-    # already manually specify our sources there's no harm in using globbing to
-    # gather all source files so we can pass them to clang-format.
-    file(GLOB_RECURSE ${PNU}_CLANG_FORMAT_SOURCES *.c *.h *.cpp *.hpp)
-
-    add_custom_target(
-      ${PNL}-format
-      COMMAND ${${PNU}_CLANG_FORMAT_PROGRAM} -i ${${PNU}_CLANG_FORMAT_SOURCES}
-      COMMENT "Formatting source files"
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    )
-  else()
-    message(FATAL_ERROR "clang-format not found")
-  endif()
-endif()
 
 ### Documentation ###
 
