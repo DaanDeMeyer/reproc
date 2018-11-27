@@ -76,14 +76,12 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
     # /W4 in CMAKE_CXX_FLAGS but this is intrusive when a project is used via
     # add_subdirectory since it would add /W4 to every target. To solve this, we
     # only add /W4 when the project is not included with add_subdirectory.
-
     if(NOT ${PNU}_IS_SUBDIRECTORY)
       # CMAKE_C_FLAGS and CMAKE_CXX_FLAGS only get their default values if they
       # haven't been modified yet when the respective language is enabled in
-      # CMake. We check to see if they have been set so we don't prevent them
-      # from taking their default values if their corresponding language is
-      # enabled after calling cddm_add_library has been called for the first
-      # time.
+      # CMake. We check to see if they have been set yet so we don't prevent
+      # them from taking their default values if their corresponding language is
+      # enabled after calling cddm_add_library.
       if(CMAKE_C_FLAGS)
         string(REGEX REPLACE /W[0-4] "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")
