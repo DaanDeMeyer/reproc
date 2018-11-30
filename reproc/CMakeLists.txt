@@ -44,7 +44,7 @@ if(MSVC)
     WIN32_LEAN_AND_MEAN
     VC_EXTRALEAN
     NOMINMAX
-    $<$<BOOL:${REPROC_ATTRIBUTE_LIST_FOUND}>:HAS_ATTRIBUTE_LIST>
+    $<$<BOOL:${REPROC_ATTRIBUTE_LIST_FOUND}>:HAVE_ATTRIBUTE_LIST>
   )
 elseif(UNIX)
   # Check if pipe2 is available.
@@ -54,7 +54,7 @@ elseif(UNIX)
 
   target_compile_definitions(reproc PRIVATE
     _GNU_SOURCE # Needed for pipe2 and kill.
-    $<$<BOOL:${REPROC_PIPE2_FOUND}>:HAS_PIPE2>
+    $<$<BOOL:${REPROC_PIPE2_FOUND}>:HAVE_PIPE2>
   )
 endif()
 

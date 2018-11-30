@@ -3,7 +3,7 @@
 
 #include <assert.h>
 
-#if defined(HAS_ATTRIBUTE_LIST)
+#if defined(HAVE_ATTRIBUTE_LIST)
 #include <stdlib.h>
 
 REPROC_ERROR
@@ -57,7 +57,7 @@ REPROC_ERROR process_create(wchar_t *command_line,
   // CTRL-BREAK signals to more than one child process in process_terminate.
   DWORD creation_flags = CREATE_NEW_PROCESS_GROUP;
 
-#if defined(HAS_ATTRIBUTE_LIST)
+#if defined(HAVE_ATTRIBUTE_LIST)
   REPROC_ERROR error = REPROC_SUCCESS;
 
   // To ensure no handles other than those necessary are inherited we use the
@@ -114,7 +114,7 @@ REPROC_ERROR process_create(wchar_t *command_line,
 
   SetErrorMode(previous_error_mode);
 
-#if defined(HAS_ATTRIBUTE_LIST)
+#if defined(HAVE_ATTRIBUTE_LIST)
   DeleteProcThreadAttributeList(attribute_list);
 #endif
 

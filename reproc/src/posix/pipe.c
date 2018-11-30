@@ -13,7 +13,7 @@ REPROC_ERROR pipe_init(int *read, int *write)
   int pipefd[2];
 
   // See avoiding resource leaks section in readme for a detailed explanation.
-#if defined(HAS_PIPE2)
+#if defined(HAVE_PIPE2)
   int result = pipe2(pipefd, O_CLOEXEC);
 #else
   int result = pipe(pipefd);
