@@ -102,7 +102,6 @@ if(REPROC_TESTS)
   add_custom_target(
     reproc-run-tests
     COMMAND $<TARGET_FILE:reproc-tests> --force-colors=true
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
   )
 
   add_dependencies(reproc-run-tests reproc-tests)
