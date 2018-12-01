@@ -18,9 +18,9 @@ endif()
 
 ### Developer options
 
+option(${PNU}_TIDY "Run clang-tidy when building.")
+option(${PNU}_SANITIZERS "Build with sanitizers.")
 option(${PNU}_CI "Add -Werror or equivalent to the compiler and clang-tidy.")
-option(${PNU}_TIDY "Run clang-tidy during the build.")
-option(${PNU}_SANITIZERS "Build with sanitizers. Only works on UNIX systems.")
 
 if(${PNU}_TIDY)
   # CMake added clang-tidy support in CMake 3.6.
