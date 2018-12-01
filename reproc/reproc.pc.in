@@ -1,8 +1,13 @@
+prefix=@REPROC_INSTALL_PREFIX@
+exec_prefix=${prefix}
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+
 Name: reproc
-Description: "Cross-platform (C99/C++11) library that simplifies working with external CLI applications from C and C++"
+Description: "Cross-platform C99 library that simplifies working with external CLI applications from C"
 URL: https://github.com/DaanDeMeyer/reproc
 Version: @PROJECT_VERSION@
-Cflags: -I@REPROC_INSTALL_PREFIX@/@CMAKE_INSTALL_INCLUDEDIR@
-Libs: -L@REPROC_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@ -lreproc
+Cflags: -I${includedir}
+Libs: -L${libdir} -lreproc
 Libs.private: @CMAKE_THREAD_LIBS_INIT@
 
