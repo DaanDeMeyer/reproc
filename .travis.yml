@@ -1,9 +1,9 @@
 dist: trusty
-# We use the generic language to avoid Travis overwriting the CC and CXX
+# We use the generic language to prevent Travis from overwriting the CC and CXX
 # environment variables. See https://stackoverflow.com/questions/35110123/travis-ci-with-c14-and-linux.
 language: generic
 
-# Stop Leak Sanitizer from crashing.
+# Leak Sanitizer crashes if we don't run with root priviliges.
 sudo: true
 
 notifications:
