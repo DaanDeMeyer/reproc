@@ -178,13 +178,25 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   string(REPLACE + x EXPORT_MACRO ${TARGET})
   string(TOUPPER ${EXPORT_MACRO} EXPORT_MACRO_UPPER)
 
+  # Make sure includes don't have to change when switching between building the
+  # library from source and using a system installed version of the library.
+  execute_process(
+    COMMAND cmake -E copy_directory
+      ${CMAKE_CURRENT_SOURCE_DIR}/include
+      ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET})
+
+  # Only use the headers from the repository when building. When installing we
+  # want to use the install location of the headers (e.g. /usr/include) as the
+  # include directory instead.
+  target_include_directories(${TARGET} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+  )
+
   if(${LANGUAGE} STREQUAL C)
     set(HEADER_EXT h)
   else()
     set(HEADER_EXT hpp)
   endif()
-
-  set(GENERATED_HEADERS_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/include)
 
   # CMake's GenerateExportHeader only recently learned to support C projects.
   if(${CMAKE_VERSION} VERSION_LESS 3.12)
@@ -199,7 +211,8 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   include(GenerateExportHeader)
   generate_export_header(${TARGET}
     BASE_NAME ${EXPORT_MACRO_UPPER}
-    EXPORT_FILE_NAME ${GENERATED_HEADERS_DIR}/${TARGET}/export.${HEADER_EXT}
+    EXPORT_FILE_NAME
+      ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}/export.${HEADER_EXT}
   )
 
   # Make sure we follow the popular naming convention for shared libraries on
@@ -207,14 +220,6 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   set_target_properties(${TARGET} PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
-  )
-
-  # Only use the headers from the repository when building. When installing we
-  # want to use the install location of the headers (e.g. /usr/include) as the
-  # include directory instead.
-  target_include_directories(${TARGET} PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${GENERATED_HEADERS_DIR}>
   )
 
   # Adapted from https://codingnest.com/basic-cmake-part-2/.
@@ -264,14 +269,14 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
 
     include(CMakePackageConfigHelpers)
     write_basic_package_version_file(
-      ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
+      ${CMAKE_CURRENT_BINARY_DIR}/${INSTALL_CMAKECONFIGDIR}/${TARGET}-config-version.cmake
       VERSION ${PROJECT_VERSION}
       COMPATIBILITY AnyNewerVersion
     )
 
     configure_package_config_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}-config.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/${INSTALL_CMAKECONFIGDIR}/${TARGET}-config.cmake
       INSTALL_DESTINATION
         ${INSTALL_PREFIX}/${INSTALL_CMAKECONFIGDIR}
     )
@@ -289,7 +294,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
 
     configure_file(
       ${TARGET}.pc.in
-      ${TARGET}.pc
+      ${INSTALL_PKGCONFIGDIR}/${TARGET}.pc
       @ONLY
     )
 

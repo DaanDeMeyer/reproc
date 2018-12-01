@@ -81,7 +81,7 @@ if(REPROC_TESTS)
   function(reproc_add_test_helper TARGET)
     add_executable(reproc-${TARGET} tests/resources/${TARGET}.cpp)
     cddm_add_common(reproc-${TARGET} CXX 11 tests/resources)
-    set_target_properties(reproc-tests PROPERTIES OUTPUT_NAME ${TARGET})
+    set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
 
     string(TOUPPER ${TARGET} TARGET_UPPER_CASE)
     # Pass paths as compile time parameters so tests can be run from any
