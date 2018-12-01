@@ -264,7 +264,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
     write_basic_package_version_file(
       ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
       VERSION ${PROJECT_VERSION}
-      COMPATIBILITY AnyNewerVersion
+      COMPATIBILITY SameMajorVersion
     )
 
     configure_package_config_file(
