@@ -99,7 +99,14 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       $<$<BOOL:${${PNU}_CI}>:/WX> # -Werror
       $<$<BOOL:${${PNU}_HAS_PERMISSIVE}>:/permissive->
     )
-    
+
+    if(NOT ${STANDARD} STREQUAL 90)
+      # MSVC reports non-constant initializers as a nonstandard extension but
+      # they've been standardized in C99 so we disable it if we're targeting at
+      # least C99.
+      target_compile_options(${TARGET} PRIVATE /wd4204)
+    endif()
+
     target_link_libraries(${TARGET} PRIVATE
       -nologo # Silence MSVC linker version output.
       # Disable incremental linking to silence warnings when rebuilding after
