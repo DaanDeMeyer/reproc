@@ -1,5 +1,3 @@
-/*! \file error.h */
-
 #ifndef REPROC_ERROR_H
 #define REPROC_ERROR_H
 
@@ -7,13 +5,13 @@
 
 /*!
 reproc's error enum. Contains all errors that may be returned by reproc's API.
-Because #REPROC_SUCCESS evaluates to zero it is possible to check for errors as
+Because `REPROC_SUCCESS` evaluates to zero it is possible to check for errors as
 follows:
 
-\code{.c}
+```c
 REPROC_ERROR error = reproc_read(...);
 if (error) { return error; } // Only executes if reproc_read returns an error.
-\endcode
+```
 */
 // When editing make sure to change the corresponding enum in error.hpp as well.
 typedef enum {
@@ -43,8 +41,7 @@ typedef enum {
   REPROC_INTERRUPTED = 6,
   /*! The parent process was not allowed to spawn any more child processes. */
   REPROC_PROCESS_LIMIT_REACHED = 7,
-  /*! One of the UTF-8 strings passed to #reproc_start did not contain valid
-  unicode. */
+  /*! An UTF-8 string did not contain valid unicode. */
   REPROC_INVALID_UNICODE = 8,
   /*! The parent process does not have permission to execute the program. */
   REPROC_PERMISSION_DENIED = 9,
@@ -62,7 +59,7 @@ typedef enum {
   REPROC_NOT_EXECUTABLE = 14,
   /*! Unlike POSIX, Windows does not include information about exactly which
   errors can occur in its documentation. If an error occurs that is not known
-  functions will return #REPROC_UNKNOWN_ERROR. */
+  functions will return `REPROC_UNKNOWN_ERROR`. */
   REPROC_UNKNOWN_ERROR = 15,
 } REPROC_ERROR;
 
@@ -84,12 +81,10 @@ communicated to the parent process which sets its own `errno` value to the
 `errno` value of the child process. This makes it possible to retrieve errors
 that happen after forking with this function (for example in `chdir` or
 `execve`).
-
-\return unsigned int The last system error code.
 */
 REPROC_EXPORT unsigned int reproc_system_error(void);
 
-/*! Returns a string representation of /p error. The returned string does not
+/*! Returns a string representation of `error`. The returned string does not
 have to be freed. */
 REPROC_EXPORT const char *reproc_error_to_string(REPROC_ERROR error);
 

@@ -1,5 +1,3 @@
-/*! \example background.cpp */
-
 #include <reproc++/reproc.hpp>
 
 #include <future>

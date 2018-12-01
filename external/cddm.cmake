@@ -7,7 +7,6 @@ get_directory_property(${PNU}_IS_SUBDIRECTORY PARENT_DIRECTORY)
 
 option(${PNU}_TESTS "Build tests.")
 option(${PNU}_EXAMPLES "Build examples.")
-option(${PNU}_DOCS "Build documentation.")
 
 # Don't add libraries to the install target by default if the project is built
 # from within another project as a static library.
@@ -301,34 +300,3 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
     )
   endif()
 endfunction()
-
-### Documentation ###
-
-if(${PNU}_DOCS)
-  find_package(Doxygen 1.8.3 REQUIRED)
-
-  if(NOT DOXYGEN_FOUND)
-    message(FATAL_ERROR "doxygen not found")
-  endif()
-
-  if(NOT EXISTS ${PROJECT_BINARY_DIR}/cppreference-doxygen-web.tag.xml)
-    # Download tag file to automatically generate links to cppreference from
-    # Doxygen.
-    file(
-      DOWNLOAD
-      http://upload.cppreference.com/mwiki/images/f/f8/cppreference-doxygen-web.tag.xml
-      ${PROJECT_BINARY_DIR}/cppreference-doxygen-web.tag.xml
-    )
-  endif()
-
-  configure_file(
-    ${PROJECT_SOURCE_DIR}/tools/doxygen/doxyfile.in
-    ${PROJECT_BINARY_DIR}/doxyfile
-  )
-
-  add_custom_target(
-    ${PNL}-docs ALL
-    COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doxyfile
-    COMMENT "Building docs"
-  )
-endif()

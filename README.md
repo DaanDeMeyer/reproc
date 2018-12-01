@@ -130,7 +130,6 @@ reproc's build can be configured using the following CMake options:
 - `REPROCXX`: Build reproc++ (default: `OFF`).
 - `REPROC_TESTS`: Build tests (default: `OFF`).
 - `REPROC_EXAMPLES`: Build examples (default: `OFF`).
-- `REPROC_DOCS`: Build docs (default: `OFF`).
 - `REPROC_INSTALL`: Add reproc to the install target (default: `ON` unless
   reproc is built as a static library using `add_subdirectory`).
 
@@ -143,15 +142,8 @@ post for more information on the different ways to link pthreads.
 
 ## Documentation
 
-API documentation and examples for the latest stable version can be found at
-<https://daandemeyer.github.io/reproc/>.
-
-The latest documentation can be built by enabling the cmake `REPROC_DOCS`
-option. This requires the latest version of
-[Doxygen](https://www.stack.nl/~dimitri/doxygen/) to be installed and available
-from the PATH. After building the generated documentation can be found in the
-`docs` subdirectory of the build directory. Open `docs/index.html` in your
-browser to view the documentation.
+Each function and class is documented extensively in its header file. Examples
+can be found in the examples subdirectory of reproc and reproc++.
 
 ## Error handling
 

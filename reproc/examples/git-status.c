@@ -1,5 +1,3 @@
-/*! \example git-status.c */
-
 #include <reproc/reproc.h>
 
 #include <stdbool.h>

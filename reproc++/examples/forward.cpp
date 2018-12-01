@@ -1,5 +1,3 @@
-/*! \example forward.cpp */
-
 #include <reproc++/reproc.hpp>
 #include <reproc++/sink.hpp>
 

@@ -1,5 +1,3 @@
-/*! \example cmake-help.cpp */
-
 #include <reproc++/reproc.hpp>
 #include <reproc++/sink.hpp>
 
