@@ -14,7 +14,7 @@ public:
 
   std::string message(int ev) const noexcept override
   {
-    return reproc_error_to_string(static_cast<REPROC_ERROR>(ev));
+    return reproc_strerror(static_cast<REPROC_ERROR>(ev));
   }
 
   bool equivalent(const std::error_code &error_code, int error_condition) const

@@ -1,6 +1,6 @@
 #include <reproc/reproc.h>
 
-const char *reproc_error_to_string(REPROC_ERROR error)
+const char *reproc_strerror(REPROC_ERROR error)
 {
   switch (error) {
   case REPROC_SUCCESS: return "success";

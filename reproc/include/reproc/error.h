@@ -84,9 +84,9 @@ that happen after forking with this function (for example in `chdir` or
 */
 REPROC_EXPORT unsigned int reproc_system_error(void);
 
-/*! Returns a string representation of `error`. The returned string does not
-have to be freed. */
-REPROC_EXPORT const char *reproc_error_to_string(REPROC_ERROR error);
+/*! Returns a string describing `error`. This string must not be modified by the
+caller. */
+REPROC_EXPORT const char *reproc_strerror(REPROC_ERROR error);
 
 #ifdef __cplusplus
 }

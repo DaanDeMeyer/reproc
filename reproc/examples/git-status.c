@@ -9,7 +9,7 @@
 
 int fail(REPROC_ERROR error)
 {
-  fprintf(stderr, "%s\n", reproc_error_to_string(error));
+  fprintf(stderr, "%s\n", reproc_strerror(error));
   return (int) error;
 }
 
