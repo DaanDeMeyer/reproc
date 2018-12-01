@@ -2,6 +2,15 @@
 
 ## 3.0.0
 
+### General
+
+- Removed support for Doxygen (and as a result `REPROC_DOCS`).
+
+All the Doxygen directives made the header docstrings were pretty hard to read
+directly. Doxygen's output also wasn't completely to my liking. I have an idea
+for a Doxygen alternative using libclang and cmark but I'm not sure when I'll be
+able to implement it.
+
 ### reproc
 
 - `reproc_terminate` and `reproc_kill` don't call `reproc_wait` internally
