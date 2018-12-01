@@ -1,8 +1,3 @@
-# Every variable is prefixed with REPROC and everything except for the C library
-# (reproc) is turned off by default to make reproc easy to use as a CMake
-# subproject with add_subdirectory. All targets are also prefixed with "reproc-"
-# to avoid name collisions.
-
 # Needed for target_sources.
 cmake_minimum_required(VERSION 3.1)
 

@@ -1,3 +1,8 @@
+# Every variable is prefixed with the name of the project and everything option
+# is turned off by default to make projects using cddm easy to use as a CMake
+# subproject with add_subdirectory. All targets are also prefixed with the name
+# of the project to avoid target name collisions.
+
 set(PNL ${PROJECT_NAME}) # PROJECT_NAME_LOWER (PNL)
 string(TOUPPER ${PROJECT_NAME} PNU) # PROJECT_NAME_UPPER (PNU)
 
