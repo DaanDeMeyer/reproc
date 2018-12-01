@@ -184,8 +184,6 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
     set(HEADER_EXT hpp)
   endif()
 
-  set(GENERATED_HEADERS_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/include)
-
   # CMake's GenerateExportHeader only recently learned to support C projects.
   if(${CMAKE_VERSION} VERSION_LESS 3.12)
     enable_language(CXX)
@@ -199,7 +197,8 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   include(GenerateExportHeader)
   generate_export_header(${TARGET}
     BASE_NAME ${EXPORT_MACRO_UPPER}
-    EXPORT_FILE_NAME ${GENERATED_HEADERS_DIR}/${TARGET}/export.${HEADER_EXT}
+    EXPORT_FILE_NAME
+      ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}/export.${HEADER_EXT}
   )
 
   # Make sure we follow the popular naming convention for shared libraries on
@@ -214,7 +213,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   # include directory instead.
   target_include_directories(${TARGET} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${GENERATED_HEADERS_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
   )
 
   # Adapted from https://codingnest.com/basic-cmake-part-2/.
@@ -253,12 +252,12 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
     )
 
     install(
-      DIRECTORY include/${TARGET}
+      DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/${TARGET}
       DESTINATION ${INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}
     )
 
     install(
-      DIRECTORY ${GENERATED_HEADERS_DIR}/${TARGET}
+      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}
       DESTINATION ${INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}
     )
 
