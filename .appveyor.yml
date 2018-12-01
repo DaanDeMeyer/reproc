@@ -54,7 +54,6 @@ before_build:
       -DREPROC_INSTALL=ON
       -DREPROC_CI=ON
       -DREPROC_TIDY=ON
-      -DREPROC_FORMAT=ON
 
 build_script: cmake --build .
 

@@ -12,7 +12,7 @@ notifications:
 matrix:
   fast_finish: true
 
-env: REPROC_TIDY=ON REPROC_FORMAT=ON
+env: REPROC_TIDY=ON
 
 matrix:
   fast_finish: true
@@ -55,7 +55,7 @@ matrix:
       env: CC=clang-7 CXX=clang++-7
 
     - os: osx
-      env: CC=clang CXX=clang++ REPROC_TIDY=OFF REPROC_FORMAT=OFF
+      env: CC=clang CXX=clang++ REPROC_TIDY=OFF
 
 script:
   - mkdir build
@@ -69,7 +69,6 @@ script:
       -DREPROC_INSTALL=ON
       -DREPROC_CI=ON
       -DREPROC_TIDY=$REPROC_TIDY
-      -DREPROC_FORMAT=$REPROC_FORMAT
       -DREPROC_SANITIZERS=ON
   - cmake --build . -- -j 2
   - cmake --build . --target reproc-run-tests

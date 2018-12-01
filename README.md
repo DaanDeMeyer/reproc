@@ -354,14 +354,10 @@ When making changes:
 - Format your changes with clang-format and run clang-tidy locally since it will
   run in CI as well.
 
-  If the `REPROC_FORMAT` CMake option is enabled, the reproc-format target is
-  added that formats all reproc source files with clang-format. reproc-format is
-  added to the `ALL` target so it will automatically run while building.
-
   If the `REPROC_TIDY` CMake option is enabled, CMake will run clang-tidy on all
   reproc source files while building.
 
-  If CMake can't find clang-format or clang-tidy you can tell it where to look:
+  If CMake can't find clang-tidy you can tell it where to look:
 
   `cmake -DCMAKE_PREFIX_PATH=<clang-install-location> ..`
 
