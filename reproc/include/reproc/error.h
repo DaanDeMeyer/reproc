@@ -79,8 +79,7 @@ reproc's API functions.
 On POSIX systems, if an error occurs after `fork` but before `exec` it is
 communicated to the parent process which sets its own `errno` value to the
 `errno` value of the child process. This makes it possible to retrieve errors
-that happen after forking with this function (for example in `chdir` or
-`execve`).
+that happen after forking with this function (for example in `chdir` or `exec`).
 */
 REPROC_EXPORT unsigned int reproc_system_error(void);
 

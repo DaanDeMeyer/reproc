@@ -28,7 +28,7 @@ REPROC_ERROR pipe_init(int *read, int *write)
     }
   }
 
-  // Assign file descriptors if pipe() call was succesfull.
+  // Assign file descriptors if `pipe` call was succesfull.
   *read = pipefd[0];
   *write = pipefd[1];
 
@@ -45,8 +45,7 @@ REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
 
   ssize_t error = read(pipe, buffer, size);
 
-  // read is different from write in that it returns 0 to indicate the other end
-  // of the pipe was closed instead of setting errno to EPIPE.
+  // `read` returns 0 to indicate the other end of the pipe was closed.
   if (error == 0) { return REPROC_STREAM_CLOSED; }
   if (error == -1) {
     switch (errno) {
@@ -55,9 +54,9 @@ REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
     }
   }
 
-  // If error is not -1 or 0 it represents the amount of bytes read.
-  // The cast is safe since size is an unsigned int and read will not read more
-  // bytes than the buffer size.
+  // If `error` is not -1 or 0 it represents the amount of bytes read.
+  // The cast is safe since `size` is an unsigned int and `read` will not read
+  // more `size` bytes.
   *bytes_read = (unsigned int) error;
 
   return REPROC_SUCCESS;
@@ -75,14 +74,16 @@ REPROC_ERROR pipe_write(int pipe, const void *buffer, unsigned int to_write,
 
   if (error == -1) {
     switch (errno) {
+    // `write` sets `errno` to `EPIPE` to indicate the other end of the pipe was
+    // closed.
     case EPIPE: return REPROC_STREAM_CLOSED;
     case EINTR: return REPROC_INTERRUPTED;
     default: return REPROC_UNKNOWN_ERROR;
     }
   }
 
-  // If error is not -1 it represents the amount of bytes written.
-  // The cast is safe since it's impossible to write more bytes than to_write
+  // If `error` is not -1 it represents the amount of bytes written.
+  // The cast is safe since it's impossible to write more bytes than `to_write`
   // which is an unsigned int.
   *bytes_written = (unsigned int) error;
 

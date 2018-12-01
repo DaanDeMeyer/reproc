@@ -149,7 +149,7 @@ public:
   void sink(const char *buffer, unsigned int size);
   ```
 
-  For examples of sinks, see sink.hpp
+  For examples of sinks, see `sink.hpp`
   */
   template <typename Sink>
   std::error_code drain(reproc::stream stream, Sink &&sink);

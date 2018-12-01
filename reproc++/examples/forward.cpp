@@ -11,17 +11,17 @@ int fail(std::error_code ec)
 }
 
 /*
-See cmake-help for a completely documented C++ example. We only thorougly
-document specifics in this example that are different from what's already been
-said in cmake-help.
+See the cmake-help example for a completely documented C++ example. We only
+thorougly document specifics in this example that are different from what's
+already been explained in cmake-help.
 
-Forwards the program arguments to a child process and prints its output on
-stdout.
+The forward example forwards the program arguments to a child process and prints
+its output on stdout.
 
 Example: "./forward cmake --help" will print CMake's help output.
 
 This program can be used to verify that manually executing a command and
-executing it with reproc give the same output.
+executing it using reproc give the same output.
 */
 int main(int argc, char *argv[])
 {
@@ -31,22 +31,22 @@ int main(int argc, char *argv[])
   }
 
   /*
-  The destructor calls process::stop with the parameters we pass in the
+  The destructor calls `process::stop` with the parameters we pass in the
   constructor which helps us make sure the process is always stopped correctly
   if unexpected errors happen.
 
   Any kind of process can be started with forward so we make sure the process
-  is cleaned up correctly by specifying reproc::terminate which sends SIGTERM
-  (POSIX) or CTRL-BREAK (Windows) and waits 5 seconds. We also add the
-  reproc::kill flag which sends SIGKILL (POSIX) or calls TerminateProcess
-  (Windows) if the process hasn't exited after 5 seconds and waits 2 more
-  seconds for the child process to exit.
+  is cleaned up correctly by specifying `reproc::terminate` which sends
+  `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) and waits five seconds. We also
+  add the `reproc::kill` flag which sends `SIGKILL` (POSIX) or calls
+  `TerminateProcess` (Windows) if the process hasn't exited after five seconds
+  and waits two more seconds for the child process to exit.
 
   Note that the timout values are maximum wait times. If the process exits
   earlier the destructor will return immediately.
 
   Also note that C++14 has chrono literals which allows
-  reproc::milliseconds(5000) to be replaced with 5000ms.
+  `reproc::milliseconds(5000)` to be replaced with `5000ms`.
   */
   reproc::process forward(reproc::terminate, reproc::milliseconds(5000),
                           reproc::kill, reproc::milliseconds(2000));
@@ -68,19 +68,19 @@ int main(int argc, char *argv[])
   we're waiting for output from the output stream or vice-versa we spawn two
   separate threads to read from both streams at the same time. */
 
-  // Pipe child process stdout output to std::cout of parent process.
+  // Pipe child process stdout output to stdout of the parent process.
   auto drain_stdout = std::async(std::launch::async, [&forward]() {
     return forward.drain(reproc::stream::out, reproc::ostream_sink(std::cout));
   });
 
-  // Pipe child process stderr output to std::cerr of parent process.
+  // Pipe child process stderr output to stderr of the parent process.
   auto drain_stderr = std::async(std::launch::async, [&forward]() {
     return forward.drain(reproc::stream::err, reproc::ostream_sink(std::cerr));
   });
 
-  /* Call stop ourselves to get the exit_status. We add reproc::wait with a
-  timeout of 10 seconds to give the process time to write its output before
-  sending SIGTERM. */
+  /* Call `process::stop` ourselves to get the exit status. We add
+  `reproc::wait` with a timeout of ten seconds to give the process time to write
+  its output before sending `SIGTERM`. */
   unsigned int exit_status = 0;
   ec = forward.stop(reproc::wait, reproc::milliseconds(10000),
                     reproc::terminate, reproc::milliseconds(5000), reproc::kill,

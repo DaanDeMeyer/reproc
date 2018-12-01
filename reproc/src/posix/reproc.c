@@ -10,14 +10,14 @@
 #include <string.h>
 #include <unistd.h>
 
-// Makeshift C lambda (receives its arguments from process_create).
-static int exec_process(const void *data)
+// Makeshift C lambda which is passed to `process_create`.
+static int exec_process(const void *context)
 {
-  const char *const *argv = data;
+  const char *const *argv = context;
 
-  // Replace the forked process with the process specified in argv's first
-  // element. The cast is safe since execvp doesn't actually change the contents
-  // of argv.
+  // Replace the forked process with the process specified in `argv`'s first
+  // element. The cast is safe since `execvp` doesn't actually change the
+  // contents of `argv`.
   if (execvp(argv[0], (char **) argv) == -1) { return errno; }
 
   return 0;
@@ -54,7 +54,7 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
     assert(argv[i]);
   }
 
-  // Predeclare every variable so we can use goto.
+  // Predeclare every variable so we can use `goto`.
 
   int child_stdin = 0;
   int child_stdout = 0;
@@ -75,21 +75,21 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
     .stdout_fd = child_stdout,
     .stderr_fd = child_stderr,
     // We put the child process in its own process group which is needed by
-    // wait_timeout in process.c (see wait_timeout for extra information).
+    // `wait_timeout` in `process.c` (see `wait_timeout` for extra information).
     .process_group = 0,
-    // Don't return early to make sure we receive errors reported by execve.
+    // Don't return early to make sure we receive errors reported by `exec`.
     .return_early = false,
     .vfork = true
   };
 
-  // Fork a child process and call exec.
+  // Fork a child process and call `exec`.
   error = process_create(exec_process, argv, &options, &process->id);
   if (error == REPROC_UNKNOWN_ERROR) { error = exec_map_error(errno); }
 
 cleanup:
-  // An error has ocurred or the child pipe endpoints have been copied to the
-  // stdin/stdout/stderr streams of the child process. Either way they can be
-  // safely closed in the parent process.
+  // Eithera n error has ocurred or the child pipe endpoints have been copied to
+  // the stdin/stdout/stderr streams of the child process. Either way they can
+  // be safely closed in the parent process.
   fd_close(&child_stdin);
   fd_close(&child_stdout);
   fd_close(&child_stderr);

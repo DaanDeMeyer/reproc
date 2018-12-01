@@ -23,7 +23,7 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
     assert(argv[i]);
   }
 
-  // Predeclare every variable so we can use goto.
+  // Predeclare every variable so we can use `goto`.
 
   HANDLE child_stdin = NULL;
   HANDLE child_stdout = NULL;
@@ -36,10 +36,9 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
   REPROC_ERROR error = REPROC_SUCCESS;
 
   // While we already make sure the child process only inherits the child pipe
-  // handles using STARTUPINFOEXW (see process_utils.c) we still disable
-  // inheritance of the parent pipe handles to lower the chance of other
-  // CreateProcess calls (outside of this library) unintentionally inheriting
-  // these handles.
+  // handles using `STARTUPINFOEXW` (see `process_utils.c`) we still disable
+  // inheritance of the parent pipe handles to lower the chance of child
+  // processes not created by reproc unintentionally inheriting these handles.
   error = pipe_init(&child_stdin, true, &process->in, false);
   if (error) { goto cleanup; }
   error = pipe_init(&process->out, false, &child_stdout, true);
@@ -47,16 +46,17 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
   error = pipe_init(&process->err, false, &child_stderr, true);
   if (error) { goto cleanup; }
 
-  // Join argv to a whitespace delimited string as required by CreateProcess.
+  // Join `argv` to a whitespace delimited string as required by
+  // `CreateProcessW`.
   error = string_join(argv, argc, &command_line_string);
   if (error) { goto cleanup; }
 
-  // Convert UTF-8 to UTF-16 as required by CreateProcessW.
+  // Convert UTF-8 to UTF-16 as required by `CreateProcessW`.
   error = string_to_wstring(command_line_string, &command_line_wstring);
   free(command_line_string); // Not needed anymore
   if (error) { goto cleanup; }
 
-  // Do the same for the working directory string if one was provided.
+  // Do the same for `working_directory` if it isn't `NULL`.
   error = working_directory
               ? string_to_wstring(working_directory, &working_directory_wstring)
               : REPROC_SUCCESS;
@@ -73,8 +73,9 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
                          &process->handle);
 
 cleanup:
-  // The child process pipe endpoint handles are copied to the child process. We
-  // don't need them anymore in the parent process so we close them.
+   // Eithera n error has ocurred or the child pipe endpoints have been copied to
+  // the stdin/stdout/stderr streams of the child process. Either way they can
+  // be safely closed in the parent process.
   handle_close(&child_stdin);
   handle_close(&child_stdout);
   handle_close(&child_stderr);

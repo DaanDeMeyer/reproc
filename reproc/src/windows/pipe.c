@@ -35,11 +35,15 @@ REPROC_ERROR pipe_init(HANDLE *read, bool inherit_read, HANDLE *write,
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
-  if (!inherit_read) { pipe_disable_inherit(*read); }
-  if (error) { goto cleanup; }
+  if (!inherit_read) {
+    error = pipe_disable_inherit(*read);
+    if (error) { goto cleanup; }
+  }
 
-  if (!inherit_write) { pipe_disable_inherit(*write); }
-  if (error) { goto cleanup; }
+  if (!inherit_write) {
+    error = pipe_disable_inherit(*write);
+    if (error) { goto cleanup; }
+  }
 
 cleanup:
   if (error) {
@@ -57,8 +61,7 @@ REPROC_ERROR pipe_read(HANDLE pipe, void *buffer, unsigned int size,
   assert(buffer);
   assert(bytes_read);
 
-  // The cast is safe since DWORD == unsigned int on Windows.
-  // ReadFile always sets bytes_read to 0 so we don't do it ourselves.
+  // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
   if (!ReadFile(pipe, buffer, size, (LPDWORD) bytes_read, NULL)) {
     switch (GetLastError()) {
     case ERROR_OPERATION_ABORTED: return REPROC_INTERRUPTED;
@@ -77,8 +80,7 @@ REPROC_ERROR pipe_write(HANDLE pipe, const void *buffer, unsigned int to_write,
   assert(buffer);
   assert(bytes_written);
 
-  // The cast is safe since DWORD == unsigned int on Windows.
-  // WriteFile always sets bytes_written to 0 so we don't do it ourselves.
+  // The cast is safe since`DWORD` is a typedef to `unsigned int` on Windows.
   if (!WriteFile(pipe, buffer, to_write, (LPDWORD) bytes_written, NULL)) {
     switch (GetLastError()) {
     case ERROR_OPERATION_ABORTED: return REPROC_INTERRUPTED;

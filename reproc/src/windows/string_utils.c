@@ -16,7 +16,7 @@ REPROC_ERROR string_join(const char *const *string_array, int array_length,
     assert(string_array[i]);
   }
 
-  // Determine length of the resulting string first.
+  // Determine the length of the concatenated string first.
   size_t string_length = 1; // Count the null terminator.
   for (int i = 0; i < array_length; i++) {
     string_length += strlen(string_array[i]);
@@ -26,7 +26,7 @@ REPROC_ERROR string_join(const char *const *string_array, int array_length,
   char *string = malloc(sizeof(char) * string_length);
   if (string == NULL) { return REPROC_NOT_ENOUGH_MEMORY; }
 
-  char *current = string; // Keeps track of where we are in the result string.
+  char *current = string; // Keeps track of where we are in the result.
   for (int i = 0; i < array_length; i++) {
     size_t part_length = strlen(string_array[i]);
     // NOLINTNEXTLINE(clang-analyzer-security.insecureAPI.strcpy)
@@ -52,8 +52,8 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
   assert(string);
   assert(result);
 
-  // Determine wstring length (MultiByteToWideChar returns the required size if
-  // its last two arguments are NULL and 0).
+  // Determine wstring length (`MultiByteToWideChar` returns the required size
+  // if its last two arguments are `NULL` and 0).
   unsigned int wstring_length = (unsigned int)
       MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string, -1, NULL, 0);
 
@@ -67,8 +67,8 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
   wchar_t *wstring = malloc(sizeof(wchar_t) * wstring_length);
   if (!wstring) { return REPROC_NOT_ENOUGH_MEMORY; }
 
-  // Now that we pass our allocated string and its length as the last two
-  // arguments instead of NULL and 0 MultiByteToWideChar will actually perform
+  // Now we pass our allocated string and its length as the last two arguments
+  // instead of `NULL` and 0 which makes `MultiByteToWideChar` actually perform
   // the conversion.
   int written = MultiByteToWideChar(CP_UTF8, 0, string, -1, wstring,
                                     wstring_length);

@@ -10,8 +10,8 @@ int fail(std::error_code ec)
   return 1;
 }
 
-// Expands upon reproc++'s string sink by locking the given mutex before
-// appending new output to the given string.
+// Expands upon `reproc::string_sink` by locking `mutex` before appending new
+// output to `out`.
 class thread_safe_string_sink
 {
 public:
@@ -36,8 +36,8 @@ The background example reads the output of a child process in a background
 thread and shows how to access the current output in the main thread while the
 background thread is still running.
 
-Like the forward example it forwards the program arguments to a child process
-and prints its output on stdout.
+Like the forward example it forwards its arguments to a child process and prints
+the child process output on stdout.
 */
 int main(int argc, char *argv[])
 {
@@ -59,8 +59,8 @@ int main(int argc, char *argv[])
 
   if (ec) { return fail(ec); }
 
-  /* We need a lock along with the output string to prevent the main thread and
-  background thread from modifying the string at the same time (std::string
+  /* We need a mutex along with `output` to prevent the main thread and
+  background thread from modifying `output` at the same time (`std::string`
   is not thread safe). */
   std::string output;
   std::mutex mutex;
@@ -76,11 +76,11 @@ int main(int argc, char *argv[])
          std::future_status::ready) {
     std::lock_guard<std::mutex> lock(mutex);
     std::cout << output;
-    // Clear output that's already been flushed to std::cout.
+    // Clear output that's already been flushed to `std::cout`.
     output.clear();
   }
 
-  // Flush the remaining output of the child process.
+  // Flush any remaining output of `background`.
   std::cout << output;
 
   // Check if any errors occurred in the background thread.
@@ -88,9 +88,9 @@ int main(int argc, char *argv[])
   if (ec) { return fail(ec); }
 
   /* Only the background thread has stopped by this point. We can't be certain
-  the child process has stopped as well. Because we can't be sure what process
+  that `background` has stopped as well. Since we can't be sure what process
   we're running (the child process to run is determined by the user) we send a
-  SIGTERM signal and SIGKILL if necessary (or the Windows equivalents). */
+  `SIGTERM` signal and `SIGKILL` if necessary (or the Windows equivalents). */
   unsigned int exit_status;
   ec = background.stop(reproc::terminate, reproc::milliseconds(5000),
                        reproc::kill, reproc::milliseconds(2000), &exit_status);

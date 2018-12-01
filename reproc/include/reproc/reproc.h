@@ -89,7 +89,7 @@ Possible errors:
 - `REPROC_PERMISSION_DENIED`
 - `REPROC_SYMLINK_LOOP`
 - `REPROC_FILE_NOT_FOUND`
-
+- `REPROC_INTERRUPTED`
 */
 REPROC_EXPORT REPROC_ERROR reproc_start(reproc_type *process, int argc,
                                         const char *const *argv,

@@ -267,10 +267,10 @@ to work with reproc from multiple threads.
 ### POSIX
 
 On POSIX systems, by default file descriptors are inherited by child processes
-when calling `execve`. To prevent unintended leaking of file descriptors to
-child processes, POSIX provides a function `fcntl` which can be used to set the
+when calling `exec`. To prevent unintended leaking of file descriptors to child
+processes, POSIX provides a function `fcntl` which can be used to set the
 `FD_CLOEXEC` flag on file descriptors which instructs the underlying system to
-close them when `execve` (or one of its variants) is called. However, using
+close them when `exec` (or one of its variants) is called. However, using
 `fcntl` introduces a race condition since any process created in another thread
 after a file descriptor is created (for example using `pipe`) but before `fcntl`
 is called to set `FD_CLOEXEC` on the file descriptor will still inherit that
@@ -278,7 +278,7 @@ file descriptor.
 
 To get around this race condition reproc uses the `pipe2` function (when it is
 available) which takes the `O_CLOEXEC` flag as an argument. This ensures the
-file descriptors of the created pipe are closed when `execve` is called. Similar
+file descriptors of the created pipe are closed when `exec` is called. Similar
 system calls that take the `O_CLOEXEC` flag exist for other system calls that
 create file descriptors. If `pipe2` is not available (for example on Darwin)
 reproc falls back to calling `fcntl` to set `FD_CLOEXEC` immediately after

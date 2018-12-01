@@ -14,7 +14,7 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
   assert(amount >= 0);
   assert(result);
 
-  // Get the required size for the attribute list.
+  // Get the required size for `attribute_list`.
   SIZE_T attribute_list_size = 0;
   if (!InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size) &&
       GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
@@ -30,7 +30,7 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
     return REPROC_UNKNOWN_ERROR;
   }
 
-  // Add the handles to be inherited to the attribute list.
+  // Add the handles to be inherited to `attribute_list`.
   if (!UpdateProcThreadAttribute(attribute_list, 0,
                                  PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,
                                  amount * sizeof(HANDLE), NULL, NULL)) {
@@ -54,7 +54,7 @@ REPROC_ERROR process_create(wchar_t *command_line,
   assert(handle);
 
   // Create each child process in a new process group so we don't send
-  // CTRL-BREAK signals to more than one child process in process_terminate.
+  // `CTRL-BREAK` signals to more than one child process in `process_terminate`.
   DWORD creation_flags = CREATE_NEW_PROCESS_GROUP;
 
 #if defined(HAVE_ATTRIBUTE_LIST)
@@ -97,7 +97,7 @@ REPROC_ERROR process_create(wchar_t *command_line,
 
   // Make sure the console window of the child process isn't visible. See
   // https://github.com/DaanDeMeyer/reproc/issues/6 and
-  // https://github.com/DaanDeMeyer/reproc/pull/7.
+  // https://github.com/DaanDeMeyer/reproc/pull/7 for more information.
   startup_info_address->dwFlags |= STARTF_USESHOWWINDOW;
   startup_info_address->wShowWindow = SW_HIDE;
 
@@ -105,7 +105,7 @@ REPROC_ERROR process_create(wchar_t *command_line,
 
   // Child processes inherit the error mode of their parents. To avoid child
   // processes creating error dialogs we set our error mode to not create error
-  // dialogs temporarily.
+  // dialogs temporarily which is inherited by the child process.
   DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
 
   BOOL result = CreateProcessW(NULL, command_line, NULL, NULL, TRUE,
@@ -145,7 +145,7 @@ REPROC_ERROR process_wait(HANDLE process, unsigned int timeout,
 
   if (exit_status == NULL) { return REPROC_SUCCESS; }
 
-  // DWORD == unsigned int so the cast is safe.
+  // `DWORD` is a typedef to `unsigned int` on Windows so the cast is safe.
   if (!GetExitCodeProcess(process, (LPDWORD) exit_status)) {
     return REPROC_UNKNOWN_ERROR;
   }
@@ -157,10 +157,9 @@ REPROC_ERROR process_terminate(HANDLE process, unsigned long pid)
 {
   assert(process);
 
-  // GenerateConsoleCtrlEvent can only be called on a process group. To call
-  // GenerateConsoleCtrlEvent on a single child process it has to be put in its
-  // own process group (which is exactly what we did when starting the child
-  // process).
+  // `GenerateConsoleCtrlEvent` can only be called on a process group. To call
+  // `GenerateConsoleCtrlEvent` on a single child process it has to be put in
+  // its own process group (which we did when starting the child process).
   if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pid)) {
     return REPROC_UNKNOWN_ERROR;
   }
@@ -173,7 +172,7 @@ REPROC_ERROR process_kill(HANDLE process)
   assert(process);
 
   // We use 137 as the exit status because it is the same exit status as a
-  // process that is stopped with the SIGKILL signal on POSIX systems.
+  // process that is stopped with the `SIGKILL` signal on POSIX systems.
   if (!TerminateProcess(process, 137)) { return REPROC_UNKNOWN_ERROR; }
 
   return REPROC_SUCCESS;

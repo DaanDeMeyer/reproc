@@ -25,18 +25,18 @@ public:
     case reproc::errc::wait_timeout:
     case reproc::errc::stream_closed:
     case reproc::errc::partial_write:
-      // This check comes down to checking if the value from REPROC_ERROR
-      // matches the value from the reproc::errc value it is checked against.
+      // This check comes down to checking if the value from `REPROC_ERROR`
+      // matches the value from the `reproc::errc` value it is checked against.
       // To avoid conflicting with other error codes we also require the error
       // code to be in the reproc error category. Look at
-      // reproc_error_to_error_code in reproc.cpp to see how the reproc specific
-      // error codes are constructed.
+      // `reproc_error_to_error_code` in `reproc.cpp` to see how the reproc
+      // specific error codes are constructed.
       return error_code ==
              std::error_code(error_condition, reproc::error_category());
 
     // The rest of the reproc errors are all system errors so we can just check
-    // against the standard error conditions from std which do all the work for
-    // us.
+    // against the standard error conditions from `std::errc` which do all the
+    // work for us.
     case reproc::errc::not_enough_memory:
       return error_code == std::errc::not_enough_memory;
     case reproc::errc::pipe_limit_reached:
@@ -48,11 +48,11 @@ public:
              error_code == std::errc::too_many_files_open;
     case reproc::errc::invalid_unicode:
 #ifdef _WIN32
-      // ERROR_NO_UNICODE_TRANSLATION == 1113 (Windows).
+      // `ERROR_NO_UNICODE_TRANSLATION` == 1113 (Windows).
       return error_code == std::error_code(1113, std::system_category());
 #else
-      // REPROC_INVALID_UNICODE is Windows specific so it can't happen on POSIX
-      // systems.
+      // `REPROC_INVALID_UNICODE` is Windows specific so it can't happen on
+      // POSIX systems.
       return false;
 #endif
     case reproc::errc::permission_denied:

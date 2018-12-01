@@ -6,16 +6,16 @@ void handle_close(HANDLE *handle)
 {
   assert(handle);
 
-  // Do nothing on NULL handle so callers don't have to check each time if a
-  // handle has been closed already.
+  // Do nothing if `handle` is `NULL` so callers don't have to check if `handle`
+  // has already been closed.
   if (!*handle) { return; }
 
-  // Avoid handle close errors overriding other system errors.
+  // Avoid `CloseHandle` errors overriding other system errors.
   unsigned int last_error = GetLastError();
   CloseHandle(*handle);
   SetLastError(last_error);
 
-  // CloseHandle should not be repeated on error so always set handle to NULL
-  // after calling CloseHandle.
+  // `CloseHandle` should not be repeated if an error occurs so we always set
+  // `handle` to `NULL`.
   *handle = NULL;
 }
