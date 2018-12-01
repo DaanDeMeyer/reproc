@@ -96,7 +96,6 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
 
     target_compile_options(${TARGET} PRIVATE
       /nologo # Silence MSVC compiler version output.
-      /EHsc
       $<$<BOOL:${${PNU}_CI}>:/WX> # -Werror
       $<$<BOOL:${${PNU}_HAS_PERMISSIVE}>:/permissive->
     )
