@@ -1,7 +1,7 @@
 prefix=@REPROC_INSTALL_PREFIX@
 exec_prefix=${prefix}
 includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
-libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
 
 Name: reproc++
 Description: "Cross-platform C++11 library that simplifies working with external CLI applications from C++"
