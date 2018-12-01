@@ -82,13 +82,13 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       # them from taking their default values if their corresponding language is
       # enabled after calling cddm_add_library.
       if(CMAKE_C_FLAGS)
-        string(REGEX REPLACE /W[0-4] "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")
+        string(REGEX REPLACE /W[0-4] "/W4" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "" FORCE)
       endif()
 
       if(CMAKE_CXX_FLAGS)
-        string(REGEX REPLACE /W[0-4] "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+        string(REGEX REPLACE /W[0-4] "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "" FORCE)
       endif()
     endif()
 
