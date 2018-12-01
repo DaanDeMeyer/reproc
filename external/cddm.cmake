@@ -147,26 +147,6 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   )
 endfunction()
 
-# CMake by default sets CMAKE_INSTALL_PREFIX to
-# "C:\Program Files (x86)\${PROJECT_NAME}" on Windows which blocks us from using
-# find_package to find specific libraries because of find_package's search
-# rules. To get around this we remove ${PROJECT_NAME} from CMAKE_INSTALL_PREFIX
-# if it hasn't been explicitly set by the user.
-if(NOT ${PNU}_SUBDIRECTORY AND WIN32 AND ${PNU}_INSTALL)
-  # Needed for CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT.
-  cmake_minimum_required(VERSION 3.7)
-
-  # Note: CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT is only true on CMake's
-  # first run without a custom CMAKE_INSTALL_PREFIX.
-  if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    get_filename_component(${PNU}_CMAKE_INSTALL_PREFIX_WITHOUT_PROJECT_NAME
-                          ${CMAKE_INSTALL_PREFIX} PATH)
-    set(CMAKE_INSTALL_PREFIX
-        ${${PNU}_CMAKE_INSTALL_PREFIX_WITHOUT_PROJECT_NAME}
-        CACHE PATH "" FORCE)
-  endif()
-endif()
-
 # Adds a new library and encapsulates common configuration for it.
 function(cddm_add_library TARGET LANGUAGE STANDARD)
   add_library(${TARGET} "")
@@ -225,48 +205,45 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   # Each library is installed separately (with separate config files).
 
   if(${PNU}_INSTALL)
-    # Add ${TARGET} to install prefix on Windows because CMake searches for
-    # <prefix>/<name>/... on Windows instead of <prefix>/....
-    if(WIN32)
-      set(INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}/${TARGET})
-    else()
-      set(INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-    endif()
-
     include(GNUInstallDirs)
 
-    target_include_directories(${TARGET} PUBLIC
-      $<INSTALL_INTERFACE:${INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}>
+    # Headers
+
+    install(
+      DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/${TARGET}
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
 
-    set(INSTALL_CMAKECONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET})
+    install(
+      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+
+    target_include_directories(${TARGET} PUBLIC
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
+
+    # Libraries
 
     install(
       TARGETS ${TARGET}
       EXPORT ${TARGET}-targets
-      RUNTIME DESTINATION ${INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
-      LIBRARY DESTINATION ${INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
-      ARCHIVE DESTINATION ${INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
 
     install(
       EXPORT ${TARGET}-targets
       FILE ${TARGET}-targets.cmake
       NAMESPACE ${PROJECT_NAME}::
-      DESTINATION ${INSTALL_PREFIX}/${INSTALL_CMAKECONFIGDIR}
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET}
     )
 
-    install(
-      DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/${TARGET}
-      DESTINATION ${INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}
-    )
-
-    install(
-      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}
-      DESTINATION ${INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}
-    )
+    # CMake config
 
     include(CMakePackageConfigHelpers)
+
     write_basic_package_version_file(
       ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
       VERSION ${PROJECT_VERSION}
@@ -277,29 +254,30 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
         ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}-config.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
       INSTALL_DESTINATION
-        ${INSTALL_PREFIX}/${INSTALL_CMAKECONFIGDIR}
+        ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET}
     )
 
     install(
       FILES
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
-      DESTINATION ${INSTALL_PREFIX}/${INSTALL_CMAKECONFIGDIR}
+      DESTINATION
+        ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET}
     )
 
-    ### pkg-config ###
+    # pkg-config
 
-    set(INSTALL_PKGCONFIGDIR ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+    set(INSTALL_PKGCONFIGDIR )
 
     configure_file(
-      ${TARGET}.pc.in
-      ${TARGET}.pc
+      ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}.pc.in
+      ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc
       @ONLY
     )
 
     install(
       FILES ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc
-      DESTINATION ${INSTALL_PREFIX}/${INSTALL_PKGCONFIGDIR}
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     )
   endif()
 endfunction()

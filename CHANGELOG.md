@@ -21,6 +21,16 @@ other than letters and underscores for variable names. However, `REPROC++` turns
 out to work without any problems so we use it since it's the expected name for
 an option to build reproc++.
 
+- Stopped modifying the default `CMAKE_INSTALL_PREFIX` on Windows.
+
+In 2.0.0, when installing to the default `CMAKE_INSTALL_PREFIX`, you would end
+up with `C:\Program Files (x86)\reproc` and `C:\Program Files (x86)\reproc++`
+when installing reproc. In 3.0.0, the default `CMAKE_INSTALL_PREFIX` isn't
+modified anymore and all libraries are installed to `CMAKE_INSTALL_PREFIX` in
+exactly the same way as they are on UNIX systems (include and lib subdirectories
+directly beneath the installation directory). Sticking to the defaults makes it
+easy to include reproc in various package managers such as vcpkg.
+
 ### reproc
 
 - `reproc_terminate` and `reproc_kill` don't call `reproc_wait` internally
