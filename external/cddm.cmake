@@ -121,22 +121,32 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       -Wsign-conversion
       $<$<BOOL:${${PNU}_CI}>:-Werror>
     )
+  endif()
 
-    if(${PNU}_SANITIZERS)
-      target_compile_options(${TARGET} PRIVATE
-        -fsanitize=address,undefined
-      )
-      target_link_libraries(${TARGET} PRIVATE
-        -fsanitize=address,undefined
-        # GCC sanitizers only work when using the gold linker.
-        $<$<C_COMPILER_ID:GNU>:-fuse-ld=gold>
-      )
+  if(${PNU}_SANITIZERS)
+    if(MSVC)
+      message(FATAL_ERROR "Building with sanitizers is not supported when \
+      using the Visual C++ toolchain.")
     endif()
+
+    if(NOT ${CMAKE_${LANGUAGE}_COMPILER_ID} MATCHES GNU|Clang)
+      message(FATAL_ERROR "Building with sanitizers is not supported when \
+      using the ${CMAKE_${LANGUAGE}_COMPILER_ID} compiler.")
+    endif()
+
+    target_compile_options(${TARGET} PRIVATE
+      -fsanitize=address,undefined
+    )
+    target_link_libraries(${TARGET} PRIVATE
+      -fsanitize=address,undefined
+      # GCC sanitizers only work when using the gold linker.
+      $<$<${LANGUAGE}_COMPILER_ID:GNU>:-fuse-ld=gold>
+    )
   endif()
 
   target_compile_options(${TARGET} PRIVATE
-    $<$<CXX_COMPILER_ID:GNU>:-fdiagnostics-color>
-    $<$<CXX_COMPILER_ID:Clang>:-fcolor-diagnostics>
+    $<$<${LANGUAGE}_COMPILER_ID:GNU>:-fdiagnostics-color>
+    $<$<${LANGUAGE}_COMPILER_ID:Clang>:-fcolor-diagnostics>
   )
 endfunction()
 
