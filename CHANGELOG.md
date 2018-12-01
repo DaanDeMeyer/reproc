@@ -13,11 +13,12 @@ able to implement it.
 
 ### CMake
 
-- Rename `REPROCXX` option to `REPROC++`.
+- Renamed `REPROCXX` option to `REPROC++`.
 
 `REPROCXX` was initially chosen because CMake didn't recommend using anything
-other than letters and underscores for variable names. However, `REPROC++` works
-so we use it since it's the expected name for an option to build reproc++.
+other than letters and underscores for variable names. However, `REPROC++` turns
+out to work without any problems so we use it since it's the expected name for
+an option to build reproc++.
 
 ### reproc
 
