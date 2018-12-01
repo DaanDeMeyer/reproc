@@ -153,10 +153,8 @@ REPROC_ERROR process_wait(HANDLE process, unsigned int timeout,
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR process_terminate(HANDLE process, unsigned long pid)
+REPROC_ERROR process_terminate(unsigned long pid)
 {
-  assert(process);
-
   // `GenerateConsoleCtrlEvent` can only be called on a process group. To call
   // `GenerateConsoleCtrlEvent` on a single child process it has to be put in
   // its own process group (which we did when starting the child process).

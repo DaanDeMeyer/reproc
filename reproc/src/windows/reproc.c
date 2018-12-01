@@ -143,7 +143,7 @@ REPROC_ERROR reproc_terminate(reproc_type *process)
 {
   assert(process);
 
-  return process_terminate(process->handle, process->id);
+  return process_terminate(process->id);
 }
 
 REPROC_ERROR reproc_kill(reproc_type *process)
