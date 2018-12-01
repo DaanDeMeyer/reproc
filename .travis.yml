@@ -72,6 +72,6 @@ script:
       -DREPROC_SANITIZERS=ON
   - cmake --build . -- -j 2
   - cmake --build . --target reproc-run-tests
-  # Make sure examples don't crash or return a non-zero exit code.
+  # Make sure the examples don't crash or return a non-zero exit code.
   - ./reproc/examples/git-status > /dev/null
   - ./reproc++/examples/cmake-help > /dev/null
