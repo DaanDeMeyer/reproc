@@ -6,10 +6,11 @@
 
 - Removed support for Doxygen (and as a result `REPROC_DOCS`).
 
-All the Doxygen directives made the header docstrings were pretty hard to read
-directly. Doxygen's output also wasn't completely to my liking. I have an idea
-for a Doxygen alternative using libclang and cmark but I'm not sure when I'll be
-able to implement it.
+All the Doxygen directives made the header docstrings rather hard to read
+directly. Doxygen's output was also too complicated for a simple library such as
+reproc. Finally, Doxygen doesn't really provide any intuitive support for
+documenting a set of libraries. I have an idea for a Doxygen alternative using
+libclang and cmark but I'm not sure when I'll be able to implement it.
 
 ### CMake
 
