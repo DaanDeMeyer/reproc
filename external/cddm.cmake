@@ -74,11 +74,16 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
     # add_subdirectory since it would add /W4 to every target. To solve this, we
     # only add /W4 when the project is not included with add_subdirectory.
     if(NOT ${PNU}_IS_SUBDIRECTORY)
-      string(REGEX REPLACE /W[0-3] "" CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS}")
+      string(REGEX REPLACE
+        /W[0-3] ""
+        CMAKE_${LANGUAGE}_FLAGS
+        "${CMAKE_${LANGUAGE}_FLAGS}"
+      )
 
       string(FIND ${CMAKE_${LANGUAGE}_FLAGS} "/W4" HAS_W4)
       if(NOT HAS_W4)
-        set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} /W4" CACHE STRING "" FORCE)
+        set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} /W4"
+            CACHE STRING "" FORCE)
       endif()
     endif()
 
