@@ -11,6 +11,14 @@ directly. Doxygen's output also wasn't completely to my liking. I have an idea
 for a Doxygen alternative using libclang and cmark but I'm not sure when I'll be
 able to implement it.
 
+### CMake
+
+- Rename `REPROCXX` option to `REPROC++`.
+
+`REPROCXX` was initially chosen because CMake didn't recommend using anything
+other than letters and underscores for variable names. However, `REPROC++` works
+so we use it since it's the expected name for an option to build reproc++.
+
 ### reproc
 
 - `reproc_terminate` and `reproc_kill` don't call `reproc_wait` internally

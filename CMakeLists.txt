@@ -17,11 +17,11 @@ project(reproc VERSION 2.0.0 LANGUAGES C)
 
 include(${PROJECT_SOURCE_DIR}/external/cddm.cmake)
 
-option(REPROCXX "Build reproc++.")
+option(REPROC++ "Build reproc++.")
 
 add_subdirectory(reproc)
 
-if(REPROCXX)
+if(REPROC++)
   enable_language(CXX)
   add_subdirectory(reproc++)
 endif()

@@ -48,7 +48,7 @@ before_build:
       -G Ninja
       -DCMAKE_BUILD_TYPE=Debug
       -DBUILD_SHARED_LIBS=ON
-      -DREPROCXX=ON
+      -DREPROC++=ON
       -DREPROC_TESTS=ON
       -DREPROC_EXAMPLES=ON
       -DREPROC_INSTALL=ON

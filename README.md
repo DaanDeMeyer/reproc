@@ -85,7 +85,7 @@ add_subdirectory(<path-to-reproc>)
 Options can be specified before calling `add_subdirectory`:
 
 ```cmake
-set(REPROCXX ON CACHE BOOL "" FORCE)
+set(REPROC++ ON CACHE BOOL "" FORCE)
 add_subdirectory(external/reproc)
 ```
 
@@ -127,7 +127,7 @@ should be picked up by your build system automatically.
 
 reproc's build can be configured using the following CMake options:
 
-- `REPROCXX`: Build reproc++ (default: `OFF`).
+- `REPROC++`: Build reproc++ (default: `OFF`).
 - `REPROC_TESTS`: Build tests (default: `OFF`).
 - `REPROC_EXAMPLES`: Build examples (default: `OFF`).
 - `REPROC_INSTALL`: Add reproc to the install target (default: `ON` unless
@@ -348,7 +348,7 @@ When making changes:
   options:
 
   ```sh
-  cmake -DREPROCXX=ON -DREPROC_TESTS=ON -DREPROC_EXAMPLES=ON ..
+  cmake -DREPROC++=ON -DREPROC_TESTS=ON -DREPROC_EXAMPLES=ON ..
   ```
 
 - Format your changes with clang-format and run clang-tidy locally since it will
