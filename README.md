@@ -120,7 +120,7 @@ target_link_libraries(myapp reproc::reproc++) # Link against reproc++.
 ## Dependencies
 
 reproc has a single dependency on pthreads on POSIX systems. However, the
-dependency is included both in reproc's CMake config and pkg-config files so it
+dependency is included in both reproc's CMake config and pkg-config files so it
 should be picked up by your build system automatically.
 
 ## CMake options
