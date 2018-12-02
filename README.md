@@ -133,12 +133,9 @@ reproc's build can be configured using the following CMake options:
 - `REPROC_INSTALL`: Add reproc to the install target (default: `ON` unless
   reproc is built as a static library using `add_subdirectory`).
 
-The `THREADS_PREFER_PTHREAD_FLAG` option influences how pthreads are linked to
-reproc. It is disabled by default but CMake recommends to enable it. reproc
-doesn't change it itself because it is a global option and changing it might
-impact the build outside of reproc's CMakeLists.txt. See
-[this](https://stackoverflow.com/questions/23250863/difference-between-pthread-and-lpthread-while-compiling)
-post for more information on the different ways to link pthreads.
+The `THREADS_PREFER_PTHREAD_FLAG` variable influences how CMake finds pthreads.
+if it is not defined, reproc's build enables it before calling
+`find_package(Threads)`.
 
 ## Documentation
 
