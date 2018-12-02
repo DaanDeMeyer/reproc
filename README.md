@@ -35,7 +35,7 @@ applications.
 reproc consists out of two libraries: reproc and reproc++. reproc is a C library
 that contains all the actual code for interacting with child processes. reproc++
 depends on reproc and adapts its API to an idiomatic C++ API. It also adds a few
-extra's that make working with child processes from C++ easier.
+extras that make working with child processes from C++ easier.
 
 ## Features
 
