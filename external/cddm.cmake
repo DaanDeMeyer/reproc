@@ -83,8 +83,8 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
         "${CMAKE_${LANGUAGE}_FLAGS}"
       )
 
-      string(FIND ${CMAKE_${LANGUAGE}_FLAGS} "/W4" HAS_W4)
-      if(NOT HAS_W4)
+      string(FIND ${CMAKE_${LANGUAGE}_FLAGS} "/W4" W4_FOUND)
+      if(NOT W4_FOUND)
         set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} /W4"
             CACHE STRING "" FORCE)
       endif()
