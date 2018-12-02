@@ -43,8 +43,6 @@ if(${PNU}_TIDY)
   endif()
 endif()
 
-include(CheckCCompilerFlag)
-
 # Encapsulates common configuration for a target.
 function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   set_target_properties(${TARGET} PROPERTIES
@@ -92,12 +90,18 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       endif()
     endif()
 
-    check_c_compiler_flag(/permissive- ${PNU}_HAS_PERMISSIVE)
+    if (${LANGUAGE} STREQUAL C)
+      include(CheckCCompilerFlag)
+      check_c_compiler_flag(/permissive- HAVE_PERMISSIVE)
+    else()
+      include(CheckCXXCompilerFlag)
+      check_cxx_compiler_flag(/permissive- HAVE_PERMISSIVE)
+    endif()
 
     target_compile_options(${TARGET} PRIVATE
       /nologo # Silence MSVC compiler version output.
       $<$<BOOL:${${PNU}_CI}>:/WX> # -Werror
-      $<$<BOOL:${${PNU}_HAS_PERMISSIVE}>:/permissive->
+      $<$<BOOL:${HAVE_PERMISSIVE}>:/permissive->
     )
 
     if(NOT ${STANDARD} STREQUAL 90)
