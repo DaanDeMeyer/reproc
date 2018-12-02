@@ -51,7 +51,6 @@ before_build:
       -DREPROC++=ON
       -DREPROC_TESTS=ON
       -DREPROC_EXAMPLES=ON
-      -DREPROC_INSTALL=ON
       -DREPROC_CI=ON
       -DREPROC_TIDY=ON
 
