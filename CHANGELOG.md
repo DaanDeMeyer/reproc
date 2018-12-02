@@ -6,30 +6,41 @@
 
 - Removed support for Doxygen (and as a result `REPROC_DOCS`).
 
-All the Doxygen directives made the header docstrings rather hard to read
-directly. Doxygen's output was also too complicated for a simple library such as
-reproc. Finally, Doxygen doesn't really provide any intuitive support for
-documenting a set of libraries. I have an idea for a Doxygen alternative using
-libclang and cmark but I'm not sure when I'll be able to implement it.
+  All the Doxygen directives made the header docstrings rather hard to read
+  directly. Doxygen's output was also too complicated for a simple library such
+  as reproc. Finally, Doxygen doesn't really provide any intuitive support for
+  documenting a set of libraries. I have an idea for a Doxygen alternative using
+  libclang and cmark but I'm not sure when I'll be able to implement it.
 
 ### CMake
 
 - Renamed `REPROCXX` option to `REPROC++`.
 
-`REPROCXX` was initially chosen because CMake didn't recommend using anything
-other than letters and underscores for variable names. However, `REPROC++` turns
-out to work without any problems so we use it since it's the expected name for
-an option to build reproc++.
+  `REPROCXX` was initially chosen because CMake didn't recommend using anything
+  other than letters and underscores for variable names. However, `REPROC++`
+  turns out to work without any problems so we use it since it's the expected
+  name for an option to build reproc++.
 
 - Stopped modifying the default `CMAKE_INSTALL_PREFIX` on Windows.
 
-In 2.0.0, when installing to the default `CMAKE_INSTALL_PREFIX`, you would end
-up with `C:\Program Files (x86)\reproc` and `C:\Program Files (x86)\reproc++`
-when installing reproc. In 3.0.0, the default `CMAKE_INSTALL_PREFIX` isn't
-modified anymore and all libraries are installed to `CMAKE_INSTALL_PREFIX` in
-exactly the same way as they are on UNIX systems (include and lib subdirectories
-directly beneath the installation directory). Sticking to the defaults makes it
-easy to include reproc in various package managers such as vcpkg.
+  In 2.0.0, when installing to the default `CMAKE_INSTALL_PREFIX`, you would end
+  up with `C:\Program Files (x86)\reproc` and `C:\Program Files (x86)\reproc++`
+  when installing reproc. In 3.0.0, the default `CMAKE_INSTALL_PREFIX` isn't
+  modified anymore and all libraries are installed to `CMAKE_INSTALL_PREFIX` in
+  exactly the same way as they are on UNIX systems (include and lib
+  subdirectories directly beneath the installation directory). Sticking to the
+  defaults makes it easy to include reproc in various package managers such as
+  vcpkg.
+
+- Config files (both CMake and pkg-config) are now installed to the share
+  subdirectory of the cmake install prefix instead of the lib subdirectory.
+
+  share and lib are both in the default search paths for CMake and pkg-config
+  but vcpkg prefers to put config files in share so we install directly to share
+  when installing reproc instead of requiring vcpkg to relocate the files after
+  installing. This also removes one of the differences between building and
+  installing reproc from source and building and installing reproc with vcpkg
+  which reduces the possibility of errors.
 
 ### reproc
 
@@ -60,7 +71,7 @@ easy to include reproc in various package managers such as vcpkg.
   updated to automatically find pthreads so users don't have to find it
   themselves.
 
-- Renamed `reproc_error_to_string` to `reproc_strerror`
+- Renamed `reproc_error_to_string` to `reproc_strerror`.
 
   The C standard library has `strerror` for retrieving a string representation
   of an error. By using the same function name (prefixed with reproc) for a
