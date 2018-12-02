@@ -92,7 +92,7 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   ### Common development flags (warnings + sanitizers + colors) ###
 
   if(MSVC)
-    if (${LANGUAGE} STREQUAL C)
+    if (LANGUAGE STREQUAL "C")
       include(CheckCCompilerFlag)
       check_c_compiler_flag(/permissive- HAVE_PERMISSIVE)
     else()
@@ -106,7 +106,7 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       $<$<BOOL:${HAVE_PERMISSIVE}>:/permissive->
     )
 
-    if(NOT ${STANDARD} STREQUAL 90)
+    if(NOT STANDARD STREQUAL "90")
       # MSVC reports non-constant initializers as a nonstandard extension but
       # they've been standardized in C99 so we disable it if we're targeting at
       # least C99.
@@ -174,7 +174,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   string(REPLACE + x EXPORT_MACRO ${TARGET})
   string(TOUPPER ${EXPORT_MACRO} EXPORT_MACRO_UPPER)
 
-  if(${LANGUAGE} STREQUAL C)
+  if(LANGUAGE STREQUAL "C")
     set(HEADER_EXT h)
   else()
     set(HEADER_EXT hpp)
