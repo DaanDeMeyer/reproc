@@ -47,16 +47,18 @@ easy to include reproc in various package managers such as vcpkg.
 
 - Default to using `vfork` instead of `fork` on POSIX systems.
 
-  This change was made to increase performance `reproc_start`'s performance when
-  the parent process uses a large amount of memory. In these scenario's, using
-  `vfork` can be a lot faster compared to using `fork`. Care is taken to make
-  sure signal handlers in the child don't corrupt the parent process state. This
-  change induces an extra constraint in that `set*id` functions cannot be called
-  while a call to `reproc_start` is in process, but this situation is rare
-  enough that the tradeoff for better performance seems worth it.
+  This change was made to increase `reproc_start`'s performance when the parent
+  process is using a large amount of memory. In these scenario's, `vfork` can be
+  a lot faster than `fork`. Care is taken to make sure signal handlers in the
+  child don't corrupt the state of the parent process. This change induces an
+  extra constraint in that `set*id` functions cannot be called while a call to
+  `reproc_start` is in process, but this situation is rare enough that the
+  tradeoff for better performance seems worth it.
 
   A dependency on pthreads had to be added in order to safely use `vfork` (we
-  needed access to `pthread_sigmask`).
+  needed access to `pthread_sigmask`). The CMake and pkg-config files have been
+  updated to automatically find pthreads so users don't have to find it
+  themselves.
 
 - Renamed `reproc_error_to_string` to `reproc_strerror`
 
