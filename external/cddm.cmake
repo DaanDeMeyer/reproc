@@ -276,8 +276,6 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
 
     # pkg-config
 
-    set(INSTALL_PKGCONFIGDIR )
-
     configure_file(
       ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}.pc.in
       ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc
