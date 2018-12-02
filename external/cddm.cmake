@@ -1,3 +1,5 @@
+# Make sure to enable every language used before including this file!
+
 # Every variable is prefixed with the name of the project and everything option
 # is turned off by default to make projects using cddm easy to use as a CMake
 # subproject with add_subdirectory. All targets are also prefixed with the name
@@ -43,6 +45,26 @@ if(${PNU}_TIDY)
   endif()
 endif()
 
+if(MSVC)
+  # We encapsulate the logic in a function so the LANGUAGE variable doesn't leak
+  # into the directory scope.
+  function(enable_w4)
+    foreach(LANGUAGE C CXX)
+      if(CMAKE_${LANGUAGE}_FLAGS)
+        string(REGEX REPLACE
+          "[-/]W[1-4]" ""
+          CMAKE_${LANGUAGE}_FLAGS
+          "${CMAKE_${LANGUAGE}_FLAGS}"
+        )
+        set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} /W4"
+            PARENT_SCOPE)
+      endif()
+    endforeach()
+  endfunction()
+  # Override the warning level for the current directory.
+  enable_w4()
+endif()
+
 # Encapsulates common configuration for a target.
 function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   set_target_properties(${TARGET} PROPERTIES
@@ -70,26 +92,6 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   ### Common development flags (warnings + sanitizers + colors) ###
 
   if(MSVC)
-    # CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default on Windows
-    # so when we add /W4 via target_compile_options cl.exe complains that both
-    # /W3 and /W4 are passed. We can avoid these warnings by replacing /W3 with
-    # /W4 in CMAKE_CXX_FLAGS but this is intrusive when a project is used via
-    # add_subdirectory since it would add /W4 to every target. To solve this, we
-    # only add /W4 when the project is not included with add_subdirectory.
-    if(NOT ${PNU}_IS_SUBDIRECTORY)
-      string(REGEX REPLACE
-        /W[0-3] ""
-        CMAKE_${LANGUAGE}_FLAGS
-        "${CMAKE_${LANGUAGE}_FLAGS}"
-      )
-
-      string(FIND ${CMAKE_${LANGUAGE}_FLAGS} "/W4" W4_FOUND)
-      if(NOT W4_FOUND)
-        set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} /W4"
-            CACHE STRING "" FORCE)
-      endif()
-    endif()
-
     if (${LANGUAGE} STREQUAL C)
       include(CheckCCompilerFlag)
       check_c_compiler_flag(/permissive- HAVE_PERMISSIVE)

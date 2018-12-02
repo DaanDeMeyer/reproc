@@ -59,8 +59,6 @@ elseif(UNIX)
 endif()
 
 if(REPROC_TESTS)
-  enable_language(CXX)
-
   add_executable(reproc-tests "")
   cddm_add_common(reproc-tests CXX 11 tests)
 

@@ -10,13 +10,15 @@ endif()
 
 project(reproc VERSION 2.0.0 LANGUAGES C)
 
-include(${PROJECT_SOURCE_DIR}/external/cddm.cmake)
-
 option(REPROC++ "Build reproc++.")
 
-add_subdirectory(reproc)
-
-if(REPROC++)
+if(REPROC++ OR REPROC_TESTS)
   enable_language(CXX)
+endif()
+
+include(${PROJECT_SOURCE_DIR}/external/cddm.cmake)
+
+add_subdirectory(reproc)
+if(REPROC++)
   add_subdirectory(reproc++)
 endif()
