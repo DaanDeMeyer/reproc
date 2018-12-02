@@ -248,7 +248,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
       EXPORT ${TARGET}-targets
       FILE ${TARGET}-targets.cmake
       NAMESPACE ${PROJECT_NAME}::
-      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET}
+      DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/${TARGET}
     )
 
     # CMake config
@@ -265,7 +265,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
         ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}-config.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
       INSTALL_DESTINATION
-        ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET}
+        ${CMAKE_INSTALL_DATADIR}/cmake/${TARGET}
     )
 
     install(
@@ -273,7 +273,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
       DESTINATION
-        ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET}
+        ${CMAKE_INSTALL_DATADIR}/cmake/${TARGET}
     )
 
     # pkg-config
@@ -286,7 +286,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
 
     install(
       FILES ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc
-      DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+      DESTINATION ${CMAKE_INSTALL_DATADIR}/pkgconfig
     )
   endif()
 endfunction()
