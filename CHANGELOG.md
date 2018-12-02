@@ -58,6 +58,13 @@ easy to include reproc in various package managers such as vcpkg.
   A dependency on pthreads had to be added in order to safely use `vfork` (we
   needed access to `pthread_sigmask`).
 
+- Renamed `reproc_error_to_string` to `reproc_strerror`
+
+  The C standard library has `strerror` for retrieving a string representation
+  of an error. By using the same function name (prefixed with reproc) for a
+  function that does the same for reproc's errors, new users will immediately
+  know what the function does.
+
 ### reproc++
 
 - reproc++ now takes timeouts as `std::chrono::duration` values (more specific
