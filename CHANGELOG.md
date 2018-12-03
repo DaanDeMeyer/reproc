@@ -1,5 +1,28 @@
 # Changelog
 
+## 3.1.0
+
+### CMake
+
+- Added `REPROC_INSTALL_PKGCONFIG` to control whether pkg-config files are
+  installed or not (default: `ON`).
+
+  The vcpkg package manager has no need for the pkg-config files so we added an
+  option to disable installing them.
+
+- Added `REPROC_INSTALL_CMAKECONFIGDIR` and `REPROC_INSTALL_PKGCONFIGDIR` to
+  control where cmake config files and pkg-config files are installed
+  respectively (default: `${CMAKE_INSTALL_LIBDIR}/cmake` and
+  `${CMAKE_INSTALL_LIBDIR}/pkgconfig`).
+
+  reproc already uses the values from `GNUInstallDirs` when generating its
+  install rules which are cache variables that be overridden by users. However,
+  `GNUInstallDirs` does not include variables for the installation directories
+  of CMake config files and pkg-config files. vcpkg requires cmake config files
+  to be installed to a different directory than the directory reproc used until
+  now. These options were added to allow vcpkg to control where the config files
+  are installed to.
+
 ## 3.0.0
 
 ### General
