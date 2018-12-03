@@ -32,16 +32,6 @@
   defaults makes it easy to include reproc in various package managers such as
   vcpkg.
 
-- Config files (both CMake and pkg-config) are now installed to the share
-  subdirectory of the cmake install prefix instead of the lib subdirectory.
-
-  share and lib are both in the default search paths for CMake and pkg-config
-  but vcpkg prefers to put config files in share so we install directly to share
-  when installing reproc instead of requiring vcpkg to relocate the files after
-  installing. This also removes one of the differences between building and
-  installing reproc from source and building and installing reproc with vcpkg
-  which reduces the possibility of errors.
-
 ### reproc
 
 - `reproc_terminate` and `reproc_kill` don't call `reproc_wait` internally
