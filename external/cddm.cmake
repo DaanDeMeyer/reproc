@@ -1,38 +1,54 @@
 # Make sure to enable every language used before including this file!
 
-# Every variable is prefixed with the name of the project and everything option
-# is turned off by default to make projects using cddm easy to use as a CMake
-# subproject with add_subdirectory. All targets are also prefixed with the name
-# of the project to avoid target name collisions.
-
 set(PNL ${PROJECT_NAME}) # PROJECT_NAME_LOWER (PNL)
 string(TOUPPER ${PROJECT_NAME} PNU) # PROJECT_NAME_UPPER (PNU)
 
 get_directory_property(${PNU}_IS_SUBDIRECTORY PARENT_DIRECTORY)
 
-### User options ###
-
-option(${PNU}_TESTS "Build tests.")
-option(${PNU}_EXAMPLES "Build examples.")
+### Install options ###
 
 # Don't add libraries to the install target by default if the project is built
 # from within another project as a static library.
 if(${PNU}_IS_SUBDIRECTORY AND NOT BUILD_SHARED_LIBS)
-  option(${PNU}_INSTALL "Install targets." OFF)
+  option(${PNU}_INSTALL "Generate installation rules." OFF)
 else()
-  option(${PNU}_INSTALL "Install targets." ON)
+  option(${PNU}_INSTALL "Generate installation rules." ON)
 endif()
 
-### Developer options
+option(${PNU}_INSTALL_PKGCONFIG "Install pkg-config files." ON)
+
+include(GNUInstallDirs)
+
+set(${PNU}_INSTALL_CMAKECONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake
+    CACHE STRING "CMake config files installation directory.")
+set(${PNU}_INSTALL_PKGCONFIGDIR ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    CACHE STRING "pkg-config files installation directory.")
+
+mark_as_advanced(
+  ${PNU}_INSTALL
+  ${PNU}_INSTALL_PKGCONFIG
+  ${PNU}_INSTALL_CMAKECONFIGDIR
+  ${PNU}_INSTALL_PKGCONFIGDIR
+)
+
+### Developer options ###
 
 option(${PNU}_TIDY "Run clang-tidy when building.")
 option(${PNU}_SANITIZERS "Build with sanitizers.")
-option(${PNU}_CI "Add -Werror or equivalent to the compiler and clang-tidy.")
+option(${PNU}_CI "Add -Werror or equivalent to the compile flags and \
+clang-tidy.")
+
+mark_as_advanced(
+  ${PNU}_TIDY
+  ${PNU}_SANITIZERS
+  ${PNU}_CI
+)
 
 if(${PNU}_TIDY)
   # CMake added clang-tidy support in CMake 3.6.
   cmake_minimum_required(VERSION 3.6)
   find_program(${PNU}_CLANG_TIDY_PROGRAM clang-tidy)
+  mark_as_advanced(${PNU}_CLANG_TIDY_PROGRAM)
 
   if(${PNU}_CLANG_TIDY_PROGRAM)
     # Treat clang-tidy warnings as errors when on CI.
@@ -218,7 +234,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   if(${PNU}_INSTALL)
     include(GNUInstallDirs)
 
-    # Headers
+    ## Headers
 
     install(
       DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/${TARGET}
@@ -234,7 +250,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
-    # Libraries
+    ## Libraries
 
     install(
       TARGETS ${TARGET}
@@ -244,14 +260,16 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
 
+    ## Config files
+
+    # CMake
+
     install(
       EXPORT ${TARGET}-targets
       FILE ${TARGET}-targets.cmake
       NAMESPACE ${PROJECT_NAME}::
-      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET}
+      DESTINATION ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
     )
-
-    # CMake config
 
     include(CMakePackageConfigHelpers)
 
@@ -265,7 +283,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
         ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}-config.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
       INSTALL_DESTINATION
-        ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET}
+        ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
     )
 
     install(
@@ -273,20 +291,22 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
       DESTINATION
-        ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET}
+        ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
     )
 
     # pkg-config
 
-    configure_file(
-      ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}.pc.in
-      ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc
-      @ONLY
-    )
+    if(${PNU}_INSTALL_PKGCONFIG)
+      configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}.pc.in
+        ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc
+        @ONLY
+      )
 
-    install(
-      FILES ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc
-      DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-    )
+      install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc
+        DESTINATION ${${PNU}_INSTALL_PKGCONFIGDIR}
+      )
+    endif()
   endif()
 endfunction()

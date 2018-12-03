@@ -128,15 +128,32 @@ should be picked up by your build system automatically.
 
 reproc's build can be configured using the following CMake options:
 
+### User
+
 - `REPROC++`: Build reproc++ (default: `OFF`).
 - `REPROC_TESTS`: Build tests (default: `OFF`).
 - `REPROC_EXAMPLES`: Build examples (default: `OFF`).
-- `REPROC_INSTALL`: Add reproc to the install target (default: `ON` unless
-  reproc is built as a static library using `add_subdirectory`).
+
+### Advanced
+
+- `REPROC_INSTALL`: Generate installation rules (default: `ON` unless
+  `BUILD_SHARED_LIBS` is false and reproc is built via `add_subdirectory`).
+- `REPROC_INSTALL_CMAKECONFIGDIR`: CMake config files installation directory
+  (default: `${CMAKE_INSTALL_LIBDIR}/cmake`).
+- `REPROC_INSTALL_PKGCONFIG`: Install pkg-config files (default: `ON`)
+- `REPROC_INSTALL_PKGCONFIGDIR`: pkg-config files installation directory
+  (default: `${CMAKE_INSTALL_LIBDIR}/pkgconfig`).
 
 The `THREADS_PREFER_PTHREAD_FLAG` variable influences how CMake finds pthreads.
 if it is not defined, reproc's build enables it before calling
 `find_package(Threads)`.
+
+### Developer
+
+- `REPROC_SANITIZERS` Build with sanitizers (default: `OFF`).
+- `REPROC_TIDY`: Run clang-tidy when building (default: `OFF`).
+- `REPROC_CI` Add -Werror or equivalent to the compile flags and clang-tidy
+  (default: `OFF`).
 
 ## Documentation
 

@@ -11,6 +11,8 @@ endif()
 project(reproc VERSION 3.0.0 LANGUAGES C)
 
 option(REPROC++ "Build reproc++.")
+option(REPROC_TESTS "Build tests.")
+option(REPROC_EXAMPLES "Build examples.")
 
 if(REPROC++ OR REPROC_TESTS)
   enable_language(CXX)
