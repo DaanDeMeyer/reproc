@@ -82,7 +82,8 @@ root CMakeLists.txt file as follows:
 add_subdirectory(<path-to-reproc>)
 ```
 
-Options can be specified before calling `add_subdirectory`:
+Options can be specified before calling `add_subdirectory` (omit `FORCE` if you
+don't want to override an existing value in the cache):
 
 ```cmake
 set(REPROC++ ON CACHE BOOL "" FORCE)
