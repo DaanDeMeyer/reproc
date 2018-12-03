@@ -14,14 +14,12 @@ documentation)**
 - [Questions](#questions)
 - [Retrieving reproc](#retrieving-reproc)
 - [Dependencies](#dependencies)
+- [CMake options](#cmake-options)
 - [Documentation](#documentation)
 - [Error handling](#error-handling)
 - [Multithreading](#multithreading)
 - [Gotchas](#gotchas)
 - [Avoiding resource leaks](#avoiding-resource-leaks)
-  - [POSIX](#posix)
-  - [Windows](#windows)
-- [Contributing](#contributing)
 
 ## What is reproc?
 
