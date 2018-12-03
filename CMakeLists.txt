@@ -8,7 +8,7 @@ else()
   cmake_policy(VERSION 3.12)
 endif()
 
-project(reproc VERSION 2.0.0 LANGUAGES C)
+project(reproc VERSION 3.0.0 LANGUAGES C)
 
 option(REPROC++ "Build reproc++.")
 
