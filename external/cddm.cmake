@@ -197,7 +197,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   endif()
 
   # CMake's GenerateExportHeader only recently learned to support C projects.
-  if(${CMAKE_VERSION} VERSION_LESS 3.12)
+  if(CMAKE_VERSION VERSION_LESS "3.12")
     enable_language(CXX)
   endif()
 
