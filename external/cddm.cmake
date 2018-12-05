@@ -66,7 +66,7 @@ if(MSVC)
   # into the directory scope.
   function(enable_w4)
     foreach(LANGUAGE C CXX)
-      if(CMAKE_${LANGUAGE}_FLAGS)
+      if(DEFINED CMAKE_${LANGUAGE}_FLAGS)
         string(REGEX REPLACE
           "[-/]W[1-4]" ""
           CMAKE_${LANGUAGE}_FLAGS
