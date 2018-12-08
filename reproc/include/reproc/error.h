@@ -60,7 +60,7 @@ typedef enum {
   /*! Unlike POSIX, Windows does not include information about exactly which
   errors can occur in its documentation. If an error occurs that is not known
   functions will return `REPROC_UNKNOWN_ERROR`. */
-  REPROC_UNKNOWN_ERROR = 15,
+  REPROC_UNKNOWN_ERROR = 15
 } REPROC_ERROR;
 
 #ifdef __cplusplus
