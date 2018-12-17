@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.2
+
+### pkg-config
+
+- Fix pkg-config install prefix
+
 ## 3.1.0
 
 ### CMake
