@@ -1,10 +1,17 @@
 # Changelog
 
+## 3.1.3
+
+### CMake
+
+- Update project version in CMakeLists.txt from 3.0.0 to the actual latest
+  version (3.1.3).
+
 ## 3.1.2
 
 ### pkg-config
 
-- Fix pkg-config install prefix
+- Fix pkg-config install prefix.
 
 ## 3.1.0
 
