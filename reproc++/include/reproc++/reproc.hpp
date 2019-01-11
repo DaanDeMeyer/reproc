@@ -207,7 +207,9 @@ std::error_code process::read(reproc::stream stream, Parser &&parser)
   /* A single call to `read` might contain multiple messages. By always calling
   `parser` once with no data before reading, we give it the chance to process
   all previous output one by one before reading from the child process again. */
-  if (!parser("", 0)) { return {}; }
+  if (!parser("", 0)) {
+    return {};
+  }
 
   char buffer[BUFFER_SIZE];
   std::error_code ec;
@@ -215,10 +217,14 @@ std::error_code process::read(reproc::stream stream, Parser &&parser)
   while (true) {
     unsigned int bytes_read = 0;
     ec = read(stream, buffer, BUFFER_SIZE, &bytes_read);
-    if (ec) { break; }
+    if (ec) {
+      break;
+    }
 
     // `parser` returns false to tell us to stop reading.
-    if (!parser(buffer, bytes_read)) { break; }
+    if (!parser(buffer, bytes_read)) {
+      break;
+    }
   }
 
   return ec;
@@ -233,13 +239,17 @@ std::error_code process::drain(reproc::stream stream, Sink &&sink)
   while (true) {
     unsigned int bytes_read = 0;
     ec = read(stream, buffer, BUFFER_SIZE, &bytes_read);
-    if (ec) { break; }
+    if (ec) {
+      break;
+    }
 
     sink(buffer, bytes_read);
   }
 
   // The child process closing the stream is not treated as an error.
-  if (ec == reproc::errc::stream_closed) { return {}; }
+  if (ec == reproc::errc::stream_closed) {
+    return {};
+  }
 
   return ec;
 }

@@ -10,7 +10,9 @@ void fd_close(int *fd)
 
   // Do nothing and return if `fd` is 0 (null) so callers don't have to check if
   // a pipe has been closed already.
-  if (*fd == 0) { return; }
+  if (*fd == 0) {
+    return;
+  }
 
   // Avoid `close` errors overriding other system errors.
   int last_system_error = errno;

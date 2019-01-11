@@ -46,7 +46,9 @@ int main(void)
   }
 
   // Shorthand for `if (error != REPROC_SUCCESS)`.
-  if (error) { return fail(error); }
+  if (error) {
+    return fail(error);
+  }
 
   /* Close the stdin stream since we're not going to write any input to git.
   While the example works perfectly without closing stdin we do it here to
@@ -57,7 +59,9 @@ int main(void)
   // allocated).
   size_t output_length = 0;
   char *output = malloc(1);
-  if (!output) { goto cleanup; }
+  if (!output) {
+    goto cleanup;
+  }
   output[0] = '\0';
 
   char buffer[BUFFER_SIZE];
@@ -70,15 +74,20 @@ int main(void)
     unsigned int bytes_read = 0;
     error = reproc_read(&git_status, REPROC_OUT, buffer, BUFFER_SIZE,
                         &bytes_read);
-    if (error) { break; }
+    if (error) {
+      break;
+    }
 
     /* Increase size of result to make sure it can hold the new output. This is
     definitely not the most performant way to grow a buffer so keep that in
     mind. Add 1 to size to leave space for the null terminator which isn't
     included in output_length. */
     char *realloc_result = realloc(output, output_length + bytes_read + 1);
-    if (!realloc_result) { goto cleanup; }
-    output = realloc_result;
+    if (!realloc_result) {
+      goto cleanup;
+    } else {
+      output = realloc_result;
+    }
 
     // Copy new data into result buffer
     memcpy(output + output_length, buffer, bytes_read);
@@ -87,7 +96,9 @@ int main(void)
 
   // Check that the while loop stopped because the output stream of the child
   // process was closed and not because of any other error.
-  if (error != REPROC_STREAM_CLOSED) { goto cleanup; }
+  if (error != REPROC_STREAM_CLOSED) {
+    goto cleanup;
+  }
 
   output[output_length] = '\0';
   printf("%s", output);
@@ -110,7 +121,9 @@ cleanup:
   section in the readme for more information. */
   reproc_destroy(&git_status);
 
-  if (error) { return fail(error); }
+  if (error) {
+    return fail(error);
+  }
 
   return (int) exit_status;
 }

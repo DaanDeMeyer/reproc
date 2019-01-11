@@ -10,7 +10,8 @@ Checks:
 -fuchsia-statically-constructed-objects,
 -google-runtime-references,
 -hicpp-multiway-paths-covered,
--hicpp-signed-bitwise
+-hicpp-signed-bitwise,
+-readability-else-after-return
 '
 ...
 

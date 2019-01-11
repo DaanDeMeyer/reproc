@@ -31,7 +31,9 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *context,
   int error_pipe_read = 0;
   int error_pipe_write = 0;
   error = pipe_init(&error_pipe_read, &error_pipe_write);
-  if (error) { goto cleanup; }
+  if (error) {
+    goto cleanup;
+  }
 
   if (options->vfork) {
     /* The code inside this block is based on code written by a Redhat employee.
@@ -70,16 +72,19 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *context,
         _exit(errno);
       }
 
-      struct sigaction oldsa;
-      struct sigaction newsa = { .sa_handler = SIG_DFL, .sa_mask = empty_mask };
+      struct sigaction old_sa;
+      struct sigaction new_sa = { .sa_handler = SIG_DFL,
+                                  .sa_mask = empty_mask };
 
       for (int i = 0; i < NSIG; i++) {
-        if (sigaction(i, NULL, &oldsa) == -1 || oldsa.sa_handler == SIG_IGN ||
-            oldsa.sa_handler == SIG_DFL) {
+        // Continue if the signal does not exist, is ignored or is already set
+        // to the default signal handler.
+        if (sigaction(i, NULL, &old_sa) == -1 || old_sa.sa_handler == SIG_IGN ||
+            old_sa.sa_handler == SIG_DFL) {
           continue;
         }
 
-        if (sigaction(i, &newsa, NULL) == -1 && errno != EINVAL) {
+        if (sigaction(i, &new_sa, NULL) == -1 && errno != EINVAL) {
           write(error_pipe_write, &errno, sizeof(errno));
           _exit(errno);
         }
@@ -94,7 +99,9 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *context,
     } else {
       // In the parent process we restore the old signal mask regardless of
       // whether `vfork` succeeded or not.
-      if (pthread_sigmask(SIG_SETMASK, &old_mask, NULL) != 0) { goto cleanup; }
+      if (pthread_sigmask(SIG_SETMASK, &old_mask, NULL) != 0) {
+        goto cleanup;
+      }
     }
   } else {
     child_pid = fork();
@@ -148,7 +155,10 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *context,
       // is created with `FD_CLOEXEC` which results in it being closed
       // automatically when `exec` or `_exit` are called so we don't have to
       // manually close it.
-      if (i == error_pipe_write) { continue; }
+      if (i == error_pipe_write) {
+        continue;
+      }
+
       close(i);
     }
     // Ignore `close` errors since we try to close every file descriptor and
@@ -156,7 +166,9 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *context,
 
     // Closing the error pipe write end will unblock the `pipe_read` call in the
     // parent process which allows it to continue executing.
-    if (options->return_early) { fd_close(&error_pipe_write); }
+    if (options->return_early) {
+      fd_close(&error_pipe_write);
+    }
 
     // Finally, call the makeshift lambda provided by the caller with the
     // accompanying context object.
@@ -173,9 +185,15 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *context,
 
   if (child_pid == -1) {
     switch (errno) {
-    case EAGAIN: error = REPROC_PROCESS_LIMIT_REACHED; break;
-    case ENOMEM: error = REPROC_NOT_ENOUGH_MEMORY; break;
-    default: error = REPROC_UNKNOWN_ERROR; break;
+    case EAGAIN:
+      error = REPROC_PROCESS_LIMIT_REACHED;
+      break;
+    case ENOMEM:
+      error = REPROC_NOT_ENOUGH_MEMORY;
+      break;
+    default:
+      error = REPROC_UNKNOWN_ERROR;
+      break;
     }
 
     goto cleanup;
@@ -192,11 +210,14 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *context,
   fd_close(&error_pipe_read);
 
   switch (error) {
-  case REPROC_SUCCESS: break;
+  case REPROC_SUCCESS:
+    break;
   // `REPROC_STREAM_CLOSED` is not an error because it means the pipe was closed
   // without an error being written to it.
-  case REPROC_STREAM_CLOSED: break;
-  default: goto cleanup;
+  case REPROC_STREAM_CLOSED:
+    break;
+  default:
+    goto cleanup;
   }
 
   // If an error was written to the error pipe we check that a full integer was
@@ -214,14 +235,30 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *context,
     errno = child_error;
 
     switch (child_error) {
-    case EACCES: error = REPROC_PERMISSION_DENIED; break;
-    case EPERM: error = REPROC_PERMISSION_DENIED; break;
-    case ELOOP: error = REPROC_SYMLINK_LOOP; break;
-    case ENAMETOOLONG: error = REPROC_NAME_TOO_LONG; break;
-    case ENOENT: error = REPROC_FILE_NOT_FOUND; break;
-    case ENOTDIR: error = REPROC_FILE_NOT_FOUND; break;
-    case EINTR: error = REPROC_INTERRUPTED; break;
-    default: error = REPROC_UNKNOWN_ERROR; break;
+    case EACCES:
+      error = REPROC_PERMISSION_DENIED;
+      break;
+    case EPERM:
+      error = REPROC_PERMISSION_DENIED;
+      break;
+    case ELOOP:
+      error = REPROC_SYMLINK_LOOP;
+      break;
+    case ENAMETOOLONG:
+      error = REPROC_NAME_TOO_LONG;
+      break;
+    case ENOENT:
+      error = REPROC_FILE_NOT_FOUND;
+      break;
+    case ENOTDIR:
+      error = REPROC_FILE_NOT_FOUND;
+      break;
+    case EINTR:
+      error = REPROC_INTERRUPTED;
+      break;
+    default:
+      error = REPROC_UNKNOWN_ERROR;
+      break;
     }
 
     goto cleanup;
@@ -236,7 +273,10 @@ cleanup:
       child_pid > 0) {
     // Make sure the child process doesn't become a zombie process the child
     // process was started (`child_pid` > 0) but an error occurred.
-    if (waitpid(child_pid, NULL, 0) == -1) { return REPROC_UNKNOWN_ERROR; }
+    if (waitpid(child_pid, NULL, 0) == -1) {
+      return REPROC_UNKNOWN_ERROR;
+    }
+
     return error;
   }
 
@@ -248,8 +288,9 @@ static unsigned int parse_exit_status(int status)
 {
   // `WEXITSTATUS` returns a value between [0,256) so casting to `unsigned int`
   // is safe.
-
-  if (WIFEXITED(status)) { return (unsigned int) WEXITSTATUS(status); }
+  if (WIFEXITED(status)) {
+    return (unsigned int) WEXITSTATUS(status);
+  }
 
   assert(WIFSIGNALED(status));
 
@@ -262,14 +303,16 @@ static REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
   // Adding `WNOHANG` makes `waitpid` only check if the child process is still
   // running without waiting.
   pid_t wait_result = waitpid(pid, &status, WNOHANG);
-
-  if (wait_result == 0) { return REPROC_WAIT_TIMEOUT; }
-  if (wait_result == -1) {
+  if (wait_result == 0) {
+    return REPROC_WAIT_TIMEOUT;
+  } else if (wait_result == -1) {
     // Ignore `EINTR`, it shouldn't happen when using `WNOHANG`.
     return REPROC_UNKNOWN_ERROR;
   }
 
-  if (exit_status) { *exit_status = parse_exit_status(status); }
+  if (exit_status) {
+    *exit_status = parse_exit_status(status);
+  }
 
   return REPROC_SUCCESS;
 }
@@ -280,12 +323,16 @@ static REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
 
   if (waitpid(pid, &status, 0) == -1) {
     switch (errno) {
-    case EINTR: return REPROC_INTERRUPTED;
-    default: return REPROC_UNKNOWN_ERROR;
+    case EINTR:
+      return REPROC_INTERRUPTED;
+    default:
+      return REPROC_UNKNOWN_ERROR;
     }
   }
 
-  if (exit_status) { *exit_status = parse_exit_status(status); }
+  if (exit_status) {
+    *exit_status = parse_exit_status(status);
+  }
 
   return REPROC_SUCCESS;
 }
@@ -301,7 +348,9 @@ static int timeout_process(const void *context)
 
   // `select` with no file descriptors can be used as a makeshift sleep function
   // that can still be interrupted.
-  if (select(0, NULL, NULL, NULL, &tv) == -1) { return errno; }
+  if (select(0, NULL, NULL, NULL, &tv) == -1) {
+    return errno;
+  }
 
   return 0;
 }
@@ -309,9 +358,12 @@ static int timeout_process(const void *context)
 static REPROC_ERROR timeout_map_error(int error)
 {
   switch (error) {
-  case EINTR: return REPROC_INTERRUPTED;
-  case ENOMEM: return REPROC_NOT_ENOUGH_MEMORY;
-  default: return REPROC_UNKNOWN_ERROR;
+  case EINTR:
+    return REPROC_INTERRUPTED;
+  case ENOMEM:
+    return REPROC_NOT_ENOUGH_MEMORY;
+  default:
+    return REPROC_UNKNOWN_ERROR;
   }
 }
 
@@ -326,7 +378,9 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
   // possibly expensive timeout process. If `wait_no_hang` doesn't time out we
   // can return early.
   error = wait_no_hang(pid, exit_status);
-  if (error != REPROC_WAIT_TIMEOUT) { return error; }
+  if (error != REPROC_WAIT_TIMEOUT) {
+    return error;
+  }
 
   struct process_options options = {
     // `waitpid` supports waiting for the first process that exits in a process
@@ -348,8 +402,13 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
 
   pid_t timeout_pid = 0;
   error = process_create(timeout_process, &timeout, &options, &timeout_pid);
-  if (error == REPROC_UNKNOWN_ERROR) { error = timeout_map_error(errno); }
-  if (error) { return error; }
+  if (error == REPROC_UNKNOWN_ERROR) {
+    error = timeout_map_error(errno);
+  }
+
+  if (error) {
+    return error;
+  }
 
   // Passing `-reproc->pid` to `waitpid` makes it wait for the first process in
   // the `reproc->pid` process group to exit. The `reproc->pid` process group
@@ -361,24 +420,35 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
   pid_t exit_pid = waitpid(-pid, &status, 0);
 
   // If the timeout process exits first the timeout will have expired.
-  if (exit_pid == timeout_pid) { return REPROC_WAIT_TIMEOUT; }
+  if (exit_pid == timeout_pid) {
+    return REPROC_WAIT_TIMEOUT;
+  }
 
   // If the child process exits first we clean up the timeout process.
   error = process_terminate(timeout_pid);
-  if (error) { return error; }
+  if (error) {
+    return error;
+  }
+
   error = wait_infinite(timeout_pid, NULL);
-  if (error) { return error; }
+  if (error) {
+    return error;
+  }
 
   // After cleaning up the timeout process we can check if `waitpid` returned an
   // error.
   if (exit_pid == -1) {
     switch (errno) {
-    case EINTR: return REPROC_INTERRUPTED;
-    default: return REPROC_UNKNOWN_ERROR;
+    case EINTR:
+      return REPROC_INTERRUPTED;
+    default:
+      return REPROC_UNKNOWN_ERROR;
     }
   }
 
-  if (exit_status) { *exit_status = parse_exit_status(status); }
+  if (exit_status) {
+    *exit_status = parse_exit_status(status);
+  }
 
   return REPROC_SUCCESS;
 }
@@ -386,23 +456,31 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
 REPROC_ERROR process_wait(pid_t pid, unsigned int timeout,
                           unsigned int *exit_status)
 {
-  if (timeout == 0) { return wait_no_hang(pid, exit_status); }
+  if (timeout == 0) {
+    return wait_no_hang(pid, exit_status);
+  }
 
-  if (timeout == REPROC_INFINITE) { return wait_infinite(pid, exit_status); }
+  if (timeout == REPROC_INFINITE) {
+    return wait_infinite(pid, exit_status);
+  }
 
   return wait_timeout(pid, timeout, exit_status);
 }
 
 REPROC_ERROR process_terminate(pid_t pid)
 {
-  if (kill(pid, SIGTERM) == -1) { return REPROC_UNKNOWN_ERROR; }
+  if (kill(pid, SIGTERM) == -1) {
+    return REPROC_UNKNOWN_ERROR;
+  }
 
   return REPROC_SUCCESS;
 }
 
 REPROC_ERROR process_kill(pid_t pid)
 {
-  if (kill(pid, SIGKILL) == -1) { return REPROC_UNKNOWN_ERROR; }
+  if (kill(pid, SIGKILL) == -1) {
+    return REPROC_UNKNOWN_ERROR;
+  }
 
   return REPROC_SUCCESS;
 }

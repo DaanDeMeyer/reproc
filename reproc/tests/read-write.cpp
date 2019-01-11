@@ -37,7 +37,9 @@ TEST_CASE("read-write")
       unsigned int bytes_read = 0;
       error = reproc_read(&io, REPROC_OUT, buffer.data(), BUFFER_SIZE,
                           &bytes_read);
-      if (error != REPROC_SUCCESS) { break; }
+      if (error != REPROC_SUCCESS) {
+        break;
+      }
 
       output.append(buffer.data(), bytes_read);
     }
@@ -68,7 +70,9 @@ TEST_CASE("read-write")
       unsigned int bytes_read = 0;
       error = reproc_read(&io, REPROC_ERR, buffer.data(), BUFFER_SIZE,
                           &bytes_read);
-      if (error != REPROC_SUCCESS) { break; }
+      if (error != REPROC_SUCCESS) {
+        break;
+      }
 
       output.append(buffer.data(), bytes_read);
     }

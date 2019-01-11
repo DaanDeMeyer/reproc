@@ -40,27 +40,40 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
   // inheritance of the parent pipe handles to lower the chance of child
   // processes not created by reproc unintentionally inheriting these handles.
   error = pipe_init(&child_stdin, true, &process->in, false);
-  if (error) { goto cleanup; }
+  if (error) {
+    goto cleanup;
+  }
+
   error = pipe_init(&process->out, false, &child_stdout, true);
-  if (error) { goto cleanup; }
+  if (error) {
+    goto cleanup;
+  }
+
   error = pipe_init(&process->err, false, &child_stderr, true);
-  if (error) { goto cleanup; }
+  if (error) {
+    goto cleanup;
+  }
 
   // Join `argv` to a whitespace delimited string as required by
   // `CreateProcessW`.
   error = string_join(argv, argc, &command_line_string);
-  if (error) { goto cleanup; }
+  if (error) {
+    goto cleanup;
+  }
 
   // Convert UTF-8 to UTF-16 as required by `CreateProcessW`.
   error = string_to_wstring(command_line_string, &command_line_wstring);
-  free(command_line_string); // Not needed anymore
-  if (error) { goto cleanup; }
+  if (error) {
+    goto cleanup;
+  }
 
   // Do the same for `working_directory` if it isn't `NULL`.
   error = working_directory
               ? string_to_wstring(working_directory, &working_directory_wstring)
               : REPROC_SUCCESS;
-  if (error) { goto cleanup; }
+  if (error) {
+    goto cleanup;
+  }
 
   struct process_options options = {
     .working_directory = working_directory_wstring,
@@ -73,7 +86,7 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
                          &process->handle);
 
 cleanup:
-   // Eithera n error has ocurred or the child pipe endpoints have been copied to
+  // Either an error has ocurred or the child pipe endpoints have been copied to
   // the stdin/stdout/stderr streams of the child process. Either way they can
   // be safely closed in the parent process.
   handle_close(&child_stdin);
@@ -83,7 +96,9 @@ cleanup:
   free(command_line_wstring);
   free(working_directory_wstring);
 
-  if (error) { reproc_destroy(process); }
+  if (error) {
+    reproc_destroy(process);
+  }
 
   return error;
 }
@@ -98,9 +113,12 @@ REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
   assert(bytes_read);
 
   switch (stream) {
-  case REPROC_IN: break;
-  case REPROC_OUT: return pipe_read(process->out, buffer, size, bytes_read);
-  case REPROC_ERR: return pipe_read(process->err, buffer, size, bytes_read);
+  case REPROC_IN:
+    break;
+  case REPROC_OUT:
+    return pipe_read(process->out, buffer, size, bytes_read);
+  case REPROC_ERR:
+    return pipe_read(process->err, buffer, size, bytes_read);
   }
 
   assert(0);
@@ -123,9 +141,15 @@ void reproc_close(reproc_type *process, REPROC_STREAM stream)
   assert(process);
 
   switch (stream) {
-  case REPROC_IN: handle_close(&process->in); return;
-  case REPROC_OUT: handle_close(&process->out); return;
-  case REPROC_ERR: handle_close(&process->err); return;
+  case REPROC_IN:
+    handle_close(&process->in);
+    return;
+  case REPROC_OUT:
+    handle_close(&process->out);
+    return;
+  case REPROC_ERR:
+    handle_close(&process->err);
+    return;
   }
 
   assert(0);

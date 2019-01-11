@@ -20,11 +20,16 @@ REPROC_ERROR string_join(const char *const *string_array, int array_length,
   size_t string_length = 1; // Count the null terminator.
   for (int i = 0; i < array_length; i++) {
     string_length += strlen(string_array[i]);
-    if (i < array_length - 1) { string_length++; } // Count whitespace.
+
+    if (i < array_length - 1) {
+      string_length++; // Count whitespace.
+    }
   }
 
   char *string = malloc(sizeof(char) * string_length);
-  if (string == NULL) { return REPROC_NOT_ENOUGH_MEMORY; }
+  if (string == NULL) {
+    return REPROC_NOT_ENOUGH_MEMORY;
+  }
 
   char *current = string; // Keeps track of where we are in the result.
   for (int i = 0; i < array_length; i++) {
@@ -59,13 +64,17 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
 
   if (wstring_length == 0) {
     switch (GetLastError()) {
-    case ERROR_NO_UNICODE_TRANSLATION: return REPROC_INVALID_UNICODE;
-    default: return REPROC_UNKNOWN_ERROR;
+    case ERROR_NO_UNICODE_TRANSLATION:
+      return REPROC_INVALID_UNICODE;
+    default:
+      return REPROC_UNKNOWN_ERROR;
     }
   }
 
   wchar_t *wstring = malloc(sizeof(wchar_t) * wstring_length);
-  if (!wstring) { return REPROC_NOT_ENOUGH_MEMORY; }
+  if (!wstring) {
+    return REPROC_NOT_ENOUGH_MEMORY;
+  }
 
   // Now we pass our allocated string and its length as the last two arguments
   // instead of `NULL` and 0 which makes `MultiByteToWideChar` actually perform
@@ -75,8 +84,10 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
   if (written == 0) {
     free(wstring);
     switch (GetLastError()) {
-    case ERROR_NO_UNICODE_TRANSLATION: return REPROC_INVALID_UNICODE;
-    default: return REPROC_UNKNOWN_ERROR;
+    case ERROR_NO_UNICODE_TRANSLATION:
+      return REPROC_INVALID_UNICODE;
+    default:
+      return REPROC_UNKNOWN_ERROR;
     }
   }
 

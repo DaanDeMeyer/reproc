@@ -55,9 +55,9 @@ int main(int argc, char *argv[])
   if (ec == reproc::errc::file_not_found) {
     std::cerr << "Program not found. Make sure it's available from the PATH.";
     return 1;
+  } else if (ec) {
+    return fail(ec);
   }
-
-  if (ec) { return fail(ec); }
 
   /* We need a mutex along with `output` to prevent the main thread and
   background thread from modifying `output` at the same time (`std::string`
@@ -85,7 +85,9 @@ int main(int argc, char *argv[])
 
   // Check if any errors occurred in the background thread.
   ec = drain_async.get();
-  if (ec) { return fail(ec); }
+  if (ec) {
+    return fail(ec);
+  }
 
   /* Only the background thread has stopped by this point. We can't be certain
   that `background` has stopped as well. Since we can't be sure what process
@@ -94,7 +96,9 @@ int main(int argc, char *argv[])
   unsigned int exit_status;
   ec = background.stop(reproc::terminate, reproc::milliseconds(5000),
                        reproc::kill, reproc::milliseconds(2000), &exit_status);
-  if (ec) { return fail(ec); }
+  if (ec) {
+    return fail(ec);
+  }
 
   return static_cast<int>(exit_status);
 }

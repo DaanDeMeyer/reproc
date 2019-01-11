@@ -56,9 +56,9 @@ int main(int argc, char *argv[])
   if (ec == reproc::errc::file_not_found) {
     std::cerr << "Program not found. Make sure it's available from the PATH.";
     return 1;
+  } else if (ec) {
+    return fail(ec);
   }
-
-  if (ec) { return fail(ec); }
 
   // Some programs wait for the input stream to be closed before continuing so
   // we close it explicitly.
@@ -85,13 +85,19 @@ int main(int argc, char *argv[])
   ec = forward.stop(reproc::wait, reproc::milliseconds(10000),
                     reproc::terminate, reproc::milliseconds(5000), reproc::kill,
                     reproc::milliseconds(2000), &exit_status);
-  if (ec) { return fail(ec); }
+  if (ec) {
+    return fail(ec);
+  }
 
   ec = drain_stdout.get();
-  if (ec) { return fail(ec); }
+  if (ec) {
+    return fail(ec);
+  }
 
   ec = drain_stderr.get();
-  if (ec) { return fail(ec); }
+  if (ec) {
+    return fail(ec);
+  }
 
   return static_cast<int>(exit_status);
 }

@@ -40,9 +40,9 @@ int main()
   if (ec == reproc::errc::file_not_found) {
     std::cerr << "cmake not found. Make sure it's available from the PATH.";
     return 1;
+  } else if (ec) {
+    return fail(ec);
   }
-
-  if (ec) { return fail(ec); }
 
   std::string output;
 
@@ -50,14 +50,18 @@ int main()
   Providing it with a `string_sink` makes it store all output is stored in
   the string passed to the string sink. */
   ec = cmake_help.drain(reproc::stream::out, reproc::string_sink(output));
-  if (ec) { return fail(ec); }
+  if (ec) {
+    return fail(ec);
+  }
 
   std::cout << output << std::flush;
 
   // You can also pass an `ostream_sink` to write the output directly to an
   // output stream such as `std::cerr`.
   ec = cmake_help.drain(reproc::stream::err, reproc::ostream_sink(std::cerr));
-  if (ec) { return fail(ec); }
+  if (ec) {
+    return fail(ec);
+  }
 
   /* It's easy to define your own sinks as well. Take a look at `sink.hpp` in
   the repository to see how `string_sink` and `ostream_sink` are declared. The
@@ -72,7 +76,9 @@ int main()
   destructor is called. */
   unsigned int exit_status = 0;
   ec = cmake_help.wait(reproc::infinite, &exit_status);
-  if (ec) { return fail(ec); }
+  if (ec) {
+    return fail(ec);
+  }
 
   return static_cast<int>(exit_status);
 }

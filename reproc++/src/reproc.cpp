@@ -7,14 +7,16 @@
 static std::error_code reproc_error_to_error_code(REPROC_ERROR error)
 {
   switch (error) {
-  case REPROC_SUCCESS: return {};
+  case REPROC_SUCCESS:
+    return {};
   // The following three errors are reproc specific and don't have a
   // corresponding OS error. Instead, we represent them through an
   // `std::error_code` with the same value as `error` in the reproc error
   // category.
   case REPROC_WAIT_TIMEOUT:
   case REPROC_STREAM_CLOSED:
-  case REPROC_PARTIAL_WRITE: return { error, reproc::error_category() };
+  case REPROC_PARTIAL_WRITE:
+    return { error, reproc::error_category() };
   default:
     // `errno` values belong to the generic category. However, on Windows we get
     // Windows specific errors which belong to the system category.
@@ -53,9 +55,13 @@ process::process(cleanup c1, reproc::milliseconds t1, cleanup c2,
 process::~process() noexcept
 {
   // No cleanup is required if the object has been moved from.
-  if (!process_) { return; }
+  if (!process_) {
+    return;
+  }
 
-  if (running_) { stop(c1_, t1_, c2_, t2_, c3_, t3_, nullptr); }
+  if (running_) {
+    stop(c1_, t1_, c2_, t2_, c3_, t3_, nullptr);
+  }
 
   reproc_destroy(process_.get());
 }
@@ -67,8 +73,9 @@ std::error_code process::start(int argc, const char *const *argv,
                                     working_directory);
 
   std::error_code ec = reproc_error_to_error_code(error);
-
-  if (!ec) { running_ = true; }
+  if (!ec) {
+    running_ = true;
+  }
 
   return ec;
 }
@@ -127,8 +134,9 @@ std::error_code process::wait(reproc::milliseconds timeout,
                                    exit_status);
 
   std::error_code ec = reproc_error_to_error_code(error);
-
-  if (!ec) { running_ = false; }
+  if (!ec) {
+    running_ = false;
+  }
 
   return ec;
 }
@@ -138,8 +146,9 @@ std::error_code process::terminate() noexcept
   REPROC_ERROR error = reproc_terminate(process_.get());
 
   std::error_code ec = reproc_error_to_error_code(error);
-
-  if (!ec) { running_ = false; }
+  if (!ec) {
+    running_ = false;
+  }
 
   return ec;
 }
@@ -149,8 +158,9 @@ std::error_code process::kill() noexcept
   REPROC_ERROR error = reproc_kill(process_.get());
 
   std::error_code ec = reproc_error_to_error_code(error);
-
-  if (!ec) { running_ = false; }
+  if (!ec) {
+    running_ = false;
+  }
 
   return ec;
 }
@@ -182,8 +192,9 @@ std::error_code process::stop(cleanup c1, reproc::milliseconds t1, cleanup c2,
                                    exit_status);
 
   std::error_code ec = reproc_error_to_error_code(error);
-
-  if (!ec) { running_ = false; }
+  if (!ec) {
+    running_ = false;
+  }
 
   return ec;
 }

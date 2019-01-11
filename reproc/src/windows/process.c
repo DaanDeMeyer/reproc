@@ -22,7 +22,9 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
   }
 
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = malloc(attribute_list_size);
-  if (!attribute_list) { return REPROC_NOT_ENOUGH_MEMORY; }
+  if (!attribute_list) {
+    return REPROC_NOT_ENOUGH_MEMORY;
+  }
 
   if (!InitializeProcThreadAttributeList(attribute_list, 1, 0,
                                          &attribute_list_size)) {
@@ -65,13 +67,23 @@ REPROC_ERROR process_create(wchar_t *command_line,
   HANDLE to_inherit[3];
   int i = 0; // to_inherit_size
 
-  if (options->stdin_handle) { to_inherit[i++] = options->stdin_handle; }
-  if (options->stdout_handle) { to_inherit[i++] = options->stdout_handle; }
-  if (options->stderr_handle) { to_inherit[i++] = options->stderr_handle; }
+  if (options->stdin_handle) {
+    to_inherit[i++] = options->stdin_handle;
+  }
+
+  if (options->stdout_handle) {
+    to_inherit[i++] = options->stdout_handle;
+  }
+
+  if (options->stderr_handle) {
+    to_inherit[i++] = options->stderr_handle;
+  }
 
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
   error = handle_inherit_list_create(to_inherit, i, &attribute_list);
-  if (error) { return error; }
+  if (error) {
+    return error;
+  }
 
   creation_flags |= EXTENDED_STARTUPINFO_PRESENT;
 
@@ -123,8 +135,10 @@ REPROC_ERROR process_create(wchar_t *command_line,
 
   if (!result) {
     switch (GetLastError()) {
-    case ERROR_FILE_NOT_FOUND: return REPROC_FILE_NOT_FOUND;
-    default: return REPROC_UNKNOWN_ERROR;
+    case ERROR_FILE_NOT_FOUND:
+      return REPROC_FILE_NOT_FOUND;
+    default:
+      return REPROC_UNKNOWN_ERROR;
     }
   }
 
@@ -140,10 +154,15 @@ REPROC_ERROR process_wait(HANDLE process, unsigned int timeout,
   assert(process);
 
   DWORD wait_result = WaitForSingleObject(process, timeout);
-  if (wait_result == WAIT_TIMEOUT) { return REPROC_WAIT_TIMEOUT; }
-  if (wait_result == WAIT_FAILED) { return REPROC_UNKNOWN_ERROR; }
+  if (wait_result == WAIT_TIMEOUT) {
+    return REPROC_WAIT_TIMEOUT;
+  } else if (wait_result == WAIT_FAILED) {
+    return REPROC_UNKNOWN_ERROR;
+  }
 
-  if (exit_status == NULL) { return REPROC_SUCCESS; }
+  if (exit_status == NULL) {
+    return REPROC_SUCCESS;
+  }
 
   // `DWORD` is a typedef to `unsigned int` on Windows so the cast is safe.
   if (!GetExitCodeProcess(process, (LPDWORD) exit_status)) {
@@ -171,7 +190,9 @@ REPROC_ERROR process_kill(HANDLE process)
 
   // We use 137 as the exit status because it is the same exit status as a
   // process that is stopped with the `SIGKILL` signal on POSIX systems.
-  if (!TerminateProcess(process, 137)) { return REPROC_UNKNOWN_ERROR; }
+  if (!TerminateProcess(process, 137)) {
+    return REPROC_UNKNOWN_ERROR;
+  }
 
   return REPROC_SUCCESS;
 }

@@ -8,7 +8,9 @@ void handle_close(HANDLE *handle)
 
   // Do nothing if `handle` is `NULL` so callers don't have to check if `handle`
   // has already been closed.
-  if (!*handle) { return; }
+  if (!*handle) {
+    return;
+  }
 
   // Avoid `CloseHandle` errors overriding other system errors.
   unsigned int last_error = GetLastError();

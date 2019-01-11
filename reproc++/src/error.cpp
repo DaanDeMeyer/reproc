@@ -50,7 +50,8 @@ bool error_category_impl::equivalent(const std::error_code &error_code,
   case reproc::errc::pipe_limit_reached:
     return error_code == std::errc::too_many_files_open ||
            error_code == std::errc::too_many_files_open_in_system;
-  case reproc::errc::interrupted: return error_code == std::errc::interrupted;
+  case reproc::errc::interrupted:
+    return error_code == std::errc::interrupted;
   case reproc::errc::process_limit_reached:
     return error_code == std::errc::resource_unavailable_try_again ||
            error_code == std::errc::too_many_files_open;
