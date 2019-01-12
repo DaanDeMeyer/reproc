@@ -1,6 +1,6 @@
 # reproc_add_library generates the pkg-config file immediately. reproc's
 # pkg-config file requires CMAKE_THREAD_LIBS_INIT to be defined so we find
-# threads before calling reproc_add_library.
+# threads before calling cddm_add_library.
 
 if(NOT DEFINED THREADS_PREFER_PTHREAD_FLAG)
   set(THREADS_PREFER_PTHREAD_FLAG ON)
