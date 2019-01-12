@@ -27,6 +27,7 @@ if(REPROC_EXAMPLES)
     reprocxx_add_example(background CXX)
     target_link_libraries(reproc++-background PRIVATE Threads::Threads)
   else()
-    message(WARNING "Threads not found. Not building all reproc++ examples.")
+    message(WARNING "Threads package not found. Not building all reproc++ \
+    examples.")
   endif()
 endif()

@@ -4,7 +4,7 @@ includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
 libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
 
 Name: reproc++
-Description: "Cross-platform C++11 library that simplifies working with external CLI applications from C++"
+Description: "Cross-platform C++11 process library"
 URL: https://github.com/DaanDeMeyer/reproc
 Version: @PROJECT_VERSION@
 Requires.private: reproc = @PROJECT_VERSION@

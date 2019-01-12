@@ -1,11 +1,10 @@
-# reproc_add_library generates the pkg-config file immediately. reproc's
-# pkg-config file requires CMAKE_THREAD_LIBS_INIT to be defined so we find
-# threads before calling cddm_add_library.
-
 if(NOT DEFINED THREADS_PREFER_PTHREAD_FLAG)
   set(THREADS_PREFER_PTHREAD_FLAG ON)
 endif()
 
+# reproc's pkg-config file requires CMAKE_THREAD_LIBS_INIT to be defined so we
+# find the Threads package before calling cddm_add_library (which generates the
+# pkg-config file).
 find_package(Threads REQUIRED)
 
 cddm_add_library(reproc C 99)
@@ -39,7 +38,7 @@ endif()
 include(CheckSymbolExists)
 
 if(MSVC)
-  # Check if STARTUPINFOEX and related functions are available.
+  # Check if `STARTUPINFOEX` and functions related to it are available.
   check_symbol_exists(InitializeProcThreadAttributeList windows.h
                       REPROC_ATTRIBUTE_LIST_FOUND)
 
@@ -52,13 +51,13 @@ if(MSVC)
     $<$<BOOL:${REPROC_ATTRIBUTE_LIST_FOUND}>:HAVE_ATTRIBUTE_LIST>
   )
 elseif(UNIX)
-  # Check if pipe2 is available.
+  # Check if `pipe2` is available.
   list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
   check_symbol_exists(pipe2 unistd.h REPROC_PIPE2_FOUND)
   list(REMOVE_AT CMAKE_REQUIRED_DEFINITIONS -1)
 
   target_compile_definitions(reproc PRIVATE
-    _GNU_SOURCE # Needed for pipe2 and kill.
+    _GNU_SOURCE # Needed for `pipe2` and `kill`.
     $<$<BOOL:${REPROC_PIPE2_FOUND}>:HAVE_PIPE2>
   )
 endif()
@@ -121,7 +120,7 @@ if(REPROC_EXAMPLES)
 
     if(REPROC_SANITIZERS)
       set_target_properties(reproc-${TARGET} PROPERTIES
-        # Hack to avoid UBSAN undefined reference errors.
+        # Hack to avoid UBSan undefined reference errors.
         LINKER_LANGUAGE CXX
       )
     endif()
