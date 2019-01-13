@@ -16,7 +16,9 @@ if(REPROC++ OR REPROC_TESTS)
   enable_language(CXX)
 endif()
 
-include(${PROJECT_SOURCE_DIR}/external/cddm.cmake)
+include(external/cddm/cddm.cmake)
+
+add_subdirectory(external)
 
 add_subdirectory(reproc)
 if(REPROC++)
