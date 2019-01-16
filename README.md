@@ -148,9 +148,9 @@ if it is not defined, reproc's build enables it before calling
 
 ### Developer
 
-- `REPROC_SANITIZERS` Build with sanitizers (default: `OFF`).
+- `REPROC_SANITIZERS`: Build with sanitizers (default: `OFF`).
 - `REPROC_TIDY`: Run clang-tidy when building (default: `OFF`).
-- `REPROC_CI` Add -Werror or equivalent to the compile flags and clang-tidy
+- `REPROC_CI`: Add -Werror or equivalent to the compile flags and clang-tidy
   (default: `OFF`).
 
 ## Documentation
