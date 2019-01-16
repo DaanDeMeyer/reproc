@@ -1,3 +1,5 @@
+enable_language(CXX)
+
 cddm_add_library(reproc++ CXX 11)
 
 target_link_libraries(reproc++ PRIVATE reproc::reproc)

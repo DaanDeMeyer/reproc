@@ -6,18 +6,13 @@ if(${CMAKE_VERSION} VERSION_LESS 3.12)
   cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 endif()
 
-project(reproc VERSION 3.1.3 LANGUAGES C)
+project(reproc VERSION 3.1.3)
 
 option(REPROC++ "Build reproc++.")
 option(REPROC_TESTS "Build tests.")
 option(REPROC_EXAMPLES "Build examples.")
 
-if(REPROC++ OR REPROC_TESTS)
-  enable_language(CXX)
-endif()
-
 include(external/cddm/cddm.cmake)
-
 add_subdirectory(external)
 
 add_subdirectory(reproc)

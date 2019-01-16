@@ -1,3 +1,5 @@
+enable_language(C)
+
 if(NOT DEFINED THREADS_PREFER_PTHREAD_FLAG)
   set(THREADS_PREFER_PTHREAD_FLAG ON)
 endif()
@@ -63,6 +65,8 @@ elseif(UNIX)
 endif()
 
 if(REPROC_TESTS)
+  enable_language(CXX)
+
   add_executable(reproc-tests "")
   cddm_add_common(reproc-tests CXX 11 tests)
 

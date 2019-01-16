@@ -1,11 +1,51 @@
-# Make sure to enable every language used before including this file!
+# CDDM (CMake Daan De Meyer)
+# Version: v0.0.1
+#
+# Description: Encapsulates common CMake configuration for cross-platform
+# C/C++ libraries.
+#
+# Features:
+# - Warnings
+#   - UNIX: -Wall, -Wextra, ...
+#   - Windows: /W4
+# - Sanitizers (optional, UNIX only)
+# - clang-tidy (optional)
+# - Automatic installation including pkg-config and CMake config files.
+# - Automatic export header generation.
+#
+# Options:
+#
+# Every option is prefixed with the upper cased project name. For example, if
+# the project is named reproc every option is prefixed with `REPROC_`.
+#
+# Installation options:
+# - `INSTALL`: Generate installation rules (default: `ON` unless
+#   `BUILD_SHARED_LIBS` is false and the project is built via
+#   `add_subdirectory`).
+# - `INSTALL_CMAKECONFIGDIR`: CMake config files installation directory
+#   (default: `${CMAKE_INSTALL_LIBDIR}/cmake`).
+# - `INSTALL_PKGCONFIG`: Install pkg-config files (default: `ON`)
+# - `INSTALL_PKGCONFIGDIR`: pkg-config files installation directory
+#   (default: `${CMAKE_INSTALL_LIBDIR}/pkgconfig`).
+#
+# Developer options:
+# - `SANITIZERS`: Build with sanitizers (default: `OFF`).
+# - `TIDY`: Run clang-tidy when building (default: `OFF`).
+# - `CI`: Add -Werror or equivalent to the compile flags and clang-tidy
+#   (default: `OFF`).
+#
+# Functions:
+# - cddm_add_common
+# - cddm_add_library
+#
+# See https://github.com/DaanDeMeyer/reproc for an example on how to use cddm.
 
 set(PNL ${PROJECT_NAME}) # PROJECT_NAME_LOWER (PNL)
 string(TOUPPER ${PROJECT_NAME} PNU) # PROJECT_NAME_UPPER (PNU)
 
 get_directory_property(${PNU}_IS_SUBDIRECTORY PARENT_DIRECTORY)
 
-### Install options ###
+### Installation options ###
 
 # Don't add libraries to the install target by default if the project is built
 # from within another project as a static library.
@@ -44,6 +84,8 @@ mark_as_advanced(
   ${PNU}_CI
 )
 
+### clang-tidy ###
+
 if(${PNU}_TIDY)
   # CMake added clang-tidy support in CMake 3.6.
   cmake_minimum_required(VERSION 3.6)
@@ -61,27 +103,12 @@ if(${PNU}_TIDY)
   endif()
 endif()
 
-if(MSVC)
-  # We encapsulate the logic in a function so the LANGUAGE variable doesn't leak
-  # into the directory scope.
-  function(enable_w4)
-    foreach(LANGUAGE C CXX)
-      if(DEFINED CMAKE_${LANGUAGE}_FLAGS)
-        string(REGEX REPLACE
-          "[-/]W[1-4]" ""
-          CMAKE_${LANGUAGE}_FLAGS
-          "${CMAKE_${LANGUAGE}_FLAGS}"
-        )
-        set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} /W4"
-            PARENT_SCOPE)
-      endif()
-    endforeach()
-  endfunction()
-  # Override the warning level for the current directory.
-  enable_w4()
-endif()
+### Functions ###
 
-# Encapsulates common configuration for a target.
+# Applies common configuration to `TARGET`. `LANGUAGE` (C or CXX) is used to
+# indicate the language of the target. `STANDARD` indicates the standard of the
+# language to use and `OUTPUT_DIRECTORY` defines where to put the resulting
+# files.
 function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   set_target_properties(${TARGET} PROPERTIES
     ${LANGUAGE}_STANDARD ${STANDARD}
@@ -108,6 +135,19 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   ### Common development flags (warnings + sanitizers + colors) ###
 
   if(MSVC)
+    if(DEFINED CMAKE_${LANGUAGE}_FLAGS)
+      # CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default which
+      # results in cl.exe warnings if we add /W4 as well. To avoid these
+      # warnings we replace /W3 with /W4 instead.
+      string(REGEX REPLACE
+        "[-/]W[1-4]" ""
+        CMAKE_${LANGUAGE}_FLAGS
+        "${CMAKE_${LANGUAGE}_FLAGS}"
+      )
+      set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} /W4"
+          PARENT_SCOPE)
+    endif()
+
     if (LANGUAGE STREQUAL "C")
       include(CheckCCompilerFlag)
       check_c_compiler_flag(/permissive- HAVE_PERMISSIVE)
@@ -131,9 +171,6 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
 
     target_link_libraries(${TARGET} PRIVATE
       -nologo # Silence MSVC linker version output.
-      # Disable incremental linking to silence warnings when rebuilding after
-      # executing ninja -t clean.
-      -INCREMENTAL:NO
     )
   else()
     target_compile_options(${TARGET} PRIVATE
@@ -174,7 +211,17 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   )
 endfunction()
 
-# Adds a new library and encapsulates common configuration for it.
+# Adds a new library with name `TARGET` and applies common configuration to it.
+# `LANGUAGE` and `STANDARD` define the language and corresponding standard used
+# by the target.
+#
+# An export header is generated and made available as follows (assuming the
+# target is named reproc):
+# - `LANGUAGE == C` => `#include <reproc/export.h>`
+# - `LANGUAGE == CXX` => `#include <reproc/export.hpp>`
+#
+# The export header for reproc includes the `REPROC_EXPORT` macro which can be
+# applied to any public API functions.
 function(cddm_add_library TARGET LANGUAGE STANDARD)
   add_library(${TARGET} "")
   add_library(${PNL}::${TARGET} ALIAS ${TARGET})
