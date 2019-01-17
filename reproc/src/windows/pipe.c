@@ -87,7 +87,7 @@ REPROC_ERROR pipe_write(HANDLE pipe, const void *buffer, unsigned int to_write,
   assert(buffer);
   assert(bytes_written);
 
-  // The cast is safe since`DWORD` is a typedef to `unsigned int` on Windows.
+  // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
   if (!WriteFile(pipe, buffer, to_write, (LPDWORD) bytes_written, NULL)) {
     switch (GetLastError()) {
     case ERROR_OPERATION_ABORTED:
