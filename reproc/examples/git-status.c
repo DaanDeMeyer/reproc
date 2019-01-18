@@ -117,7 +117,7 @@ cleanup:
 
   /* Clean up the resources allocated to the child process. Calling this
   function before calling reproc_wait (or reproc_terminate/reproc_kill)
-  successfully will result in a resource leak on POSIX systems. See the Gotcha's
+  successfully will result in a resource leak on POSIX systems. See the Gotchas
   section in the readme for more information. */
   reproc_destroy(&git_status);
 
