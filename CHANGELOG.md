@@ -1,5 +1,30 @@
 # Changelog
 
+## 4.0.0
+
+### General
+
+- Internal improvements and documentation fixes.
+
+### reproc
+
+- Added `reproc_parse` which mimics reproc++'s `process::parse`.
+- Added `reproc_drain` which mimics reproc++'s `process::drain`.
+
+  Because C doesn't support lambda's, both of these functions take a function
+  pointer and an extra context argument which is passed to the function pointer
+  each time it is called. The context argument can be used to store any data
+  needed by the given function pointer.
+
+### reproc++
+
+- Renamed the `process::read` overload which takes a parser to `process::parse`.
+
+  This breaking change was done to keep consistency with reproc where we added
+  `reproc_parse`. We couldn't add another `reproc_read` since C doesn't support
+  overloading so we made the decision to rename `process::read` to
+  `process::parse` instead.
+
 ## 3.1.3
 
 ### CMake
