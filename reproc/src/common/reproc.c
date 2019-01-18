@@ -1,6 +1,7 @@
 #include <reproc/reproc.h>
 
 #include <assert.h>
+#include <stdbool.h>
 
 REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
                          unsigned int t1, REPROC_CLEANUP c2, unsigned int t2,
@@ -43,6 +44,65 @@ REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
     if (error != REPROC_WAIT_TIMEOUT) {
       break;
     }
+  }
+
+  return error;
+}
+
+const unsigned int BUFFER_SIZE = 1024;
+
+REPROC_ERROR reproc_parse(reproc_type *process, REPROC_STREAM stream,
+                          bool (*parser)(void *context, const char *buffer,
+                                        unsigned int size),
+                          void *context)
+{
+  /* A single call to `read` might contain multiple messages. By always calling
+  `parser` once with no data before reading, we give it the chance to process
+  all previous output one by one before reading from the child process again. */
+  if (!parser(context, "", 0)) {
+    return REPROC_SUCCESS;
+  }
+
+  char buffer[BUFFER_SIZE];
+  REPROC_ERROR error = REPROC_SUCCESS;
+
+  while (true) {
+    unsigned int bytes_read = 0;
+    error = reproc_read(process, stream, buffer, BUFFER_SIZE, &bytes_read);
+    if (error) {
+      break;
+    }
+
+    // `parser` returns false to tell us to stop reading.
+    if (!parser(context, buffer, bytes_read)) {
+      break;
+    }
+  }
+
+  return error;
+}
+
+REPROC_ERROR reproc_drain(reproc_type *process, REPROC_STREAM stream,
+                          void (*sink)(void *context, const char *buffer,
+                                       unsigned int size),
+                          void *context)
+{
+  char buffer[BUFFER_SIZE];
+  REPROC_ERROR error = REPROC_SUCCESS;
+
+  while (true) {
+    unsigned int bytes_read = 0;
+    error = reproc_read(process, stream, buffer, BUFFER_SIZE, &bytes_read);
+    if (error) {
+      break;
+    }
+
+    sink(context, buffer, bytes_read);
+  }
+
+  // The child process closing the stream is not treated as an error.
+  if (error == REPROC_STREAM_CLOSED) {
+    return REPROC_SUCCESS;
   }
 
   return error;

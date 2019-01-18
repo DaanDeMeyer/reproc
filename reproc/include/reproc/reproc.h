@@ -4,6 +4,8 @@
 #include <reproc/error.h>
 #include <reproc/export.h>
 
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -148,6 +150,35 @@ REPROC_EXPORT REPROC_ERROR reproc_read(reproc_type *process,
                                        REPROC_STREAM stream, void *buffer,
                                        unsigned int size,
                                        unsigned int *bytes_read);
+
+/*!
+Calls `reproc_read` on `stream` until `parser` returns false or an error occurs.
+`parser` receives the output after each read, along with `context`.
+
+`parser` is always called once with an empty string to give the parser the
+chance to process all output from the previous call to `reproc_parse` one by
+one.
+
+See `reproc_read` for a list of possible errors.
+*/
+REPROC_EXPORT REPROC_ERROR reproc_parse(
+    reproc_type *process, REPROC_STREAM stream,
+    bool (*parser)(void *context, const char *buffer, unsigned int size),
+    void *context);
+
+/*!
+Calls `reproc_read` on `stream` until it is closed or an error occurs. `sink`
+receives the output after each read, along with `context`.
+
+Note that this method does not report `stream` being closed as an error.
+
+See `reproc_read` for a list of possible errors (except for
+`REPROC_STREAM_CLOSED`).
+*/
+REPROC_EXPORT REPROC_ERROR
+reproc_drain(reproc_type *process, REPROC_STREAM stream,
+             void (*sink)(void *context, const char *buffer, unsigned int size),
+             void *context);
 
 /*!
 Writes up to `to_write` bytes from `buffer` to the standard input (stdin) of
