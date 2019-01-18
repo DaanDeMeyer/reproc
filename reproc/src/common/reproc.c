@@ -49,7 +49,7 @@ REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
   return error;
 }
 
-const unsigned int BUFFER_SIZE = 1024;
+#define BUFFER_SIZE 1024
 
 REPROC_ERROR reproc_parse(reproc_type *process, REPROC_STREAM stream,
                           bool (*parser)(void *context, const char *buffer,
