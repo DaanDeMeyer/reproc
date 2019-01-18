@@ -134,7 +134,7 @@ public:
   ```
   */
   template <typename Parser>
-  std::error_code read(reproc::stream stream, Parser &&parser);
+  std::error_code parse(reproc::stream stream, Parser &&parser);
 
   /*!
   Calls `read` until the stream indicated by `stream` is closed or an error
@@ -202,7 +202,7 @@ private:
 };
 
 template <typename Parser>
-std::error_code process::read(reproc::stream stream, Parser &&parser)
+std::error_code process::parse(reproc::stream stream, Parser &&parser)
 {
   /* A single call to `read` might contain multiple messages. By always calling
   `parser` once with no data before reading, we give it the chance to process
