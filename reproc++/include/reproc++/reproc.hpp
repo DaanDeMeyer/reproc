@@ -121,11 +121,11 @@ public:
                                        unsigned int *bytes_read) noexcept;
 
   /*!
-  Calls `read` on `stream` until the provided parser returns false or an error
-  occurs. `parser` receives the output after each read.
+  Calls `read` on `stream` until `parser` returns false or an error occurs.
+  `parser` receives the output after each read.
 
   `parser` is always called once with an empty string to give the parser the
-  chance to process all output from the previous call to `read` one by one.
+  chance to process all output from the previous call to `parse` one by one.
 
   `Parser` expects the following signature:
 
@@ -137,11 +137,10 @@ public:
   std::error_code parse(reproc::stream stream, Parser &&parser);
 
   /*!
-  Calls `read` until the stream indicated by `stream` is closed or an error
-  occurs. `sink` receives the output after each read.
+  Calls `read` on `stream` until it is closed or an error occurs. `sink`
+  receives the output after each read.
 
-  Note that this method does not report the output stream being closed as an
-  error.
+  Note that this method does not report `stream` being closed as an error.
 
   `Sink` expects the following signature:
 
