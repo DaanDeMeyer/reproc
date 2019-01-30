@@ -9,7 +9,8 @@
 ### reproc
 
 - Added `reproc_parse` which mimics reproc++'s `process::parse`.
-- Added `reproc_drain` which mimics reproc++'s `process::drain`.
+- Added `reproc_drain` which mimics reproc++'s `process::drain` along with an
+  example that explains how to use it.
 
   Because C doesn't support lambda's, both of these functions take a function
   pointer and an extra context argument which is passed to the function pointer
@@ -24,6 +25,13 @@
   `reproc_parse`. We couldn't add another `reproc_read` since C doesn't support
   overloading so we made the decision to rename `process::read` to
   `process::parse` instead.
+
+- Changed `process::drain` sinks to return a boolean instead of `void`.
+
+  Before this change, the only way to stop draining a process was to throw an
+  exception from the sink. By changing sinks to return `bool`, a sink can tell
+  `drain` to stop if an error occurs by returning `false`. The error itself can
+  be stored in the sink if needed.
 
 ## 3.1.3
 
