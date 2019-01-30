@@ -129,4 +129,5 @@ if(REPROC_EXAMPLES)
   endfunction()
 
   reproc_add_example(git-status C)
+  reproc_add_example(drain C)
 endif()
