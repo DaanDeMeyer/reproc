@@ -124,7 +124,7 @@ public:
   Calls `read` on `stream` until `parser` returns false or an error occurs.
   `parser` receives the output after each read.
 
-  `parser` is always called once with an empty string to give the parser the
+  `parser` is always called once with the empty string to give the parser the
   chance to process all output from the previous call to `parse` one by one.
 
   `Parser` expects the following signature:
@@ -137,15 +137,16 @@ public:
   std::error_code parse(reproc::stream stream, Parser &&parser);
 
   /*!
-  Calls `read` on `stream` until it is closed or an error occurs. `sink`
-  receives the output after each read.
+  Calls `read` on `stream` until it is closed, `sink` returns false or an error
+  occurs. `sink` receives the output after each read.
 
-  Note that this method does not report `stream` being closed as an error.
+  Note that this method does not report `stream` being closed as an error. This
+  is also the main difference with `parse`.
 
   `Sink` expects the following signature:
 
   ```c++
-  void sink(const char *buffer, unsigned int size);
+  bool sink(const char *buffer, unsigned int size);
   ```
 
   For examples of sinks, see `sink.hpp`
@@ -242,7 +243,10 @@ std::error_code process::drain(reproc::stream stream, Sink &&sink)
       break;
     }
 
-    sink(buffer, bytes_read);
+    // `sink` return false to tell us to stop reading.
+    if (!sink(buffer, bytes_read)) {
+      break;
+    }
   }
 
   // The child process closing the stream is not treated as an error.

@@ -17,7 +17,7 @@ class string_sink
 public:
   REPROCXX_EXPORT string_sink(std::string &out) noexcept;
 
-  REPROCXX_EXPORT void operator()(const char *buffer, unsigned int size);
+  REPROCXX_EXPORT bool operator()(const char *buffer, unsigned int size);
 };
 
 /*! Forwards the entire output of a child process to `out`. */
@@ -28,7 +28,7 @@ class ostream_sink
 public:
   REPROCXX_EXPORT ostream_sink(std::ostream &out) noexcept;
 
-  REPROCXX_EXPORT void operator()(const char *buffer, unsigned int size);
+  REPROCXX_EXPORT bool operator()(const char *buffer, unsigned int size);
 };
 
 } // namespace reproc

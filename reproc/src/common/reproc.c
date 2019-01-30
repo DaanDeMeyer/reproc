@@ -83,7 +83,7 @@ REPROC_ERROR reproc_parse(reproc_type *process, REPROC_STREAM stream,
 }
 
 REPROC_ERROR reproc_drain(reproc_type *process, REPROC_STREAM stream,
-                          void (*sink)(void *context, const char *buffer,
+                          bool (*sink)(void *context, const char *buffer,
                                        unsigned int size),
                           void *context)
 {
@@ -97,7 +97,10 @@ REPROC_ERROR reproc_drain(reproc_type *process, REPROC_STREAM stream,
       break;
     }
 
-    sink(context, buffer, bytes_read);
+    // `sink` return false to tell us to stop reading.
+    if (!sink(context, buffer, bytes_read)) {
+      break;
+    }
   }
 
   // The child process closing the stream is not treated as an error.
