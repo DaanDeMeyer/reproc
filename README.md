@@ -93,7 +93,6 @@ build and install reproc to your system yourself or install reproc via a package
 manager. reproc is available in the following package repositories:
 
 - Arch User Repository (<https://aur.archlinux.org/packages/reproc>)
-- Vcpkg (<https://github.com/Microsoft/vcpkg>)
 
 After installing reproc to the system your build system will have to find it.
 reproc provides both CMake config files and pkg-config files to simplify finding
