@@ -53,12 +53,12 @@ REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
 
 REPROC_ERROR reproc_parse(reproc_type *process, REPROC_STREAM stream,
                           bool (*parser)(void *context, const char *buffer,
-                                        unsigned int size),
+                                         unsigned int size),
                           void *context)
 {
-  /* A single call to `read` might contain multiple messages. By always calling
-  `parser` once with no data before reading, we give it the chance to process
-  all previous output one by one before reading from the child process again. */
+  // A single call to `read` might contain multiple messages. By always calling
+  // `parser` once with no data before reading, we give it the chance to process
+  // all previous output one by one before reading from the child process again.
   if (!parser(context, "", 0)) {
     return REPROC_SUCCESS;
   }

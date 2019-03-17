@@ -4,9 +4,9 @@ if(NOT DEFINED THREADS_PREFER_PTHREAD_FLAG)
   set(THREADS_PREFER_PTHREAD_FLAG ON)
 endif()
 
-# reproc's pkg-config file requires CMAKE_THREAD_LIBS_INIT to be defined so we
-# find the Threads package before calling cddm_add_library (which generates the
-# pkg-config file).
+# reproc's pkg-config file requires `CMAKE_THREAD_LIBS_INIT` to be defined so we
+# find the Threads package (which initializes `CMAKE_THREAD_LIBS_INIT`) before
+# calling `cddm_add_library` (which generates the pkg-config file).
 find_package(Threads REQUIRED)
 
 cddm_add_library(reproc C 99)
@@ -46,11 +46,11 @@ if(MSVC)
 
   target_compile_definitions(reproc PRIVATE
     _CRT_SECURE_NO_WARNINGS
+    $<$<BOOL:${REPROC_ATTRIBUTE_LIST_FOUND}>:HAVE_ATTRIBUTE_LIST>
     # Remove unneeded stuff from windows.h.
     WIN32_LEAN_AND_MEAN
     VC_EXTRALEAN
     NOMINMAX
-    $<$<BOOL:${REPROC_ATTRIBUTE_LIST_FOUND}>:HAVE_ATTRIBUTE_LIST>
   )
 elseif(UNIX)
   # Check if `pipe2` is available.

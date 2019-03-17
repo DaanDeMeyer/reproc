@@ -2,4 +2,9 @@
 
 #include <errno.h>
 
-unsigned int reproc_system_error(void) { return (unsigned int) errno; }
+unsigned int reproc_system_error(void)
+{
+  // Only positive numbers are valid `errno` values so casting to unsigned int
+  // is safe.
+  return (unsigned int) errno;
+}

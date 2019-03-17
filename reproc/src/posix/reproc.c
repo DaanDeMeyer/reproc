@@ -25,6 +25,8 @@ static int exec_process(const void *context)
   return 0;
 }
 
+// Maps errno values returned by `exec_process` and not handled by
+// `process_create` to reproc error values.
 static REPROC_ERROR exec_map_error(int error)
 {
   switch (error) {
@@ -75,6 +77,9 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
+  // Create the pipes used to redirect the child process' stdin/stdout/stderr to
+  // the parent process.
+
   error = pipe_init(&child_stdin, &process->in);
   if (error) {
     goto cleanup;
@@ -98,12 +103,14 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
     // We put the child process in its own process group which is needed by
     // `wait_timeout` in `process.c` (see `wait_timeout` for extra information).
     .process_group = 0,
-    // Don't return early to make sure we receive errors reported by `exec`.
+    // Don't return early to make sure we receive errors reported by `execve`.
     .return_early = false,
+    // Use vfork to increase performance when forking from a large parent
+    // process (`vfork` avoids copying the entire page table).
     .vfork = true
   };
 
-  // Fork a child process and call `exec`.
+  // Fork a child process and call `execve`.
   error = process_create(exec_process, argv, &options, &process->id);
   if (error == REPROC_UNKNOWN_ERROR) {
     error = exec_map_error(errno);

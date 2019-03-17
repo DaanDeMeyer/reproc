@@ -36,7 +36,7 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
   REPROC_ERROR error = REPROC_SUCCESS;
 
   // While we already make sure the child process only inherits the child pipe
-  // handles using `STARTUPINFOEXW` (see `process_utils.c`) we still disable
+  // handles using `STARTUPINFOEXW` (see `process.c`) we still disable
   // inheritance of the parent pipe handles to lower the chance of child
   // processes not created by reproc unintentionally inheriting these handles.
   error = pipe_init(&child_stdin, true, &process->in, false);

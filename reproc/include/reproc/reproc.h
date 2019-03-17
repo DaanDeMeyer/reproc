@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-/*! Used to store information about a child process. We define reproc_type in
+/*! Used to store information about a child process. We define `reproc_type` in
 the header file so it can be allocated on the stack but its internals are prone
 to change and should **NOT** be depended on. */
 #if defined(_WIN32)
@@ -32,9 +32,9 @@ struct reproc_type {
 };
 #endif
 
-// We can't name the struct reproc because reproc++'s namespace is already named
-// reproc. reproc_t can't be used either because the _t suffix is reserved by
-// POSIX so we fall back to reproc_type instead.
+// We can't name the struct `reproc` because reproc++'s namespace is already
+// named `reproc`. `reproc_t` can't be used either because the _t suffix is
+// reserved by POSIX so we fall back to `reproc_type` instead.
 typedef struct reproc_type reproc_type;
 
 /*! Stream identifiers used to indicate which stream to act on. */
