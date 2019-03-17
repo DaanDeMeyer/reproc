@@ -155,7 +155,8 @@ if it is not defined, reproc's build enables it before calling
 ## Documentation
 
 Each function and class is documented extensively in its header file. Examples
-can be found in the examples subdirectory of reproc and reproc++.
+can be found in the examples subdirectory of [reproc](reproc/examples) and
+[reproc++](reproc++/examples).
 
 ## Error handling
 
@@ -225,8 +226,8 @@ Different threads can read from or write to different streams at the same time.
 This is a valid approach when you want to write to stdin and read from stdout in
 parallel.
 
-Look at the [forward](examples/reproc++/forward.cpp) and
-[background](examples/reproc++/background.cpp) examples to see examples of how
+Look at the [forward](reproc++/examples/forward.cpp) and
+[background](reproc++/examples/background.cpp) examples to see examples of how
 to work with reproc from multiple threads.
 
 ## Gotchas
