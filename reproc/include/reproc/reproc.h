@@ -13,8 +13,8 @@ extern "C" {
 /*! Used to store information about a child process. We define `reproc_type` in
 the header file so it can be allocated on the stack but its internals are prone
 to change and should **NOT** be depended on. */
-#if defined(_WIN32)
 struct reproc_type {
+#if defined(_WIN32)
   // unsigned long = DWORD
   unsigned long id;
   // void * = HANDLE
@@ -22,15 +22,13 @@ struct reproc_type {
   void *in;
   void *out;
   void *err;
-};
 #else
-struct reproc_type {
   int id;
   int in;
   int out;
   int err;
-};
 #endif
+};
 
 // We can't name the struct `reproc` because reproc++'s namespace is already
 // named `reproc`. `reproc_t` can't be used either because the _t suffix is
