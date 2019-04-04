@@ -6,7 +6,7 @@ if(${CMAKE_VERSION} VERSION_LESS 3.12)
   cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 endif()
 
-project(reproc VERSION 4.0.0)
+project(reproc VERSION 5.0.0)
 
 option(REPROC++ "Build reproc++.")
 option(REPROC_TESTS "Build tests.")
