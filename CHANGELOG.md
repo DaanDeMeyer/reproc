@@ -1,5 +1,62 @@
 # Changelog
 
+## 5.0.0
+
+### General
+
+- Added and rewrote implementation documentation.
+
+### CMake
+
+- Removed namespace from reproc's targets
+
+  To link against reproc or reproc++, you now have to link against the target
+  without a namespace prefix:
+
+  ```cmake
+  find_package(reproc) # or add_subdirectory(external/reproc)
+  target_link_libraries(myapp PRIVATE reproc)
+
+  find_package(reproc++) # or add_subdirectory(external/reproc++)
+  target_link_libraries(myapp PRIVATE reproc++)
+  ```
+
+  This change was made because of a change in cddm (a collection of CMake
+  functions to make setting up new projects easier) that removed namespacing and
+  aliases of library targets in favor of namespacing within the target name
+  itself. This change was made because the original target can still conflict
+  with other targets even after adding an alias. This can cause problems when
+  using generic names for targets inside the library itself. An example
+  clarifies the problem:
+
+  Imagine reproc added a target for working with processes asynchronously. In
+  the previous naming scheme, we'd do the following in reproc's CMake build
+  files:
+
+  ```cmake
+  add_library(async "")
+  add_library(reproc::async ALIAS async)
+  ```
+
+  However, there's a non-negligible chance that someone using reproc might also
+  have a target named async which would result in a conflict when using reproc
+  with `add_subdirectory` since there'd be two targets with the same name. With
+  the new naming scheme, we'd do the following instead:
+
+  ```cmake
+  add_library(reproc-async "")
+  ```
+
+  This has almost zero chance of conflicting with user's target names. The
+  advantage is that with this scheme we can use common target names without
+  conflicting with user's target names which was not the case with the previous
+  naming scheme.
+
+### reproc
+
+- Removed undefined behaviour in Windows implementation caused by casting an
+  int to an unsigned int.
+
 ## 4.0.0
 
 ### General
