@@ -111,8 +111,8 @@ After building reproc as part of your project or finding a system installed
 reproc, you can link against it from within your CMakeLists.txt file as follows:
 
 ```cmake
-target_link_libraries(myapp reproc::reproc) # Link against reproc.
-target_link_libraries(myapp reproc::reproc++) # Link against reproc++.
+target_link_libraries(myapp reproc) # Link against reproc.
+target_link_libraries(myapp reproc++) # Link against reproc++.
 ```
 
 ## Dependencies

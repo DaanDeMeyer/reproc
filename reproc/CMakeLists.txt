@@ -70,7 +70,7 @@ if(REPROC_TESTS)
   add_executable(reproc-tests "")
   cddm_add_common(reproc-tests CXX 11 tests)
 
-  target_link_libraries(reproc-tests PRIVATE reproc::reproc doctest::doctest)
+  target_link_libraries(reproc-tests PRIVATE reproc doctest::doctest)
   set_target_properties(reproc-tests PROPERTIES OUTPUT_NAME tests)
 
   target_sources(reproc-tests PRIVATE
@@ -116,7 +116,7 @@ if(REPROC_EXAMPLES)
     add_executable(reproc-${TARGET} "")
     cddm_add_common(reproc-${TARGET} C 99 examples)
 
-    target_link_libraries(reproc-${TARGET} PRIVATE reproc::reproc)
+    target_link_libraries(reproc-${TARGET} PRIVATE reproc)
     target_sources(reproc-${TARGET} PRIVATE examples/${TARGET}.c)
     set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
 

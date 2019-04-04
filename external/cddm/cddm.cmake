@@ -1,5 +1,5 @@
 # CDDM (CMake Daan De Meyer)
-# Version: v0.0.1
+# Version: v0.0.2
 #
 # Description: Encapsulates common CMake configuration for cross-platform
 # C/C++ libraries.
@@ -224,7 +224,6 @@ endfunction()
 # applied to any public API functions.
 function(cddm_add_library TARGET LANGUAGE STANDARD)
   add_library(${TARGET} "")
-  add_library(${PNL}::${TARGET} ALIAS ${TARGET})
   cddm_add_common(${TARGET} ${LANGUAGE} ${STANDARD} lib)
 
   # Enable -fvisibility=hidden and -fvisibility-inlines-hidden (if applicable).
@@ -314,7 +313,6 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
     install(
       EXPORT ${TARGET}-targets
       FILE ${TARGET}-targets.cmake
-      NAMESPACE ${PROJECT_NAME}::
       DESTINATION ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
     )
 
