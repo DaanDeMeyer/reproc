@@ -1,4 +1,4 @@
-dist: trusty
+dist: xenial
 # We use the generic language to prevent Travis from overwriting the CC and CXX
 # environment variables. See https://stackoverflow.com/questions/35110123/travis-ci-with-c14-and-linux.
 language: generic
@@ -66,11 +66,11 @@ script:
       -DREPROC++=ON
       -DREPROC_TESTS=ON
       -DREPROC_EXAMPLES=ON
-      -DREPROC_CI=ON
+      -DREPROC_WARNINGS_AS_ERRORS=ON
       -DREPROC_TIDY=$REPROC_TIDY
       -DREPROC_SANITIZERS=ON
   - cmake --build . -- -j 2
-  - cmake --build . --target reproc-run-tests
+  - cmake --build . --target test
   # Make sure the examples don't crash or return a non-zero exit code.
   - ./reproc/examples/git-status > /dev/null
   - ./reproc++/examples/cmake-help > /dev/null

@@ -1,5 +1,5 @@
 # CDDM (CMake Daan De Meyer)
-# Version: v0.0.2
+# Version: v0.0.5
 #
 # Description: Encapsulates common CMake configuration for cross-platform
 # C/C++ libraries.
@@ -31,21 +31,25 @@
 # Developer options:
 # - `SANITIZERS`: Build with sanitizers (default: `OFF`).
 # - `TIDY`: Run clang-tidy when building (default: `OFF`).
-# - `CI`: Add -Werror or equivalent to the compile flags and clang-tidy
-#   (default: `OFF`).
+# - `WARNINGS_AS_ERRORS`: Add -Werror or equivalent to the compile flags and
+#   clang-tidy (default: `OFF`).
 #
 # Functions:
-# - cddm_add_common
-# - cddm_add_library
+# - `cddm_add_common`
+# - `cddm_add_library`
 #
 # See https://github.com/DaanDeMeyer/reproc for an example on how to use cddm.
+#
+# NOTE: All languages used have to be enabled before including cddm.
+
+cmake_minimum_required(VERSION 3.12)
 
 set(PNL ${PROJECT_NAME}) # PROJECT_NAME_LOWER (PNL)
 string(TOUPPER ${PROJECT_NAME} PNU) # PROJECT_NAME_UPPER (PNU)
 
-get_directory_property(${PNU}_IS_SUBDIRECTORY PARENT_DIRECTORY)
-
 ### Installation options ###
+
+get_directory_property(${PNU}_IS_SUBDIRECTORY PARENT_DIRECTORY)
 
 # Don't add libraries to the install target by default if the project is built
 # from within another project as a static library.
@@ -55,9 +59,11 @@ else()
   option(${PNU}_INSTALL "Generate installation rules." ON)
 endif()
 
-option(${PNU}_INSTALL_PKGCONFIG "Install pkg-config files." ON)
+mark_as_advanced(${PNU}_INSTALL)
 
 include(GNUInstallDirs)
+
+option(${PNU}_INSTALL_PKGCONFIG "Install pkg-config files." ON)
 
 set(${PNU}_INSTALL_CMAKECONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake
     CACHE STRING "CMake config files installation directory.")
@@ -75,26 +81,22 @@ mark_as_advanced(
 
 option(${PNU}_TIDY "Run clang-tidy when building.")
 option(${PNU}_SANITIZERS "Build with sanitizers.")
-option(${PNU}_CI "Add -Werror or equivalent to the compile flags and \
-clang-tidy.")
+option(${PNU}_WARNINGS_AS_ERRORS "Add -Werror or equivalent to the compile flags and clang-tidy.")
 
 mark_as_advanced(
   ${PNU}_TIDY
   ${PNU}_SANITIZERS
-  ${PNU}_CI
+  ${PNU}_WARNINGS_AS_ERRORS
 )
 
 ### clang-tidy ###
 
 if(${PNU}_TIDY)
-  # CMake added clang-tidy support in CMake 3.6.
-  cmake_minimum_required(VERSION 3.6)
   find_program(${PNU}_CLANG_TIDY_PROGRAM clang-tidy)
   mark_as_advanced(${PNU}_CLANG_TIDY_PROGRAM)
 
   if(${PNU}_CLANG_TIDY_PROGRAM)
-    # Treat clang-tidy warnings as errors when on CI.
-    if(${PNU}_CI)
+    if(${PNU}_WARNINGS_AS_ERRORS)
       set(${PNU}_CLANG_TIDY_PROGRAM
           ${${PNU}_CLANG_TIDY_PROGRAM} -warnings-as-errors=*)
     endif()
@@ -103,6 +105,49 @@ if(${PNU}_TIDY)
   endif()
 endif()
 
+### Global Setup ###
+
+foreach(LANGUAGE IN ITEMS C CXX)
+  if(NOT LANGUAGE IN_LIST ENABLED_LANGUAGES)
+    continue()
+  endif()
+
+  if(MSVC)
+    # CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default which
+    # results in cl.exe warnings if we add /W4 as well. To avoid these
+    # warnings we replace /W3 with /W4 instead.
+    string(REGEX REPLACE
+      "[-/]W[1-4]" ""
+      CMAKE_${LANGUAGE}_FLAGS
+      "${CMAKE_${LANGUAGE}_FLAGS}"
+    )
+    set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} /W4")
+
+    if(LANGUAGE STREQUAL "C")
+      include(CheckCCompilerFlag)
+      check_c_compiler_flag(/permissive- ${LANGUAGE}_HAVE_PERMISSIVE)
+    else()
+      include(CheckCXXCompilerFlag)
+      check_cxx_compiler_flag(/permissive- ${LANGUAGE}_HAVE_PERMISSIVE)
+    endif()
+  endif()
+
+  if(${PNU}_SANITIZERS)
+    if(MSVC)
+      message(FATAL_ERROR "Building with sanitizers is not supported when using the Visual C++ toolchain.")
+    endif()
+
+    if(NOT ${CMAKE_${LANGUAGE}_COMPILER_ID} MATCHES GNU|Clang)
+      message(FATAL_ERROR "Building with sanitizers is not supported when using the ${CMAKE_${LANGUAGE}_COMPILER_ID} compiler.")
+    endif()
+  endif()
+endforeach()
+
+### Includes ###
+
+include(GenerateExportHeader)
+include(CMakePackageConfigHelpers)
+
 ### Functions ###
 
 # Applies common configuration to `TARGET`. `LANGUAGE` (C or CXX) is used to
@@ -110,18 +155,22 @@ endif()
 # language to use and `OUTPUT_DIRECTORY` defines where to put the resulting
 # files.
 function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
+  if(LANGUAGE STREQUAL "C")
+    target_compile_features(${TARGET} PUBLIC c_std_${STANDARD})
+  else()
+    target_compile_features(${TARGET} PUBLIC cxx_std_${STANDARD})
+  endif()
+
   set_target_properties(${TARGET} PROPERTIES
-    ${LANGUAGE}_STANDARD ${STANDARD}
-    ${LANGUAGE}_STANDARD_REQUIRED ON
     ${LANGUAGE}_EXTENSIONS OFF
 
     # Only one of these is actually used per target but instead of passing the
     # type of target to the function and setting only the appropriate property
     # we just set all of them to avoid lots of if checks and an extra function
     # parameter.
-    RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
-    ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
-    LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
+    RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
+    ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
+    LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
   )
 
   if(${PNU}_TIDY AND ${PNU}_CLANG_TIDY_PROGRAM)
@@ -135,31 +184,10 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   ### Common development flags (warnings + sanitizers + colors) ###
 
   if(MSVC)
-    if(DEFINED CMAKE_${LANGUAGE}_FLAGS)
-      # CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default which
-      # results in cl.exe warnings if we add /W4 as well. To avoid these
-      # warnings we replace /W3 with /W4 instead.
-      string(REGEX REPLACE
-        "[-/]W[1-4]" ""
-        CMAKE_${LANGUAGE}_FLAGS
-        "${CMAKE_${LANGUAGE}_FLAGS}"
-      )
-      set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} /W4"
-          PARENT_SCOPE)
-    endif()
-
-    if (LANGUAGE STREQUAL "C")
-      include(CheckCCompilerFlag)
-      check_c_compiler_flag(/permissive- HAVE_PERMISSIVE)
-    else()
-      include(CheckCXXCompilerFlag)
-      check_cxx_compiler_flag(/permissive- HAVE_PERMISSIVE)
-    endif()
-
     target_compile_options(${TARGET} PRIVATE
       /nologo # Silence MSVC compiler version output.
-      $<$<BOOL:${${PNU}_CI}>:/WX> # -Werror
-      $<$<BOOL:${HAVE_PERMISSIVE}>:/permissive->
+      $<$<BOOL:${${PNU}_WARNINGS_AS_ERRORS}>:/WX> # -Werror
+      $<$<BOOL:${${LANGUAGE}_HAVE_PERMISSIVE}>:/permissive->
     )
 
     if(NOT STANDARD STREQUAL "90")
@@ -180,21 +208,11 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       -Wshadow
       -Wconversion
       -Wsign-conversion
-      $<$<BOOL:${${PNU}_CI}>:-Werror>
+      $<$<BOOL:${${PNU}_WARNINGS_AS_ERRORS}>:-Werror>
     )
   endif()
 
   if(${PNU}_SANITIZERS)
-    if(MSVC)
-      message(FATAL_ERROR "Building with sanitizers is not supported when \
-      using the Visual C++ toolchain.")
-    endif()
-
-    if(NOT ${CMAKE_${LANGUAGE}_COMPILER_ID} MATCHES GNU|Clang)
-      message(FATAL_ERROR "Building with sanitizers is not supported when \
-      using the ${CMAKE_${LANGUAGE}_COMPILER_ID} compiler.")
-    endif()
-
     target_compile_options(${TARGET} PRIVATE
       -fsanitize=address,undefined
     )
@@ -223,7 +241,7 @@ endfunction()
 # The export header for reproc includes the `REPROC_EXPORT` macro which can be
 # applied to any public API functions.
 function(cddm_add_library TARGET LANGUAGE STANDARD)
-  add_library(${TARGET} "")
+  add_library(${TARGET})
   cddm_add_common(${TARGET} ${LANGUAGE} ${STANDARD} lib)
 
   # Enable -fvisibility=hidden and -fvisibility-inlines-hidden (if applicable).
@@ -242,17 +260,11 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
     set(HEADER_EXT hpp)
   endif()
 
-  # CMake's GenerateExportHeader only recently learned to support C projects.
-  if(CMAKE_VERSION VERSION_LESS "3.12")
-    enable_language(CXX)
-  endif()
-
   # Generate export headers. We generate export headers using CMake since
   # different export files are required depending on whether a library is shared
   # or static and we can't determine whether a library is shared or static from
   # the export header without requiring the user to add a #define which we want
   # to avoid.
-  include(GenerateExportHeader)
   generate_export_header(${TARGET}
     BASE_NAME ${EXPORT_MACRO_UPPER}
     EXPORT_FILE_NAME
@@ -278,7 +290,6 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   # Each library is installed separately (with separate config files).
 
   if(${PNU}_INSTALL)
-    include(GNUInstallDirs)
 
     ## Headers
 
@@ -315,8 +326,6 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
       FILE ${TARGET}-targets.cmake
       DESTINATION ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
     )
-
-    include(CMakePackageConfigHelpers)
 
     write_basic_package_version_file(
       ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake

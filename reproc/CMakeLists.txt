@@ -1,5 +1,3 @@
-enable_language(C)
-
 if(NOT DEFINED THREADS_PREFER_PTHREAD_FLAG)
   set(THREADS_PREFER_PTHREAD_FLAG ON)
 endif()
@@ -65,59 +63,39 @@ elseif(UNIX)
 endif()
 
 if(REPROC_TESTS)
-  enable_language(CXX)
-
-  add_executable(reproc-tests "")
-  cddm_add_common(reproc-tests CXX 11 tests)
-
-  target_link_libraries(reproc-tests PRIVATE reproc doctest::doctest)
-  set_target_properties(reproc-tests PROPERTIES OUTPUT_NAME tests)
+  target_link_libraries(reproc-tests PRIVATE reproc)
 
   target_sources(reproc-tests PRIVATE
-    tests/impl.cpp
     tests/read-write.cpp
     tests/stop.cpp
     tests/working-directory.cpp
   )
 
-  ### Helper programs ###
-
   function(reproc_add_test_helper TARGET)
-    add_executable(reproc-${TARGET} tests/resources/${TARGET}.cpp)
-    cddm_add_common(reproc-${TARGET} CXX 11 tests/resources)
+    add_executable(reproc-${TARGET} resources/${TARGET}.cpp)
+
+    cddm_add_common(reproc-${TARGET} CXX 11 resources)
+    # Remove reproc prefix in resulting filename since namespacing doesn't
+    # matter for the filename.
     set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
 
-    string(TOUPPER ${TARGET} TARGET_UPPER_CASE)
-    # Pass paths as compile time parameters so tests can be run from any
-    # directory without hardcoding the path in the tests which differs for each
-    # user.
-    target_compile_definitions(reproc-tests PRIVATE
-      ${TARGET_UPPER_CASE}_PATH="$<TARGET_FILE:reproc-${TARGET}>"
-      ${TARGET_UPPER_CASE}_DIR="$<TARGET_FILE_DIR:reproc-${TARGET}>"
-    )
+    # Build the helper executable as part of reproc-tests build.
     add_dependencies(reproc-tests reproc-${TARGET})
   endfunction()
 
+  # Helper binaries required by reproc's tests.
   reproc_add_test_helper(stdout)
   reproc_add_test_helper(stderr)
   reproc_add_test_helper(infinite)
   reproc_add_test_helper(noop)
-
-  add_custom_target(
-    reproc-run-tests
-    COMMAND $<TARGET_FILE:reproc-tests> --force-colors=true
-  )
-
-  add_dependencies(reproc-run-tests reproc-tests)
 endif()
 
 if(REPROC_EXAMPLES)
   function(reproc_add_example TARGET)
-    add_executable(reproc-${TARGET} "")
-    cddm_add_common(reproc-${TARGET} C 99 examples)
+    add_executable(reproc-${TARGET} examples/${TARGET}.c)
 
+    cddm_add_common(reproc-${TARGET} C 99 examples)
     target_link_libraries(reproc-${TARGET} PRIVATE reproc)
-    target_sources(reproc-${TARGET} PRIVATE examples/${TARGET}.c)
     set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
 
     if(REPROC_SANITIZERS)

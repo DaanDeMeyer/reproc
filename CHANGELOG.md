@@ -5,10 +5,26 @@
 ### General
 
 - Added and rewrote implementation documentation.
+- General refactoring and simplification of the source code.
 
 ### CMake
 
-- Removed namespace from reproc's targets
+- reproc's test executable is now registered with ctest if `REPROC_TESTS` has
+  been enabled.
+
+- Raised minimum CMake version to 3.12.
+
+  Minimum version of CMake in [cddm](https://github.com/DaanDeMeyer/cddm) was
+  raised so reproc's minimum CMake version was raised as well. cddm was moved to
+  3.12 to allow removing some hacks (most notably having to enable C++ to use
+  the GenerateExportHeader module for C projects).
+
+- `REPROC_CI` was renamed to `REPROC_WARNINGS_AS_ERRORS`.
+
+  This is a side effect of upgrading cddm. The variable was renamed in cddm to
+  more clearly indicate its purpose.
+
+- Removed namespace from reproc's targets.
 
   To link against reproc or reproc++, you now have to link against the target
   without a namespace prefix:
@@ -54,8 +70,8 @@
 
 ### reproc
 
-- Removed undefined behaviour in Windows implementation caused by casting an
-  int to an unsigned int.
+- Removed undefined behaviour in Windows implementation caused by casting an int
+  to an unsigned int.
 
 ## 4.0.0
 

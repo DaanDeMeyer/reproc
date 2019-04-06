@@ -42,8 +42,8 @@ before_build:
   - call %VCVARSALL% %PLATFORM%
   - mkdir build
   - cd build
-  # Build reproc as a shared library so CI verifies all the necessary symbols
-  # are exported from the dll's.
+  # Build reproc as a shared library to verify all the necessary symbols are
+  # exported from the dll's.
   - cmake ..
       -G Ninja
       -DCMAKE_BUILD_TYPE=Debug
@@ -51,7 +51,7 @@ before_build:
       -DREPROC++=ON
       -DREPROC_TESTS=ON
       -DREPROC_EXAMPLES=ON
-      -DREPROC_CI=ON
+      -DREPROC_WARNINGS_AS_ERRORS=ON
       -DREPROC_TIDY=ON
 
 build_script: cmake --build .
@@ -62,7 +62,7 @@ before_test:
   - set PATH=%APPVEYOR_BUILD_FOLDER%/build/reproc++/lib;%PATH%
 
 test_script:
-  - cmake --build . --target reproc-run-tests
+  - cmake --build . --target test
   # Make sure the examples don't crash or return a non-zero exit code.
   - .\reproc\examples\git-status >NUL
   - .\reproc++\examples\\cmake-help >NUL
