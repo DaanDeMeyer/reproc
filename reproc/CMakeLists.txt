@@ -8,6 +8,7 @@ endif()
 find_package(Threads REQUIRED)
 
 cddm_add_library(reproc C 99)
+
 target_link_libraries(reproc PRIVATE Threads::Threads)
 
 target_sources(reproc PRIVATE
@@ -72,11 +73,10 @@ if(REPROC_TESTS)
   )
 
   function(reproc_add_test_helper TARGET)
-    add_executable(reproc-${TARGET} resources/${TARGET}.cpp)
+    add_executable(reproc-${TARGET})
 
     cddm_add_common(reproc-${TARGET} CXX 11 resources)
-    # Remove reproc prefix in resulting filename since namespacing doesn't
-    # matter for the filename.
+    target_sources(reproc-${TARGET} PRIVATE resources/${TARGET}.cpp)
     set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
 
     # Build the helper executable as part of reproc-tests build.
@@ -92,9 +92,10 @@ endif()
 
 if(REPROC_EXAMPLES)
   function(reproc_add_example TARGET)
-    add_executable(reproc-${TARGET} examples/${TARGET}.c)
+    add_executable(reproc-${TARGET})
 
     cddm_add_common(reproc-${TARGET} C 99 examples)
+    target_sources(reproc-${TARGET} PRIVATE examples/${TARGET}.c)
     target_link_libraries(reproc-${TARGET} PRIVATE reproc)
     set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
 
