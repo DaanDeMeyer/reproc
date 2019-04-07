@@ -40,11 +40,11 @@ install:
 before_build:
   # Set MSVC's enviroment variables.
   - call %VCVARSALL% %PLATFORM%
-  - mkdir build
-  - cd build
   # Build reproc as a shared library to verify all the necessary symbols are
   # exported from the dll's.
-  - cmake ..
+  - cmake
+      -B build
+      -S .
       -G Ninja
       -DCMAKE_BUILD_TYPE=Debug
       -DBUILD_SHARED_LIBS=ON
@@ -54,7 +54,7 @@ before_build:
       -DREPROC_WARNINGS_AS_ERRORS=ON
       -DREPROC_TIDY=ON
 
-build_script: cmake --build .
+build_script: cmake --build build --parallel 2
 
 before_test:
   # Make sure the tests and examples can find the reproc and reproc++ dll's.
@@ -62,7 +62,7 @@ before_test:
   - set PATH=%APPVEYOR_BUILD_FOLDER%/build/reproc++/lib;%PATH%
 
 test_script:
-  - cmake --build . --target test
+  - build\tests
   # Make sure the examples don't crash or return a non-zero exit code.
-  - .\reproc\examples\git-status >NUL
-  - .\reproc++\examples\\cmake-help >NUL
+  - build\reproc\examples\git-status >NUL
+  - build\reproc++\examples\\cmake-help >NUL
