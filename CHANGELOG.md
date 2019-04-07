@@ -12,12 +12,13 @@
 - reproc's test executable is now registered with ctest if `REPROC_TESTS` has
   been enabled.
 
-- Raised minimum CMake version to 3.12.
+- Raised minimum CMake version to 3.13.
 
-  Minimum version of CMake in [cddm](https://github.com/DaanDeMeyer/cddm) was
-  raised so reproc's minimum CMake version was raised as well. cddm was moved to
-  3.12 to allow removing some hacks (most notably having to enable C++ to use
-  the GenerateExportHeader module for C projects).
+  Tests are now added to a single target `reproc-tests` in each subdirectory
+  included with `add_subdirectory`. Dependencies required to run the added tests
+  are added to `reproc-tests` with `target_link_libraries`. Before CMake 3.13,
+  `target_link_libraries` could not modify targets created outside of the
+  current directory which is why CMake 3.13 is needed.
 
 - `REPROC_CI` was renamed to `REPROC_WARNINGS_AS_ERRORS`.
 
@@ -72,6 +73,10 @@
 
 - Removed undefined behaviour in Windows implementation caused by casting an int
   to an unsigned int.
+
+- Added a note to `reproc_start` docs about the behaviour of using a executable
+  path relative to the working directory combined with a custom working
+  directory for the child process on different platforms.
 
 ## 4.0.0
 
