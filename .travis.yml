@@ -71,9 +71,9 @@ install:
     export PATH=/usr/local/bin:$PATH;
 
 script:
-  - mkdir build
-  - cd build
-  - cmake ..
+  - cmake
+      -B build
+      -S .
       -DCMAKE_BUILD_TYPE=Debug
       -DBUILD_SHARED_LIBS=ON
       -DREPROC++=ON
@@ -82,8 +82,8 @@ script:
       -DREPROC_WARNINGS_AS_ERRORS=ON
       -DREPROC_TIDY=$REPROC_TIDY
       -DREPROC_SANITIZERS=ON
-  - cmake --build . -- -j 2
-  - cmake --build . --target test
+  - cmake --build build --parallel 2
+  - build/tests
   # Make sure the examples don't crash or return a non-zero exit code.
-  - ./reproc/examples/git-status > /dev/null
-  - ./reproc++/examples/cmake-help > /dev/null
+  - build/reproc/examples/git-status > /dev/null
+  - build/reproc++/examples/cmake-help > /dev/null
