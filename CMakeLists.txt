@@ -1,5 +1,5 @@
 # 3.1 is needed for target_sources.
-cmake_minimum_required(VERSION 3.12...3.14)
+cmake_minimum_required(VERSION 3.13...3.14)
 
 project(reproc
   VERSION 5.0.0
