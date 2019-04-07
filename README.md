@@ -119,9 +119,9 @@ target_link_libraries(myapp reproc++) # Link against reproc++.
 
 Building reproc requires CMake 3.13 or higher.
 
-reproc has a single runtime dependency on pthreads on POSIX systems. However,
-the dependency is included in both reproc's CMake config and pkg-config files so
-it should be picked up by your build system automatically.
+reproc has a single dependency on pthreads on POSIX systems. However, the
+dependency is included in both reproc's CMake config and pkg-config files so it
+should be picked up by your build system automatically.
 
 ## CMake options
 
