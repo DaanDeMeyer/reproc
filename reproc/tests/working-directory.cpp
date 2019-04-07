@@ -14,11 +14,12 @@ TEST_SUITE("reproc")
     const char *working_directory = "reproc/resources";
     static constexpr unsigned int ARGV_SIZE = 2;
 
-    #if defined(_WIN32) || defined(__APPLE__)
-      std::array<const char *, ARGV_SIZE> argv{ { "reproc/resources/noop", nullptr } };
-    #else
-      std::array<const char *, ARGV_SIZE> argv{ { "./noop", nullptr } };
-    #endif
+#if defined(_WIN32) || defined(__APPLE__)
+    std::array<const char *, ARGV_SIZE> argv{ { "reproc/resources/noop",
+                                                nullptr } };
+#else
+    std::array<const char *, ARGV_SIZE> argv{ { "./noop", nullptr } };
+#endif
 
     int error = REPROC_SUCCESS;
     CAPTURE(error);

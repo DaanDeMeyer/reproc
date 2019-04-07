@@ -3,7 +3,7 @@
 #include <doctest.h>
 
 #if !defined(DOCTEST_WORKING_DIRECTORY)
-  #error "DOCTEST_WORKING_DIRECTORY not defined"
+#error "DOCTEST_WORKING_DIRECTORY not defined"
 #endif
 
 #if defined(_WIN32)
