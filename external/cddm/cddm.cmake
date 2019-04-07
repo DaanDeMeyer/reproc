@@ -1,5 +1,5 @@
 # CDDM (CMake Daan De Meyer)
-# Version: v0.0.5
+# Version: v0.0.6
 #
 # Description: Encapsulates common CMake configuration for cross-platform
 # C/C++ libraries.
@@ -42,7 +42,8 @@
 #
 # NOTE: All languages used have to be enabled before including cddm.
 
-cmake_minimum_required(VERSION 3.12)
+# CMake 3.13 added target_link_options.
+cmake_minimum_required(VERSION 3.13)
 
 set(PNL ${PROJECT_NAME}) # PROJECT_NAME_LOWER (PNL)
 string(TOUPPER ${PROJECT_NAME} PNU) # PROJECT_NAME_UPPER (PNU)
@@ -197,8 +198,8 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       target_compile_options(${TARGET} PRIVATE /wd4204)
     endif()
 
-    target_link_libraries(${TARGET} PRIVATE
-      -nologo # Silence MSVC linker version output.
+    target_link_options(${TARGET} PRIVATE
+      /nologo # Silence MSVC linker version output.
     )
   else()
     target_compile_options(${TARGET} PRIVATE
@@ -216,7 +217,7 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
     target_compile_options(${TARGET} PRIVATE
       -fsanitize=address,undefined
     )
-    target_link_libraries(${TARGET} PRIVATE
+    target_link_options(${TARGET} PRIVATE
       -fsanitize=address,undefined
       # GCC sanitizers only work when using the gold linker.
       $<$<${LANGUAGE}_COMPILER_ID:GNU>:-fuse-ld=gold>
