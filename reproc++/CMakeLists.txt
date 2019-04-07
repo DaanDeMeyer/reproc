@@ -9,7 +9,7 @@ target_sources(reproc++ PRIVATE
 
 if(REPROC_EXAMPLES)
   function(reprocxx_add_example TARGET)
-    add_executable(reproc++-${TARGET} "")
+    add_executable(reproc++-${TARGET})
     cddm_add_common(reproc++-${TARGET} CXX 11 examples)
 
     target_link_libraries(reproc++-${TARGET} PRIVATE reproc++)
@@ -27,7 +27,6 @@ if(REPROC_EXAMPLES)
     reprocxx_add_example(background CXX)
     target_link_libraries(reproc++-background PRIVATE Threads::Threads)
   else()
-    message(WARNING "Threads package not found. Not building all reproc++ \
-    examples.")
+    message(STATUS "Threads package not found. Not building all reproc++ examples.")
   endif()
 endif()
