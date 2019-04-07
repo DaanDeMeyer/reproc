@@ -81,6 +81,15 @@ Example: if `argv` is `["cmake", "--help", NULL]` then `argc` is 2.
 `working_directory` specifies the working directory for the child process. If it
 is `NULL`, the child process runs in the same directory as the parent process.
 
+NOTE: Indicating the program to run with a path relative to the working
+directory in `argv` with a custom `working_directory` results in different
+behaviour on Windows, MacOS and Linux. On Windows and MacOS, the path is
+relative to the working directory of the parent process. On Linux, the path is
+relative to the working directory of the child process. To avoid issues,
+convert the path to an absolute path before passing it to `reproc_start` or use
+a path relative to the PATH environment variable when using a custom working
+directory.
+
 Possible errors:
 - `REPROC_PIPE_LIMIT_REACHED`
 - `REPROC_PROCESS_LIMIT_REACHED`
