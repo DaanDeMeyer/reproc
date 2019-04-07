@@ -23,6 +23,7 @@ include(external/cddm/cddm.cmake)
 if(REPROC_TESTS)
   add_library(doctest OBJECT external/doctest/main.cpp)
 
+  target_compile_features(doctest PUBLIC cxx_std_11)
   target_include_directories(doctest PUBLIC external/doctest)
   # We change the working directory to the build directory before executing the
   # tests so tests can reliably find any required resources.
