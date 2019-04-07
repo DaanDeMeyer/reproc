@@ -1,5 +1,5 @@
 # CDDM (CMake Daan De Meyer)
-# Version: v0.0.6
+# Version: v0.0.7
 #
 # Description: Encapsulates common CMake configuration for cross-platform
 # C/C++ libraries.
@@ -50,11 +50,11 @@ string(TOUPPER ${PROJECT_NAME} PNU) # PROJECT_NAME_UPPER (PNU)
 
 ### Installation options ###
 
-get_directory_property(${PNU}_IS_SUBDIRECTORY PARENT_DIRECTORY)
+get_directory_property(CDDM_IS_SUBDIRECTORY PARENT_DIRECTORY)
 
 # Don't add libraries to the install target by default if the project is built
 # from within another project as a static library.
-if(${PNU}_IS_SUBDIRECTORY AND NOT BUILD_SHARED_LIBS)
+if(CDDM_IS_SUBDIRECTORY AND NOT BUILD_SHARED_LIBS)
   option(${PNU}_INSTALL "Generate installation rules." OFF)
 else()
   option(${PNU}_INSTALL "Generate installation rules." ON)
@@ -93,13 +93,13 @@ mark_as_advanced(
 ### clang-tidy ###
 
 if(${PNU}_TIDY)
-  find_program(${PNU}_CLANG_TIDY_PROGRAM clang-tidy)
-  mark_as_advanced(${PNU}_CLANG_TIDY_PROGRAM)
+  find_program(CDDM_CLANG_TIDY_PROGRAM clang-tidy)
+  mark_as_advanced(CDDM_CLANG_TIDY_PROGRAM)
 
-  if(${PNU}_CLANG_TIDY_PROGRAM)
+  if(CDDM_CLANG_TIDY_PROGRAM)
     if(${PNU}_WARNINGS_AS_ERRORS)
-      set(${PNU}_CLANG_TIDY_PROGRAM
-          ${${PNU}_CLANG_TIDY_PROGRAM} -warnings-as-errors=*)
+      set(CDDM_CLANG_TIDY_PROGRAM
+          ${CDDM_CLANG_TIDY_PROGRAM} -warnings-as-errors=*)
     endif()
   else()
     message(FATAL_ERROR "clang-tidy not found")
@@ -126,10 +126,10 @@ foreach(LANGUAGE IN ITEMS C CXX)
 
     if(LANGUAGE STREQUAL "C")
       include(CheckCCompilerFlag)
-      check_c_compiler_flag(/permissive- ${LANGUAGE}_HAVE_PERMISSIVE)
+      check_c_compiler_flag(/permissive- CDDM_${LANGUAGE}_HAVE_PERMISSIVE)
     else()
       include(CheckCXXCompilerFlag)
-      check_cxx_compiler_flag(/permissive- ${LANGUAGE}_HAVE_PERMISSIVE)
+      check_cxx_compiler_flag(/permissive- CDDM_${LANGUAGE}_HAVE_PERMISSIVE)
     endif()
   endif()
 
@@ -174,11 +174,11 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
     LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
   )
 
-  if(${PNU}_TIDY AND ${PNU}_CLANG_TIDY_PROGRAM)
+  if(${PNU}_TIDY AND CDDM_CLANG_TIDY_PROGRAM)
     set_target_properties(${TARGET} PROPERTIES
       # CLANG_TIDY_PROGRAM is a list so we surround it with quotes to pass it as
       # a single argument.
-      ${LANGUAGE}_CLANG_TIDY "${${PNU}_CLANG_TIDY_PROGRAM}"
+      ${LANGUAGE}_CLANG_TIDY "${CDDM_CLANG_TIDY_PROGRAM}"
     )
   endif()
 
@@ -188,7 +188,7 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
     target_compile_options(${TARGET} PRIVATE
       /nologo # Silence MSVC compiler version output.
       $<$<BOOL:${${PNU}_WARNINGS_AS_ERRORS}>:/WX> # -Werror
-      $<$<BOOL:${${LANGUAGE}_HAVE_PERMISSIVE}>:/permissive->
+      $<$<BOOL:${CDDM_${LANGUAGE}_HAVE_PERMISSIVE}>:/permissive->
     )
 
     if(NOT STANDARD STREQUAL "90")
