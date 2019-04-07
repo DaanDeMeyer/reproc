@@ -21,22 +21,23 @@ endif()
 include(external/cddm/cddm.cmake)
 
 if(REPROC_TESTS)
+  add_library(doctest OBJECT external/doctest/main.cpp)
+
+  target_include_directories(doctest PUBLIC external/doctest)
+  # We change the working directory to the build directory before executing the
+  # tests so tests can reliably find any required resources.
+  target_compile_definitions(doctest PRIVATE
+    DOCTEST_WORKING_DIRECTORY="${PROJECT_BINARY_DIR}"
+  )
+
   # reproc uses the doctest testing framework. All tests are grouped inside a
   # single executable. Use `target_sources(reproc-tests PRIVATE <file>)` to add
   # new tests. Tests are executed by running the build/tests executable.
-  add_executable(reproc-tests external/doctest/main.cpp)
+  add_executable(reproc-tests)
 
   cddm_add_common(reproc-tests CXX 11 "")
-  target_include_directories(reproc-tests PRIVATE external/doctest)
   set_target_properties(reproc-tests PROPERTIES OUTPUT_NAME tests)
-
-  # We change the working directory to the build directory before executing the
-  # tests so tests can reliably find any required resources.
-  set_property(
-    SOURCE external/doctest/main.cpp APPEND
-    PROPERTY COMPILE_DEFINITIONS
-      DOCTEST_WORKING_DIRECTORY="${PROJECT_BINARY_DIR}"
-  )
+  target_link_libraries(reproc-tests PRIVATE doctest)
 
   include(CTest)
   add_test(NAME reproc COMMAND reproc-tests --force-colors=true)
