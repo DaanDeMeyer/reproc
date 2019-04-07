@@ -21,8 +21,9 @@ endif()
 include(external/cddm/cddm.cmake)
 
 if(REPROC_TESTS)
-  add_library(doctest OBJECT external/doctest/main.cpp)
+  add_library(doctest OBJECT)
 
+  target_sources(doctest PRIVATE external/doctest/main.cpp)
   target_compile_features(doctest PUBLIC cxx_std_11)
   target_include_directories(doctest PUBLIC external/doctest)
   # We change the working directory to the build directory before executing the
