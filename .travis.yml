@@ -57,6 +57,19 @@ matrix:
     - os: osx
       env: CC=clang CXX=clang++ REPROC_TIDY=OFF
 
+# Install newer CMake
+install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      curl -sSL https://github.com/Kitware/CMake/releases/download/v3.14.1/cmake-3.14.1-Linux-x86_64.tar.gz -o cmake.tar.gz;
+      sudo tar xf cmake.tar.gz --strip 1 -C /usr/local;
+    else
+      brew uninstall cmake;
+      curl -sSL https://github.com/Kitware/CMake/releases/download/v3.14.1/cmake-3.14.1-Darwin-x86_64.tar.gz -o cmake.tar.gz;
+      sudo tar xf cmake.tar.gz --strip 1 -C /Applications;
+      sudo /Applications/CMake.app/Contents/bin/cmake-gui --install;
+    fi;
+    export PATH=/usr/local/bin:$PATH;
+
 script:
   - mkdir build
   - cd build
