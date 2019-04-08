@@ -45,7 +45,7 @@ if(MSVC)
 
   target_compile_definitions(reproc PRIVATE
     _CRT_SECURE_NO_WARNINGS
-    $<$<BOOL:${REPROC_ATTRIBUTE_LIST_FOUND}>:HAVE_ATTRIBUTE_LIST>
+    $<$<BOOL:${REPROC_ATTRIBUTE_LIST_FOUND}>:ATTRIBUTE_LIST_FOUND>
     # Remove unneeded stuff from windows.h.
     WIN32_LEAN_AND_MEAN
     VC_EXTRALEAN
@@ -59,7 +59,7 @@ elseif(UNIX)
 
   target_compile_definitions(reproc PRIVATE
     _GNU_SOURCE # Needed for `pipe2` and `kill`.
-    $<$<BOOL:${REPROC_PIPE2_FOUND}>:HAVE_PIPE2>
+    $<$<BOOL:${REPROC_PIPE2_FOUND}>:PIPE2_FOUND>
   )
 endif()
 
