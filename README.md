@@ -77,7 +77,7 @@ After including reproc's source code in your project, it can be built from the
 root CMakeLists.txt file as follows:
 
 ```cmake
-add_subdirectory(<path-to-reproc>)
+add_subdirectory(<path-to-reproc>) # For example: add_subdirectory(external/reproc)
 ```
 
 Options can be specified before calling `add_subdirectory` (omit `FORCE` if you
@@ -85,7 +85,7 @@ don't want to override an existing value in the cache):
 
 ```cmake
 set(REPROC++ ON CACHE BOOL "" FORCE)
-add_subdirectory(external/reproc)
+add_subdirectory(<path-to-reproc>)
 ```
 
 You can also depend on a system installed version of reproc. You can either
