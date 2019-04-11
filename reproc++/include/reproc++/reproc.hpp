@@ -1,5 +1,4 @@
-#ifndef REPROC_HPP
-#define REPROC_HPP
+#pragma once
 
 #include <reproc++/error.hpp>
 #include <reproc++/export.hpp>
@@ -286,5 +285,3 @@ std::error_code process::drain(reproc::stream stream, Sink &&sink)
 }
 
 } // namespace reproc
-
-#endif

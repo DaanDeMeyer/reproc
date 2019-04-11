@@ -1,5 +1,4 @@
-#ifndef REPROC_POSIX_PIPE_H
-#define REPROC_POSIX_PIPE_H
+#pragma once
 
 #include <reproc/error.h>
 
@@ -34,5 +33,3 @@ REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
 // - `REPROC_PARTIAL_WRITE`
 REPROC_ERROR pipe_write(int pipe, const void *buffer, unsigned int to_write,
                         unsigned int *bytes_written);
-
-#endif

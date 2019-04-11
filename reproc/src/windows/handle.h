@@ -1,5 +1,4 @@
-#ifndef REPROC_WINDOWS_HANDLE_H
-#define REPROC_WINDOWS_HANDLE_H
+#pragma once
 
 #include <windows.h>
 
@@ -7,5 +6,3 @@
 // Otherwise, does nothing. Does not overwrite the result of `GetLastError` if
 // an error occurs while closing `handle`.
 void handle_close(HANDLE *handle);
-
-#endif

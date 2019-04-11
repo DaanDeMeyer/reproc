@@ -1,5 +1,4 @@
-#ifndef REPROC_ERROR_HPP
-#define REPROC_ERROR_HPP
+#pragma once
 
 #include <reproc++/export.hpp>
 
@@ -61,5 +60,3 @@ template <> struct is_error_condition_enum<reproc::errc> : true_type {
 };
 
 } // namespace std
-
-#endif

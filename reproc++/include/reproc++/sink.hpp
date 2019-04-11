@@ -1,5 +1,4 @@
-#ifndef REPROCXX_SINK_HPP
-#define REPROCXX_SINK_HPP
+#pragma once
 
 #include <reproc++/export.hpp>
 
@@ -32,5 +31,3 @@ public:
 };
 
 } // namespace reproc
-
-#endif

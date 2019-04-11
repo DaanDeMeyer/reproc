@@ -1,5 +1,4 @@
-#ifndef REPROC_ERROR_H
-#define REPROC_ERROR_H
+#pragma once
 
 #include <reproc/export.h>
 
@@ -89,6 +88,4 @@ REPROC_EXPORT const char *reproc_strerror(REPROC_ERROR error);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

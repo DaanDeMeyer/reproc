@@ -1,5 +1,4 @@
-#ifndef REPROC_H
-#define REPROC_H
+#pragma once
 
 #include <reproc/error.h>
 #include <reproc/export.h>
@@ -331,6 +330,4 @@ REPROC_EXPORT void reproc_destroy(reproc_type *process);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

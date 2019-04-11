@@ -1,5 +1,4 @@
-#ifndef REPROC_WINDOWS_PROCESS_H
-#define REPROC_WINDOWS_PROCESS_H
+#pragma once
 
 #include <reproc/error.h>
 
@@ -37,5 +36,3 @@ REPROC_ERROR process_terminate(unsigned long pid);
 
 // Calls `TerminateProcess` on the process indicated by `handle`.
 REPROC_ERROR process_kill(HANDLE process);
-
-#endif

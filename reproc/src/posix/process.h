@@ -1,5 +1,4 @@
-#ifndef REPROC_POSIX_PROCESS_H
-#define REPROC_POSIX_PROCESS_H
+#pragma once
 
 #include <reproc/error.h>
 
@@ -48,5 +47,3 @@ REPROC_ERROR process_terminate(pid_t pid);
 
 // Sends the `SIGKILL` signal to the process indicated by `pid`.
 REPROC_ERROR process_kill(pid_t pid);
-
-#endif

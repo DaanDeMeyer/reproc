@@ -1,5 +1,4 @@
-#ifndef REPROC_WINDOWS_STRING_UTILS_H
-#define REPROC_WINDOWS_STRING_UTILS_H
+#pragma once
 
 #include <reproc/error.h>
 
@@ -20,5 +19,3 @@ REPROC_ERROR string_join(const char *const *string_array, int array_length,
 // - `REPROC_NOT_ENOUGH_MEMORY`
 // - `REPROC_INVALID_UNICODE`
 REPROC_ERROR string_to_wstring(const char *string, wchar_t **result);
-
-#endif
