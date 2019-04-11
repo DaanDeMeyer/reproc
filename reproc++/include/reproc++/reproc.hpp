@@ -135,6 +135,8 @@ public:
 
     std::error_code ec = start(argc, argv, child_working_directory);
 
+    delete[] argv;
+
     return ec;
   }
 
