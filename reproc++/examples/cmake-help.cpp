@@ -1,8 +1,8 @@
 #include <reproc++/reproc.hpp>
 #include <reproc++/sink.hpp>
 
-#include <iostream>
 #include <array>
+#include <iostream>
 
 int fail(std::error_code ec)
 {
