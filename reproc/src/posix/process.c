@@ -35,6 +35,15 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *context,
     goto cleanup;
   }
 
+  // `sysconf` is not signal safe so we retrieve the fd limit before forking.
+  // This results in the same value as calling it in the child since the child
+  // inherits the parent's resource limits.
+  int max_fd = (int) sysconf(_SC_OPEN_MAX);
+  if (max_fd == -1) {
+    error = REPROC_UNKNOWN_ERROR;
+    goto cleanup;
+  }
+
   if (options->vfork) {
     // The code inside this block is based on code written by a Redhat employee.
     // The original code along with detailed comments can be found here:
@@ -200,7 +209,6 @@ REPROC_ERROR process_create(int (*action)(const void *), const void *context,
     }
 
     // Close open file descriptors in the child process.
-    int max_fd = (int) sysconf(_SC_OPEN_MAX);
     for (int i = 3; i < max_fd; i++) {
       // We might still need the error pipe so we don't close it. The error pipe
       // is created with `FD_CLOEXEC` which results in it being closed
