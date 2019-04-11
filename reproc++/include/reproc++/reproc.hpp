@@ -73,8 +73,8 @@ public:
   The default arguments instruct the destructor to wait indefinitely for the
   child process to exit.
   */
-  REPROCXX_EXPORT process(cleanup c1 = reproc::wait,
-                          reproc::milliseconds t1 = reproc::infinite);
+  REPROCXX_EXPORT explicit process(cleanup c1 = reproc::wait,
+                                   reproc::milliseconds t1 = reproc::infinite);
 
   REPROCXX_EXPORT process(cleanup c1, reproc::milliseconds t1, cleanup c2,
                           reproc::milliseconds t2);
@@ -110,24 +110,27 @@ public:
   `working_directory` specifies the working directory. It is optional and
   defaults to `nullptr`.
   */
-  template <typename Container>
+  template <typename SequenceContainer>
   REPROCXX_EXPORT std::error_code
-  start(const Container &args, const std::string *working_directory = nullptr)
+  start(const SequenceContainer &args,
+        const std::string *working_directory = nullptr)
   {
-    static_assert(
-        std::is_same<typename Container::value_type, std::string>::value,
-        "Container value_type must be std::string");
+    using value_type = typename SequenceContainer::value_type;
+    using size_type = typename SequenceContainer::size_type;
 
-    // Turn `args` into array of C strings.
-    auto argv = new const char *[args.size() + 1];
+    static_assert(std::is_same<value_type, std::string>::value,
+                  "Container value_type must be std::string");
 
-    for (std::size_t i = 0; i < args.size(); i++) {
+    // Turn `args` into an array of C strings.
+    auto argv = new const char *[args.size() + 1]; // NOLINT
+    for (size_type i = 0; i < args.size(); i++) {
       argv[i] = args[i].c_str();
     }
     argv[args.size()] = nullptr;
 
-    // We don't expect that `args`'s size won't fit into an integer.
+    // We assume that `args`'s size fits into an integer.
     auto argc = static_cast<int>(args.size());
+
     // `std::string *` => `const char *`
     const char *child_working_directory = working_directory != nullptr
                                               ? working_directory->c_str()
@@ -135,7 +138,7 @@ public:
 
     std::error_code ec = start(argc, argv, child_working_directory);
 
-    delete[] argv;
+    delete[] argv; // NOLINT
 
     return ec;
   }
@@ -236,18 +239,18 @@ std::error_code process::parse(reproc::stream stream, Parser &&parser)
     return {};
   }
 
-  char buffer[BUFFER_SIZE];
+  std::array<char, BUFFER_SIZE> buffer = {};
   std::error_code ec;
 
   while (true) {
     unsigned int bytes_read = 0;
-    ec = read(stream, buffer, BUFFER_SIZE, &bytes_read);
+    ec = read(stream, buffer.data(), buffer.size(), &bytes_read);
     if (ec) {
       break;
     }
 
     // `parser` returns false to tell us to stop reading.
-    if (!parser(buffer, bytes_read)) {
+    if (!parser(buffer.data(), bytes_read)) {
       break;
     }
   }
@@ -258,18 +261,18 @@ std::error_code process::parse(reproc::stream stream, Parser &&parser)
 template <typename Sink>
 std::error_code process::drain(reproc::stream stream, Sink &&sink)
 {
-  char buffer[BUFFER_SIZE];
+  std::array<char, BUFFER_SIZE> buffer = {};
   std::error_code ec;
 
   while (true) {
     unsigned int bytes_read = 0;
-    ec = read(stream, buffer, BUFFER_SIZE, &bytes_read);
+    ec = read(stream, buffer.data(), buffer.size(), &bytes_read);
     if (ec) {
       break;
     }
 
     // `sink` return false to tell us to stop reading.
-    if (!sink(buffer, bytes_read)) {
+    if (!sink(buffer.data(), bytes_read)) {
       break;
     }
   }

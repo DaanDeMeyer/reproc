@@ -1,5 +1,5 @@
-#ifndef REPROC_SINK_HPP
-#define REPROC_SINK_HPP
+#ifndef REPROCXX_SINK_HPP
+#define REPROCXX_SINK_HPP
 
 #include <reproc++/export.hpp>
 
@@ -15,7 +15,7 @@ class string_sink
   std::string &out_;
 
 public:
-  REPROCXX_EXPORT string_sink(std::string &out) noexcept;
+  REPROCXX_EXPORT explicit string_sink(std::string &out) noexcept;
 
   REPROCXX_EXPORT bool operator()(const char *buffer, unsigned int size);
 };
@@ -26,7 +26,7 @@ class ostream_sink
   std::ostream &out_;
 
 public:
-  REPROCXX_EXPORT ostream_sink(std::ostream &out) noexcept;
+  REPROCXX_EXPORT explicit ostream_sink(std::ostream &out) noexcept;
 
   REPROCXX_EXPORT bool operator()(const char *buffer, unsigned int size);
 };

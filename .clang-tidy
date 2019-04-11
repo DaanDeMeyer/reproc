@@ -6,14 +6,19 @@ Checks:
 -cert-err58-cpp,
 -clang-diagnostic-unused-command-line-argument,
 -cppcoreguidelines-avoid-magic-numbers,
+-cppcoreguidelines-pro-bounds-constant-array-index,
+-cppcoreguidelines-pro-bounds-pointer-arithmetic,
+-cppcoreguidelines-macro-usage,
 -fuchsia-default-arguments,
 -fuchsia-overloaded-operator,
 -fuchsia-statically-constructed-objects,
 -google-runtime-references,
 -hicpp-multiway-paths-covered,
 -hicpp-signed-bitwise,
+-llvm-header-guard,
 -readability-else-after-return,
 -readability-magic-numbers
 '
+HeaderFilterRegex: '.*reproc\+\+.*$'
 ...
 
