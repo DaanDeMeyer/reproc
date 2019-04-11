@@ -110,9 +110,8 @@ public:
   defaults to `nullptr`.
   */
   template <typename SequenceContainer>
-  REPROCXX_EXPORT std::error_code
-  start(const SequenceContainer &args,
-        const std::string *working_directory = nullptr)
+  std::error_code start(const SequenceContainer &args,
+                        const std::string *working_directory = nullptr)
   {
     using value_type = typename SequenceContainer::value_type;
     using size_type = typename SequenceContainer::size_type;
