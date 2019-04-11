@@ -78,6 +78,17 @@
   path relative to the working directory combined with a custom working
   directory for the child process on different platforms.
 
+- We now retrieve the file descriptor limit in the parent process (using
+  `sysconf`) instead of in the child process because `sysconf` is not guaranteed
+  to be async-signal-safe which all functions called in a child process after
+  forking should be.
+
+### reproc++
+
+- Generified `process::start` so it works with any container of `std::string`
+  satisfying the
+  [Container](https://en.cppreference.com/w/cpp/named_req/Container) interface.
+
 ## 4.0.0
 
 ### General
