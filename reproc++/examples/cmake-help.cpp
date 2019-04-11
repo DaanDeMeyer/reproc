@@ -2,6 +2,7 @@
 #include <reproc++/sink.hpp>
 
 #include <iostream>
+#include <array>
 
 int fail(std::error_code ec)
 {
