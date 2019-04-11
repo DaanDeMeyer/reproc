@@ -80,30 +80,6 @@ std::error_code process::start(int argc, const char *const *argv,
   return ec;
 }
 
-std::error_code process::start(const std::vector<std::string> &args,
-                               const std::string *working_directory)
-{
-  // Turn `args` into array of C strings.
-  auto argv = std::vector<const char *>(args.size() + 1);
-
-  for (std::size_t i = 0; i < args.size(); i++) {
-    argv[i] = args[i].c_str();
-  }
-  argv[args.size()] = nullptr;
-
-  // We don't expect that `args`'s size won't fit into an integer.
-  auto argc = static_cast<int>(args.size());
-  // `std::string *` => `const char *`
-  const char *child_working_directory = working_directory != nullptr
-                                            ? working_directory->c_str()
-                                            : nullptr;
-
-  std::error_code ec = start(argc, &argv[0] /* `std::vector` -> C array */,
-                             child_working_directory);
-
-  return ec;
-}
-
 std::error_code process::read(reproc::stream stream, void *buffer,
                               unsigned int size,
                               unsigned int *bytes_read) noexcept

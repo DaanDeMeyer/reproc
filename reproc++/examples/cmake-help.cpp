@@ -26,7 +26,7 @@ int main()
   `process` has a start method that takes a vector of `std::string` and takes
   care of converting the vector into the array expected by `reproc_start`
   (including adding the NULL value at the end). */
-  std::vector<std::string> args = { "cmake", "--help" };
+  std::array<std::string, 2> args = { "cmake", "--help" };
 
   /* The child process is not started in the constructor since this would force
   every class that uses the process class to use `std::optional` or heap

@@ -7,7 +7,6 @@
 #include <chrono>
 #include <memory>
 #include <string>
-#include <vector>
 
 // Forward declare `reproc_type` so we don't have to include reproc.h in the
 // header.
@@ -102,7 +101,7 @@ public:
         const char *working_directory = nullptr) noexcept;
 
   /*!
-  Overload of `start` for convenient usage from C++.
+  Overload of `start` for convenient usage with C++ containers of `std::string`.
 
   `args` has the same restrictions as `argv` in `reproc_start` except that it
   should not end with `NULL` (`start` allocates a new array which includes the
@@ -111,9 +110,33 @@ public:
   `working_directory` specifies the working directory. It is optional and
   defaults to `nullptr`.
   */
+  template <typename Container>
   REPROCXX_EXPORT std::error_code
-  start(const std::vector<std::string> &args,
-        const std::string *working_directory = nullptr);
+  start(const Container &args, const std::string *working_directory = nullptr)
+  {
+    static_assert(
+        std::is_same<typename Container::value_type, std::string>::value,
+        "Container value_type must be std::string");
+
+    // Turn `args` into array of C strings.
+    auto argv = new const char *[args.size() + 1];
+
+    for (std::size_t i = 0; i < args.size(); i++) {
+      argv[i] = args[i].c_str();
+    }
+    argv[args.size()] = nullptr;
+
+    // We don't expect that `args`'s size won't fit into an integer.
+    auto argc = static_cast<int>(args.size());
+    // `std::string *` => `const char *`
+    const char *child_working_directory = working_directory != nullptr
+                                              ? working_directory->c_str()
+                                              : nullptr;
+
+    std::error_code ec = start(argc, argv, child_working_directory);
+
+    return ec;
+  }
 
   /*! `reproc_read` */
   REPROCXX_EXPORT std::error_code read(reproc::stream stream, void *buffer,
