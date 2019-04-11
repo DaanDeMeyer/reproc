@@ -238,18 +238,18 @@ std::error_code process::parse(reproc::stream stream, Parser &&parser)
     return {};
   }
 
-  std::array<char, BUFFER_SIZE> buffer = {};
+  char buffer[BUFFER_SIZE]; // NOLINT
   std::error_code ec;
 
   while (true) {
     unsigned int bytes_read = 0;
-    ec = read(stream, buffer.data(), buffer.size(), &bytes_read);
+    ec = read(stream, buffer, BUFFER_SIZE, &bytes_read);
     if (ec) {
       break;
     }
 
     // `parser` returns false to tell us to stop reading.
-    if (!parser(buffer.data(), bytes_read)) {
+    if (!parser(buffer, bytes_read)) {
       break;
     }
   }
@@ -260,18 +260,18 @@ std::error_code process::parse(reproc::stream stream, Parser &&parser)
 template <typename Sink>
 std::error_code process::drain(reproc::stream stream, Sink &&sink)
 {
-  std::array<char, BUFFER_SIZE> buffer = {};
+  char buffer[BUFFER_SIZE]; // NOLINT
   std::error_code ec;
 
   while (true) {
     unsigned int bytes_read = 0;
-    ec = read(stream, buffer.data(), buffer.size(), &bytes_read);
+    ec = read(stream, buffer, BUFFER_SIZE, &bytes_read);
     if (ec) {
       break;
     }
 
     // `sink` return false to tell us to stop reading.
-    if (!sink(buffer.data(), bytes_read)) {
+    if (!sink(buffer, bytes_read)) {
       break;
     }
   }
