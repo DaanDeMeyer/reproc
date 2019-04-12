@@ -25,6 +25,7 @@ int main(int argc, char **argv)
   if (rv == -1) {
     std::cerr << "Failed to change working directory to "
               << DOCTEST_WORKING_DIRECTORY << std::endl;
+    return 1;
   }
 
   return doctest::Context(argc, argv).run();
