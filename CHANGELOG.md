@@ -87,7 +87,8 @@
 
 - Generified `process::start` so it works with any container of `std::string`
   satisfying the
-  [Container](https://en.cppreference.com/w/cpp/named_req/Container) interface.
+  [SequenceContainer](https://en.cppreference.com/w/cpp/named_req/SequenceContainer)
+  interface.
 
 ## 4.0.0
 
