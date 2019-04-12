@@ -85,5 +85,8 @@ script:
   - cmake --build build --parallel 2
   - build/tests
   # Make sure the examples don't crash or return a non-zero exit code.
+  - build/reproc/examples/drain > /dev/null
   - build/reproc/examples/git-status > /dev/null
+  - build/reproc++/examples/background cmake --help > /dev/null
   - build/reproc++/examples/cmake-help > /dev/null
+  - build/reproc++/examples/forward cmake --help > /dev/null

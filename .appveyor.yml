@@ -64,5 +64,8 @@ before_test:
 test_script:
   - build\tests
   # Make sure the examples don't crash or return a non-zero exit code.
+  - build\reproc\examples\drain >NUL
   - build\reproc\examples\git-status >NUL
-  - build\reproc++\examples\\cmake-help >NUL
+  - build\reproc++\examples\background cmake --help >NUL
+  - build\reproc++\examples\cmake-help >NUL
+  - build\reproc++\examples\forward cmake --help >NUL
