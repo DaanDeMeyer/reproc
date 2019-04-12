@@ -208,6 +208,7 @@ public:
   REPROCXX_EXPORT std::error_code stop(cleanup c1, reproc::milliseconds t1,
                                        cleanup c2, reproc::milliseconds t2,
                                        unsigned int *exit_status) noexcept;
+
   /*! Overload of `stop` with `c2` and `c3` set to `noop` and `t2` and `t3 set
   to 0. */
   REPROCXX_EXPORT std::error_code stop(cleanup c1, reproc::milliseconds t1,
