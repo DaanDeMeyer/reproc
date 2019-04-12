@@ -9,9 +9,6 @@
 
 ### CMake
 
-- reproc's test executable is now registered with ctest if `REPROC_TESTS` has
-  been enabled.
-
 - Raised minimum CMake version to 3.13.
 
   Tests are now added to a single target `reproc-tests` in each subdirectory

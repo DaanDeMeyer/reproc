@@ -31,9 +31,6 @@ if(REPROC_TESTS)
   cddm_add_common(reproc-tests CXX 11 "")
   set_target_properties(reproc-tests PROPERTIES OUTPUT_NAME tests)
   target_link_libraries(reproc-tests PRIVATE doctest)
-
-  include(CTest)
-  add_test(NAME reproc COMMAND reproc-tests --force-colors=true)
 endif()
 
 add_subdirectory(reproc)
