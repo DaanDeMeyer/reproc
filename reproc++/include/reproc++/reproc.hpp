@@ -231,9 +231,9 @@ private:
 template <typename Parser>
 std::error_code process::parse(reproc::stream stream, Parser &&parser)
 {
-  /* A single call to `read` might contain multiple messages. By always calling
-  `parser` once with no data before reading, we give it the chance to process
-  all previous output one by one before reading from the child process again. */
+  // A single call to `read` might contain multiple messages. By always calling
+  // `parser` once with no data before reading, we give it the chance to process
+  // all previous output one by one before reading from the child process again.
   if (!parser("", 0)) {
     return {};
   }
