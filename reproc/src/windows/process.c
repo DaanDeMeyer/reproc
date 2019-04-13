@@ -100,9 +100,9 @@ REPROC_ERROR process_create(wchar_t *command_line,
 #else
   STARTUPINFOW startup_info = { .cb = sizeof(startup_info),
                                 .dwFlags = STARTF_USESTDHANDLES,
-                                .hStdInput = child_stdin,
-                                .hStdOutput = child_stdout,
-                                .hStdError = child_stderr };
+                                .hStdInput = options->stdin_handle,
+                                .hStdOutput = options->stdout_handle,
+                                .hStdError = options->stderr_handle };
 
   LPSTARTUPINFOW startup_info_address = &startup_info;
 #endif
