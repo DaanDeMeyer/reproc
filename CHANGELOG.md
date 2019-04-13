@@ -80,6 +80,8 @@
   to be async-signal-safe which all functions called in a child process after
   forking should be.
 
+- Fixed compilation issue when `ATTRIBUTE_LIST_FOUND` was undefined (#15).
+
 ### reproc++
 
 - Generified `process::start` so it works with any container of `std::string`
