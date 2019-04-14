@@ -60,7 +60,7 @@ REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
 
   // If `error` is not -1 or 0 it represents the amount of bytes read.
   // The cast is safe since `size` is an unsigned int and `read` will not read
-  // more `size` bytes.
+  // more than `size` bytes.
   *bytes_read = (unsigned int) error;
 
   return REPROC_SUCCESS;
