@@ -2,7 +2,7 @@
 
 **Be sure to select the git tag corresponding to the version you're using to get
 the correct documentation. (For example:
-<https://github.com/DaanDeMeyer/reproc/tree/v4.0.0> to get the v4.0.0
+<https://github.com/DaanDeMeyer/reproc/tree/v5.0.0> to get the v5.0.0
 documentation)**
 
 [![Build Status](https://travis-ci.com/DaanDeMeyer/reproc.svg?branch=master)](https://travis-ci.com/DaanDeMeyer/reproc)
