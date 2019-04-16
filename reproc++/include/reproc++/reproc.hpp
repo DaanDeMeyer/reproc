@@ -91,8 +91,8 @@ public:
   process(const process &) = delete;
   process &operator=(const process &) = delete;
 
-  REPROCXX_EXPORT process(process &&) noexcept = default;
-  REPROCXX_EXPORT process &operator=(process &&) noexcept = default;
+  REPROCXX_EXPORT process(process &&) noexcept;
+  REPROCXX_EXPORT process &operator=(process &&) noexcept;
 
   /*! `reproc_start` */
   REPROCXX_EXPORT std::error_code

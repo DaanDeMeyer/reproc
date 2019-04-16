@@ -19,7 +19,8 @@ Checks:
 -hicpp-signed-bitwise,
 -llvm-header-guard,
 -readability-else-after-return,
--readability-magic-numbers
+-readability-magic-numbers,
+-readability-named-parameter
 '
 HeaderFilterRegex: '.*reproc\+\+.*$'
 ...

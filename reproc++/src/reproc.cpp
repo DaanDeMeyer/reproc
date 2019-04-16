@@ -66,6 +66,9 @@ process::~process() noexcept
   reproc_destroy(process_.get());
 }
 
+process::process(process &&) noexcept = default; // NOLINT
+process &process::operator=(process &&) noexcept = default;
+
 std::error_code process::start(int argc, const char *const *argv,
                                const char *working_directory) noexcept
 {
