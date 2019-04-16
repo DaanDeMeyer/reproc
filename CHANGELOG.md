@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.0.1
+
+### reproc++
+
+- Fixed compilation error caused by defining `reproc::process`'s move assignment
+  operator as default in the header which is not allowed when a
+  `std::unique_ptr` member of an incomplete type is present.
+
 ## 5.0.0
 
 ### General
