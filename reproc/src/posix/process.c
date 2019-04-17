@@ -499,7 +499,7 @@ wait_timeout(pid_t pid, unsigned int timeout, unsigned int *exit_status)
   }
 
   if (timeout_exit_status > 0) {
-    errno = (int) exit_status;
+    errno = (int) timeout_exit_status;
     return REPROC_UNKNOWN_ERROR;
   }
 
