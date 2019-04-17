@@ -110,8 +110,7 @@ cleanup:
   /* Wait for the process to exit. This should always be done since some systems
   (POSIX) don't clean up system resources allocated to a child process until the
   parent process explicitly waits for it after it has exited. */
-  unsigned int exit_status = 0;
-  error = reproc_wait(&git_status, REPROC_INFINITE, &exit_status);
+  error = reproc_wait(&git_status, REPROC_INFINITE);
 
   // git status will always exit on its own so calling reproc_terminate or
   // reproc_kill is not necessary.
@@ -126,5 +125,5 @@ cleanup:
     return fail(error);
   }
 
-  return (int) exit_status;
+  return (int) reproc_exit_status(&git_status);
 }

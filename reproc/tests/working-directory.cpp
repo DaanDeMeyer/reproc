@@ -27,10 +27,9 @@ TEST_SUITE("reproc")
     error = reproc_start(&noop, ARGV_SIZE - 1, argv.data(), working_directory);
     REQUIRE(!error);
 
-    unsigned int exit_status = 0;
-    error = reproc_wait(&noop, REPROC_INFINITE, &exit_status);
+    error = reproc_wait(&noop, REPROC_INFINITE);
     REQUIRE(!error);
-    REQUIRE((exit_status == 0));
+    REQUIRE((reproc_exit_status(&noop) == 0));
 
     reproc_destroy(&noop);
   }

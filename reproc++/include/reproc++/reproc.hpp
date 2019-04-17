@@ -72,15 +72,13 @@ public:
   The default arguments instruct the destructor to wait indefinitely for the
   child process to exit.
   */
-  REPROCXX_EXPORT explicit process(cleanup c1 = reproc::wait,
-                                   reproc::milliseconds t1 = reproc::infinite);
-
-  REPROCXX_EXPORT process(cleanup c1, reproc::milliseconds t1, cleanup c2,
-                          reproc::milliseconds t2);
-
-  REPROCXX_EXPORT process(cleanup c1, reproc::milliseconds t1, cleanup c2,
-                          reproc::milliseconds t2, cleanup c3,
-                          reproc::milliseconds t3);
+  REPROCXX_EXPORT explicit process(
+      reproc::cleanup c1 = reproc::wait,
+      reproc::milliseconds t1 = reproc::infinite,
+      reproc::cleanup c2 = reproc::noop,
+      reproc::milliseconds t2 = reproc::milliseconds(0),
+      cleanup c3 = reproc::noop,
+      reproc::milliseconds t3 = reproc::milliseconds(0));
 
   /*! Calls `stop` with the arguments provided in the constructor if the child
   process is still running and frees all allocated resources. */
@@ -96,7 +94,8 @@ public:
 
   /*! `reproc_start` */
   REPROCXX_EXPORT std::error_code
-  start(int argc, const char *const *argv,
+  start(int argc,
+        const char *const *argv,
         const char *working_directory = nullptr) noexcept;
 
   /*!
@@ -111,38 +110,11 @@ public:
   */
   template <typename SequenceContainer>
   std::error_code start(const SequenceContainer &args,
-                        const std::string *working_directory = nullptr)
-  {
-    using value_type = typename SequenceContainer::value_type;
-    using size_type = typename SequenceContainer::size_type;
-
-    static_assert(std::is_same<value_type, std::string>::value,
-                  "Container value_type must be std::string");
-
-    // Turn `args` into an array of C strings.
-    auto argv = new const char *[args.size() + 1]; // NOLINT
-    for (size_type i = 0; i < args.size(); i++) {
-      argv[i] = args[i].c_str();
-    }
-    argv[args.size()] = nullptr;
-
-    // We assume that `args`'s size fits into an integer.
-    auto argc = static_cast<int>(args.size());
-
-    // `std::string *` => `const char *`
-    const char *child_working_directory = working_directory != nullptr
-                                              ? working_directory->c_str()
-                                              : nullptr;
-
-    std::error_code ec = start(argc, argv, child_working_directory);
-
-    delete[] argv; // NOLINT
-
-    return ec;
-  }
+                        const std::string *working_directory = nullptr);
 
   /*! `reproc_read` */
-  REPROCXX_EXPORT std::error_code read(reproc::stream stream, void *buffer,
+  REPROCXX_EXPORT std::error_code read(reproc::stream stream,
+                                       void *buffer,
                                        unsigned int size,
                                        unsigned int *bytes_read) noexcept;
 
@@ -188,9 +160,11 @@ public:
   /*! `reproc_close` */
   REPROCXX_EXPORT void close(reproc::stream stream) noexcept;
 
+  /*! `reproc_running` */
+  REPROCXX_EXPORT bool running() noexcept;
+
   /*! `reproc_wait` */
-  REPROCXX_EXPORT std::error_code wait(reproc::milliseconds timeout,
-                                       unsigned int *exit_status) noexcept;
+  REPROCXX_EXPORT std::error_code wait(reproc::milliseconds timeout) noexcept;
 
   /*! `reproc_terminate` */
   REPROCXX_EXPORT std::error_code terminate() noexcept;
@@ -199,24 +173,19 @@ public:
   REPROCXX_EXPORT std::error_code kill() noexcept;
 
   /*! `reproc_stop` */
-  REPROCXX_EXPORT std::error_code stop(cleanup c1, reproc::milliseconds t1,
-                                       cleanup c2, reproc::milliseconds t2,
-                                       cleanup c3, reproc::milliseconds t3,
-                                       unsigned int *exit_status) noexcept;
+  REPROCXX_EXPORT std::error_code
+  stop(cleanup c1,
+       reproc::milliseconds t1,
+       cleanup c2 = reproc::noop,
+       reproc::milliseconds t2 = reproc::milliseconds(0),
+       cleanup c3 = reproc::noop,
+       reproc::milliseconds t3 = reproc::milliseconds(0)) noexcept;
 
-  /*! Overload of `stop` with `c3` set to `noop` and `t3` set to 0. */
-  REPROCXX_EXPORT std::error_code stop(cleanup c1, reproc::milliseconds t1,
-                                       cleanup c2, reproc::milliseconds t2,
-                                       unsigned int *exit_status) noexcept;
-
-  /*! Overload of `stop` with `c2` and `c3` set to `noop` and `t2` and `t3 set
-  to 0. */
-  REPROCXX_EXPORT std::error_code stop(cleanup c1, reproc::milliseconds t1,
-                                       unsigned int *exit_status) noexcept;
+  /*! `reproc_exit_status` */
+  REPROCXX_EXPORT unsigned int exit_status() noexcept;
 
 private:
   std::unique_ptr<reproc_type> process_;
-  bool running_;
 
   cleanup c1_;
   reproc::milliseconds t1_;
@@ -227,6 +196,38 @@ private:
 
   static constexpr unsigned int BUFFER_SIZE = 1024;
 };
+
+template <typename SequenceContainer>
+std::error_code process::start(const SequenceContainer &args,
+                               const std::string *working_directory)
+{
+  using value_type = typename SequenceContainer::value_type;
+  using size_type = typename SequenceContainer::size_type;
+
+  static_assert(std::is_same<value_type, std::string>::value,
+                "Container value_type must be std::string");
+
+  // Turn `args` into an array of C strings.
+  auto argv = new const char *[args.size() + 1]; // NOLINT
+  for (size_type i = 0; i < args.size(); i++) {
+    argv[i] = args[i].c_str();
+  }
+  argv[args.size()] = nullptr;
+
+  // We assume that `args`'s size fits into an integer.
+  auto argc = static_cast<int>(args.size());
+
+  // `std::string *` => `const char *`
+  const char *child_working_directory = working_directory != nullptr
+                                            ? working_directory->c_str()
+                                            : nullptr;
+
+  std::error_code ec = start(argc, argv, child_working_directory);
+
+  delete[] argv; // NOLINT
+
+  return ec;
+}
 
 template <typename Parser>
 std::error_code process::parse(reproc::stream stream, Parser &&parser)

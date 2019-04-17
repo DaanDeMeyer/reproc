@@ -13,6 +13,10 @@ extern "C" {
 the header file so it can be allocated on the stack but its internals are prone
 to change and should **NOT** be depended on. */
 struct reproc_type {
+  // On POSIX systems, we can't wait again on the same process after
+  // successfully waiting once so we store the result.
+  bool running;
+  unsigned int exit_status;
 #if defined(_WIN32)
   // unsigned long = DWORD
   unsigned long id;
@@ -228,32 +232,33 @@ If `timeout` is 0 the function will only check if the child process is still
 running without waiting. If `timeout` is `REPROC_INFINITE` the function will
 wait indefinitely for the child process to exit.
 
-If the child process exits before the timeout expires and `exit_status` is not
-`NULL`, the exit status is stored in `exit_status`.
+If this function returns `REPROC_SUCCESS`, `process` has exited and its exit
+status can be retrieved with `reproc_exit_status`.
 
-This function should not be called after one of `reproc_wait` or `reproc_stop`
-has returned `REPROC_SUCCESS` for that child process.
-
-Possible errors when `timeout` is 0 or `REPROC_INFINITE`:
-- `REPROC_INTERRUPTED`
+Possible errors when `timeout` is 0:
 - `REPROC_WAIT_TIMEOUT`
 
-Extra possible errors when `timeout` is not 0 or `REPROC_INFINITE` (POSIX only):
+Possible errors when `timeout` is `REPROC_INFINITE`:
+- `REPROC_WAIT_TIMEOUT`
+- `REPROC_INTERRUPTED`
+
+Possible errors when `timeout` is not 0 or `REPROC_INFINITE`:
+- `REPROC_WAIT_TIMEOUT`
+- `REPROC_INTERRUPTED`
 - `REPROC_PROCESS_LIMIT_REACHED`
 - `REPROC_NOT_ENOUGH_MEMORY`
 */
 REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_type *process,
-                                       unsigned int timeout,
-                                       unsigned int *exit_status);
+                                       unsigned int timeout);
+
+/*! Returns `true` if `process` is still running, `false` otherwise. */
+REPROC_EXPORT bool reproc_running(reproc_type *process);
 
 /*!
 Sends the `SIGTERM` signal (POSIX) or the `CTRL-BREAK` signal (Windows) to the
 child process. Remember that successfull calls to `reproc_wait` and
 `reproc_destroy` are required to make sure the child process is completely
 cleaned up.
-
-This function should not be called after one of `reproc_wait` or `reproc_stop`
-has returned `REPROC_SUCCESS` for that child process.
 */
 REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_type *process);
 
@@ -262,9 +267,6 @@ Sends the `SIGKILL` signal to the child process (POSIX) or calls
 `TerminateProcess` (Windows) on the child process. Remember that successfull
 calls to `reproc_wait` and `reproc_destroy` are required to make sure the child
 process is completely cleaned up.
-
-This function should not be called after one of `reproc_wait` or `reproc_stop`
-has returned `REPROC_SUCCESS` for that child process.
 */
 REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_type *process);
 
@@ -285,9 +287,6 @@ Simplifies calling combinations of `reproc_wait`, `reproc_terminate` and
 `reproc_kill`. The function executes each specified step and waits (using
 `reproc_wait`) until the corresponding timeout expires before continuing with
 the next step.
-
-This function should not be called after one of `reproc_wait` or `reproc_stop`
-has returned `REPROC_SUCCESS` for that child process.
 
 Example:
 
@@ -311,21 +310,22 @@ execute the corresponding function to stop the process. The second element of
 each pair tells `reproc_stop` how long to wait after executing the function
 indicated by the first element.
 
-If `exit_status` is not `NULL`, it is used to store the exit status of the child
-process.
+If this function returns `REPROC_SUCCESS`, `process` has exited and its exit
+status can be retrieved with `reproc_exit_status`.
 
 See `reproc_wait` for the list of possible errors.
 */
 REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
                                        unsigned int t1, REPROC_CLEANUP c2,
                                        unsigned int t2, REPROC_CLEANUP c3,
-                                       unsigned int t3,
-                                       unsigned int *exit_status);
+                                       unsigned int t3);
 
-/*!
-Frees all allocated resources stored in `process`. Should only be called after
-`reproc_wait` has returned `REPROC_SUCCESS` for `process`.
-*/
+/*! Returns the exit status of `process`. It is undefined behaviour to call this
+function before `process` has exited. */
+REPROC_EXPORT unsigned int reproc_exit_status(reproc_type *process);
+
+/*! Frees all allocated resources stored in `process`. It is undefined behaviour
+to call this function before `process` has exited. */
 REPROC_EXPORT void reproc_destroy(reproc_type *process);
 
 #ifdef __cplusplus

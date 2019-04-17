@@ -96,8 +96,7 @@ int main(void)
 cleanup:
   free(output);
 
-  unsigned int exit_status = 0;
-  error = reproc_wait(&git_help, REPROC_INFINITE, &exit_status);
+  error = reproc_wait(&git_help, REPROC_INFINITE);
 
   reproc_destroy(&git_help);
 
@@ -105,5 +104,5 @@ cleanup:
     return fail(error);
   }
 
-  return (int) exit_status;
+  return (int) reproc_exit_status(&git_help);
 }

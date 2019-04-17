@@ -71,15 +71,14 @@ int main()
 
   /* Even if we pass stop parameters to the constructor, we can still call the
   individual stop methods ourselves. This allows us to retrieve the exit status
-  of the process which is hard to retrieve if the process is stopped in the
-  destructor. `process` has logic to prevent `process::stop` from being called
-  in the destructor if the child process has already been stopped before the
-  destructor is called. */
-  unsigned int exit_status = 0;
-  ec = cmake_help.wait(reproc::infinite, &exit_status);
+  of the process which is impossible to retrieve if the process is stopped in
+  the destructor. `process` has logic to prevent `process::stop` from being
+  called in the destructor if the child process has already been stopped before
+  the destructor is called. */
+  ec = cmake_help.wait(reproc::infinite);
   if (ec) {
     return fail(ec);
   }
 
-  return static_cast<int>(exit_status);
+  return static_cast<int>(cmake_help.exit_status());
 }

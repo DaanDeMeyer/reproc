@@ -67,10 +67,9 @@ TEST_SUITE("reproc")
 
     REQUIRE_EQ(output, message);
 
-    unsigned int exit_status = 0;
-    error = reproc_wait(&io, REPROC_INFINITE, &exit_status);
+    error = reproc_wait(&io, REPROC_INFINITE);
     REQUIRE(!error);
-    REQUIRE((exit_status == 0));
+    REQUIRE((reproc_exit_status(&io) == 0));
 
     reproc_destroy(&io);
   }

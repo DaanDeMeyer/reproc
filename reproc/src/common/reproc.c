@@ -3,10 +3,9 @@
 #include <assert.h>
 #include <stdbool.h>
 
-REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
-                         unsigned int t1, REPROC_CLEANUP c2, unsigned int t2,
-                         REPROC_CLEANUP c3, unsigned int t3,
-                         unsigned int *exit_status)
+REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1, unsigned int t1,
+                         REPROC_CLEANUP c2, unsigned int t2, REPROC_CLEANUP c3,
+                         unsigned int t3)
 {
   assert(process);
 
@@ -14,7 +13,7 @@ REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
   unsigned int timeouts[3] = { t1, t2, t3 };
 
   // We don't set `error` to `REPROC_SUCCESS` so we can check if `reproc_wait`,
-  // `reproc_terminate` or `reproc_kill` succeeded (in which case `error` is set
+  // `reproc_terminate` or `reproc_kill` succeed (in which case `error` is set
   // to `REPROC_SUCCESS`).
   REPROC_ERROR error = REPROC_WAIT_TIMEOUT;
 
@@ -35,12 +34,12 @@ REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
       break;
     }
 
-    // Stop if `reproc_terminate` or `reproc_kill` returned an error.
+    // Stop if `reproc_terminate` or `reproc_kill` return an error.
     if (error != REPROC_SUCCESS && error != REPROC_WAIT_TIMEOUT) {
       break;
     }
 
-    error = reproc_wait(process, timeout, exit_status);
+    error = reproc_wait(process, timeout);
     if (error != REPROC_WAIT_TIMEOUT) {
       break;
     }
@@ -56,6 +55,9 @@ REPROC_ERROR reproc_parse(reproc_type *process, REPROC_STREAM stream,
                                          unsigned int size),
                           void *context)
 {
+  assert(process);
+  assert(parser);
+
   // A single call to `read` might contain multiple messages. By always calling
   // `parser` once with no data before reading, we give it the chance to process
   // all previous output one by one before reading from the child process again.
@@ -87,6 +89,9 @@ REPROC_ERROR reproc_drain(reproc_type *process, REPROC_STREAM stream,
                                        unsigned int size),
                           void *context)
 {
+  assert(process);
+  assert(sink);
+
   char buffer[BUFFER_SIZE];
   REPROC_ERROR error = REPROC_SUCCESS;
 
@@ -109,4 +114,15 @@ REPROC_ERROR reproc_drain(reproc_type *process, REPROC_STREAM stream,
   }
 
   return error;
+}
+
+bool reproc_running(reproc_type *process)
+{
+  return reproc_wait(process, 0) == REPROC_SUCCESS ? false : true;
+}
+
+unsigned int reproc_exit_status(reproc_type *process)
+{
+  assert(process);
+  return process->exit_status;
 }

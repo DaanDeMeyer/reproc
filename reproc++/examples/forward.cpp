@@ -81,10 +81,9 @@ int main(int argc, char *argv[])
   /* Call `process::stop` ourselves to get the exit status. We add
   `reproc::wait` with a timeout of ten seconds to give the process time to write
   its output before sending `SIGTERM`. */
-  unsigned int exit_status = 0;
   ec = forward.stop(reproc::wait, reproc::milliseconds(10000),
                     reproc::terminate, reproc::milliseconds(5000), reproc::kill,
-                    reproc::milliseconds(2000), &exit_status);
+                    reproc::milliseconds(2000));
   if (ec) {
     return fail(ec);
   }
@@ -99,5 +98,5 @@ int main(int argc, char *argv[])
     return fail(ec);
   }
 
-  return static_cast<int>(exit_status);
+  return static_cast<int>(forward.exit_status());
 }

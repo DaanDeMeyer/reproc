@@ -19,7 +19,7 @@ TEST_SUITE("reproc")
     error = reproc_start(&infinite, ARGV_SIZE - 1, argv.data(), nullptr);
     REQUIRE(!error);
 
-    error = reproc_wait(&infinite, 50, nullptr);
+    error = reproc_wait(&infinite, 50);
     REQUIRE(error == REPROC_WAIT_TIMEOUT);
 
     SUBCASE("terminate")
@@ -34,7 +34,7 @@ TEST_SUITE("reproc")
       REQUIRE(!error);
     }
 
-    error = reproc_wait(&infinite, 50, nullptr);
+    error = reproc_wait(&infinite, 50);
     REQUIRE(!error);
 
     reproc_destroy(&infinite);

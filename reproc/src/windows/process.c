@@ -152,16 +152,13 @@ REPROC_ERROR process_wait(HANDLE process, unsigned int timeout,
                           unsigned int *exit_status)
 {
   assert(process);
+  assert(exit_status);
 
   DWORD wait_result = WaitForSingleObject(process, timeout);
   if (wait_result == WAIT_TIMEOUT) {
     return REPROC_WAIT_TIMEOUT;
   } else if (wait_result == WAIT_FAILED) {
     return REPROC_UNKNOWN_ERROR;
-  }
-
-  if (exit_status == NULL) {
-    return REPROC_SUCCESS;
   }
 
   // `DWORD` is a typedef to `unsigned int` on Windows so the cast is safe.

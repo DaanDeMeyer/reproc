@@ -23,6 +23,8 @@ REPROC_ERROR reproc_start(reproc_type *process, int argc,
     assert(argv[i]);
   }
 
+  process->running = false;
+
   // Predeclare every variable so we can use `goto`.
 
   HANDLE child_stdin = NULL;
@@ -98,6 +100,8 @@ cleanup:
 
   if (error) {
     reproc_destroy(process);
+  } else {
+    process->running = true;
   }
 
   return error;
@@ -155,17 +159,31 @@ void reproc_close(reproc_type *process, REPROC_STREAM stream)
   assert(0);
 }
 
-REPROC_ERROR reproc_wait(reproc_type *process, unsigned int timeout,
-                         unsigned int *exit_status)
+REPROC_ERROR reproc_wait(reproc_type *process, unsigned int timeout)
 {
   assert(process);
 
-  return process_wait(process->handle, timeout, exit_status);
+  if (!process->running) {
+    return REPROC_SUCCESS;
+  }
+
+  REPROC_ERROR error = process_wait(process->handle, timeout,
+                                    &process->exit_status);
+
+  if (error == REPROC_SUCCESS) {
+    process->running = false;
+  }
+
+  return error;
 }
 
 REPROC_ERROR reproc_terminate(reproc_type *process)
 {
   assert(process);
+
+  if(!process->running) {
+    return REPROC_SUCCESS;
+  }
 
   return process_terminate(process->id);
 }
@@ -173,6 +191,10 @@ REPROC_ERROR reproc_terminate(reproc_type *process)
 REPROC_ERROR reproc_kill(reproc_type *process)
 {
   assert(process);
+
+  if(!process->running) {
+    return REPROC_SUCCESS;
+  }
 
   return process_kill(process->handle);
 }

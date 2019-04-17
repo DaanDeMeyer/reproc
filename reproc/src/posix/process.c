@@ -358,6 +358,8 @@ static unsigned int parse_exit_status(int status)
 
 static REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
 {
+  assert(exit_status);
+
   int status = 0;
   // Adding `WNOHANG` makes `waitpid` only check if the child process is still
   // running without waiting.
@@ -369,15 +371,15 @@ static REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
     return REPROC_UNKNOWN_ERROR;
   }
 
-  if (exit_status) {
-    *exit_status = parse_exit_status(status);
-  }
+  *exit_status = parse_exit_status(status);
 
   return REPROC_SUCCESS;
 }
 
 static REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
 {
+  assert(exit_status);
+
   int status = 0;
 
   if (waitpid(pid, &status, 0) == -1) {
@@ -389,9 +391,7 @@ static REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
     }
   }
 
-  if (exit_status) {
-    *exit_status = parse_exit_status(status);
-  }
+  *exit_status = parse_exit_status(status);
 
   return REPROC_SUCCESS;
 }
@@ -430,6 +430,7 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
                                  unsigned int *exit_status)
 {
   assert(timeout > 0);
+  assert(exit_status);
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
@@ -505,9 +506,7 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
     }
   }
 
-  if (exit_status) {
-    *exit_status = parse_exit_status(status);
-  }
+  *exit_status = parse_exit_status(status);
 
   return REPROC_SUCCESS;
 }
@@ -515,6 +514,8 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
 REPROC_ERROR process_wait(pid_t pid, unsigned int timeout,
                           unsigned int *exit_status)
 {
+  assert(exit_status);
+
   if (timeout == 0) {
     return wait_no_hang(pid, exit_status);
   }
