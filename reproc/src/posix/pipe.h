@@ -12,8 +12,8 @@ REPROC_ERROR pipe_init(int *read, int *write);
 // Possible errors:
 // - `REPROC_STREAM_CLOSED`
 // - `REPROC_INTERRUPTED`
-REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
-                       unsigned int *bytes_read);
+REPROC_ERROR
+pipe_read(int pipe, void *buffer, unsigned int size, unsigned int *bytes_read);
 
 // Writes up to `to_write` bytes from `buffer` to the pipe indicated by `pipe`
 // and stores the amount of bytes written in `bytes_written`.
@@ -31,5 +31,7 @@ REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
 // - `REPROC_STREAM_CLOSED`
 // - `REPROC_INTERRUPTED`
 // - `REPROC_PARTIAL_WRITE`
-REPROC_ERROR pipe_write(int pipe, const void *buffer, unsigned int to_write,
+REPROC_ERROR pipe_write(int pipe,
+                        const void *buffer,
+                        unsigned int to_write,
                         unsigned int *bytes_written);

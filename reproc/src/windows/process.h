@@ -23,13 +23,14 @@ struct process_options {
 // process is spawned. See `process_options` for more information on the
 // possible options.
 REPROC_ERROR process_create(wchar_t *command_line,
-                            struct process_options *options, DWORD *pid,
+                            struct process_options *options,
+                            DWORD *pid,
                             HANDLE *handle);
 
 // Waits `timeout` milliseconds for the process indicated by `pid` to exit and
 // stores the exit code in `exit_status`.
-REPROC_ERROR process_wait(HANDLE process, unsigned int timeout,
-                          unsigned int *exit_status);
+REPROC_ERROR
+process_wait(HANDLE process, unsigned int timeout, unsigned int *exit_status);
 
 // Sends the `CTRL-BREAK` signal to the process indicated by `pid`.
 REPROC_ERROR process_terminate(unsigned long pid);

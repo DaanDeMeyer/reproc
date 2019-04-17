@@ -9,8 +9,8 @@
 //
 // Possible errors:
 // - `REPROC_NOT_ENOUGH_MEMORY`
-REPROC_ERROR string_join(const char *const *string_array, int array_length,
-                         char **result);
+REPROC_ERROR
+string_join(const char *const *string_array, int array_length, char **result);
 
 // Converts the UTF-8 string in `string` to a UTF-16 string and stores the
 // result in `result`.

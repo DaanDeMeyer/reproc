@@ -2,7 +2,10 @@
 BasedOnStyle: LLVM
 ---
 Language: Cpp
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackParameters: false
 BreakBeforeBraces: Linux
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
 Cpp11BracedListStyle: false
 PenaltyBreakAssignment: 100
 PenaltyBreakBeforeFirstCallParameter: 100

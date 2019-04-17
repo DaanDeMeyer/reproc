@@ -9,8 +9,8 @@
 // write handle of the pipe respectively. `inherit_read` and `inherit_write`
 // specify whether the `read` or `write` handle respectively should be inherited
 // by any child processes spawned by the current process.
-REPROC_ERROR pipe_init(HANDLE *read, bool inherit_read, HANDLE *write,
-                       bool inherit_write);
+REPROC_ERROR
+pipe_init(HANDLE *read, bool inherit_read, HANDLE *write, bool inherit_write);
 
 // Reads up to `size` bytes from the pipe indicated by `handle` and stores them
 // them in `buffer`. The amount of bytes read is stored in `bytes_read`.
@@ -18,7 +18,9 @@ REPROC_ERROR pipe_init(HANDLE *read, bool inherit_read, HANDLE *write,
 // Possible errors:
 // - `REPROC_STREAM_CLOSED`
 // - `REPROC_INTERRUPTED`
-REPROC_ERROR pipe_read(HANDLE pipe, void *buffer, unsigned int size,
+REPROC_ERROR pipe_read(HANDLE pipe,
+                       void *buffer,
+                       unsigned int size,
                        unsigned int *bytes_read);
 
 // Writes up to `to_write` bytes from `buffer` to the pipe indicated by `handle`
@@ -33,5 +35,7 @@ REPROC_ERROR pipe_read(HANDLE pipe, void *buffer, unsigned int size,
 // - `REPROC_STREAM_CLOSED`
 // - `REPROC_INTERRUPTED`
 // - `REPROC_PARTIAL_WRITE`
-REPROC_ERROR pipe_write(HANDLE pipe, const void *buffer, unsigned int to_write,
+REPROC_ERROR pipe_write(HANDLE pipe,
+                        const void *buffer,
+                        unsigned int to_write,
                         unsigned int *bytes_written);

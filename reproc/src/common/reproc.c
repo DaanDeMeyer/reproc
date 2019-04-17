@@ -3,8 +3,12 @@
 #include <assert.h>
 #include <stdbool.h>
 
-REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1, unsigned int t1,
-                         REPROC_CLEANUP c2, unsigned int t2, REPROC_CLEANUP c3,
+REPROC_ERROR reproc_stop(reproc_type *process,
+                         REPROC_CLEANUP c1,
+                         unsigned int t1,
+                         REPROC_CLEANUP c2,
+                         unsigned int t2,
+                         REPROC_CLEANUP c3,
                          unsigned int t3)
 {
   assert(process);
@@ -50,8 +54,10 @@ REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1, unsigned int t
 
 #define BUFFER_SIZE 1024
 
-REPROC_ERROR reproc_parse(reproc_type *process, REPROC_STREAM stream,
-                          bool (*parser)(void *context, const char *buffer,
+REPROC_ERROR reproc_parse(reproc_type *process,
+                          REPROC_STREAM stream,
+                          bool (*parser)(void *context,
+                                         const char *buffer,
                                          unsigned int size),
                           void *context)
 {
@@ -84,10 +90,11 @@ REPROC_ERROR reproc_parse(reproc_type *process, REPROC_STREAM stream,
   return error;
 }
 
-REPROC_ERROR reproc_drain(reproc_type *process, REPROC_STREAM stream,
-                          bool (*sink)(void *context, const char *buffer,
-                                       unsigned int size),
-                          void *context)
+REPROC_ERROR
+reproc_drain(reproc_type *process,
+             REPROC_STREAM stream,
+             bool (*sink)(void *context, const char *buffer, unsigned int size),
+             void *context)
 {
   assert(process);
   assert(sink);

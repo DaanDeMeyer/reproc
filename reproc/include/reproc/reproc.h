@@ -103,7 +103,8 @@ Possible errors:
 - `REPROC_FILE_NOT_FOUND`
 - `REPROC_INTERRUPTED`
 */
-REPROC_EXPORT REPROC_ERROR reproc_start(reproc_type *process, int argc,
+REPROC_EXPORT REPROC_ERROR reproc_start(reproc_type *process,
+                                        int argc,
                                         const char *const *argv,
                                         const char *working_directory);
 
@@ -157,7 +158,8 @@ buffer[bytes_read] = '\0'; // Add null terminator
 ```
 */
 REPROC_EXPORT REPROC_ERROR reproc_read(reproc_type *process,
-                                       REPROC_STREAM stream, void *buffer,
+                                       REPROC_STREAM stream,
+                                       void *buffer,
                                        unsigned int size,
                                        unsigned int *bytes_read);
 
@@ -171,10 +173,12 @@ one.
 
 See `reproc_read` for a list of possible errors.
 */
-REPROC_EXPORT REPROC_ERROR reproc_parse(
-    reproc_type *process, REPROC_STREAM stream,
-    bool (*parser)(void *context, const char *buffer, unsigned int size),
-    void *context);
+REPROC_EXPORT REPROC_ERROR reproc_parse(reproc_type *process,
+                                        REPROC_STREAM stream,
+                                        bool (*parser)(void *context,
+                                                       const char *buffer,
+                                                       unsigned int size),
+                                        void *context);
 
 /*!
 Calls `reproc_read` on `stream` until it is closed, `sink` returns false or an
@@ -186,10 +190,12 @@ also the main difference with `reproc_parse`.
 See `reproc_read` for a list of possible errors (except for
 `REPROC_STREAM_CLOSED`).
 */
-REPROC_EXPORT REPROC_ERROR
-reproc_drain(reproc_type *process, REPROC_STREAM stream,
-             bool (*sink)(void *context, const char *buffer, unsigned int size),
-             void *context);
+REPROC_EXPORT REPROC_ERROR reproc_drain(reproc_type *process,
+                                        REPROC_STREAM stream,
+                                        bool (*sink)(void *context,
+                                                     const char *buffer,
+                                                     unsigned int size),
+                                        void *context);
 
 /*!
 Writes up to `to_write` bytes from `buffer` to the standard input (stdin) of
@@ -315,9 +321,12 @@ status can be retrieved with `reproc_exit_status`.
 
 See `reproc_wait` for the list of possible errors.
 */
-REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_type *process, REPROC_CLEANUP c1,
-                                       unsigned int t1, REPROC_CLEANUP c2,
-                                       unsigned int t2, REPROC_CLEANUP c3,
+REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_type *process,
+                                       REPROC_CLEANUP c1,
+                                       unsigned int t1,
+                                       REPROC_CLEANUP c2,
+                                       unsigned int t2,
+                                       REPROC_CLEANUP c3,
                                        unsigned int t3);
 
 /*! Returns the exit status of `process`. It is undefined behaviour to call this

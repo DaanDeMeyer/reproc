@@ -7,7 +7,8 @@
 #include <stdlib.h>
 
 REPROC_ERROR
-static handle_inherit_list_create(HANDLE *handles, int amount,
+static handle_inherit_list_create(HANDLE *handles,
+                                  int amount,
                                   LPPROC_THREAD_ATTRIBUTE_LIST *result)
 {
   assert(handles);
@@ -47,7 +48,8 @@ static handle_inherit_list_create(HANDLE *handles, int amount,
 #endif
 
 REPROC_ERROR process_create(wchar_t *command_line,
-                            struct process_options *options, DWORD *pid,
+                            struct process_options *options,
+                            DWORD *pid,
                             HANDLE *handle)
 {
   assert(command_line);
@@ -148,8 +150,8 @@ REPROC_ERROR process_create(wchar_t *command_line,
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR process_wait(HANDLE process, unsigned int timeout,
-                          unsigned int *exit_status)
+REPROC_ERROR
+process_wait(HANDLE process, unsigned int timeout, unsigned int *exit_status)
 {
   assert(process);
   assert(exit_status);

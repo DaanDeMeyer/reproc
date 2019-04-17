@@ -9,7 +9,8 @@
 #include <stdlib.h>
 #include <windows.h>
 
-REPROC_ERROR reproc_start(reproc_type *process, int argc,
+REPROC_ERROR reproc_start(reproc_type *process,
+                          int argc,
                           const char *const *argv,
                           const char *working_directory)
 {
@@ -107,8 +108,10 @@ cleanup:
   return error;
 }
 
-REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
-                         void *buffer, unsigned int size,
+REPROC_ERROR reproc_read(reproc_type *process,
+                         REPROC_STREAM stream,
+                         void *buffer,
+                         unsigned int size,
                          unsigned int *bytes_read)
 {
   assert(process);
@@ -129,8 +132,10 @@ REPROC_ERROR reproc_read(reproc_type *process, REPROC_STREAM stream,
   return REPROC_UNKNOWN_ERROR;
 }
 
-REPROC_ERROR reproc_write(reproc_type *process, const void *buffer,
-                          unsigned int to_write, unsigned int *bytes_written)
+REPROC_ERROR reproc_write(reproc_type *process,
+                          const void *buffer,
+                          unsigned int to_write,
+                          unsigned int *bytes_written)
 {
   assert(process);
   assert(process->in);
@@ -181,7 +186,7 @@ REPROC_ERROR reproc_terminate(reproc_type *process)
 {
   assert(process);
 
-  if(!process->running) {
+  if (!process->running) {
     return REPROC_SUCCESS;
   }
 
@@ -192,7 +197,7 @@ REPROC_ERROR reproc_kill(reproc_type *process)
 {
   assert(process);
 
-  if(!process->running) {
+  if (!process->running) {
     return REPROC_SUCCESS;
   }
 

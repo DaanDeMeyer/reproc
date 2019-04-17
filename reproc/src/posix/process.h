@@ -34,13 +34,15 @@ struct process_options {
 // `options` contains options that modify how the child process is spawned. See
 // `process_options` for more information on the possible options.
 REPROC_ERROR
-process_create(int (*action)(const void *), const void *context,
-               struct process_options *options, pid_t *pid);
+process_create(int (*action)(const void *),
+               const void *context,
+               struct process_options *options,
+               pid_t *pid);
 
 // Waits `timeout` milliseconds for the process indicated by `pid` to exit and
 // stores the exit code in `exit_status`.
-REPROC_ERROR process_wait(pid_t pid, unsigned int timeout,
-                          unsigned int *exit_status);
+REPROC_ERROR
+process_wait(pid_t pid, unsigned int timeout, unsigned int *exit_status);
 
 // Sends the `SIGTERM` signal to the process indicated by `pid`.
 REPROC_ERROR process_terminate(pid_t pid);

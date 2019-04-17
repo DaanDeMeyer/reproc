@@ -12,8 +12,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-REPROC_ERROR process_create(int (*action)(const void *), const void *context,
-                            struct process_options *options, pid_t *pid)
+REPROC_ERROR process_create(int (*action)(const void *),
+                            const void *context,
+                            struct process_options *options,
+                            pid_t *pid)
 {
   assert(options->stdin_fd >= 0);
   assert(options->stdout_fd >= 0);
@@ -426,8 +428,8 @@ static REPROC_ERROR timeout_map_error(int error)
   }
 }
 
-static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
-                                 unsigned int *exit_status)
+static REPROC_ERROR
+wait_timeout(pid_t pid, unsigned int timeout, unsigned int *exit_status)
 {
   assert(timeout > 0);
   assert(exit_status);
@@ -511,8 +513,8 @@ static REPROC_ERROR wait_timeout(pid_t pid, unsigned int timeout,
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR process_wait(pid_t pid, unsigned int timeout,
-                          unsigned int *exit_status)
+REPROC_ERROR
+process_wait(pid_t pid, unsigned int timeout, unsigned int *exit_status)
 {
   assert(exit_status);
 

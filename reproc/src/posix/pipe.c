@@ -37,8 +37,8 @@ REPROC_ERROR pipe_init(int *read, int *write)
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
-                       unsigned int *bytes_read)
+REPROC_ERROR
+pipe_read(int pipe, void *buffer, unsigned int size, unsigned int *bytes_read)
 {
   assert(buffer);
   assert(bytes_read);
@@ -66,7 +66,9 @@ REPROC_ERROR pipe_read(int pipe, void *buffer, unsigned int size,
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR pipe_write(int pipe, const void *buffer, unsigned int to_write,
+REPROC_ERROR pipe_write(int pipe,
+                        const void *buffer,
+                        unsigned int to_write,
                         unsigned int *bytes_written)
 {
   assert(buffer);

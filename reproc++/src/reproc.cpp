@@ -33,9 +33,18 @@ namespace reproc
 
 const reproc::milliseconds infinite = reproc::milliseconds(0xFFFFFFFF);
 
-process::process(cleanup c1, reproc::milliseconds t1, cleanup c2,
-                 reproc::milliseconds t2, cleanup c3, reproc::milliseconds t3)
-    : process_(new reproc_type()), c1_(c1), t1_(t1), c2_(c2), t2_(t2), c3_(c3),
+process::process(cleanup c1,
+                 reproc::milliseconds t1,
+                 cleanup c2,
+                 reproc::milliseconds t2,
+                 cleanup c3,
+                 reproc::milliseconds t3)
+    : process_(new reproc_type()),
+      c1_(c1),
+      t1_(t1),
+      c2_(c2),
+      t2_(t2),
+      c3_(c3),
       t3_(t3)
 {
 }
@@ -55,7 +64,8 @@ process::~process() noexcept
 process::process(process &&) noexcept = default; // NOLINT
 process &process::operator=(process &&) noexcept = default;
 
-std::error_code process::start(int argc, const char *const *argv,
+std::error_code process::start(int argc,
+                               const char *const *argv,
                                const char *working_directory) noexcept
 {
   REPROC_ERROR error = reproc_start(process_.get(), argc, argv,
@@ -63,7 +73,8 @@ std::error_code process::start(int argc, const char *const *argv,
   return reproc_error_to_error_code(error);
 }
 
-std::error_code process::read(reproc::stream stream, void *buffer,
+std::error_code process::read(reproc::stream stream,
+                              void *buffer,
                               unsigned int size,
                               unsigned int *bytes_read) noexcept
 {
@@ -73,7 +84,8 @@ std::error_code process::read(reproc::stream stream, void *buffer,
   return reproc_error_to_error_code(error);
 }
 
-std::error_code process::write(const void *buffer, unsigned int to_write,
+std::error_code process::write(const void *buffer,
+                               unsigned int to_write,
                                unsigned int *bytes_written) noexcept
 {
   REPROC_ERROR error = reproc_write(process_.get(), buffer, to_write,
@@ -106,8 +118,11 @@ std::error_code process::kill() noexcept
   return reproc_error_to_error_code(error);
 }
 
-std::error_code process::stop(cleanup c1, reproc::milliseconds t1, cleanup c2,
-                              reproc::milliseconds t2, cleanup c3,
+std::error_code process::stop(cleanup c1,
+                              reproc::milliseconds t1,
+                              cleanup c2,
+                              reproc::milliseconds t2,
+                              cleanup c3,
                               reproc::milliseconds t3) noexcept
 {
   REPROC_ERROR error = reproc_stop(process_.get(),

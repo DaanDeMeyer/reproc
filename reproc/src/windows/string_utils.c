@@ -5,8 +5,8 @@
 #include <string.h>
 #include <windows.h>
 
-REPROC_ERROR string_join(const char *const *string_array, int array_length,
-                         char **result)
+REPROC_ERROR
+string_join(const char *const *string_array, int array_length, char **result)
 {
   assert(string_array);
   assert(array_length >= 0);
