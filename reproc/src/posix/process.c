@@ -498,7 +498,7 @@ wait_timeout(pid_t pid, unsigned int timeout, unsigned int *exit_status)
     return error;
   }
 
-  if (timeout_exit_status > 0) {
+  if (timeout_exit_status != 0 && timeout_exit_status != SIGTERM) {
     errno = (int) timeout_exit_status;
     return REPROC_UNKNOWN_ERROR;
   }
