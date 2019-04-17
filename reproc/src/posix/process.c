@@ -492,9 +492,15 @@ wait_timeout(pid_t pid, unsigned int timeout, unsigned int *exit_status)
     return error;
   }
 
-  error = wait_infinite(timeout_pid, NULL);
+  unsigned int timeout_exit_status = 0;
+  error = wait_infinite(timeout_pid, &timeout_exit_status);
   if (error) {
     return error;
+  }
+
+  if (timeout_exit_status > 0) {
+    errno = (int) exit_status;
+    return REPROC_UNKNOWN_ERROR;
   }
 
   // After cleaning up the timeout process we can check if `waitpid` returned an
