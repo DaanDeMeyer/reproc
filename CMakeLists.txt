@@ -31,6 +31,13 @@ if(REPROC_TESTS)
   cddm_add_common(reproc-tests CXX 11 "")
   set_target_properties(reproc-tests PROPERTIES OUTPUT_NAME tests)
   target_link_libraries(reproc-tests PRIVATE doctest)
+  # We change the working directory to the build directory before executing the
+  # tests so tests can reliably find any required resources.
+  target_compile_definitions(reproc-tests PRIVATE
+    DOCTEST_WORKING_DIRECTORY="${PROJECT_BINARY_DIR}"
+  )
+
+  target_sources(reproc-tests PRIVATE external/doctest/main.cpp)
 endif()
 
 add_subdirectory(reproc)
