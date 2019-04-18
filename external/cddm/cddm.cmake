@@ -1,5 +1,5 @@
 # CDDM (CMake Daan De Meyer)
-# Version: v0.0.10
+# Version: v0.0.11
 #
 # Description: Encapsulates common CMake configuration for cross-platform
 # C/C++ libraries.
@@ -154,7 +154,7 @@ include(CMakePackageConfigHelpers)
 # Applies common configuration to `TARGET`. `LANGUAGE` (C or CXX) is used to
 # indicate the language of the target. `STANDARD` indicates the standard of the
 # language to use.
-function(cddm_add_common TARGET LANGUAGE STANDARD)
+function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   if(LANGUAGE STREQUAL "C")
     target_compile_features(${TARGET} PUBLIC c_std_${STANDARD})
   else()
@@ -164,6 +164,10 @@ function(cddm_add_common TARGET LANGUAGE STANDARD)
   set_target_properties(${TARGET} PROPERTIES
     C_EXTENSIONS OFF
     CXX_EXTENSIONS OFF
+
+    RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
+    ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
+    LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
   )
 
   if(${PNU}_TIDY AND CDDM_CLANG_TIDY_PROGRAM)
@@ -244,10 +248,6 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
     C_VISIBILITY_PRESET hidden
     CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN true
-
-    RUNTIME_OUTPUT_DIRECTORY lib
-    ARCHIVE_OUTPUT_DIRECTORY lib
-    LIBRARY_OUTPUT_DIRECTORY lib
   )
 
   # A preprocesor macro cannot contain + so we replace it with x.
