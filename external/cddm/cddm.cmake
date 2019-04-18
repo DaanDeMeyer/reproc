@@ -1,5 +1,5 @@
 # CDDM (CMake Daan De Meyer)
-# Version: v0.0.7
+# Version: v0.0.10
 #
 # Description: Encapsulates common CMake configuration for cross-platform
 # C/C++ libraries.
@@ -132,17 +132,17 @@ foreach(LANGUAGE IN ITEMS C CXX)
       check_cxx_compiler_flag(/permissive- CDDM_${LANGUAGE}_HAVE_PERMISSIVE)
     endif()
   endif()
-
-  if(${PNU}_SANITIZERS)
-    if(MSVC)
-      message(FATAL_ERROR "Building with sanitizers is not supported when using the Visual C++ toolchain.")
-    endif()
-
-    if(NOT ${CMAKE_${LANGUAGE}_COMPILER_ID} MATCHES GNU|Clang)
-      message(FATAL_ERROR "Building with sanitizers is not supported when using the ${CMAKE_${LANGUAGE}_COMPILER_ID} compiler.")
-    endif()
-  endif()
 endforeach()
+
+if(${PNU}_SANITIZERS)
+  if(MSVC)
+    message(FATAL_ERROR "Building with sanitizers is not supported when using the Visual C++ toolchain.")
+  endif()
+
+  if(NOT ${CMAKE_${LANGUAGE}_COMPILER_ID} MATCHES GNU|Clang)
+    message(FATAL_ERROR "Building with sanitizers is not supported when using the ${CMAKE_${LANGUAGE}_COMPILER_ID} compiler.")
+  endif()
+endif()
 
 ### Includes ###
 
@@ -153,9 +153,8 @@ include(CMakePackageConfigHelpers)
 
 # Applies common configuration to `TARGET`. `LANGUAGE` (C or CXX) is used to
 # indicate the language of the target. `STANDARD` indicates the standard of the
-# language to use and `OUTPUT_DIRECTORY` defines where to put the resulting
-# files.
-function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
+# language to use.
+function(cddm_add_common TARGET LANGUAGE STANDARD)
   if(LANGUAGE STREQUAL "C")
     target_compile_features(${TARGET} PUBLIC c_std_${STANDARD})
   else()
@@ -163,22 +162,16 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   endif()
 
   set_target_properties(${TARGET} PROPERTIES
-    ${LANGUAGE}_EXTENSIONS OFF
-
-    # Only one of these is actually used per target but instead of passing the
-    # type of target to the function and setting only the appropriate property
-    # we just set all of them to avoid lots of if checks and an extra function
-    # parameter.
-    RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
-    ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
-    LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
+    C_EXTENSIONS OFF
+    CXX_EXTENSIONS OFF
   )
 
   if(${PNU}_TIDY AND CDDM_CLANG_TIDY_PROGRAM)
     set_target_properties(${TARGET} PROPERTIES
       # CLANG_TIDY_PROGRAM is a list so we surround it with quotes to pass it as
       # a single argument.
-      ${LANGUAGE}_CLANG_TIDY "${CDDM_CLANG_TIDY_PROGRAM}"
+      C_CLANG_TIDY "${CDDM_CLANG_TIDY_PROGRAM}"
+      CXX_CLANG_TIDY "${CDDM_CLANG_TIDY_PROGRAM}"
     )
   endif()
 
@@ -187,6 +180,7 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   if(MSVC)
     target_compile_options(${TARGET} PRIVATE
       /nologo # Silence MSVC compiler version output.
+      /wd4068
       $<$<BOOL:${${PNU}_WARNINGS_AS_ERRORS}>:/WX> # -Werror
       $<$<BOOL:${CDDM_${LANGUAGE}_HAVE_PERMISSIVE}>:/permissive->
     )
@@ -243,12 +237,17 @@ endfunction()
 # applied to any public API functions.
 function(cddm_add_library TARGET LANGUAGE STANDARD)
   add_library(${TARGET})
-  cddm_add_common(${TARGET} ${LANGUAGE} ${STANDARD} lib)
 
+  cddm_add_common(${TARGET} ${LANGUAGE} ${STANDARD} lib)
   # Enable -fvisibility=hidden and -fvisibility-inlines-hidden (if applicable).
   set_target_properties(${TARGET} PROPERTIES
-    ${LANGUAGE}_VISIBILITY_PRESET hidden
+    C_VISIBILITY_PRESET hidden
+    CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN true
+
+    RUNTIME_OUTPUT_DIRECTORY lib
+    ARCHIVE_OUTPUT_DIRECTORY lib
+    LIBRARY_OUTPUT_DIRECTORY lib
   )
 
   # A preprocesor macro cannot contain + so we replace it with x.
