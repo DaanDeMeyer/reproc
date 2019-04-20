@@ -1,0 +1,90 @@
+jobs:
+- template: ci/windows.yml
+  parameters:
+    name: windows_vs2015_x64_msvc
+    image: vs2015-win2012r2
+    variables:
+      VCVARSALL: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat
+      PLATFORM: x64
+      CC: cl.exe
+      CXX: cl.exe
+
+- template: ci/windows.yml
+  parameters:
+    name: windows_vs2015_x86_clang
+    image: vs2015-win2012r2
+    variables:
+      VCVARSALL: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat
+      PLATFORM: x86
+      CC: clang-cl.exe
+      CXX: clang-cl.exe
+      # https://gitlab.kitware.com/cmake/cmake/issues/16259.
+      CFLAGS: -m32
+      CXXFLAGS: -m32
+
+- template: ci/windows.yml
+  parameters:
+    name: windows_vs2017_x86_msvc
+    image: vs2017-win2016
+    variables:
+      VCVARSALL: C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+      PLATFORM: x86
+      CC: cl.exe
+      CXX: cl.exe
+
+- template: ci/windows.yml
+  parameters:
+    name: windows_vs2017_x64_clang
+    image: vs2017-win2016
+    variables:
+      VCVARSALL: C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+      PLATFORM: x64
+      CC: clang-cl.exe
+      CXX: clang-cl.exe
+
+- template: ci/macos.yml
+  parameters:
+    name: macos_10_13
+    image: macOS-10.13
+
+- template: ci/macos.yml
+  parameters:
+    name: macos_10_14
+    image: macOS-10.14
+
+
+- template: ci/linux.yml
+  parameters:
+    name: linux_gcc_4_9
+    variables:
+      PACKAGE: g++-4.9
+      REPOSITORY: ppa:ubuntu-toolchain-r/test
+      CC: gcc-4.9
+      CXX: g++-4.9
+
+- template: ci/linux.yml
+  parameters:
+    name: linux_clang_3_5
+    variables:
+      PACKAGE: clang-3.5
+      REPOSITORY: deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial main
+      CC: clang-3.5
+      CXX: clang++-3.5
+
+- template: ci/linux.yml
+  parameters:
+    name: linux_gcc_8
+    variables:
+      PACKAGE: g++-8
+      REPOSITORY: ppa:ubuntu-toolchain-r/test
+      CC: gcc-8
+      CXX: g++-8
+
+- template: ci/linux.yml
+  parameters:
+    name: linux_clang_8
+    variables:
+      PACKAGE: clang-8
+      REPOSITORY: deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-8 main
+      CC: clang-8
+      CXX: clang++-8

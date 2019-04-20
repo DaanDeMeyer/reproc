@@ -1,0 +1,37 @@
+parameters:
+  name: ''
+  image: ''
+
+jobs:
+- job: ${{ parameters.name }}
+  pool:
+    vmImage: ${{ parameters.image }}
+  steps:
+  - script: brew upgrade cmake
+    displayName: Install
+
+  - script: |
+      cmake \
+        -B $(Build.SourcesDirectory)/build \
+        -S $(Build.SourcesDirectory) \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DBUILD_SHARED_LIBS=ON \
+        -DREPROC++=ON \
+        -DREPROC_TESTS=ON \
+        -DREPROC_EXAMPLES=ON \
+        -DREPROC_WARNINGS_AS_ERRORS=ON \
+        -DREPROC_SANITIZERS=ON
+    displayName: Configure
+
+  - script: cmake --build $(Build.SourcesDirectory)/build --parallel 2
+    displayName: Build
+
+  - script: |
+      build/tests
+      build/reproc/examples/drain > /dev/null
+      build/reproc/examples/git-status > /dev/null
+      build/reproc++/examples/background cmake --help > /dev/null
+      build/reproc++/examples/cmake-help > /dev/null
+      build/reproc++/examples/forward cmake --help > /dev/null
+    displayName: Test
+

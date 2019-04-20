@@ -1,0 +1,48 @@
+parameters:
+  name: ''
+  variables: {}
+
+jobs:
+- job: ${{ parameters.name }}
+  pool:
+    vmImage: 'ubuntu-16.04'
+  variables:
+    ${{ insert }}: ${{ parameters.variables }}
+  steps:
+  - script: |
+      sudo add-apt-repository "$(REPOSITORY)"
+      sudo apt-get update
+      sudo apt-get install $(PACKAGE)
+
+      curl -sSL https://github.com/Kitware/CMake/releases/download/v3.14.2/cmake-3.14.2-Linux-x86_64.tar.gz -o cmake.tar.gz;
+      sudo tar xf cmake.tar.gz --strip 1 -C /usr/local;
+    displayName: Install
+
+  - script: |
+      export PATH=/usr/local/bin:$PATH;
+      cmake \
+        -B $(Build.SourcesDirectory)/build \
+        -S $(Build.SourcesDirectory) \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DBUILD_SHARED_LIBS=ON \
+        -DREPROC++=ON \
+        -DREPROC_TESTS=ON \
+        -DREPROC_EXAMPLES=ON \
+        -DREPROC_WARNINGS_AS_ERRORS=ON \
+        -DREPROC_SANITIZERS=ON
+    displayName: Configure
+
+  - script: |
+      export PATH=/usr/local/bin:$PATH;
+      cmake --build $(Build.SourcesDirectory)/build --parallel 2
+    displayName: Build
+
+  - script: |
+      build/tests
+      build/reproc/examples/drain > /dev/null
+      build/reproc/examples/git-status > /dev/null
+      build/reproc++/examples/background cmake --help > /dev/null
+      build/reproc++/examples/cmake-help > /dev/null
+      build/reproc++/examples/forward cmake --help > /dev/null
+    displayName: Test
+
