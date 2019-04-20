@@ -77,13 +77,13 @@ script:
       -DCMAKE_BUILD_TYPE=Debug
       -DBUILD_SHARED_LIBS=ON
       -DREPROC++=ON
-      -DREPROC_TESTS=ON
+      -DREPROC_TEST=ON
       -DREPROC_EXAMPLES=ON
       -DREPROC_WARNINGS_AS_ERRORS=ON
       -DREPROC_TIDY=$REPROC_TIDY
       -DREPROC_SANITIZERS=ON
   - cmake --build build --parallel 2
-  - build/tests
+  - build/test
   # Make sure the examples don't crash or return a non-zero exit code.
   - build/reproc/examples/drain > /dev/null
   - build/reproc/examples/git-status > /dev/null

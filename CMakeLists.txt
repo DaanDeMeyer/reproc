@@ -10,32 +10,32 @@ project(reproc
 )
 
 option(REPROC++ "Build reproc++.")
-option(REPROC_TESTS "Build tests.")
+option(REPROC_TEST "Build tests.")
 option(REPROC_EXAMPLES "Build examples.")
 
 # Enable languages before including cddm as required by cddm.
-if(REPROC++ OR REPROC_TESTS)
+if(REPROC++ OR REPROC_TEST)
   enable_language(CXX)
 endif()
 
 include(external/cddm/cddm.cmake)
 
-if(REPROC_TESTS)
+if(REPROC_TEST)
   # reproc uses the doctest testing framework. All tests are grouped inside a
-  # single executable. Use `target_sources(reproc-tests PRIVATE <file>)` to add
-  # new tests. Tests are executed by running the build/tests executable.
-  add_executable(reproc-tests)
+  # single executable. Use `target_sources(reproc-test PRIVATE <file>)` to add
+  # new tests. Tests are executed by running the build/test executable.
+  add_executable(reproc-test)
 
-  cddm_add_common(reproc-tests CXX 11 "")
-  target_include_directories(reproc-tests PRIVATE external/doctest)
-  set_target_properties(reproc-tests PROPERTIES OUTPUT_NAME tests)
+  cddm_add_common(reproc-test CXX 11 "")
+  target_include_directories(reproc-test PRIVATE external/doctest)
+  set_target_properties(reproc-test PROPERTIES OUTPUT_NAME test)
   # We change the working directory to the build directory before executing the
   # tests so tests can reliably find any required resources.
-  target_compile_definitions(reproc-tests PRIVATE
+  target_compile_definitions(reproc-test PRIVATE
     DOCTEST_WORKING_DIRECTORY="${PROJECT_BINARY_DIR}"
   )
 
-  target_sources(reproc-tests PRIVATE external/doctest/main.cpp)
+  target_sources(reproc-test PRIVATE external/doctest/main.cpp)
 endif()
 
 add_subdirectory(reproc)

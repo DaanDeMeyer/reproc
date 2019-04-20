@@ -63,13 +63,13 @@ elseif(UNIX)
   )
 endif()
 
-if(REPROC_TESTS)
-  target_link_libraries(reproc-tests PRIVATE reproc)
+if(REPROC_TEST)
+  target_link_libraries(reproc-test PRIVATE reproc)
 
-  target_sources(reproc-tests PRIVATE
-    tests/read-write.cpp
-    tests/stop.cpp
-    tests/working-directory.cpp
+  target_sources(reproc-test PRIVATE
+    test/read-write.cpp
+    test/stop.cpp
+    test/working-directory.cpp
   )
 
   function(reproc_add_test_helper TARGET)
@@ -79,8 +79,8 @@ if(REPROC_TESTS)
     target_sources(reproc-${TARGET} PRIVATE resources/${TARGET}.cpp)
     set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
 
-    # Build the helper executable as part of reproc-tests build.
-    add_dependencies(reproc-tests reproc-${TARGET})
+    # Build the helper executable as part of reproc-test build.
+    add_dependencies(reproc-test reproc-${TARGET})
   endfunction()
 
   # Helper binaries required by reproc's tests.

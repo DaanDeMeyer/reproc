@@ -49,7 +49,7 @@ before_build:
       -DCMAKE_BUILD_TYPE=Debug
       -DBUILD_SHARED_LIBS=ON
       -DREPROC++=ON
-      -DREPROC_TESTS=ON
+      -DREPROC_TEST=ON
       -DREPROC_EXAMPLES=ON
       -DREPROC_WARNINGS_AS_ERRORS=ON
       -DREPROC_TIDY=ON
@@ -62,7 +62,7 @@ before_test:
   - set PATH=%APPVEYOR_BUILD_FOLDER%\build\reproc++\lib;%PATH%
 
 test_script:
-  - build\tests
+  - build\test
   # Make sure the examples don't crash or return a non-zero exit code.
   - build\reproc\examples\drain >NUL
   - build\reproc\examples\git-status >NUL

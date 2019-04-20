@@ -26,7 +26,7 @@ jobs:
         -DCMAKE_BUILD_TYPE=Debug \
         -DBUILD_SHARED_LIBS=ON \
         -DREPROC++=ON \
-        -DREPROC_TESTS=ON \
+        -DREPROC_TEST=ON \
         -DREPROC_EXAMPLES=ON \
         -DREPROC_WARNINGS_AS_ERRORS=ON \
         -DREPROC_SANITIZERS=ON
@@ -38,7 +38,7 @@ jobs:
     displayName: Build
 
   - script: |
-      build/tests
+      build/test
       build/reproc/examples/drain > /dev/null
       build/reproc/examples/git-status > /dev/null
       build/reproc++/examples/background cmake --help > /dev/null

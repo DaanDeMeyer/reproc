@@ -131,7 +131,7 @@ reproc's build can be configured using the following CMake options:
 ### User
 
 - `REPROC++`: Build reproc++ (default: `OFF`).
-- `REPROC_TESTS`: Build tests (default: `OFF`).
+- `REPROC_TEST`: Build tests (default: `OFF`).
 - `REPROC_EXAMPLES`: Build examples (default: `OFF`).
 
 ### Advanced
