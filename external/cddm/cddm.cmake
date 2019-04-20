@@ -1,5 +1,5 @@
 # CDDM (CMake Daan De Meyer)
-# Version: v0.0.12
+# Version: v0.0.13
 #
 # Description: Encapsulates common CMake configuration for cross-platform
 # C/C++ libraries.
@@ -132,17 +132,17 @@ foreach(LANGUAGE IN ITEMS C CXX)
       check_cxx_compiler_flag(/permissive- CDDM_${LANGUAGE}_HAVE_PERMISSIVE)
     endif()
   endif()
+
+  if(${PNU}_SANITIZERS)
+    if(MSVC)
+      message(FATAL_ERROR "Building with sanitizers is not supported when using the Visual C++ toolchain.")
+    endif()
+
+    if(NOT ${CMAKE_${LANGUAGE}_COMPILER_ID} MATCHES GNU|Clang)
+      message(FATAL_ERROR "Building with sanitizers is not supported when using the ${CMAKE_${LANGUAGE}_COMPILER_ID} compiler.")
+    endif()
+  endif()
 endforeach()
-
-if(${PNU}_SANITIZERS)
-  if(MSVC)
-    message(FATAL_ERROR "Building with sanitizers is not supported when using the Visual C++ toolchain.")
-  endif()
-
-  if(NOT ${CMAKE_${LANGUAGE}_COMPILER_ID} MATCHES GNU|Clang)
-    message(FATAL_ERROR "Building with sanitizers is not supported when using the ${CMAKE_${LANGUAGE}_COMPILER_ID} compiler.")
-  endif()
-endif()
 
 ### Includes ###
 
