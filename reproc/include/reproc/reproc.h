@@ -251,8 +251,7 @@ Possible errors when `timeout` is not 0 or `REPROC_INFINITE`:
 - `REPROC_PROCESS_LIMIT_REACHED`
 - `REPROC_NOT_ENOUGH_MEMORY`
 */
-REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_t *process,
-                                       unsigned int timeout);
+REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_t *process, unsigned int timeout);
 
 /*! Returns `true` if `process` is still running, `false` otherwise. */
 REPROC_EXPORT bool reproc_running(reproc_t *process);
