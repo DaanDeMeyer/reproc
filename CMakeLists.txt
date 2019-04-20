@@ -21,16 +21,14 @@ endif()
 include(external/cddm/cddm.cmake)
 
 if(REPROC_TESTS)
-  add_subdirectory(external/doctest)
-
   # reproc uses the doctest testing framework. All tests are grouped inside a
   # single executable. Use `target_sources(reproc-tests PRIVATE <file>)` to add
   # new tests. Tests are executed by running the build/tests executable.
   add_executable(reproc-tests)
 
   cddm_add_common(reproc-tests CXX 11 "")
+  target_include_directories(reproc-tests PRIVATE external/doctest)
   set_target_properties(reproc-tests PROPERTIES OUTPUT_NAME tests)
-  target_link_libraries(reproc-tests PRIVATE doctest)
   # We change the working directory to the build directory before executing the
   # tests so tests can reliably find any required resources.
   target_compile_definitions(reproc-tests PRIVATE
