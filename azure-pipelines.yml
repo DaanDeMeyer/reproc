@@ -52,7 +52,6 @@ jobs:
     name: macos_10_14
     image: macOS-10.14
 
-
 - template: ci/linux.yml
   parameters:
     name: linux_gcc_4_9
