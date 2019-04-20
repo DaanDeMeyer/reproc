@@ -64,13 +64,13 @@ elseif(UNIX)
 endif()
 
 if(REPROC_TEST)
-  target_link_libraries(reproc-test PRIVATE reproc)
-
   target_sources(reproc-test PRIVATE
     test/read-write.cpp
     test/stop.cpp
     test/working-directory.cpp
   )
+
+  target_link_libraries(reproc-test PRIVATE reproc)
 
   function(reproc_add_test_helper TARGET)
     add_executable(reproc-${TARGET})
