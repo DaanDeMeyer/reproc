@@ -39,7 +39,7 @@ process::process(cleanup c1,
                  reproc::milliseconds t2,
                  cleanup c3,
                  reproc::milliseconds t3)
-    : process_(new reproc_type()),
+    : process_(new reproc_t()),
       c1_(c1),
       t1_(t1),
       c2_(c2),

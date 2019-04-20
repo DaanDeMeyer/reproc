@@ -7,7 +7,7 @@ TEST_SUITE("reproc")
 {
   TEST_CASE("working-directory")
   {
-    reproc_type noop;
+    reproc_t noop;
 
     // Executable path is relative to reproc/resources because we change
     // working directory before executing noop as a child process.

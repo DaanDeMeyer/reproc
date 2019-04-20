@@ -9,10 +9,10 @@
 extern "C" {
 #endif
 
-/*! Used to store information about a child process. We define `reproc_type` in
+/*! Used to store information about a child process. We define `reproc_t` in
 the header file so it can be allocated on the stack but its internals are prone
 to change and should **NOT** be depended on. */
-struct reproc_type {
+struct reproc_t {
   // On POSIX systems, we can't wait again on the same process after
   // successfully waiting once so we store the result.
   bool running;
@@ -33,10 +33,7 @@ struct reproc_type {
 #endif
 };
 
-// We can't name the struct `reproc` because reproc++'s namespace is already
-// named `reproc`. `reproc_t` can't be used either because the _t suffix is
-// reserved by POSIX so we fall back to `reproc_type` instead.
-typedef struct reproc_type reproc_type;
+typedef struct reproc_t reproc_t;
 
 /*! Stream identifiers used to indicate which stream to act on. */
 typedef enum {
@@ -103,7 +100,7 @@ Possible errors:
 - `REPROC_FILE_NOT_FOUND`
 - `REPROC_INTERRUPTED`
 */
-REPROC_EXPORT REPROC_ERROR reproc_start(reproc_type *process,
+REPROC_EXPORT REPROC_ERROR reproc_start(reproc_t *process,
                                         int argc,
                                         const char *const *argv,
                                         const char *working_directory);
@@ -157,7 +154,7 @@ if (error) { return error; }
 buffer[bytes_read] = '\0'; // Add null terminator
 ```
 */
-REPROC_EXPORT REPROC_ERROR reproc_read(reproc_type *process,
+REPROC_EXPORT REPROC_ERROR reproc_read(reproc_t *process,
                                        REPROC_STREAM stream,
                                        void *buffer,
                                        unsigned int size,
@@ -173,7 +170,7 @@ one.
 
 See `reproc_read` for a list of possible errors.
 */
-REPROC_EXPORT REPROC_ERROR reproc_parse(reproc_type *process,
+REPROC_EXPORT REPROC_ERROR reproc_parse(reproc_t *process,
                                         REPROC_STREAM stream,
                                         bool (*parser)(void *context,
                                                        const char *buffer,
@@ -190,7 +187,7 @@ also the main difference with `reproc_parse`.
 See `reproc_read` for a list of possible errors (except for
 `REPROC_STREAM_CLOSED`).
 */
-REPROC_EXPORT REPROC_ERROR reproc_drain(reproc_type *process,
+REPROC_EXPORT REPROC_ERROR reproc_drain(reproc_t *process,
                                         REPROC_STREAM stream,
                                         bool (*sink)(void *context,
                                                      const char *buffer,
@@ -215,7 +212,7 @@ Possible errors:
 - `REPROC_INTERRUPTED`
 - `REPROC_PARTIAL_WRITE`
 */
-REPROC_EXPORT REPROC_ERROR reproc_write(reproc_type *process,
+REPROC_EXPORT REPROC_ERROR reproc_write(reproc_t *process,
                                         const void *buffer,
                                         unsigned int to_write,
                                         unsigned int *bytes_written);
@@ -229,7 +226,7 @@ the standard input stream can be closed using this function.
 
 Possible errors: /
 */
-REPROC_EXPORT void reproc_close(reproc_type *process, REPROC_STREAM stream);
+REPROC_EXPORT void reproc_close(reproc_t *process, REPROC_STREAM stream);
 
 /*!
 Waits `timeout` milliseconds for the child process to exit.
@@ -254,11 +251,11 @@ Possible errors when `timeout` is not 0 or `REPROC_INFINITE`:
 - `REPROC_PROCESS_LIMIT_REACHED`
 - `REPROC_NOT_ENOUGH_MEMORY`
 */
-REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_type *process,
+REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_t *process,
                                        unsigned int timeout);
 
 /*! Returns `true` if `process` is still running, `false` otherwise. */
-REPROC_EXPORT bool reproc_running(reproc_type *process);
+REPROC_EXPORT bool reproc_running(reproc_t *process);
 
 /*!
 Sends the `SIGTERM` signal (POSIX) or the `CTRL-BREAK` signal (Windows) to the
@@ -266,7 +263,7 @@ child process. Remember that successfull calls to `reproc_wait` and
 `reproc_destroy` are required to make sure the child process is completely
 cleaned up.
 */
-REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_type *process);
+REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_t *process);
 
 /*!
 Sends the `SIGKILL` signal to the child process (POSIX) or calls
@@ -274,7 +271,7 @@ Sends the `SIGKILL` signal to the child process (POSIX) or calls
 calls to `reproc_wait` and `reproc_destroy` are required to make sure the child
 process is completely cleaned up.
 */
-REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_type *process);
+REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_t *process);
 
 /*! Used to tell `reproc_stop` how to stop a child process. */
 typedef enum {
@@ -321,7 +318,7 @@ status can be retrieved with `reproc_exit_status`.
 
 See `reproc_wait` for the list of possible errors.
 */
-REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_type *process,
+REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_t *process,
                                        REPROC_CLEANUP c1,
                                        unsigned int t1,
                                        REPROC_CLEANUP c2,
@@ -331,11 +328,11 @@ REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_type *process,
 
 /*! Returns the exit status of `process`. It is undefined behaviour to call this
 function before `process` has exited. */
-REPROC_EXPORT unsigned int reproc_exit_status(reproc_type *process);
+REPROC_EXPORT unsigned int reproc_exit_status(reproc_t *process);
 
 /*! Frees all allocated resources stored in `process`. It is undefined behaviour
 to call this function before `process` has exited. */
-REPROC_EXPORT void reproc_destroy(reproc_type *process);
+REPROC_EXPORT void reproc_destroy(reproc_t *process);
 
 #ifdef __cplusplus
 }

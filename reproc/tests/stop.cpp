@@ -7,7 +7,7 @@ TEST_SUITE("reproc")
 {
   TEST_CASE("stop")
   {
-    reproc_type infinite;
+    reproc_t infinite;
 
     static constexpr unsigned int ARGV_SIZE = 2;
     std::array<const char *, ARGV_SIZE> argv{ { "reproc/resources/infinite",

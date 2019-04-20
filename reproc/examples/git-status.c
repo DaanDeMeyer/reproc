@@ -16,8 +16,8 @@ int fail(REPROC_ERROR error)
 // Uses reproc to print the output of git status.
 int main(void)
 {
-  // `reproc_type` stores necessary information between calls to reproc's API.
-  reproc_type git_status;
+  // `reproc_t` stores necessary information between calls to reproc's API.
+  reproc_t git_status;
 
   /* `reproc_start` imposes the same restrictions on `argc` and `argv` as the
   regular main function of C and C++ applications. `argv` is required to end
@@ -31,7 +31,7 @@ int main(void)
   // returned.
   REPROC_ERROR error = REPROC_SUCCESS;
 
-  /* `reproc_start` takes a child process instance (`reproc_type`), argc, argv
+  /* `reproc_start` takes a child process instance (`reproc_t`), argc, argv
   and the working directory of the child process. If the working directory is
   `NULL` the working directory of the parent process is used. */
   error = reproc_start(&git_status, argc, argv, NULL);

@@ -7,9 +7,9 @@
 #include <memory>
 #include <string>
 
-// Forward declare `reproc_type` so we don't have to include reproc.h in the
+// Forward declare `reproc_t` so we don't have to include reproc.h in the
 // header.
-struct reproc_type;
+struct reproc_t;
 
 /*! The `reproc` namespace wraps all reproc++ declarations. reproc::process
 wraps reproc's API inside a C++ class. `reproc::errc` improves on `REPROC_ERROR`
@@ -53,7 +53,7 @@ class process
 
 public:
   /*!
-  Allocates memory for reproc's `reproc_type` struct.
+  Allocates memory for reproc's `reproc_t` struct.
 
   The arguments are passed to `stop` in the destructor if the process is still
   running by then.
@@ -185,7 +185,7 @@ public:
   REPROCXX_EXPORT unsigned int exit_status() noexcept;
 
 private:
-  std::unique_ptr<reproc_type> process_;
+  std::unique_ptr<reproc_t> process_;
 
   cleanup c1_;
   reproc::milliseconds t1_;

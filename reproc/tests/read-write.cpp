@@ -8,7 +8,7 @@ TEST_SUITE("reproc")
 {
   TEST_CASE("read-write")
   {
-    reproc_type io;
+    reproc_t io;
 
     int error = REPROC_SUCCESS;
     CAPTURE(error);

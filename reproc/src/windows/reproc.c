@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <windows.h>
 
-REPROC_ERROR reproc_start(reproc_type *process,
+REPROC_ERROR reproc_start(reproc_t *process,
                           int argc,
                           const char *const *argv,
                           const char *working_directory)
@@ -108,7 +108,7 @@ cleanup:
   return error;
 }
 
-REPROC_ERROR reproc_read(reproc_type *process,
+REPROC_ERROR reproc_read(reproc_t *process,
                          REPROC_STREAM stream,
                          void *buffer,
                          unsigned int size,
@@ -132,7 +132,7 @@ REPROC_ERROR reproc_read(reproc_type *process,
   return REPROC_UNKNOWN_ERROR;
 }
 
-REPROC_ERROR reproc_write(reproc_type *process,
+REPROC_ERROR reproc_write(reproc_t *process,
                           const void *buffer,
                           unsigned int to_write,
                           unsigned int *bytes_written)
@@ -145,7 +145,7 @@ REPROC_ERROR reproc_write(reproc_type *process,
   return pipe_write(process->in, buffer, to_write, bytes_written);
 }
 
-void reproc_close(reproc_type *process, REPROC_STREAM stream)
+void reproc_close(reproc_t *process, REPROC_STREAM stream)
 {
   assert(process);
 
@@ -164,7 +164,7 @@ void reproc_close(reproc_type *process, REPROC_STREAM stream)
   assert(0);
 }
 
-REPROC_ERROR reproc_wait(reproc_type *process, unsigned int timeout)
+REPROC_ERROR reproc_wait(reproc_t *process, unsigned int timeout)
 {
   assert(process);
 
@@ -182,7 +182,7 @@ REPROC_ERROR reproc_wait(reproc_type *process, unsigned int timeout)
   return error;
 }
 
-REPROC_ERROR reproc_terminate(reproc_type *process)
+REPROC_ERROR reproc_terminate(reproc_t *process)
 {
   assert(process);
 
@@ -193,7 +193,7 @@ REPROC_ERROR reproc_terminate(reproc_type *process)
   return process_terminate(process->id);
 }
 
-REPROC_ERROR reproc_kill(reproc_type *process)
+REPROC_ERROR reproc_kill(reproc_t *process)
 {
   assert(process);
 
@@ -204,7 +204,7 @@ REPROC_ERROR reproc_kill(reproc_type *process)
   return process_kill(process->handle);
 }
 
-void reproc_destroy(reproc_type *process)
+void reproc_destroy(reproc_t *process)
 {
   assert(process);
 

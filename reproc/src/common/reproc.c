@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdbool.h>
 
-REPROC_ERROR reproc_stop(reproc_type *process,
+REPROC_ERROR reproc_stop(reproc_t *process,
                          REPROC_CLEANUP c1,
                          unsigned int t1,
                          REPROC_CLEANUP c2,
@@ -54,7 +54,7 @@ REPROC_ERROR reproc_stop(reproc_type *process,
 
 #define BUFFER_SIZE 1024
 
-REPROC_ERROR reproc_parse(reproc_type *process,
+REPROC_ERROR reproc_parse(reproc_t *process,
                           REPROC_STREAM stream,
                           bool (*parser)(void *context,
                                          const char *buffer,
@@ -91,7 +91,7 @@ REPROC_ERROR reproc_parse(reproc_type *process,
 }
 
 REPROC_ERROR
-reproc_drain(reproc_type *process,
+reproc_drain(reproc_t *process,
              REPROC_STREAM stream,
              bool (*sink)(void *context, const char *buffer, unsigned int size),
              void *context)
@@ -123,12 +123,12 @@ reproc_drain(reproc_type *process,
   return error;
 }
 
-bool reproc_running(reproc_type *process)
+bool reproc_running(reproc_t *process)
 {
   return reproc_wait(process, 0) == REPROC_SUCCESS ? false : true;
 }
 
-unsigned int reproc_exit_status(reproc_type *process)
+unsigned int reproc_exit_status(reproc_t *process)
 {
   assert(process);
   return process->exit_status;

@@ -50,7 +50,7 @@ int fail(REPROC_ERROR error)
 // information on how to use reproc.
 int main(void)
 {
-  reproc_type git_help;
+  reproc_t git_help;
 
   int argc = 2;
   const char *argv[3] = { "git", "--help", NULL };
