@@ -7,6 +7,7 @@ documentation)**
 
 [![Build Status](https://travis-ci.com/DaanDeMeyer/reproc.svg?branch=master)](https://travis-ci.com/DaanDeMeyer/reproc)
 [![Build status](https://ci.appveyor.com/api/projects/status/9d79srq8n7ytnrs5?svg=true)](https://ci.appveyor.com/project/DaanDeMeyer/reproc)
+[![Build Status](https://dev.azure.com/daanjdemeyer/reproc/_apis/build/status/DaanDeMeyer.reproc?branchName=master)](https://dev.azure.com/daanjdemeyer/reproc/_build/latest?definitionId=1&branchName=master)
 [![Join the chat at https://gitter.im/reproc/Lobby](https://badges.gitter.im/reproc/Lobby.svg)](https://gitter.im/reproc/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 - [What is reproc?](#what-is-reproc)
