@@ -58,8 +58,8 @@ build_script: cmake --build build --parallel 2
 
 before_test:
   # Make sure the tests and examples can find the reproc and reproc++ dll's.
-  - set PATH=%APPVEYOR_BUILD_FOLDER%/build/reproc/lib;%PATH%
-  - set PATH=%APPVEYOR_BUILD_FOLDER%/build/reproc++/lib;%PATH%
+  - set PATH=%APPVEYOR_BUILD_FOLDER%\build\reproc\lib;%PATH%
+  - set PATH=%APPVEYOR_BUILD_FOLDER%\build\reproc++\lib;%PATH%
 
 test_script:
   - build\tests
