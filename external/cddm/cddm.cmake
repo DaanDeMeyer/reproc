@@ -1,5 +1,5 @@
 # CDDM (CMake Daan De Meyer)
-# Version: v0.0.11
+# Version: v0.0.12
 #
 # Description: Encapsulates common CMake configuration for cross-platform
 # C/C++ libraries.
@@ -152,8 +152,9 @@ include(CMakePackageConfigHelpers)
 ### Functions ###
 
 # Applies common configuration to `TARGET`. `LANGUAGE` (C or CXX) is used to
-# indicate the language of the target. `STANDARD` indicates the standard of the
-# language to use.
+# indicate the language of the target, `STANDARD` indicates the standard of the
+# language to use and `OUTPUT_DIRECTORY` specifies the target's output
+# directory.
 function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   if(LANGUAGE STREQUAL "C")
     target_compile_features(${TARGET} PUBLIC c_std_${STANDARD})
@@ -162,8 +163,7 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   endif()
 
   set_target_properties(${TARGET} PROPERTIES
-    C_EXTENSIONS OFF
-    CXX_EXTENSIONS OFF
+    ${LANGUAGE}_EXTENSIONS OFF
 
     RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
     ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
@@ -174,8 +174,7 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
     set_target_properties(${TARGET} PROPERTIES
       # CLANG_TIDY_PROGRAM is a list so we surround it with quotes to pass it as
       # a single argument.
-      C_CLANG_TIDY "${CDDM_CLANG_TIDY_PROGRAM}"
-      CXX_CLANG_TIDY "${CDDM_CLANG_TIDY_PROGRAM}"
+      ${LANGUAGE}_CLANG_TIDY "${CDDM_CLANG_TIDY_PROGRAM}"
     )
   endif()
 
@@ -245,8 +244,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   cddm_add_common(${TARGET} ${LANGUAGE} ${STANDARD} lib)
   # Enable -fvisibility=hidden and -fvisibility-inlines-hidden (if applicable).
   set_target_properties(${TARGET} PROPERTIES
-    C_VISIBILITY_PRESET hidden
-    CXX_VISIBILITY_PRESET hidden
+    ${LANGUAGE}_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN true
   )
 
