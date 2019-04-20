@@ -1,5 +1,58 @@
 # Changelog
 
+## 6.0.0
+
+## General
+
+- Added Azure Pipelines CI.
+
+  Azure Pipelines provides 10 parallel jobs which is more than Travis and
+  Appveyor combined. If it turns out to be reliable Appveyor and Travis will
+  likely be dropped in the future. For now, all three are enabled.
+
+- Code cleanup and refactoring.
+
+## CMake
+
+- Renamed `REPROC_TESTS` to `REPROC_TEST`.
+- Renamed test executable from `tests` to `test`.
+
+## reproc
+
+- Renamed `reproc_type` to `reproc_t`.
+
+  We chose `reproc_type` initially because `_t` belongs to POSIX but we switch
+  to using `_t` because `reproc` is a sufficiently unique name that we don't
+  have to worry about naming conflicts.
+
+- reproc now keeps track of whether a process has exited and its exit status.
+
+  Keeping track of whether the child process has exited allows us to remove the
+  restriction that `reproc_wait`, `reproc_terminate`, `reproc_kill` and
+  `reproc_stop` cannot be called again on the same process after completing
+  successfully once. Now, if the process has already exited, these methods don't
+  do anything and return `REPROC_SUCCESS`.
+
+- Added `reproc_running` to allow checking whether a child process is still
+  running.
+
+- Added `reproc_exit_status` to allow querying the exit status of a process
+  after it has exited.
+
+- `reproc_wait` and `reproc_stop` lost their `exit_status` output parameter.
+
+  Use `reproc_exit_status` instead to retrieve the exit status.
+
+## reproc++
+
+- Added `process::running` and `process::exit_status`.
+
+  These delegate to `reproc_running` and `reproc_exit_status` respectively.
+
+- `process::wait` and `process::stop` lost their `exit_status` output parameter.
+
+  Use `process::exit_status` instead.
+
 ## 5.0.1
 
 ### reproc++
