@@ -9,7 +9,7 @@ TEST_SUITE("reproc")
   {
     reproc_type noop;
 
-    // Executable path is relative to reproc/tests/resources because we change
+    // Executable path is relative to reproc/resources because we change
     // working directory before executing noop as a child process.
     const char *working_directory = "reproc/resources";
     static constexpr unsigned int ARGV_SIZE = 2;
