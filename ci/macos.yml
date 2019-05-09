@@ -7,7 +7,12 @@ jobs:
   pool:
     vmImage: ${{ parameters.image }}
   steps:
-  - script: brew upgrade cmake
+  # brew upgrade returns a non-zero error code if the package is already
+  # up-to-date. To avoid this we check if the package is out-of-date first.
+  - script: |
+      if (brew outdated | grep -q cmake); then
+        brew upgrade cmake;
+      fi
     displayName: Install
 
   - script: |
