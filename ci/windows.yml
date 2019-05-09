@@ -23,7 +23,7 @@ jobs:
     # add the required environment variables at the start of each step.
 
   - script: |
-      set PATH=C:\ProgramData\scoop\shims;C:\ProgramData\scoop\apps\llvm\current\bin;%PATH%
+      set PATH=C:\ProgramData\scoop\shims;%PATH%
       call "$(VCVARSALL)" $(PLATFORM)
       cmake ^
         -B $(Build.SourcesDirectory)\build ^
