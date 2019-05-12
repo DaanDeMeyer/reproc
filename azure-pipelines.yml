@@ -54,21 +54,21 @@ jobs:
 
 - template: ci/linux.yml
   parameters:
-    name: linux_gcc_4_9
+    name: linux_gcc_5
     variables:
-      PACKAGE: g++-4.9
+      PACKAGE: g++-5
       REPOSITORY: ppa:ubuntu-toolchain-r/test
-      CC: gcc-4.9
-      CXX: g++-4.9
+      CC: gcc-5
+      CXX: g++-5
 
 - template: ci/linux.yml
   parameters:
-    name: linux_clang_3_5
+    name: linux_clang_6_0
     variables:
-      PACKAGE: clang-3.5
-      REPOSITORY: deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial main
-      CC: clang-3.5
-      CXX: clang++-3.5
+      PACKAGE: clang-6.0
+      REPOSITORY: deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main
+      CC: clang-6.0
+      CXX: clang++-6.0
 
 - template: ci/linux.yml
   parameters:

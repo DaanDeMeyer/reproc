@@ -15,10 +15,10 @@ TEST_SUITE("reproc")
     static constexpr unsigned int ARGV_SIZE = 2;
 
 #if defined(_WIN32) || defined(__APPLE__)
-    std::array<const char *, ARGV_SIZE> argv{ { "reproc/resources/noop",
-                                                nullptr } };
+    std::array<const char *, ARGV_SIZE> argv{ "reproc/resources/noop",
+                                              nullptr };
 #else
-    std::array<const char *, ARGV_SIZE> argv{ { "./noop", nullptr } };
+    std::array<const char *, ARGV_SIZE> argv{ "./noop", nullptr };
 #endif
 
     int error = REPROC_SUCCESS;

@@ -14,13 +14,13 @@ TEST_SUITE("reproc")
     CAPTURE(error);
 
     static constexpr unsigned int BUFFER_SIZE = 1024;
-    std::array<char, BUFFER_SIZE> buffer = { {} };
+    std::array<char, BUFFER_SIZE> buffer = {};
 
     std::string message;
     unsigned int message_length = 0;
 
     static constexpr unsigned int ARGV_SIZE = 2;
-    std::array<const char *, ARGV_SIZE> argv = { { nullptr, nullptr } };
+    std::array<const char *, ARGV_SIZE> argv = { nullptr, nullptr };
 
     REPROC_STREAM stream = REPROC_IN;
 
