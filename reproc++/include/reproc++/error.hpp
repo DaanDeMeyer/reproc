@@ -9,7 +9,7 @@ namespace reproc {
 /*! `REPROC_ERROR` */
 // When changing this enum make sure to change the corresponding enum in error.h
 // as well.
-enum class errc {
+enum class error {
   // reproc errors
 
   /*! `REPROC_WAIT_TIMEOUT` */
@@ -47,14 +47,13 @@ enum class errc {
 
 REPROCXX_EXPORT const std::error_category &error_category() noexcept;
 
-REPROCXX_EXPORT std::error_condition
-make_error_condition(reproc::errc error) noexcept;
+REPROCXX_EXPORT std::error_code
+make_error_code(reproc::error error) noexcept;
 
 } // namespace reproc
 
 namespace std {
 
-template <> struct is_error_condition_enum<reproc::errc> : true_type {
-};
+template <> struct is_error_code_enum<reproc::error> : true_type {};
 
 } // namespace std

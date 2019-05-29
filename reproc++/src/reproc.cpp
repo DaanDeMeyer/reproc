@@ -4,32 +4,6 @@
 
 #include <array>
 
-static std::error_code reproc_error_to_error_code(REPROC_ERROR error)
-{
-  switch (error) {
-    case REPROC_SUCCESS:
-      return {};
-    // The following three errors are reproc specific and don't have a
-    // corresponding OS error. Instead, we represent them through an
-    // `std::error_code` with the same value as `error` in the reproc error
-    // category.
-    case REPROC_WAIT_TIMEOUT:
-    case REPROC_STREAM_CLOSED:
-    case REPROC_PARTIAL_WRITE:
-      return { error, reproc::error_category() };
-    default:
-      // `errno` values belong to the generic category. However, on Windows we
-      // get Windows specific errors which belong to the system category.
-#ifdef _WIN32
-      return { static_cast<int>(reproc_system_error()),
-               std::system_category() };
-#else
-      return { static_cast<int>(reproc_system_error()),
-               std::generic_category() };
-#endif
-  }
-}
-
 namespace reproc {
 
 const reproc::milliseconds infinite = reproc::milliseconds(0xFFFFFFFF);
@@ -71,7 +45,7 @@ std::error_code process::start(int argc,
 {
   REPROC_ERROR error = reproc_start(process_.get(), argc, argv,
                                     working_directory);
-  return reproc_error_to_error_code(error);
+  return static_cast<reproc::error>(error);
 }
 
 std::error_code process::read(reproc::stream stream,
@@ -82,7 +56,7 @@ std::error_code process::read(reproc::stream stream,
   REPROC_ERROR error = reproc_read(process_.get(),
                                    static_cast<REPROC_STREAM>(stream), buffer,
                                    size, bytes_read);
-  return reproc_error_to_error_code(error);
+  return static_cast<reproc::error>(error);
 }
 
 std::error_code process::write(const void *buffer,
@@ -91,7 +65,7 @@ std::error_code process::write(const void *buffer,
 {
   REPROC_ERROR error = reproc_write(process_.get(), buffer, to_write,
                                     bytes_written);
-  return reproc_error_to_error_code(error);
+  return static_cast<reproc::error>(error);
 }
 
 void process::close(reproc::stream stream) noexcept
@@ -107,19 +81,19 @@ bool process::running() noexcept
 std::error_code process::wait(reproc::milliseconds timeout) noexcept
 {
   REPROC_ERROR error = reproc_wait(process_.get(), timeout.count());
-  return reproc_error_to_error_code(error);
+  return static_cast<reproc::error>(error);
 }
 
 std::error_code process::terminate() noexcept
 {
   REPROC_ERROR error = reproc_terminate(process_.get());
-  return reproc_error_to_error_code(error);
+  return static_cast<reproc::error>(error);
 }
 
 std::error_code process::kill() noexcept
 {
   REPROC_ERROR error = reproc_kill(process_.get());
-  return reproc_error_to_error_code(error);
+  return static_cast<reproc::error>(error);
 }
 
 std::error_code process::stop(cleanup c1,
@@ -133,7 +107,7 @@ std::error_code process::stop(cleanup c1,
                                    static_cast<REPROC_CLEANUP>(c1), t1.count(),
                                    static_cast<REPROC_CLEANUP>(c2), t2.count(),
                                    static_cast<REPROC_CLEANUP>(c3), t3.count());
-  return reproc_error_to_error_code(error);
+  return static_cast<reproc::error>(error);
 }
 
 unsigned int process::exit_status() noexcept

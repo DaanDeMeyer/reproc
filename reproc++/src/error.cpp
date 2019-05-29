@@ -6,14 +6,13 @@
 
 namespace reproc {
 
-class error_category_impl : public std::error_category
-{
+class error_category_impl : public std::error_category {
 public:
   const char *name() const noexcept override;
 
-  std::string message(int ev) const noexcept override;
+  std::string message(int condition) const noexcept override;
 
-  bool equivalent(const std::error_code &error_code, int error_condition) const
+  bool equivalent(int code, const std::error_condition &condition) const
       noexcept override;
 };
 
@@ -22,63 +21,48 @@ const char *error_category_impl::name() const noexcept
   return "reproc";
 }
 
-std::string error_category_impl::message(int ev) const noexcept
+std::string error_category_impl::message(int condition) const noexcept
 {
-  return reproc_strerror(static_cast<REPROC_ERROR>(ev));
+  return reproc_strerror(static_cast<REPROC_ERROR>(condition));
 }
 
-bool error_category_impl::equivalent(const std::error_code &error_code,
-                                     int error_condition) const noexcept
+bool error_category_impl::equivalent(
+    int code,
+    const std::error_condition &condition) const noexcept
 {
-  switch (static_cast<reproc::errc>(error_condition)) {
-    // reproc errors are handled identically so we use switch fallthrough.
-    case reproc::errc::wait_timeout:
-    case reproc::errc::stream_closed:
-    case reproc::errc::partial_write:
-      // This check comes down to checking if the value from `REPROC_ERROR`
-      // matches the value from the `reproc::errc` value it is checked against.
-      // To avoid conflicting with other error codes we also require the error
-      // code to be in the reproc error category. Look at
-      // `reproc_error_to_error_code` in `reproc.cpp` to see how the reproc
-      // specific error codes are constructed.
-      return error_code ==
-             std::error_code(error_condition, reproc::error_category());
+  if (condition == default_error_condition(code)) {
+    return true;
+  }
 
+  switch (static_cast<reproc::error>(code)) {
     // The rest of the reproc errors are all system errors so we can just check
-    // against the standard error conditions from `std::errc` which do all the
+    // against the standard error conditions from `std::error` which do all the
     // work for us.
-    case reproc::errc::not_enough_memory:
-      return error_code == std::errc::not_enough_memory;
-    case reproc::errc::pipe_limit_reached:
-      return error_code == std::errc::too_many_files_open ||
-             error_code == std::errc::too_many_files_open_in_system;
-    case reproc::errc::interrupted:
-      return error_code == std::errc::interrupted;
-    case reproc::errc::process_limit_reached:
-      return error_code == std::errc::resource_unavailable_try_again ||
-             error_code == std::errc::too_many_files_open;
-    case reproc::errc::invalid_unicode:
-#ifdef _WIN32
-      // `ERROR_NO_UNICODE_TRANSLATION` == 1113 (Windows).
-      return error_code == std::error_code(1113, std::system_category());
-#else
-      // `REPROC_INVALID_UNICODE` is Windows specific so it can't happen on
-      // POSIX systems.
-      return false;
-#endif
-    case reproc::errc::permission_denied:
-      return error_code == std::errc::permission_denied ||
-             error_code == std::errc::operation_not_permitted;
-    case reproc::errc::symlink_loop:
-      return error_code == std::errc::too_many_symbolic_link_levels;
-    case reproc::errc::file_not_found:
-      return error_code == std::errc::no_such_file_or_directory;
-    case reproc::errc::name_too_long:
-      return error_code == std::errc::filename_too_long;
-    case reproc::errc::args_too_long:
-      return error_code == std::errc::argument_list_too_long;
-    case reproc::errc::not_executable:
-      return error_code == std::errc::executable_format_error;
+    case reproc::error::not_enough_memory:
+      return condition == std::errc::not_enough_memory;
+    case reproc::error::pipe_limit_reached:
+      return condition == std::errc::too_many_files_open ||
+             condition == std::errc::too_many_files_open_in_system;
+    case reproc::error::interrupted:
+      return condition == std::errc::interrupted;
+    case reproc::error::process_limit_reached:
+      return condition == std::errc::resource_unavailable_try_again ||
+             condition == std::errc::too_many_files_open;
+    case reproc::error::permission_denied:
+      return condition == std::errc::permission_denied ||
+             condition == std::errc::operation_not_permitted;
+    case reproc::error::symlink_loop:
+      return condition == std::errc::too_many_symbolic_link_levels;
+    case reproc::error::file_not_found:
+      return condition == std::errc::no_such_file_or_directory;
+    case reproc::error::name_too_long:
+      return condition == std::errc::filename_too_long;
+    case reproc::error::args_too_long:
+      return condition == std::errc::argument_list_too_long;
+    case reproc::error::not_executable:
+      return condition == std::errc::executable_format_error;
+    default:
+      break;
   }
 
   return false;
@@ -90,7 +74,7 @@ const std::error_category &error_category() noexcept
   return instance;
 }
 
-std::error_condition make_error_condition(reproc::errc error) noexcept
+std::error_code make_error_code(reproc::error error) noexcept
 {
   return { static_cast<int>(error), reproc::error_category() };
 }

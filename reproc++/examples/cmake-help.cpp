@@ -38,7 +38,7 @@ int main()
   /* reproc++ uses error codes to report errors to the user. If an exception is
   needed instead, you can convert `std::error_code`'s to exceptions using
   `std::system_error`. */
-  if (ec == reproc::errc::file_not_found) {
+  if (ec == reproc::error::file_not_found) {
     std::cerr << "cmake not found. Make sure it's available from the PATH.";
     return 1;
   } else if (ec) {

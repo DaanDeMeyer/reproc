@@ -1,5 +1,18 @@
 # Changelog
 
+## 7.0.0
+
+- Converted `reproc::errc` error condition into `reproc::error` error code.
+
+  Error conditions are meant to provide high level matching abstractions that
+  match against multiple different error codes. Using them for reproc's error
+  codes was not correct usage of error conditions. Instead, we now use an error
+  code and define equivalence from this error code with the `std::errc` error
+  condition. We now (hopefully) use the `system_error` feature as intended.
+
+  Aside from renaming `reproc::errc` to `reproc::error`, no changes should be
+  necessary in user code.
+
 ## 6.0.0
 
 ## General

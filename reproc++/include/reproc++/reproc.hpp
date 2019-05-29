@@ -276,7 +276,7 @@ std::error_code process::drain(reproc::stream stream, Sink &&sink)
   }
 
   // The child process closing the stream is not treated as an error.
-  if (ec == reproc::errc::stream_closed) {
+  if (ec == reproc::error::stream_closed) {
     return {};
   }
 
