@@ -42,6 +42,28 @@ jobs:
       CC: clang-cl.exe
       CXX: clang-cl.exe
 
+- template: ci/windows.yml
+  parameters:
+    name: windows_vs_2019_x86_clang
+    image: windows-2019
+    variables:
+      VCVARSALL: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+      PLATFORM: x86
+      CC: clang-cl.exe
+      CXX: clang-cl.exe
+      CFLAGS: -m32
+      CXXFLAGS: -m32
+
+- template: ci/windows.yml
+  parameters:
+    name: windows_vs_2019_x64_msvc
+    image: windows-2019
+    variables:
+      VCVARSALL: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+      PLATFORM: x64
+      CC: cl.exe
+      CXX: cl.exe
+
 - template: ci/macos.yml
   parameters:
     name: macos_10_13
