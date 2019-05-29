@@ -1,5 +1,5 @@
 # CDDM (CMake Daan De Meyer)
-# Version: v0.0.13
+# Version: v0.0.19
 #
 # Description: Encapsulates common CMake configuration for cross-platform
 # C/C++ libraries.
@@ -163,8 +163,6 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   endif()
 
   set_target_properties(${TARGET} PROPERTIES
-    ${LANGUAGE}_EXTENSIONS OFF
-
     RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
     ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
     LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
@@ -183,7 +181,7 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   if(MSVC)
     target_compile_options(${TARGET} PRIVATE
       /nologo # Silence MSVC compiler version output.
-      /wd4068
+      /wd4068 # Allow unknown pragmas.
       $<$<BOOL:${${PNU}_WARNINGS_AS_ERRORS}>:/WX> # -Werror
       $<$<BOOL:${CDDM_${LANGUAGE}_HAVE_PERMISSIVE}>:/permissive->
     )
@@ -202,11 +200,12 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
     target_compile_options(${TARGET} PRIVATE
       -Wall
       -Wextra
-      -pedantic-errors
-      -Wshadow
+      -pedantic
       -Wconversion
       -Wsign-conversion
+      -Wno-unknown-pragmas
       $<$<BOOL:${${PNU}_WARNINGS_AS_ERRORS}>:-Werror>
+      $<$<BOOL:${${PNU}_WARNINGS_AS_ERRORS}>:-pedantic-errors>
     )
   endif()
 
@@ -258,6 +257,10 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
     set(HEADER_EXT hpp)
   endif()
 
+  # Replace - with / in the target name to get the nested include directory of
+  # the target. For example, `reproc-async` becomes `reproc/async`.
+  string(REPLACE - / EXPORT_FILE_DIRECTORY ${TARGET})
+
   # Generate export headers. We generate export headers using CMake since
   # different export files are required depending on whether a library is shared
   # or static and we can't determine whether a library is shared or static from
@@ -266,7 +269,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   generate_export_header(${TARGET}
     BASE_NAME ${EXPORT_MACRO_UPPER}
     EXPORT_FILE_NAME
-      ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}/export.${HEADER_EXT}
+      ${CMAKE_CURRENT_BINARY_DIR}/include/${EXPORT_FILE_DIRECTORY}/export.${HEADER_EXT}
   )
 
   # Make sure we follow the popular naming convention for shared libraries on
@@ -289,66 +292,69 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
 
   if(${PNU}_INSTALL)
 
-    ## Headers
-
-    install(
-      DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/${TARGET}
-      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-
-    install(
-      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}
-      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-
-    target_include_directories(${TARGET} PUBLIC
-      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-    )
-
-    ## Libraries
-
-    install(
-      TARGETS ${TARGET}
-      EXPORT ${TARGET}-targets
-      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    )
-
     ## Config files
 
-    # CMake
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}-config.cmake.in)
 
-    install(
-      EXPORT ${TARGET}-targets
-      FILE ${TARGET}-targets.cmake
-      DESTINATION ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
-    )
+      # CMake
 
-    write_basic_package_version_file(
-      ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
-      VERSION ${PROJECT_VERSION}
-      COMPATIBILITY SameMajorVersion
-    )
+      ## Headers
 
-    configure_package_config_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}-config.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
-      INSTALL_DESTINATION
-        ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
-    )
+      install(
+        DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/${TARGET}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+      )
 
-    install(
-      FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
+      install(
+        DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+      )
+
+      target_include_directories(${TARGET} PUBLIC
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+      )
+
+      ## Libraries
+
+      install(
+        TARGETS ${TARGET}
+        EXPORT ${TARGET}-targets
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      )
+
+      install(
+        EXPORT ${TARGET}-targets
+        FILE ${TARGET}-targets.cmake
+        DESTINATION ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
+      )
+
+      write_basic_package_version_file(
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
-      DESTINATION
-        ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
-    )
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion
+      )
+
+      configure_package_config_file(
+          ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}-config.cmake.in
+          ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
+        INSTALL_DESTINATION
+          ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
+      )
+
+      install(
+        FILES
+          ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
+          ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
+        DESTINATION
+          ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
+      )
+    endif()
 
     # pkg-config
 
-    if(${PNU}_INSTALL_PKGCONFIG)
+    if(${PNU}_INSTALL_PKGCONFIG AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}.pc.in)
       configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}.pc.in
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc
