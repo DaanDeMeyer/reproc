@@ -70,12 +70,12 @@ REPROC_ERROR pipe_read(HANDLE pipe,
   // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
   if (!ReadFile(pipe, buffer, size, (LPDWORD) bytes_read, NULL)) {
     switch (GetLastError()) {
-    case ERROR_OPERATION_ABORTED:
-      return REPROC_INTERRUPTED;
-    case ERROR_BROKEN_PIPE:
-      return REPROC_STREAM_CLOSED;
-    default:
-      return REPROC_UNKNOWN_ERROR;
+      case ERROR_OPERATION_ABORTED:
+        return REPROC_INTERRUPTED;
+      case ERROR_BROKEN_PIPE:
+        return REPROC_STREAM_CLOSED;
+      default:
+        return REPROC_UNKNOWN_ERROR;
     }
   }
 
@@ -94,12 +94,12 @@ REPROC_ERROR pipe_write(HANDLE pipe,
   // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
   if (!WriteFile(pipe, buffer, to_write, (LPDWORD) bytes_written, NULL)) {
     switch (GetLastError()) {
-    case ERROR_OPERATION_ABORTED:
-      return REPROC_INTERRUPTED;
-    case ERROR_BROKEN_PIPE:
-      return REPROC_STREAM_CLOSED;
-    default:
-      return REPROC_UNKNOWN_ERROR;
+      case ERROR_OPERATION_ABORTED:
+        return REPROC_INTERRUPTED;
+      case ERROR_BROKEN_PIPE:
+        return REPROC_STREAM_CLOSED;
+      default:
+        return REPROC_UNKNOWN_ERROR;
     }
   }
 

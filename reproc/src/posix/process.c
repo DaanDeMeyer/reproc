@@ -246,15 +246,15 @@ REPROC_ERROR process_create(int (*action)(const void *),
 
   if (child_pid == -1) {
     switch (errno) {
-    case EAGAIN:
-      error = REPROC_PROCESS_LIMIT_REACHED;
-      break;
-    case ENOMEM:
-      error = REPROC_NOT_ENOUGH_MEMORY;
-      break;
-    default:
-      error = REPROC_UNKNOWN_ERROR;
-      break;
+      case EAGAIN:
+        error = REPROC_PROCESS_LIMIT_REACHED;
+        break;
+      case ENOMEM:
+        error = REPROC_NOT_ENOUGH_MEMORY;
+        break;
+      default:
+        error = REPROC_UNKNOWN_ERROR;
+        break;
     }
 
     goto cleanup;
@@ -271,14 +271,14 @@ REPROC_ERROR process_create(int (*action)(const void *),
   fd_close(&error_pipe_read);
 
   switch (error) {
-  case REPROC_SUCCESS:
-    break;
-  // `REPROC_STREAM_CLOSED` is not an error because it means the pipe was closed
-  // without an error being written to it.
-  case REPROC_STREAM_CLOSED:
-    break;
-  default:
-    goto cleanup;
+    case REPROC_SUCCESS:
+      break;
+    // `REPROC_STREAM_CLOSED` is not an error because it means the pipe was
+    // closed without an error being written to it.
+    case REPROC_STREAM_CLOSED:
+      break;
+    default:
+      goto cleanup;
   }
 
   // If an error was written to the error pipe we check that a full integer was
@@ -296,30 +296,30 @@ REPROC_ERROR process_create(int (*action)(const void *),
     errno = child_error;
 
     switch (child_error) {
-    case EACCES:
-      error = REPROC_PERMISSION_DENIED;
-      break;
-    case EPERM:
-      error = REPROC_PERMISSION_DENIED;
-      break;
-    case ELOOP:
-      error = REPROC_SYMLINK_LOOP;
-      break;
-    case ENAMETOOLONG:
-      error = REPROC_NAME_TOO_LONG;
-      break;
-    case ENOENT:
-      error = REPROC_FILE_NOT_FOUND;
-      break;
-    case ENOTDIR:
-      error = REPROC_FILE_NOT_FOUND;
-      break;
-    case EINTR:
-      error = REPROC_INTERRUPTED;
-      break;
-    default:
-      error = REPROC_UNKNOWN_ERROR;
-      break;
+      case EACCES:
+        error = REPROC_PERMISSION_DENIED;
+        break;
+      case EPERM:
+        error = REPROC_PERMISSION_DENIED;
+        break;
+      case ELOOP:
+        error = REPROC_SYMLINK_LOOP;
+        break;
+      case ENAMETOOLONG:
+        error = REPROC_NAME_TOO_LONG;
+        break;
+      case ENOENT:
+        error = REPROC_FILE_NOT_FOUND;
+        break;
+      case ENOTDIR:
+        error = REPROC_FILE_NOT_FOUND;
+        break;
+      case EINTR:
+        error = REPROC_INTERRUPTED;
+        break;
+      default:
+        error = REPROC_UNKNOWN_ERROR;
+        break;
     }
 
     goto cleanup;
@@ -386,10 +386,10 @@ static REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
 
   if (waitpid(pid, &status, 0) == -1) {
     switch (errno) {
-    case EINTR:
-      return REPROC_INTERRUPTED;
-    default:
-      return REPROC_UNKNOWN_ERROR;
+      case EINTR:
+        return REPROC_INTERRUPTED;
+      default:
+        return REPROC_UNKNOWN_ERROR;
     }
   }
 
@@ -419,12 +419,12 @@ static int timeout_process(const void *context)
 static REPROC_ERROR timeout_map_error(int error)
 {
   switch (error) {
-  case EINTR:
-    return REPROC_INTERRUPTED;
-  case ENOMEM:
-    return REPROC_NOT_ENOUGH_MEMORY;
-  default:
-    return REPROC_UNKNOWN_ERROR;
+    case EINTR:
+      return REPROC_INTERRUPTED;
+    case ENOMEM:
+      return REPROC_NOT_ENOUGH_MEMORY;
+    default:
+      return REPROC_UNKNOWN_ERROR;
   }
 }
 
@@ -507,10 +507,10 @@ wait_timeout(pid_t pid, unsigned int timeout, unsigned int *exit_status)
   // error.
   if (exit_pid == -1) {
     switch (errno) {
-    case EINTR:
-      return REPROC_INTERRUPTED;
-    default:
-      return REPROC_UNKNOWN_ERROR;
+      case EINTR:
+        return REPROC_INTERRUPTED;
+      default:
+        return REPROC_UNKNOWN_ERROR;
     }
   }
 

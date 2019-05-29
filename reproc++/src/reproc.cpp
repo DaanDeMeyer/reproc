@@ -7,29 +7,30 @@
 static std::error_code reproc_error_to_error_code(REPROC_ERROR error)
 {
   switch (error) {
-  case REPROC_SUCCESS:
-    return {};
-  // The following three errors are reproc specific and don't have a
-  // corresponding OS error. Instead, we represent them through an
-  // `std::error_code` with the same value as `error` in the reproc error
-  // category.
-  case REPROC_WAIT_TIMEOUT:
-  case REPROC_STREAM_CLOSED:
-  case REPROC_PARTIAL_WRITE:
-    return { error, reproc::error_category() };
-  default:
-    // `errno` values belong to the generic category. However, on Windows we get
-    // Windows specific errors which belong to the system category.
+    case REPROC_SUCCESS:
+      return {};
+    // The following three errors are reproc specific and don't have a
+    // corresponding OS error. Instead, we represent them through an
+    // `std::error_code` with the same value as `error` in the reproc error
+    // category.
+    case REPROC_WAIT_TIMEOUT:
+    case REPROC_STREAM_CLOSED:
+    case REPROC_PARTIAL_WRITE:
+      return { error, reproc::error_category() };
+    default:
+      // `errno` values belong to the generic category. However, on Windows we
+      // get Windows specific errors which belong to the system category.
 #ifdef _WIN32
-    return { static_cast<int>(reproc_system_error()), std::system_category() };
+      return { static_cast<int>(reproc_system_error()),
+               std::system_category() };
 #else
-    return { static_cast<int>(reproc_system_error()), std::generic_category() };
+      return { static_cast<int>(reproc_system_error()),
+               std::generic_category() };
 #endif
   }
 }
 
-namespace reproc
-{
+namespace reproc {
 
 const reproc::milliseconds infinite = reproc::milliseconds(0xFFFFFFFF);
 
@@ -98,7 +99,10 @@ void process::close(reproc::stream stream) noexcept
   return reproc_close(process_.get(), static_cast<REPROC_STREAM>(stream));
 }
 
-bool process::running() noexcept { return reproc_running(process_.get()); }
+bool process::running() noexcept
+{
+  return reproc_running(process_.get());
+}
 
 std::error_code process::wait(reproc::milliseconds timeout) noexcept
 {

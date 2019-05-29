@@ -3,10 +3,23 @@ BasedOnStyle: LLVM
 ---
 Language: Cpp
 AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortFunctionsOnASingleLine: Empty
 BinPackParameters: false
-BreakBeforeBraces: Linux
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: false
+  AfterControlStatement: false
+  AfterEnum: false
+  AfterFunction: true
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeCatch: false
+  BeforeElse: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 Cpp11BracedListStyle: false
+IndentCaseLabels: true
 PenaltyBreakAssignment: 100
 PenaltyBreakBeforeFirstCallParameter: 100
 SpaceAfterCStyleCast: true

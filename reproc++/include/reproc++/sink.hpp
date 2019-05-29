@@ -5,8 +5,7 @@
 #include <iosfwd>
 #include <string>
 
-namespace reproc
-{
+namespace reproc {
 
 /*! Reads the entire output of a child process into `out`. */
 class string_sink

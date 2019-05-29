@@ -2,8 +2,7 @@
 
 #include <ostream>
 
-namespace reproc
-{
+namespace reproc {
 
 string_sink::string_sink(std::string &out) noexcept : out_(out) {}
 

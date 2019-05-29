@@ -4,8 +4,7 @@
 
 #include <system_error>
 
-namespace reproc
-{
+namespace reproc {
 
 /*! `REPROC_ERROR` */
 // When changing this enum make sure to change the corresponding enum in error.h
@@ -53,8 +52,7 @@ make_error_condition(reproc::errc error) noexcept;
 
 } // namespace reproc
 
-namespace std
-{
+namespace std {
 
 template <> struct is_error_condition_enum<reproc::errc> : true_type {
 };

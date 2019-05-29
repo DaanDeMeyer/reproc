@@ -16,8 +16,7 @@ wraps reproc's API inside a C++ class. `reproc::errc` improves on `REPROC_ERROR`
 by integrating with C++'s `std::error_code` error handling mechanism. To avoid
 exposing reproc's API when using reproc++ all the other enums and constants of
 reproc have a replacement in reproc++ as well. */
-namespace reproc
-{
+namespace reproc {
 
 /*! See `REPROC_STREAM` */
 enum class stream {
@@ -48,8 +47,7 @@ enum cleanup {
 /*! Improves on reproc's API by wrapping it in a class. Aside from methods that
 mimick reproc's API it also adds configurable RAII and several methods that
 reduce the boilerplate required to use reproc from idiomatic C++ code. */
-class process
-{
+class process {
 
 public:
   /*!

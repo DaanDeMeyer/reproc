@@ -120,12 +120,12 @@ REPROC_ERROR reproc_read(reproc_t *process,
   assert(bytes_read);
 
   switch (stream) {
-  case REPROC_IN:
-    break;
-  case REPROC_OUT:
-    return pipe_read(process->out, buffer, size, bytes_read);
-  case REPROC_ERR:
-    return pipe_read(process->err, buffer, size, bytes_read);
+    case REPROC_IN:
+      break;
+    case REPROC_OUT:
+      return pipe_read(process->out, buffer, size, bytes_read);
+    case REPROC_ERR:
+      return pipe_read(process->err, buffer, size, bytes_read);
   }
 
   assert(0);
@@ -150,15 +150,15 @@ void reproc_close(reproc_t *process, REPROC_STREAM stream)
   assert(process);
 
   switch (stream) {
-  case REPROC_IN:
-    handle_close(&process->in);
-    return;
-  case REPROC_OUT:
-    handle_close(&process->out);
-    return;
-  case REPROC_ERR:
-    handle_close(&process->err);
-    return;
+    case REPROC_IN:
+      handle_close(&process->in);
+      return;
+    case REPROC_OUT:
+      handle_close(&process->out);
+      return;
+    case REPROC_ERR:
+      handle_close(&process->err);
+      return;
   }
 
   assert(0);

@@ -64,10 +64,10 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
 
   if (wstring_length == 0) {
     switch (GetLastError()) {
-    case ERROR_NO_UNICODE_TRANSLATION:
-      return REPROC_INVALID_UNICODE;
-    default:
-      return REPROC_UNKNOWN_ERROR;
+      case ERROR_NO_UNICODE_TRANSLATION:
+        return REPROC_INVALID_UNICODE;
+      default:
+        return REPROC_UNKNOWN_ERROR;
     }
   }
 
@@ -84,10 +84,10 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
   if (written == 0) {
     free(wstring);
     switch (GetLastError()) {
-    case ERROR_NO_UNICODE_TRANSLATION:
-      return REPROC_INVALID_UNICODE;
-    default:
-      return REPROC_UNKNOWN_ERROR;
+      case ERROR_NO_UNICODE_TRANSLATION:
+        return REPROC_INVALID_UNICODE;
+      default:
+        return REPROC_UNKNOWN_ERROR;
     }
   }
 
