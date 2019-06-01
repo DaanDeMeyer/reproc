@@ -27,6 +27,7 @@ REPROC_ERROR reproc_stop(reproc_t *process,
 
     switch (operation) {
       case REPROC_NOOP:
+        error = REPROC_SUCCESS;
         continue;
       case REPROC_WAIT:
         break;
