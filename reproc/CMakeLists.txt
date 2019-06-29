@@ -4,10 +4,10 @@ endif()
 
 # reproc's pkg-config file requires `CMAKE_THREAD_LIBS_INIT` to be defined so we
 # find the Threads package (which initializes `CMAKE_THREAD_LIBS_INIT`) before
-# calling `cddm_add_library` (which generates the pkg-config file).
+# calling `reproc_add_library` (which generates the pkg-config file).
 find_package(Threads REQUIRED)
 
-cddm_add_library(reproc C 99)
+reproc_add_library(reproc C 99)
 
 target_link_libraries(reproc PRIVATE Threads::Threads)
 
@@ -75,7 +75,7 @@ if(REPROC_TEST)
   function(reproc_add_test_helper TARGET)
     add_executable(reproc-${TARGET})
 
-    cddm_add_common(reproc-${TARGET} CXX 11 resources)
+    reproc_add_common(reproc-${TARGET} CXX 11 resources)
     target_sources(reproc-${TARGET} PRIVATE resources/${TARGET}.cpp)
     set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
 
@@ -94,7 +94,7 @@ if(REPROC_EXAMPLES)
   function(reproc_add_example TARGET)
     add_executable(reproc-${TARGET})
 
-    cddm_add_common(reproc-${TARGET} C 99 examples)
+    reproc_add_common(reproc-${TARGET} C 99 examples)
     target_sources(reproc-${TARGET} PRIVATE examples/${TARGET}.c)
     target_link_libraries(reproc-${TARGET} PRIVATE reproc)
     set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})

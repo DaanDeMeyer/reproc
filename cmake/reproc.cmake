@@ -1,105 +1,55 @@
-# CDDM (CMake Daan De Meyer)
-# Version: v0.0.19
-#
-# Description: Encapsulates common CMake configuration for cross-platform
-# C/C++ libraries.
-#
-# Features:
-# - Warnings
-#   - UNIX: -Wall, -Wextra, ...
-#   - Windows: /W4
-# - Sanitizers (optional, UNIX only)
-# - clang-tidy (optional)
-# - Automatic installation including pkg-config and CMake config files.
-# - Automatic export header generation.
-#
-# Options:
-#
-# Every option is prefixed with the upper cased project name. For example, if
-# the project is named reproc every option is prefixed with `REPROC_`.
-#
-# Installation options:
-# - `INSTALL`: Generate installation rules (default: `ON` unless
-#   `BUILD_SHARED_LIBS` is false and the project is built via
-#   `add_subdirectory`).
-# - `INSTALL_CMAKECONFIGDIR`: CMake config files installation directory
-#   (default: `${CMAKE_INSTALL_LIBDIR}/cmake`).
-# - `INSTALL_PKGCONFIG`: Install pkg-config files (default: `ON`)
-# - `INSTALL_PKGCONFIGDIR`: pkg-config files installation directory
-#   (default: `${CMAKE_INSTALL_LIBDIR}/pkgconfig`).
-#
-# Developer options:
-# - `SANITIZERS`: Build with sanitizers (default: `OFF`).
-# - `TIDY`: Run clang-tidy when building (default: `OFF`).
-# - `WARNINGS_AS_ERRORS`: Add -Werror or equivalent to the compile flags and
-#   clang-tidy (default: `OFF`).
-#
-# Functions:
-# - `cddm_add_common`
-# - `cddm_add_library`
-#
-# See https://github.com/DaanDeMeyer/reproc for an example on how to use cddm.
-#
-# NOTE: All languages used have to be enabled before including cddm.
-
-# CMake 3.13 added target_link_options.
-cmake_minimum_required(VERSION 3.13)
-
-set(PNL ${PROJECT_NAME}) # PROJECT_NAME_LOWER (PNL)
-string(TOUPPER ${PROJECT_NAME} PNU) # PROJECT_NAME_UPPER (PNU)
-
 ### Installation options ###
 
-get_directory_property(CDDM_IS_SUBDIRECTORY PARENT_DIRECTORY)
+get_directory_property(REPROC_IS_SUBDIRECTORY PARENT_DIRECTORY)
 
 # Don't add libraries to the install target by default if the project is built
 # from within another project as a static library.
-if(CDDM_IS_SUBDIRECTORY AND NOT BUILD_SHARED_LIBS)
-  option(${PNU}_INSTALL "Generate installation rules." OFF)
+if(REPROC_IS_SUBDIRECTORY AND NOT BUILD_SHARED_LIBS)
+  option(REPROC_INSTALL "Generate installation rules." OFF)
 else()
-  option(${PNU}_INSTALL "Generate installation rules." ON)
+  option(REPROC_INSTALL "Generate installation rules." ON)
 endif()
 
-mark_as_advanced(${PNU}_INSTALL)
+mark_as_advanced(REPROC_INSTALL)
 
 include(GNUInstallDirs)
 
-option(${PNU}_INSTALL_PKGCONFIG "Install pkg-config files." ON)
+option(REPROC_INSTALL_PKGCONFIG "Install pkg-config files." ON)
 
-set(${PNU}_INSTALL_CMAKECONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake
+set(REPROC_INSTALL_CMAKECONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake
     CACHE STRING "CMake config files installation directory.")
-set(${PNU}_INSTALL_PKGCONFIGDIR ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+set(REPROC_INSTALL_PKGCONFIGDIR ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     CACHE STRING "pkg-config files installation directory.")
 
 mark_as_advanced(
-  ${PNU}_INSTALL
-  ${PNU}_INSTALL_PKGCONFIG
-  ${PNU}_INSTALL_CMAKECONFIGDIR
-  ${PNU}_INSTALL_PKGCONFIGDIR
+  REPROC_INSTALL
+  REPROC_INSTALL_PKGCONFIG
+  REPROC_INSTALL_CMAKECONFIGDIR
+  REPROC_INSTALL_PKGCONFIGDIR
 )
 
 ### Developer options ###
 
-option(${PNU}_TIDY "Run clang-tidy when building.")
-option(${PNU}_SANITIZERS "Build with sanitizers.")
-option(${PNU}_WARNINGS_AS_ERRORS "Add -Werror or equivalent to the compile flags and clang-tidy.")
+option(REPROC_TIDY "Run clang-tidy when building.")
+option(REPROC_SANITIZERS "Build with sanitizers.")
+option(REPROC_WARNINGS_AS_ERRORS "Add -Werror or equivalent to the compile flags and clang-tidy.")
 
 mark_as_advanced(
-  ${PNU}_TIDY
-  ${PNU}_SANITIZERS
-  ${PNU}_WARNINGS_AS_ERRORS
+  REPROC_TIDY
+  REPROC_SANITIZERS
+  REPROC_WARNINGS_AS_ERRORS
 )
 
 ### clang-tidy ###
 
-if(${PNU}_TIDY)
-  find_program(CDDM_CLANG_TIDY_PROGRAM clang-tidy)
-  mark_as_advanced(CDDM_CLANG_TIDY_PROGRAM)
+if(REPROC_TIDY)
+  find_program(REPROC_CLANG_TIDY_PROGRAM clang-tidy)
+  mark_as_advanced(REPROC_CLANG_TIDY_PROGRAM)
 
-  if(CDDM_CLANG_TIDY_PROGRAM)
-    if(${PNU}_WARNINGS_AS_ERRORS)
-      set(CDDM_CLANG_TIDY_PROGRAM
-          ${CDDM_CLANG_TIDY_PROGRAM} -warnings-as-errors=*)
+  if(REPROC_CLANG_TIDY_PROGRAM)
+    if(REPROC_WARNINGS_AS_ERRORS)
+      set(REPROC_CLANG_TIDY_PROGRAM
+          ${REPROC_CLANG_TIDY_PROGRAM} -warnings-as-errors=*)
     endif()
   else()
     message(FATAL_ERROR "clang-tidy not found")
@@ -126,14 +76,14 @@ foreach(LANGUAGE IN ITEMS C CXX)
 
     if(LANGUAGE STREQUAL "C")
       include(CheckCCompilerFlag)
-      check_c_compiler_flag(/permissive- CDDM_${LANGUAGE}_HAVE_PERMISSIVE)
+      check_c_compiler_flag(/permissive- REPROC_${LANGUAGE}_HAVE_PERMISSIVE)
     else()
       include(CheckCXXCompilerFlag)
-      check_cxx_compiler_flag(/permissive- CDDM_${LANGUAGE}_HAVE_PERMISSIVE)
+      check_cxx_compiler_flag(/permissive- REPROC_${LANGUAGE}_HAVE_PERMISSIVE)
     endif()
   endif()
 
-  if(${PNU}_SANITIZERS)
+  if(REPROC_SANITIZERS)
     if(MSVC)
       message(FATAL_ERROR "Building with sanitizers is not supported when using the Visual C++ toolchain.")
     endif()
@@ -151,11 +101,7 @@ include(CMakePackageConfigHelpers)
 
 ### Functions ###
 
-# Applies common configuration to `TARGET`. `LANGUAGE` (C or CXX) is used to
-# indicate the language of the target, `STANDARD` indicates the standard of the
-# language to use and `OUTPUT_DIRECTORY` specifies the target's output
-# directory.
-function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
+function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   if(LANGUAGE STREQUAL "C")
     target_compile_features(${TARGET} PUBLIC c_std_${STANDARD})
   else()
@@ -168,11 +114,11 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
     LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
   )
 
-  if(${PNU}_TIDY AND CDDM_CLANG_TIDY_PROGRAM)
+  if(REPROC_TIDY AND REPROC_CLANG_TIDY_PROGRAM)
     set_target_properties(${TARGET} PROPERTIES
       # CLANG_TIDY_PROGRAM is a list so we surround it with quotes to pass it as
       # a single argument.
-      ${LANGUAGE}_CLANG_TIDY "${CDDM_CLANG_TIDY_PROGRAM}"
+      ${LANGUAGE}_CLANG_TIDY "${REPROC_CLANG_TIDY_PROGRAM}"
     )
   endif()
 
@@ -182,8 +128,8 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
     target_compile_options(${TARGET} PRIVATE
       /nologo # Silence MSVC compiler version output.
       /wd4068 # Allow unknown pragmas.
-      $<$<BOOL:${${PNU}_WARNINGS_AS_ERRORS}>:/WX> # -Werror
-      $<$<BOOL:${CDDM_${LANGUAGE}_HAVE_PERMISSIVE}>:/permissive->
+      $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:/WX> # -Werror
+      $<$<BOOL:${REPROC_${LANGUAGE}_HAVE_PERMISSIVE}>:/permissive->
     )
 
     if(NOT STANDARD STREQUAL "90")
@@ -204,12 +150,12 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       -Wconversion
       -Wsign-conversion
       -Wno-unknown-pragmas
-      $<$<BOOL:${${PNU}_WARNINGS_AS_ERRORS}>:-Werror>
-      $<$<BOOL:${${PNU}_WARNINGS_AS_ERRORS}>:-pedantic-errors>
+      $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-Werror>
+      $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-pedantic-errors>
     )
   endif()
 
-  if(${PNU}_SANITIZERS)
+  if(REPROC_SANITIZERS)
     target_compile_options(${TARGET} PRIVATE
       -fsanitize=address,undefined
     )
@@ -226,21 +172,10 @@ function(cddm_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   )
 endfunction()
 
-# Adds a new library with name `TARGET` and applies common configuration to it.
-# `LANGUAGE` and `STANDARD` define the language and corresponding standard used
-# by the target.
-#
-# An export header is generated and made available as follows (assuming the
-# target is named reproc):
-# - `LANGUAGE == C` => `#include <reproc/export.h>`
-# - `LANGUAGE == CXX` => `#include <reproc/export.hpp>`
-#
-# The export header for reproc includes the `REPROC_EXPORT` macro which can be
-# applied to any public API functions.
-function(cddm_add_library TARGET LANGUAGE STANDARD)
+function(reproc_add_library TARGET LANGUAGE STANDARD)
   add_library(${TARGET})
 
-  cddm_add_common(${TARGET} ${LANGUAGE} ${STANDARD} lib)
+  reproc_add_common(${TARGET} ${LANGUAGE} ${STANDARD} lib)
   # Enable -fvisibility=hidden and -fvisibility-inlines-hidden (if applicable).
   set_target_properties(${TARGET} PROPERTIES
     ${LANGUAGE}_VISIBILITY_PRESET hidden
@@ -290,7 +225,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
   # Adapted from https://codingnest.com/basic-cmake-part-2/.
   # Each library is installed separately (with separate config files).
 
-  if(${PNU}_INSTALL)
+  if(REPROC_INSTALL)
 
     ## Config files
 
@@ -327,7 +262,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
       install(
         EXPORT ${TARGET}-targets
         FILE ${TARGET}-targets.cmake
-        DESTINATION ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
+        DESTINATION ${REPROC_INSTALL_CMAKECONFIGDIR}/${TARGET}
       )
 
       write_basic_package_version_file(
@@ -340,7 +275,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
           ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}-config.cmake.in
           ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
         INSTALL_DESTINATION
-          ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
+          ${REPROC_INSTALL_CMAKECONFIGDIR}/${TARGET}
       )
 
       install(
@@ -348,13 +283,14 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
           ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
           ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
         DESTINATION
-          ${${PNU}_INSTALL_CMAKECONFIGDIR}/${TARGET}
+          ${REPROC_INSTALL_CMAKECONFIGDIR}/${TARGET}
       )
     endif()
 
     # pkg-config
 
-    if(${PNU}_INSTALL_PKGCONFIG AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}.pc.in)
+    if(REPROC_INSTALL_PKGCONFIG AND
+       EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}.pc.in)
       configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}.pc.in
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc
@@ -363,7 +299,7 @@ function(cddm_add_library TARGET LANGUAGE STANDARD)
 
       install(
         FILES ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc
-        DESTINATION ${${PNU}_INSTALL_PKGCONFIGDIR}
+        DESTINATION ${REPROC_INSTALL_PKGCONFIGDIR}
       )
     endif()
   endif()

@@ -13,12 +13,12 @@ option(REPROC++ "Build reproc++.")
 option(REPROC_TEST "Build tests.")
 option(REPROC_EXAMPLES "Build examples.")
 
-# Enable languages before including cddm as required by cddm.
+# Enable languages before configuring all enabled languages in reproc.cmake.
 if(REPROC++ OR REPROC_TEST)
   enable_language(CXX)
 endif()
 
-include(external/cddm/cddm.cmake)
+include(cmake/reproc.cmake)
 
 if(REPROC_TEST)
   # reproc uses the doctest testing framework. All tests are grouped inside a
@@ -26,7 +26,7 @@ if(REPROC_TEST)
   # new tests. Tests are executed by running the build/test executable.
   add_executable(reproc-test)
 
-  cddm_add_common(reproc-test CXX 11 "")
+  reproc_add_common(reproc-test CXX 11 "")
   target_include_directories(reproc-test PRIVATE external/doctest)
   set_target_properties(reproc-test PROPERTIES OUTPUT_NAME test)
   # We change the working directory to the build directory before executing the

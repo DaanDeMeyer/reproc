@@ -1,4 +1,4 @@
-cddm_add_library(reproc++ CXX 11)
+reproc_add_library(reproc++ CXX 11)
 
 target_link_libraries(reproc++ PRIVATE reproc)
 target_sources(reproc++ PRIVATE
@@ -11,7 +11,7 @@ if(REPROC_EXAMPLES)
   function(reprocxx_add_example TARGET)
     add_executable(reproc++-${TARGET})
 
-    cddm_add_common(reproc++-${TARGET} CXX 11 examples)
+    reproc_add_common(reproc++-${TARGET} CXX 11 examples)
     target_link_libraries(reproc++-${TARGET} PRIVATE reproc++)
     target_sources(reproc++-${TARGET} PRIVATE examples/${TARGET}.cpp)
     set_target_properties(reproc++-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
