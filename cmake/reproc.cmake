@@ -304,3 +304,27 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
     endif()
   endif()
 endfunction()
+
+# We duplicate `FetchContent_MakeAvailable` here so we can use a CMake minimum
+# version of 3.13 (`FetchContent_MakeAvailable` was added in CMake 3.14). We
+# don't require CMake 3.14 because Debian Buster doesn't have it in its stable
+# repositories.
+macro(reproc_MakeAvailable)
+  foreach(contentName IN ITEMS ${ARGV})
+    string(TOLOWER ${contentName} contentNameLower)
+    FetchContent_GetProperties(${contentName})
+    if(NOT ${contentNameLower}_POPULATED)
+      FetchContent_Populate(${contentName})
+
+      # Only try to call add_subdirectory() if the populated content
+      # can be treated that way. Protecting the call with the check
+      # allows this function to be used for projects that just want
+      # to ensure the content exists, such as to provide content at
+      # a known location.
+      if(EXISTS ${${contentNameLower}_SOURCE_DIR}/CMakeLists.txt)
+        add_subdirectory(${${contentNameLower}_SOURCE_DIR}
+                         ${${contentNameLower}_BINARY_DIR})
+      endif()
+    endif()
+  endforeach()
+endmacro()

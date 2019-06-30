@@ -1,5 +1,4 @@
-# 3.13 is needed for to allow using `target_link_libraries` to modify targets
-# created outside the current directory.
+# 3.13 is needed for `target_link_options`.
 cmake_minimum_required(VERSION 3.13...3.14)
 
 project(reproc
@@ -20,6 +19,8 @@ endif()
 
 include(cmake/reproc.cmake)
 
+add_subdirectory(external)
+
 if(REPROC_TEST)
   # reproc uses the doctest testing framework. All tests are grouped inside a
   # single executable. Use `target_sources(reproc-test PRIVATE <file>)` to add
@@ -27,8 +28,9 @@ if(REPROC_TEST)
   add_executable(reproc-test)
 
   reproc_add_common(reproc-test CXX 11 "")
-  target_include_directories(reproc-test PRIVATE external/doctest)
+  target_link_libraries(reproc-test PRIVATE doctest)
   set_target_properties(reproc-test PROPERTIES OUTPUT_NAME test)
+
   # We change the working directory to the build directory before executing the
   # tests so tests can reliably find any required resources.
   target_compile_definitions(reproc-test PRIVATE
