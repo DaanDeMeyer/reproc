@@ -10,4 +10,3 @@ Version: @PROJECT_VERSION@
 Cflags: -I${includedir}
 Libs: -L${libdir} -l@TARGET@
 Libs.private: @CMAKE_THREAD_LIBS_INIT@
-

@@ -10,5 +10,3 @@ Version: @PROJECT_VERSION@
 Cflags: -I${includedir}
 Libs: -L${libdir} -l@TARGET@
 Requires.private: reproc = @PROJECT_VERSION@
-
-

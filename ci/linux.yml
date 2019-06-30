@@ -45,4 +45,3 @@ jobs:
       build/reproc++/examples/cmake-help > /dev/null
       build/reproc++/examples/forward cmake --help > /dev/null
     displayName: Test
-

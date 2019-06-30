@@ -24,4 +24,3 @@ Checks:
 '
 HeaderFilterRegex: '.*reproc\+\+.*$'
 ...
-
