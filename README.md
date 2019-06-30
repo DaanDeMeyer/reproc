@@ -115,9 +115,9 @@ target_link_libraries(myapp reproc++) # Link against reproc++.
 
 Building reproc requires CMake 3.13 or higher.
 
-reproc has a single dependency on pthreads on POSIX systems. However, the
-dependency is included in both reproc's CMake config and pkg-config files so it
-should be picked up by your build system automatically.
+By default, reproc has a single dependency on pthreads on POSIX systems.
+However, the dependency is included in both reproc's CMake config and pkg-config
+files so it should be picked up by your build system automatically.
 
 ## CMake options
 
@@ -138,10 +138,21 @@ reproc's build can be configured using the following CMake options:
 - `REPROC_INSTALL_PKGCONFIG`: Install pkg-config files (default: `ON`)
 - `REPROC_INSTALL_PKGCONFIGDIR`: pkg-config files installation directory
   (default: `${CMAKE_INSTALL_LIBDIR}/pkgconfig`).
+- `REPROC_MULTITHREADED`: Use `pthread_sigmask` instead of `sigprocmask`
+  (default: `ON`).
 
-The `THREADS_PREFER_PTHREAD_FLAG` variable influences how CMake finds pthreads.
-if it is not defined, reproc's build enables it before calling
-`find_package(Threads)`.
+  `sigprocmask`'s behaviour is only defined for single-threaded programs. When
+  using multiple threads, `pthread_sigmask` should be used instead. Because we
+  cannot determine whether reproc will be used in a multi-threaded program when
+  building reproc, `REPROC_MULTITHREADED` is enabled by default to guarantee
+  defined behaviour. Users that know for certain their program will only use a
+  single thread can opt to disable `REPROC_MULTITHREADED`.
+
+  When using reproc via CMake `add_subdirectory` and `REPROC_MULTITHREADED` is
+  enabled, reproc will only call `find_package(Threads)` if the user has not
+  called `find_package(Threads)` himself. The `THREADS_PREFER_PTHREAD_FLAG`
+  variable influences the behaviour of `find_package(Threads)`. if it is not
+  defined, reproc's build enables it before calling `find_package(Threads)`.
 
 ### Developer
 

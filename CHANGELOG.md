@@ -13,6 +13,14 @@
   Aside from renaming `reproc::errc` to `reproc::error`, no changes should be
   necessary in user code.
 
+- Introduce `REPROC_MULTITHREADED` to configure whether reproc should link
+  against pthreads.
+
+  By default, `REPROC_MULTITHREADED` is enabled to prevent accidental undefined
+  behaviour caused by forgetting to enable `REPROC_MULTITHREADED`. Advanced
+  users might want to disable `REPROC_MULTITHREADED` when they know for certain
+  their code won't use more than a single thread.
+
 - doctest is now downloaded at configure time instead of being vendored inside
   the reproc repository.
 

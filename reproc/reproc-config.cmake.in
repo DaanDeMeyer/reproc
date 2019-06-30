@@ -1,6 +1,10 @@
 @PACKAGE_INIT@
 
-include(CMakeFindDependencyMacro)
-find_dependency(Threads REQUIRED)
+set(REPROC_MULTITHREADED @REPROC_MULTITHREADED@)
+
+if(REPROC_MULTITHREADED)
+  include(CMakeFindDependencyMacro)
+  find_dependency(Threads REQUIRED)
+endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/@TARGET@-targets.cmake)

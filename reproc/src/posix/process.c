@@ -7,15 +7,26 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <pthread.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-REPROC_ERROR process_create(int (*action)(const void *),
-                            const void *context,
-                            struct process_options *options,
-                            pid_t *pid)
+#if defined(REPROC_MULTITHREADED)
+#define SIGMASK_SAFE pthread_sigmask
+#else
+#define SIGMASK_SAFE sigprocmask
+#endif
+
+// Disable address sanitizers for `process_create` to avoid a false positive
+// when using `vfork` and `sigprocmask` simultaneously.
+#if !defined(REPROC_MULTITHREADED) && defined(ADDRESS_SANITIZERS)
+__attribute__((no_sanitize("address")))
+#endif
+REPROC_ERROR
+process_create(int (*action)(const void *),
+               const void *context,
+               struct process_options *options,
+               pid_t *pid)
 {
   assert(options->stdin_fd >= 0);
   assert(options->stdout_fd >= 0);
@@ -96,7 +107,7 @@ REPROC_ERROR process_create(int (*action)(const void *),
       goto cleanup;
     }
 
-    if (pthread_sigmask(SIG_BLOCK, &all_blocked, &old_mask) == -1) {
+    if (SIGMASK_SAFE(SIG_BLOCK, &all_blocked, &old_mask) == -1) {
       error = REPROC_UNKNOWN_ERROR;
       goto cleanup;
     }
@@ -144,7 +155,7 @@ REPROC_ERROR process_create(int (*action)(const void *),
       }
 
       // Restore the old signal mask from the parent process.
-      if (pthread_sigmask(SIG_SETMASK, &old_mask, NULL) != 0) {
+      if (SIGMASK_SAFE(SIG_SETMASK, &old_mask, NULL) != 0) {
         write(error_pipe_write, &errno, sizeof(errno));
         _exit(errno);
       }
@@ -160,7 +171,7 @@ REPROC_ERROR process_create(int (*action)(const void *),
     } else {
       // In the parent process we restore the old signal mask regardless of
       // whether `vfork` succeeded or not.
-      if (pthread_sigmask(SIG_SETMASK, &old_mask, NULL) != 0) {
+      if (SIGMASK_SAFE(SIG_SETMASK, &old_mask, NULL) != 0) {
         error = REPROC_UNKNOWN_ERROR;
         goto cleanup;
       }

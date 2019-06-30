@@ -11,6 +11,7 @@ project(reproc
 option(REPROC++ "Build reproc++.")
 option(REPROC_TEST "Build tests.")
 option(REPROC_EXAMPLES "Build examples.")
+option(REPROC_MULTITHREADED "Use `pthread_sigmask` instead of `sigprocmask`." ON)
 
 # Enable languages before configuring all enabled languages in reproc.cmake.
 if(REPROC++ OR REPROC_TEST)
@@ -19,7 +20,7 @@ endif()
 
 include(cmake/reproc.cmake)
 
-add_subdirectory(external)
+include(external/CMakeLists.txt)
 
 if(REPROC_TEST)
   # reproc uses the doctest testing framework. All tests are grouped inside a

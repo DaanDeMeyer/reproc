@@ -11,3 +11,11 @@ if(REPROC_TEST)
 
   reproc_MakeAvailable(doctest)
 endif()
+
+if(REPROC_MULTITHREADED AND NOT TARGET Threads::Threads)
+  if(NOT DEFINED THREADS_PREFER_PTHREAD_FLAG)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+  endif()
+
+  find_package(Threads REQUIRED)
+endif()

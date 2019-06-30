@@ -1,15 +1,13 @@
-if(NOT DEFINED THREADS_PREFER_PTHREAD_FLAG)
-  set(THREADS_PREFER_PTHREAD_FLAG ON)
-endif()
-
-# reproc's pkg-config file requires `CMAKE_THREAD_LIBS_INIT` to be defined so we
-# find the Threads package (which initializes `CMAKE_THREAD_LIBS_INIT`) before
-# calling `reproc_add_library` (which generates the pkg-config file).
-find_package(Threads REQUIRED)
-
 reproc_add_library(reproc C 99)
 
-target_link_libraries(reproc PRIVATE Threads::Threads)
+if(REPROC_MULTITHREADED)
+  target_link_libraries(reproc PRIVATE Threads::Threads)
+  target_compile_definitions(reproc PRIVATE REPROC_MULTITHREADED)
+endif()
+
+if(REPROC_SANITIZERS)
+  target_compile_definitions(reproc PRIVATE ADDRESS_SANITIZERS)
+endif()
 
 target_sources(reproc PRIVATE
   src/common/error.c
