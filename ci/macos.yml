@@ -7,15 +7,16 @@ jobs:
   pool:
     vmImage: ${{ parameters.image }}
   steps:
-  # brew upgrade returns a non-zero error code if the package is already
-  # up-to-date. To avoid this we check if the package is out-of-date first.
+  # Download CMake manually because brew is too slow.
   - script: |
-      if (brew outdated | grep -q cmake); then
-        brew upgrade cmake;
-      fi
+      brew uninstall cmake;
+      curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.4/cmake-3.13.4-Darwin-x86_64.tar.gz -o cmake.tar.gz;
+      sudo tar xf cmake.tar.gz --strip 1 -C /Applications;
+      sudo /Applications/CMake.app/Contents/bin/cmake-gui --install;
     displayName: Install
 
   - script: |
+      export PATH=/usr/local/bin:$PATH;
       cmake \
         -B $(Build.SourcesDirectory)/build \
         -S $(Build.SourcesDirectory) \
@@ -28,7 +29,9 @@ jobs:
         -DREPROC_SANITIZERS=ON
     displayName: Configure
 
-  - script: cmake --build $(Build.SourcesDirectory)/build --parallel 2
+  - script: |
+      export PATH=/usr/local/bin:$PATH;
+      cmake --build $(Build.SourcesDirectory)/build --parallel 2
     displayName: Build
 
   - script: |
