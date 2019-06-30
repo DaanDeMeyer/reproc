@@ -13,6 +13,15 @@
   Aside from renaming `reproc::errc` to `reproc::error`, no changes should be
   necessary in user code.
 
+- doctest is now downloaded at configure time instead of being vendored inside
+  the reproc repository.
+
+  doctest is only downloaded if `REPROC_TEST` is enabled.
+
+- Azure Pipelines CI now includes Visual Studio 2019.
+
+- Various smaller improvements and fixes.
+
 ## 6.0.0
 
 ## General
