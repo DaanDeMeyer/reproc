@@ -12,10 +12,10 @@
 struct reproc_t;
 
 /*! The `reproc` namespace wraps all reproc++ declarations. reproc::process
-wraps reproc's API inside a C++ class. `reproc::errc` improves on `REPROC_ERROR`
-by integrating with C++'s `std::error_code` error handling mechanism. To avoid
-exposing reproc's API when using reproc++ all the other enums and constants of
-reproc have a replacement in reproc++ as well. */
+wraps reproc's API inside a C++ class. `reproc::error` improves on
+`REPROC_ERROR` by integrating with C++'s `std::error_code` error handling
+mechanism. To avoid exposing reproc's API when using reproc++ all the other
+enums and constants of reproc have a replacement in reproc++ as well. */
 namespace reproc {
 
 /*! See `REPROC_STREAM` */

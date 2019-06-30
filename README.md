@@ -179,15 +179,15 @@ reproc++'s API integrates with the C++ standard library error codes mechanism
 (`std::error_code` and `std::error_condition`). All functions in reproc++'s API
 return `std::error_code` values that contain the actual system error that
 occurred. This means the `reproc_system_error` function is not necessary in
-reproc++ since the returned error codes stores the actual system error instead
-of the enum value in `REPROC_ERROR`. You can still test against these error
-codes using the `reproc::errc` error condition enum:
+reproc++ since the returned error codes store the actual system error instead of
+the enum value in `REPROC_ERROR`. You can still test against these error codes
+using the `reproc::error` error enum:
 
 ```c++
 reproc::process;
 std::error_code ec = process.start(...);
 
-if (ec == reproc::errc::file_not_found) {
+if (ec == reproc::error::file_not_found) {
   std::cerr << "Executable not found. Make sure it is available from the PATH.";
   return 1;
 }
