@@ -2,16 +2,11 @@
 
 ## 7.0.0
 
-- Converted `reproc::errc` error condition into `reproc::error` error code.
+- Renamed `reproc::errc` to `reproc::error`.
 
-  Error conditions are meant to provide high level matching abstractions that
-  match against multiple different error codes. Using them for reproc's error
-  codes was not correct usage of error conditions. Instead, we now use an error
-  code and define equivalence from this error code with the `std::errc` error
-  condition. We now (hopefully) use the `system_error` feature as intended.
-
-  Aside from renaming `reproc::errc` to `reproc::error`, no changes should be
-  necessary in user code.
+  `error` is more descriptive than `errc` for users who aren't familiar with
+  C++11's `system_error` feature. We choose `error` instead of `errc` to avoid
+  these users having to figure out the exact meaning of an error condition.
 
 - Introduce `REPROC_MULTITHREADED` to configure whether reproc should link
   against pthreads.
