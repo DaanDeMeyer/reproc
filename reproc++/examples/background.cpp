@@ -48,8 +48,9 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  reproc::process background(reproc::terminate, reproc::milliseconds(5000),
-                             reproc::kill, reproc::milliseconds(2000));
+  reproc::process background(reproc::cleanup::terminate,
+                             reproc::milliseconds(5000), reproc::cleanup::kill,
+                             reproc::milliseconds(2000));
 
   std::error_code ec = background.start(argc - 1, argv + 1);
 
@@ -94,8 +95,8 @@ int main(int argc, char *argv[])
   that `background` has stopped as well. Since we can't be sure what process
   we're running (the child process to run is determined by the user) we send a
   `SIGTERM` signal and `SIGKILL` if necessary (or the Windows equivalents). */
-  ec = background.stop(reproc::terminate, reproc::milliseconds(5000),
-                       reproc::kill, reproc::milliseconds(2000));
+  ec = background.stop(reproc::cleanup::terminate, reproc::milliseconds(5000),
+                       reproc::cleanup::kill, reproc::milliseconds(2000));
   if (ec) {
     return fail(ec);
   }

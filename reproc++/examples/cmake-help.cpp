@@ -21,7 +21,7 @@ int main()
   waiting indefinitely until it exits on its own is sufficient to make sure the
   process is always stopped and cleaned up. Waiting indefinitely in the
   destructor is the default behaviour. */
-  reproc::process cmake_help(reproc::wait, reproc::infinite);
+  reproc::process cmake_help(reproc::cleanup::wait, reproc::infinite);
 
   /* While `reproc_start` requires the args to end with a `NULL` value,
   `process` has a start method that takes a vector of `std::string` and takes

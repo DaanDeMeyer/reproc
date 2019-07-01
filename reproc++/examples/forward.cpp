@@ -48,8 +48,9 @@ int main(int argc, char *argv[])
   Also note that C++14 has chrono literals which allows
   `reproc::milliseconds(5000)` to be replaced with `5000ms`.
   */
-  reproc::process forward(reproc::terminate, reproc::milliseconds(5000),
-                          reproc::kill, reproc::milliseconds(2000));
+  reproc::process forward(reproc::cleanup::terminate,
+                          reproc::milliseconds(5000), reproc::cleanup::kill,
+                          reproc::milliseconds(2000));
 
   std::error_code ec = forward.start(argc - 1, argv + 1);
 
@@ -81,9 +82,9 @@ int main(int argc, char *argv[])
   /* Call `process::stop` ourselves to get the exit status. We add
   `reproc::wait` with a timeout of ten seconds to give the process time to write
   its output before sending `SIGTERM`. */
-  ec = forward.stop(reproc::wait, reproc::milliseconds(10000),
-                    reproc::terminate, reproc::milliseconds(5000), reproc::kill,
-                    reproc::milliseconds(2000));
+  ec = forward.stop(reproc::cleanup::wait, reproc::milliseconds(10000),
+                    reproc::cleanup::terminate, reproc::milliseconds(5000),
+                    reproc::cleanup::kill, reproc::milliseconds(2000));
   if (ec) {
     return fail(ec);
   }

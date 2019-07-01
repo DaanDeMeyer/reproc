@@ -33,7 +33,7 @@ using milliseconds = std::chrono::duration<unsigned int, std::milli>;
 REPROCXX_EXPORT extern const reproc::milliseconds infinite;
 
 /*! See `process::stop` */
-enum cleanup {
+enum class cleanup {
   /*! Do nothing (no operation). */
   noop = 0,
   /*! `process::wait` */
@@ -59,7 +59,7 @@ public:
   Example:
 
   ```c++
-  reproc::process example(reproc::wait, 10000, reproc::terminate, 5000);
+  process example(cleanup::wait, 10000, cleanup::terminate, 5000);
   ```
 
   If the child process is still running when example's destructor is called, it
@@ -71,12 +71,12 @@ public:
   child process to exit.
   */
   REPROCXX_EXPORT explicit process(
-      reproc::cleanup c1 = reproc::wait,
-      reproc::milliseconds t1 = reproc::infinite,
-      reproc::cleanup c2 = reproc::noop,
-      reproc::milliseconds t2 = reproc::milliseconds(0),
-      cleanup c3 = reproc::noop,
-      reproc::milliseconds t3 = reproc::milliseconds(0));
+      cleanup c1 = cleanup::wait,
+      milliseconds t1 = infinite,
+      cleanup c2 = cleanup::noop,
+      milliseconds t2 = milliseconds(0),
+      cleanup c3 = cleanup::noop,
+      milliseconds t3 = milliseconds(0));
 
   /*! Calls `stop` with the arguments provided in the constructor if the child
   process is still running and frees all allocated resources. */
@@ -173,11 +173,11 @@ public:
   /*! `reproc_stop` */
   REPROCXX_EXPORT std::error_code
   stop(cleanup c1,
-       reproc::milliseconds t1,
-       cleanup c2 = reproc::noop,
-       reproc::milliseconds t2 = reproc::milliseconds(0),
-       cleanup c3 = reproc::noop,
-       reproc::milliseconds t3 = reproc::milliseconds(0)) noexcept;
+       milliseconds t1,
+       cleanup c2 = cleanup::noop,
+       milliseconds t2 = milliseconds(0),
+       cleanup c3 = cleanup::noop,
+       milliseconds t3 = milliseconds(0)) noexcept;
 
   /*! `reproc_exit_status` */
   REPROCXX_EXPORT unsigned int exit_status() noexcept;
