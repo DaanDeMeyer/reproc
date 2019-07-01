@@ -12,13 +12,11 @@ int fail(std::error_code ec)
 
 // Expands upon `reproc::string_sink` by locking `mutex` before appending new
 // output to `out`.
-class thread_safe_string_sink
-{
+class thread_safe_string_sink {
 public:
   thread_safe_string_sink(std::string &out, std::mutex &mutex)
       : out_(out), mutex_(mutex)
-  {
-  }
+  {}
 
   bool operator()(const char *buffer, unsigned int size)
   {
