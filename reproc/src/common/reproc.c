@@ -26,15 +26,15 @@ REPROC_ERROR reproc_stop(reproc_t *process,
     unsigned int timeout = timeouts[i];
 
     switch (operation) {
-      case REPROC_NOOP:
+      case REPROC_CLEANUP_NOOP:
         error = REPROC_SUCCESS;
         continue;
-      case REPROC_WAIT:
+      case REPROC_CLEANUP_WAIT:
         break;
-      case REPROC_TERMINATE:
+      case REPROC_CLEANUP_TERMINATE:
         error = reproc_terminate(process);
         break;
-      case REPROC_KILL:
+      case REPROC_CLEANUP_KILL:
         error = reproc_kill(process);
         break;
     }

@@ -265,13 +265,13 @@ REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_t *process);
 /*! Used to tell `reproc_stop` how to stop a child process. */
 typedef enum {
   /*! noop (no operation) */
-  REPROC_NOOP = 0,
+  REPROC_CLEANUP_NOOP = 0,
   /*! `reproc_wait` */
-  REPROC_WAIT = 1,
+  REPROC_CLEANUP_WAIT = 1,
   /*! `reproc_terminate` */
-  REPROC_TERMINATE = 2,
+  REPROC_CLEANUP_TERMINATE = 2,
   /*! `reproc_kill` */
-  REPROC_KILL = 3
+  REPROC_CLEANUP_KILL = 3
 } REPROC_CLEANUP;
 
 /*!
