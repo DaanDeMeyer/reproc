@@ -8,10 +8,6 @@ REPROC_ERROR pipe_init(int *read, int *write);
 
 // Reads up to `size` bytes from the pipe indicated by `pipe` and stores them
 // them in `buffer`. The amount of bytes read is stored in `bytes_read`.
-//
-// Possible errors:
-// - `REPROC_STREAM_CLOSED`
-// - `REPROC_INTERRUPTED`
 REPROC_ERROR
 pipe_read(int pipe, void *buffer, unsigned int size, unsigned int *bytes_read);
 
@@ -24,13 +20,8 @@ pipe_read(int pipe, void *buffer, unsigned int size, unsigned int *bytes_read);
 // requested.
 //
 // By default, writing to a closed pipe terminates a process with the `SIGPIPE`
-// signal. `pipe_write` will only return `REPROC_STREAM_CLOSED` if this signal
-// is ignored by the running process.
-//
-// Possible errors:
-// - `REPROC_STREAM_CLOSED`
-// - `REPROC_INTERRUPTED`
-// - `REPROC_PARTIAL_WRITE`
+// signal. `pipe_write` will only return `REPROC_ERROR_STREAM_CLOSED` if this
+// signal is ignored by the running process.
 REPROC_ERROR pipe_write(int pipe,
                         const void *buffer,
                         unsigned int to_write,

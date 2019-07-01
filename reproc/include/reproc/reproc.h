@@ -91,14 +91,7 @@ a path relative to the PATH environment variable when using a custom working
 directory.
 
 Possible errors:
-- `REPROC_PIPE_LIMIT_REACHED`
-- `REPROC_PROCESS_LIMIT_REACHED`
-- `REPROC_NOT_ENOUGH_MEMORY`
-- `REPROC_INVALID_UNICODE`
-- `REPROC_PERMISSION_DENIED`
-- `REPROC_SYMLINK_LOOP`
-- `REPROC_FILE_NOT_FOUND`
-- `REPROC_INTERRUPTED`
+- `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_start(reproc_t *process,
                                         int argc,
@@ -111,8 +104,8 @@ Reads up to `size` bytes from the child process stream indicated by `stream`
 read is stored in `bytes_read`.
 
 Possible errors:
-- `REPROC_STREAM_CLOSED`
-- `REPROC_INTERRUPTED`
+- `REPROC_ERROR_STREAM_CLOSED`
+- `REPROC_ERROR_SYSTEM`
 
 Assuming no other errors occur this function will return `REPROC_SUCCESS` until
 the stream is closed and all remaining data has been read. This allows the
@@ -135,7 +128,7 @@ while (true) {
   output.append(buffer, bytes_read);
 }
 
-if (error != REPROC_STREAM_CLOSED) { return error; }
+if (error != REPROC_ERROR_STREAM_CLOSED) { return error; }
 
 // Do something with the output
 ```
@@ -168,7 +161,9 @@ Calls `reproc_read` on `stream` until `parser` returns false or an error occurs.
 chance to process all output from the previous call to `reproc_parse` one by
 one.
 
-See `reproc_read` for a list of possible errors.
+Possible errors:
+- `REPROC_ERROR_STREAM_CLOSED`
+- `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_parse(reproc_t *process,
                                         REPROC_STREAM stream,
@@ -184,8 +179,8 @@ error occurs. `sink` receives the output after each read, along with `context`.
 Note that this method does not report `stream` being closed as an error. This is
 also the main difference with `reproc_parse`.
 
-See `reproc_read` for a list of possible errors (except for
-`REPROC_STREAM_CLOSED`).
+Possible errors:
+- `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_drain(reproc_t *process,
                                         REPROC_STREAM stream,
@@ -205,12 +200,12 @@ requested.
 
 (POSIX) By default, writing to a closed stdin pipe terminates the parent process
 with the `SIGPIPE` signal. `reproc_write` will only return
-`REPROC_STREAM_CLOSED` if this signal is ignored by the parent process.
+`REPROC_ERROR_STREAM_CLOSED` if this signal is ignored by the parent process.
 
 Possible errors:
-- `REPROC_STREAM_CLOSED`
-- `REPROC_INTERRUPTED`
-- `REPROC_PARTIAL_WRITE`
+- `REPROC_ERROR_STREAM_CLOSED`
+- `REPROC_ERROR_PARTIAL_WRITE`
+- `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_write(reproc_t *process,
                                         const void *buffer,
@@ -223,8 +218,6 @@ Closes the stream endpoint of the parent process indicated by `stream`.
 This function is necessary when a child process reads from stdin until it is
 closed. After writing all the input to the child process with `reproc_write`,
 the standard input stream can be closed using this function.
-
-Possible errors: /
 */
 REPROC_EXPORT void reproc_close(reproc_t *process, REPROC_STREAM stream);
 
@@ -238,18 +231,9 @@ wait indefinitely for the child process to exit.
 If this function returns `REPROC_SUCCESS`, `process` has exited and its exit
 status can be retrieved with `reproc_exit_status`.
 
-Possible errors when `timeout` is 0:
-- `REPROC_WAIT_TIMEOUT`
-
-Possible errors when `timeout` is `REPROC_INFINITE`:
-- `REPROC_WAIT_TIMEOUT`
-- `REPROC_INTERRUPTED`
-
-Possible errors when `timeout` is not 0 or `REPROC_INFINITE`:
-- `REPROC_WAIT_TIMEOUT`
-- `REPROC_INTERRUPTED`
-- `REPROC_PROCESS_LIMIT_REACHED`
-- `REPROC_NOT_ENOUGH_MEMORY`
+Possible errors:
+- `REPROC_ERROR_WAIT_TIMEOUT`
+- `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_t *process, unsigned int timeout);
 
@@ -261,6 +245,9 @@ Sends the `SIGTERM` signal (POSIX) or the `CTRL-BREAK` signal (Windows) to the
 child process. Remember that successfull calls to `reproc_wait` and
 `reproc_destroy` are required to make sure the child process is completely
 cleaned up.
+
+Possible errors:
+- `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_t *process);
 
@@ -269,6 +256,9 @@ Sends the `SIGKILL` signal to the child process (POSIX) or calls
 `TerminateProcess` (Windows) on the child process. Remember that successfull
 calls to `reproc_wait` and `reproc_destroy` are required to make sure the child
 process is completely cleaned up.
+
+Possible errors:
+- `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_t *process);
 
@@ -315,7 +305,9 @@ indicated by the first element.
 If this function returns `REPROC_SUCCESS`, `process` has exited and its exit
 status can be retrieved with `reproc_exit_status`.
 
-See `reproc_wait` for the list of possible errors.
+Possible errors:
+- `REPROC_ERROR_WAIT_TIMEOUT`
+- `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_t *process,
                                        REPROC_CLEANUP c1,

@@ -129,7 +129,7 @@ REPROC_ERROR reproc_read(reproc_t *process,
   }
 
   assert(0);
-  return REPROC_UNKNOWN_ERROR;
+  return REPROC_ERROR_SYSTEM;
 }
 
 REPROC_ERROR reproc_write(reproc_t *process,

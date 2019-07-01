@@ -3,23 +3,26 @@
 #include <reproc/reproc.h>
 
 #include <array>
+#include <cassert>
 
-// See `error_category_impl::equivalent` in `error.cpp` for more information.
 static std::error_code error_to_error_code(REPROC_ERROR error)
 {
   switch (error) {
     case REPROC_SUCCESS:
-      return {};
-    case REPROC_WAIT_TIMEOUT:
-    case REPROC_STREAM_CLOSED:
-    case REPROC_PARTIAL_WRITE:
-      return { error, reproc::error_category() };
-    default:
+    case REPROC_ERROR_WAIT_TIMEOUT:
+    case REPROC_ERROR_STREAM_CLOSED:
+    case REPROC_ERROR_PARTIAL_WRITE:
+      return static_cast<reproc::error>(error);
+    case REPROC_ERROR_SYSTEM:
       // Convert operating system errors back to platform-specific error codes
-      // to preserve the original error value and message.
+      // to preserve the original error value and message. These can then be
+      // matched against using the `std::errc` error condition.
       return { static_cast<int>(reproc_system_error()),
                std::system_category() };
   }
+
+  assert(0);
+  return {};
 }
 
 namespace reproc {

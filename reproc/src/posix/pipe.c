@@ -22,12 +22,7 @@ REPROC_ERROR pipe_init(int *read, int *write)
 #endif
 
   if (result == -1) {
-    switch (errno) {
-      case ENFILE:
-        return REPROC_PIPE_LIMIT_REACHED;
-      default:
-        return REPROC_UNKNOWN_ERROR;
-    }
+    return REPROC_ERROR_SYSTEM;
   }
 
   // Assign file descriptors if `pipe` call was succesfull.
@@ -48,14 +43,9 @@ pipe_read(int pipe, void *buffer, unsigned int size, unsigned int *bytes_read)
   ssize_t error = read(pipe, buffer, size);
   // `read` returns 0 to indicate the other end of the pipe was closed.
   if (error == 0) {
-    return REPROC_STREAM_CLOSED;
+    return REPROC_ERROR_STREAM_CLOSED;
   } else if (error == -1) {
-    switch (errno) {
-      case EINTR:
-        return REPROC_INTERRUPTED;
-      default:
-        return REPROC_UNKNOWN_ERROR;
-    }
+    return REPROC_ERROR_SYSTEM;
   }
 
   // If `error` is not -1 or 0 it represents the amount of bytes read.
@@ -82,11 +72,9 @@ REPROC_ERROR pipe_write(int pipe,
       // `write` sets `errno` to `EPIPE` to indicate the other end of the pipe
       // was closed.
       case EPIPE:
-        return REPROC_STREAM_CLOSED;
-      case EINTR:
-        return REPROC_INTERRUPTED;
+        return REPROC_ERROR_STREAM_CLOSED;
       default:
-        return REPROC_UNKNOWN_ERROR;
+        return REPROC_ERROR_SYSTEM;
     }
   }
 
@@ -96,7 +84,7 @@ REPROC_ERROR pipe_write(int pipe,
   *bytes_written = (unsigned int) error;
 
   if (*bytes_written != to_write) {
-    return REPROC_PARTIAL_WRITE;
+    return REPROC_ERROR_PARTIAL_WRITE;
   }
 
   return REPROC_SUCCESS;

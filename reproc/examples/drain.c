@@ -58,13 +58,6 @@ int main(void)
   REPROC_ERROR error = REPROC_SUCCESS;
 
   error = reproc_start(&git_help, argc, argv, NULL);
-
-  if (error == REPROC_FILE_NOT_FOUND) {
-    fprintf(stderr, "%s\n",
-            "git not found. Make sure it's available from the PATH.");
-    return 1;
-  }
-
   if (error) {
     return fail(error);
   }

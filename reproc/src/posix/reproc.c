@@ -25,36 +25,6 @@ static int exec_process(const void *context)
   return 0;
 }
 
-// Maps errno values returned by `exec_process` and not handled by
-// `process_create` to reproc error values.
-static REPROC_ERROR exec_map_error(int error)
-{
-  switch (error) {
-    case E2BIG:
-      return REPROC_ARGS_TOO_LONG;
-    case EACCES:
-      return REPROC_PERMISSION_DENIED;
-    case ELOOP:
-      return REPROC_SYMLINK_LOOP;
-    case EMFILE:
-      return REPROC_PROCESS_LIMIT_REACHED;
-    case ENAMETOOLONG:
-      return REPROC_NAME_TOO_LONG;
-    case ENOENT:
-      return REPROC_FILE_NOT_FOUND;
-    case ENOTDIR:
-      return REPROC_FILE_NOT_FOUND;
-    case ENOEXEC:
-      return REPROC_NOT_EXECUTABLE;
-    case ENOMEM:
-      return REPROC_NOT_ENOUGH_MEMORY;
-    case EPERM:
-      return REPROC_PERMISSION_DENIED;
-    default:
-      return REPROC_UNKNOWN_ERROR;
-  }
-}
-
 REPROC_ERROR reproc_start(reproc_t *process,
                           int argc,
                           const char *const *argv,
@@ -115,9 +85,6 @@ REPROC_ERROR reproc_start(reproc_t *process,
 
   // Fork a child process and call `execve`.
   error = process_create(exec_process, argv, &options, &process->id);
-  if (error == REPROC_UNKNOWN_ERROR) {
-    error = exec_map_error(errno);
-  }
 
 cleanup:
   // Either an error has ocurred or the child pipe endpoints have been copied to
@@ -157,7 +124,7 @@ REPROC_ERROR reproc_read(reproc_t *process,
   }
 
   assert(0);
-  return REPROC_UNKNOWN_ERROR;
+  return REPROC_ERROR_SYSTEM;
 }
 
 REPROC_ERROR reproc_write(reproc_t *process,

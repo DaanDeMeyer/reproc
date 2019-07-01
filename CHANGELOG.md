@@ -2,11 +2,42 @@
 
 ## 7.0.0
 
-- Renamed `reproc::errc` to `reproc::error`.
+## General
 
-  `error` is more descriptive than `errc` for users who aren't familiar with
-  C++11's `system_error` feature. We choose `error` instead of `errc` to avoid
-  these users having to figure out the exact meaning of an error condition.
+- Rework error handling.
+
+  Trying to abstract platform-specific errors in `REPROC_ERROR` and
+  `reproc::errc` turned out to be harder than expected. On POSIX it remains very
+  hard to figure out which errors actually have a chance of happening and
+  matching `reproc::errc` values to `std::errc` values is also ambiguous and
+  prone to errors. On Windows, there's hardly any documentation on which system
+  errors functions can return so 90% of the time we were just returning
+  `REPROC_UNKNOWN_ERROR`. Furthermore, many operating system errors will be
+  fatal for most users and we suspect they'll all be handled similarly (stopping
+  the application or retrying).
+
+  As a result, in this release we stop trying to abstract system errors in
+  reproc. All system errors in `REPROC_ERROR` were replaced by a single value
+  (`REPROC_ERROR_SYSTEM`). `reproc::errc` was renamed to `reproc::error` and
+  turned into an error code instead of an error condition and only contains the
+  reproc-specific errors.
+
+  reproc users can still retrieve the specific system error using
+  `reproc_system_error`.
+
+  reproc++ users can still match against specific system errors using the
+  `std::errc` error condition enum
+  (<https://en.cppreference.com/w/cpp/error/errc>) or print a string
+  presentation of the error using the `message` method of `std::error_code`.
+
+  All values from `REPROC_ERROR` are now prefixed with `REPROC_ERROR` instead of
+  `REPROC` which helps reduce clutter in code completion.
+
+- Azure Pipelines CI now includes Visual Studio 2019.
+
+- Various smaller improvements and fixes.
+
+## CMake
 
 - Introduce `REPROC_MULTITHREADED` to configure whether reproc should link
   against pthreads.
@@ -20,10 +51,6 @@
   the reproc repository.
 
   doctest is only downloaded if `REPROC_TEST` is enabled.
-
-- Azure Pipelines CI now includes Visual Studio 2019.
-
-- Various smaller improvements and fixes.
 
 ## 6.0.0
 

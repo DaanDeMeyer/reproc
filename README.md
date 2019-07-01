@@ -172,33 +172,23 @@ can be found in the examples subdirectory of [reproc](reproc/examples) and
 Most functions in reproc's API return `REPROC_ERROR`. The `REPROC_ERROR` enum
 represents all possible errors that can occur when calling reproc API functions.
 Not all errors apply to each function so the documentation of each function
-includes a section detailing which errors can occur. One error that can be
-returned by each function that returns `REPROC_ERROR` is `REPROC_UNKNOWN_ERROR`.
-`REPROC_UNKNOWN_ERROR` is necessary because the documentation of the underlying
-system calls reproc uses doesn't always detail what errors occur in which
-circumstances (Windows is especially bad here).
-
-To get more information when a reproc API function returns
-`REPROC_UNKNOWN_ERROR` reproc provides the `reproc_system_error` function that
-returns the actual system error. Use this function to retrieve the actual system
-error and file an issue with the system error and the reproc function that
-returned it. With this information an extra value can be added to `REPROC_ERROR`
-and you'll be able to check against this value instead of having to check
-against `REPROC_UNKNOWN_ERROR`.
+includes a section detailing which errors can occur. System errors are
+represented by `REPROC_ERROR_SYSTEM`. The `reproc_system_error` error can be
+used to retrieve the actual system error.
 
 reproc++'s API integrates with the C++ standard library error codes mechanism
 (`std::error_code` and `std::error_condition`). All functions in reproc++'s API
 return `std::error_code` values that contain the actual system error that
-occurred. This means the `reproc_system_error` function is not necessary in
-reproc++ since the returned error codes store the actual system error instead of
-the enum value in `REPROC_ERROR`. You can still test against these error codes
-using the `reproc::error` error enum:
+occurred. This means `reproc_system_error` is not necessary in reproc++ since
+the returned error codes store the actual system error instead of the value of
+`REPROC_ERROR_SYSTEM`. You can test against these error codes using the
+`std::errc` error condition enum:
 
 ```c++
 reproc::process;
 std::error_code ec = process.start(...);
 
-if (ec == reproc::error::file_not_found) {
+if (ec == std::errc::no_such_file_or_directory) {
   std::cerr << "Executable not found. Make sure it is available from the PATH.";
   return 1;
 }
@@ -213,7 +203,7 @@ if (ec) {
 }
 ```
 
-If needed, you can also convert `std::error_code` values to exceptions using
+If needed, you can also convert `std::error_code`'s to exceptions using
 `std::system_error`:
 
 ```c++
@@ -273,8 +263,8 @@ to work with reproc from multiple threads.
 - (POSIX) Writing to a closed stdin pipe of a child process will crash the
   parent process with the `SIGPIPE` signal. To avoid this the `SIGPIPE` signal
   has to be ignored in the parent process. If the `SIGPIPE` signal is ignored
-  `reproc_write` will return `REPROC_STREAM_CLOSED` as expected when writing to
-  a closed stdin pipe.
+  `reproc_write` will return `REPROC_ERROR_STREAM_CLOSED` as expected when
+  writing to a closed stdin pipe.
 
 - (POSIX) Ignoring the `SIGCHLD` signal by setting its disposition to `SIG_IGN`
   changes the behavior of the `waitpid` system call which will cause

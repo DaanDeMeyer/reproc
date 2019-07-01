@@ -36,15 +36,10 @@ int main(void)
   `NULL` the working directory of the parent process is used. */
   error = reproc_start(&git_status, argc, argv, NULL);
 
-  /* reproc exposes a single error enum `REPROC_ERROR` which contains values for
-  all system errors that reproc checks for explicitly. If an unknown error
-  occurs reproc's functions will return `REPROC_UNKNOWN_ERROR`. You can get the
-  actual system error using the `reproc_system_error` function. */
-  if (error == REPROC_FILE_NOT_FOUND) {
-    fprintf(stderr, "%s\n",
-            "git not found. Make sure it's available from the PATH.");
-    return 1;
-  }
+  /* reproc exposes a single error enum `REPROC_ERROR` which contains errors
+  specific to reproc and `REPROC_ERROR_SYSTEM` to indicate a system error
+  occurred. You can get the actual system error using the `reproc_system_error`
+  function. */
 
   // Shorthand for `if (error != REPROC_SUCCESS)`.
   if (error) {
@@ -97,7 +92,7 @@ int main(void)
 
   // Check that the while loop stopped because the output stream of the child
   // process was closed and not because of any other error.
-  if (error != REPROC_STREAM_CLOSED) {
+  if (error != REPROC_ERROR_STREAM_CLOSED) {
     goto cleanup;
   }
 

@@ -17,7 +17,7 @@ static REPROC_ERROR pipe_disable_inherit(HANDLE pipe)
   assert(pipe);
 
   if (!SetHandleInformation(pipe, HANDLE_FLAG_INHERIT, 0)) {
-    return REPROC_UNKNOWN_ERROR;
+    return REPROC_ERROR_SYSTEM;
   }
 
   return REPROC_SUCCESS;
@@ -30,7 +30,7 @@ pipe_init(HANDLE *read, bool inherit_read, HANDLE *write, bool inherit_write)
   assert(write);
 
   if (!CreatePipe(read, write, &security_attributes, 0)) {
-    return REPROC_UNKNOWN_ERROR;
+    return REPROC_ERROR_SYSTEM;
   }
 
   REPROC_ERROR error = REPROC_SUCCESS;
@@ -70,12 +70,10 @@ REPROC_ERROR pipe_read(HANDLE pipe,
   // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
   if (!ReadFile(pipe, buffer, size, (LPDWORD) bytes_read, NULL)) {
     switch (GetLastError()) {
-      case ERROR_OPERATION_ABORTED:
-        return REPROC_INTERRUPTED;
       case ERROR_BROKEN_PIPE:
-        return REPROC_STREAM_CLOSED;
+        return REPROC_ERROR_STREAM_CLOSED;
       default:
-        return REPROC_UNKNOWN_ERROR;
+        return REPROC_ERROR_SYSTEM;
     }
   }
 
@@ -94,17 +92,15 @@ REPROC_ERROR pipe_write(HANDLE pipe,
   // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
   if (!WriteFile(pipe, buffer, to_write, (LPDWORD) bytes_written, NULL)) {
     switch (GetLastError()) {
-      case ERROR_OPERATION_ABORTED:
-        return REPROC_INTERRUPTED;
       case ERROR_BROKEN_PIPE:
-        return REPROC_STREAM_CLOSED;
+        return REPROC_ERROR_STREAM_CLOSED;
       default:
-        return REPROC_UNKNOWN_ERROR;
+        return REPROC_ERROR_SYSTEM;
     }
   }
 
   if (*bytes_written != to_write) {
-    return REPROC_PARTIAL_WRITE;
+    return REPROC_ERROR_PARTIAL_WRITE;
   }
 
   return REPROC_SUCCESS;

@@ -19,7 +19,7 @@ REPROC_ERROR reproc_stop(reproc_t *process,
   // We don't set `error` to `REPROC_SUCCESS` so we can check if `reproc_wait`,
   // `reproc_terminate` or `reproc_kill` succeed (in which case `error` is set
   // to `REPROC_SUCCESS`).
-  REPROC_ERROR error = REPROC_WAIT_TIMEOUT;
+  REPROC_ERROR error = REPROC_ERROR_WAIT_TIMEOUT;
 
   for (int i = 0; i < 3; i++) {
     REPROC_CLEANUP operation = operations[i];
@@ -40,12 +40,12 @@ REPROC_ERROR reproc_stop(reproc_t *process,
     }
 
     // Stop if `reproc_terminate` or `reproc_kill` return an error.
-    if (error != REPROC_SUCCESS && error != REPROC_WAIT_TIMEOUT) {
+    if (error != REPROC_SUCCESS && error != REPROC_ERROR_WAIT_TIMEOUT) {
       break;
     }
 
     error = reproc_wait(process, timeout);
-    if (error != REPROC_WAIT_TIMEOUT) {
+    if (error != REPROC_ERROR_WAIT_TIMEOUT) {
       break;
     }
   }
@@ -117,7 +117,7 @@ reproc_drain(reproc_t *process,
   }
 
   // The child process closing the stream is not treated as an error.
-  if (error == REPROC_STREAM_CLOSED) {
+  if (error == REPROC_ERROR_STREAM_CLOSED) {
     return REPROC_SUCCESS;
   }
 

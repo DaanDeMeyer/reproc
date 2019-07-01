@@ -14,10 +14,6 @@ pipe_init(HANDLE *read, bool inherit_read, HANDLE *write, bool inherit_write);
 
 // Reads up to `size` bytes from the pipe indicated by `handle` and stores them
 // them in `buffer`. The amount of bytes read is stored in `bytes_read`.
-//
-// Possible errors:
-// - `REPROC_STREAM_CLOSED`
-// - `REPROC_INTERRUPTED`
 REPROC_ERROR pipe_read(HANDLE pipe,
                        void *buffer,
                        unsigned int size,
@@ -30,11 +26,6 @@ REPROC_ERROR pipe_read(HANDLE pipe,
 // requested amount of bytes have been written to the pipe so this function
 // should only rarely succeed without writing the full amount of bytes
 // requested.
-//
-// Possible errors:
-// - `REPROC_STREAM_CLOSED`
-// - `REPROC_INTERRUPTED`
-// - `REPROC_PARTIAL_WRITE`
 REPROC_ERROR pipe_write(HANDLE pipe,
                         const void *buffer,
                         unsigned int to_write,

@@ -20,7 +20,7 @@ TEST_SUITE("reproc")
     REQUIRE(!error);
 
     error = reproc_wait(&infinite, 50);
-    REQUIRE(error == REPROC_WAIT_TIMEOUT);
+    REQUIRE(error == REPROC_ERROR_WAIT_TIMEOUT);
 
     SUBCASE("terminate")
     {

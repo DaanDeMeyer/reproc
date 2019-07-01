@@ -28,7 +28,7 @@ string_join(const char *const *string_array, int array_length, char **result)
 
   char *string = malloc(sizeof(char) * string_length);
   if (string == NULL) {
-    return REPROC_NOT_ENOUGH_MEMORY;
+    return REPROC_ERROR_SYSTEM;
   }
 
   char *current = string; // Keeps track of where we are in the result.
@@ -63,17 +63,12 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
                                            string, -1, NULL, 0);
 
   if (wstring_length == 0) {
-    switch (GetLastError()) {
-      case ERROR_NO_UNICODE_TRANSLATION:
-        return REPROC_INVALID_UNICODE;
-      default:
-        return REPROC_UNKNOWN_ERROR;
-    }
+    return REPROC_ERROR_SYSTEM;
   }
 
   wchar_t *wstring = malloc(sizeof(wchar_t) * wstring_length);
   if (!wstring) {
-    return REPROC_NOT_ENOUGH_MEMORY;
+    return REPROC_ERROR_SYSTEM;
   }
 
   // Now we pass our allocated string and its length as the last two arguments
@@ -83,12 +78,7 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
                                     wstring_length);
   if (written == 0) {
     free(wstring);
-    switch (GetLastError()) {
-      case ERROR_NO_UNICODE_TRANSLATION:
-        return REPROC_INVALID_UNICODE;
-      default:
-        return REPROC_UNKNOWN_ERROR;
-    }
+    return REPROC_ERROR_SYSTEM;
   }
 
   *result = wstring;

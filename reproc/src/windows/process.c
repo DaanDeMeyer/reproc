@@ -19,18 +19,18 @@ static handle_inherit_list_create(HANDLE *handles,
   SIZE_T attribute_list_size = 0;
   if (!InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size) &&
       GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-    return REPROC_UNKNOWN_ERROR;
+    return REPROC_ERROR_SYSTEM;
   }
 
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = malloc(attribute_list_size);
   if (!attribute_list) {
-    return REPROC_NOT_ENOUGH_MEMORY;
+    return REPROC_ERROR_SYSTEM;
   }
 
   if (!InitializeProcThreadAttributeList(attribute_list, 1, 0,
                                          &attribute_list_size)) {
     free(attribute_list);
-    return REPROC_UNKNOWN_ERROR;
+    return REPROC_ERROR_SYSTEM;
   }
 
   // Add the handles to be inherited to `attribute_list`.
@@ -38,7 +38,7 @@ static handle_inherit_list_create(HANDLE *handles,
                                  PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,
                                  amount * sizeof(HANDLE), NULL, NULL)) {
     DeleteProcThreadAttributeList(attribute_list);
-    return REPROC_UNKNOWN_ERROR;
+    return REPROC_ERROR_SYSTEM;
   }
 
   *result = attribute_list;
@@ -136,12 +136,7 @@ REPROC_ERROR process_create(wchar_t *command_line,
   handle_close(&info.hThread);
 
   if (!result) {
-    switch (GetLastError()) {
-    case ERROR_FILE_NOT_FOUND:
-      return REPROC_FILE_NOT_FOUND;
-    default:
-      return REPROC_UNKNOWN_ERROR;
-    }
+    return REPROC_ERROR_SYSTEM;
   }
 
   *pid = info.dwProcessId;
@@ -158,14 +153,14 @@ process_wait(HANDLE process, unsigned int timeout, unsigned int *exit_status)
 
   DWORD wait_result = WaitForSingleObject(process, timeout);
   if (wait_result == WAIT_TIMEOUT) {
-    return REPROC_WAIT_TIMEOUT;
+    return REPROC_ERROR_WAIT_TIMEOUT;
   } else if (wait_result == WAIT_FAILED) {
-    return REPROC_UNKNOWN_ERROR;
+    return REPROC_ERROR_SYSTEM;
   }
 
   // `DWORD` is a typedef to `unsigned int` on Windows so the cast is safe.
   if (!GetExitCodeProcess(process, (LPDWORD) exit_status)) {
-    return REPROC_UNKNOWN_ERROR;
+    return REPROC_ERROR_SYSTEM;
   }
 
   return REPROC_SUCCESS;
@@ -177,7 +172,7 @@ REPROC_ERROR process_terminate(unsigned long pid)
   // `GenerateConsoleCtrlEvent` on a single child process it has to be put in
   // its own process group (which we did when starting the child process).
   if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pid)) {
-    return REPROC_UNKNOWN_ERROR;
+    return REPROC_ERROR_SYSTEM;
   }
 
   return REPROC_SUCCESS;
@@ -190,7 +185,7 @@ REPROC_ERROR process_kill(HANDLE process)
   // We use 137 as the exit status because it is the same exit status as a
   // process that is stopped with the `SIGKILL` signal on POSIX systems.
   if (!TerminateProcess(process, 137)) {
-    return REPROC_UNKNOWN_ERROR;
+    return REPROC_ERROR_SYSTEM;
   }
 
   return REPROC_SUCCESS;
