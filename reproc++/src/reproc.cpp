@@ -30,11 +30,11 @@ namespace reproc {
 const milliseconds infinite = milliseconds(0xFFFFFFFF);
 
 process::process(cleanup c1,
-                 reproc::milliseconds t1,
+                 milliseconds t1,
                  cleanup c2,
-                 reproc::milliseconds t2,
+                 milliseconds t2,
                  cleanup c3,
-                 reproc::milliseconds t3)
+                 milliseconds t3)
     : process_(new reproc_t()),
       c1_(c1),
       t1_(t1),
@@ -42,8 +42,7 @@ process::process(cleanup c1,
       t2_(t2),
       c3_(c3),
       t3_(t3)
-{
-}
+{}
 
 process::~process() noexcept
 {
@@ -69,7 +68,7 @@ std::error_code process::start(int argc,
   return error_to_error_code(error);
 }
 
-std::error_code process::read(reproc::stream stream,
+std::error_code process::read(stream stream,
                               void *buffer,
                               unsigned int size,
                               unsigned int *bytes_read) noexcept
@@ -89,7 +88,7 @@ std::error_code process::write(const void *buffer,
   return error_to_error_code(error);
 }
 
-void process::close(reproc::stream stream) noexcept
+void process::close(stream stream) noexcept
 {
   return reproc_close(process_.get(), static_cast<REPROC_STREAM>(stream));
 }
@@ -99,7 +98,7 @@ bool process::running() noexcept
   return reproc_running(process_.get());
 }
 
-std::error_code process::wait(reproc::milliseconds timeout) noexcept
+std::error_code process::wait(milliseconds timeout) noexcept
 {
   REPROC_ERROR error = reproc_wait(process_.get(), timeout.count());
   return error_to_error_code(error);
@@ -118,11 +117,11 @@ std::error_code process::kill() noexcept
 }
 
 std::error_code process::stop(cleanup c1,
-                              reproc::milliseconds t1,
+                              milliseconds t1,
                               cleanup c2,
-                              reproc::milliseconds t2,
+                              milliseconds t2,
                               cleanup c3,
-                              reproc::milliseconds t3) noexcept
+                              milliseconds t3) noexcept
 {
   REPROC_ERROR error = reproc_stop(process_.get(),
                                    static_cast<REPROC_CLEANUP>(c1), t1.count(),

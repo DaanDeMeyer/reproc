@@ -11,26 +11,26 @@
 // header.
 struct reproc_t;
 
-/*! The `reproc` namespace wraps all reproc++ declarations. reproc::process
-wraps reproc's API inside a C++ class. `reproc::error` improves on
-`REPROC_ERROR` by integrating with C++'s `std::error_code` error handling
-mechanism. To avoid exposing reproc's API when using reproc++ all the other
-enums and constants of reproc have a replacement in reproc++ as well. */
+/*! The `reproc` namespace wraps all reproc++ declarations. `process` wraps
+reproc's API inside a C++ class. `error` improves on `REPROC_ERROR` by
+integrating with C++'s `std::error_code` error handling mechanism. To avoid
+exposing reproc's API when using reproc++ all the other enums and constants of
+reproc have a replacement in reproc++ as well. */
 namespace reproc {
 
 /*! See `REPROC_STREAM` */
 enum class stream {
-  /*! `REPROC_IN` */
+  /*! `REPROC_STREAM_IN` */
   in = 0,
-  /*! `REPROC_OUT` */
+  /*! `REPROC_STREAM_OUT` */
   out = 1,
-  /*! `REPROC_ERR` */
+  /*! `REPROC_STREAM_ERR` */
   err = 2
 };
 
 using milliseconds = std::chrono::duration<unsigned int, std::milli>;
 /*! See `REPROC_INFINITE` */
-REPROCXX_EXPORT extern const reproc::milliseconds infinite;
+REPROCXX_EXPORT extern const milliseconds infinite;
 
 /*! See `process::stop` */
 enum class cleanup {
@@ -111,7 +111,7 @@ public:
                         const std::string *working_directory = nullptr);
 
   /*! `reproc_read` */
-  REPROCXX_EXPORT std::error_code read(reproc::stream stream,
+  REPROCXX_EXPORT std::error_code read(stream stream,
                                        void *buffer,
                                        unsigned int size,
                                        unsigned int *bytes_read) noexcept;
@@ -130,7 +130,7 @@ public:
   ```
   */
   template <typename Parser>
-  std::error_code parse(reproc::stream stream, Parser &&parser);
+  std::error_code parse(stream stream, Parser &&parser);
 
   /*!
   Calls `read` on `stream` until it is closed, `sink` returns false or an error
@@ -148,7 +148,7 @@ public:
   For examples of sinks, see `sink.hpp`
   */
   template <typename Sink>
-  std::error_code drain(reproc::stream stream, Sink &&sink);
+  std::error_code drain(stream stream, Sink &&sink);
 
   /*! `reproc_write` */
   REPROCXX_EXPORT std::error_code write(const void *buffer,
@@ -156,13 +156,13 @@ public:
                                         unsigned int *bytes_written) noexcept;
 
   /*! `reproc_close` */
-  REPROCXX_EXPORT void close(reproc::stream stream) noexcept;
+  REPROCXX_EXPORT void close(stream stream) noexcept;
 
   /*! `reproc_running` */
   REPROCXX_EXPORT bool running() noexcept;
 
   /*! `reproc_wait` */
-  REPROCXX_EXPORT std::error_code wait(reproc::milliseconds timeout) noexcept;
+  REPROCXX_EXPORT std::error_code wait(milliseconds timeout) noexcept;
 
   /*! `reproc_terminate` */
   REPROCXX_EXPORT std::error_code terminate() noexcept;
@@ -186,11 +186,11 @@ private:
   std::unique_ptr<reproc_t> process_;
 
   cleanup c1_;
-  reproc::milliseconds t1_;
+  milliseconds t1_;
   cleanup c2_;
-  reproc::milliseconds t2_;
+  milliseconds t2_;
   cleanup c3_;
-  reproc::milliseconds t3_;
+  milliseconds t3_;
 
   static constexpr unsigned int BUFFER_SIZE = 1024;
 };
@@ -228,7 +228,7 @@ std::error_code process::start(const SequenceContainer &args,
 }
 
 template <typename Parser>
-std::error_code process::parse(reproc::stream stream, Parser &&parser)
+std::error_code process::parse(stream stream, Parser &&parser)
 {
   // A single call to `read` might contain multiple messages. By always calling
   // `parser` once with no data before reading, we give it the chance to process
@@ -257,7 +257,7 @@ std::error_code process::parse(reproc::stream stream, Parser &&parser)
 }
 
 template <typename Sink>
-std::error_code process::drain(reproc::stream stream, Sink &&sink)
+std::error_code process::drain(stream stream, Sink &&sink)
 {
   char buffer[BUFFER_SIZE]; // NOLINT
   std::error_code ec;
@@ -276,7 +276,7 @@ std::error_code process::drain(reproc::stream stream, Sink &&sink)
   }
 
   // The child process closing the stream is not treated as an error.
-  if (ec == reproc::error::stream_closed) {
+  if (ec == error::stream_closed) {
     return {};
   }
 
