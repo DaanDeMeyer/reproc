@@ -38,11 +38,11 @@ typedef struct reproc_t reproc_t;
 /*! Stream identifiers used to indicate which stream to act on. */
 typedef enum {
   /*! stdin */
-  REPROC_IN = 0,
+  REPROC_STREAM_IN = 0,
   /*! stdout */
-  REPROC_OUT = 1,
+  REPROC_STREAM_OUT = 1,
   /*! stderr */
-  REPROC_ERR = 2
+  REPROC_STREAM_ERR = 2
 } REPROC_STREAM;
 
 /*! Tells a function that takes a timeout value to wait indefinitely. */
@@ -100,8 +100,8 @@ REPROC_EXPORT REPROC_ERROR reproc_start(reproc_t *process,
 
 /*!
 Reads up to `size` bytes from the child process stream indicated by `stream`
-(cannot be `REPROC_IN`) and stores them them in `buffer`. The amount of bytes
-read is stored in `bytes_read`.
+(cannot be `REPROC_STREAM_IN`) and stores them them in `buffer`. The amount of
+bytes read is stored in `bytes_read`.
 
 Possible errors:
 - `REPROC_ERROR_STREAM_CLOSED`
@@ -122,7 +122,8 @@ std::string output{};
 
 while (true) {
   unsigned int bytes_read = 0;
-  error = reproc_read(process, REPROC_OUT, buffer, BUFFER_SIZE, &bytes_read);
+  error = reproc_read(process, REPROC_STREAM_OUT, buffer, BUFFER_SIZE,
+                      &bytes_read);
   if (error) { break; }
 
   output.append(buffer, bytes_read);
@@ -140,8 +141,9 @@ when reading:
 
 ```c++
 unsigned int bytes_read = 0;
-error = reproc_read(process, REPROC_OUT, buffer, BUFFER_SIZE - 1, &bytes_read);
-//                                               ^^^^^^^^^^^^^^^
+error = reproc_read(process, REPROC_STREAM_OUT, buffer, BUFFER_SIZE - 1,
+//                                                      ^^^^^^^^^^^^^^^
+                    &bytes_read);
 if (error) { return error; }
 
 buffer[bytes_read] = '\0'; // Add null terminator

@@ -62,7 +62,7 @@ int main(void)
     return fail(error);
   }
 
-  reproc_close(&git_help, REPROC_IN);
+  reproc_close(&git_help, REPROC_STREAM_IN);
 
   size_t output_length = 0;
   char *output = malloc(1);
@@ -78,7 +78,7 @@ int main(void)
   // `reproc_drain`.
   string_sink_context context = { .buffer = &output, .length = &output_length };
 
-  error = reproc_drain(&git_help, REPROC_OUT, string_sink, &context);
+  error = reproc_drain(&git_help, REPROC_STREAM_OUT, string_sink, &context);
   if (error) {
     goto cleanup;
   }

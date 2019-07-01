@@ -49,7 +49,7 @@ int main(void)
   /* Close the stdin stream since we're not going to write any input to git.
   While the example works perfectly without closing stdin we do it here to
   show how `reproc_close` works. */
-  reproc_close(&git_status, REPROC_IN);
+  reproc_close(&git_status, REPROC_STREAM_IN);
 
   // Start with an empty string (only space for the null terminator is
   // allocated).
@@ -68,7 +68,7 @@ int main(void)
   closing its output stream is also reported as an error). */
   while (true) {
     unsigned int bytes_read = 0;
-    error = reproc_read(&git_status, REPROC_OUT, buffer, BUFFER_SIZE,
+    error = reproc_read(&git_status, REPROC_STREAM_OUT, buffer, BUFFER_SIZE,
                         &bytes_read);
     if (error) {
       break;

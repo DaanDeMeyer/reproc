@@ -22,7 +22,7 @@ TEST_SUITE("reproc")
     static constexpr unsigned int ARGV_SIZE = 2;
     std::array<const char *, ARGV_SIZE> argv = { nullptr, nullptr };
 
-    REPROC_STREAM stream = REPROC_IN;
+    REPROC_STREAM stream = REPROC_STREAM_IN;
 
     SUBCASE("stdout")
     {
@@ -31,7 +31,7 @@ TEST_SUITE("reproc")
 
       argv[0] = "reproc/resources/stdout";
 
-      stream = REPROC_OUT;
+      stream = REPROC_STREAM_OUT;
     }
 
     SUBCASE("stderr")
@@ -41,7 +41,7 @@ TEST_SUITE("reproc")
 
       argv[0] = "reproc/resources/stderr";
 
-      stream = REPROC_ERR;
+      stream = REPROC_STREAM_ERR;
     }
 
     error = reproc_start(&io, ARGV_SIZE - 1, argv.data(), nullptr);
@@ -51,7 +51,7 @@ TEST_SUITE("reproc")
     error = reproc_write(&io, message.data(), message_length, &bytes_written);
     REQUIRE(!error);
 
-    reproc_close(&io, REPROC_IN);
+    reproc_close(&io, REPROC_STREAM_IN);
 
     std::string output{};
 
