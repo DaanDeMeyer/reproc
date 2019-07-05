@@ -19,7 +19,7 @@ typedef struct {
   size_t *length;
 } string_sink_context;
 
-bool string_sink(void *context, const char *buffer, unsigned int size)
+bool string_sink(const char *buffer, unsigned int size, void *context)
 {
   // `context` is required to be of type `string_sink_context` when passing
   // `string_sink` to `reproc_drain` so we cast `context` to the correct type.

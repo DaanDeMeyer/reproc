@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.0.0
+
+- Change `reproc_parse` and `reproc_drain` argument order.
+
+  `context` is now the last argument instead of the first.
+
 ## 7.0.0
 
 ## General

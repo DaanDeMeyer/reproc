@@ -57,9 +57,9 @@ REPROC_ERROR reproc_stop(reproc_t *process,
 
 REPROC_ERROR reproc_parse(reproc_t *process,
                           REPROC_STREAM stream,
-                          bool (*parser)(void *context,
-                                         const char *buffer,
-                                         unsigned int size),
+                          bool (*parser)(const char *buffer,
+                                         unsigned int size,
+                                         void *context),
                           void *context)
 {
   assert(process);
@@ -68,7 +68,7 @@ REPROC_ERROR reproc_parse(reproc_t *process,
   // A single call to `read` might contain multiple messages. By always calling
   // `parser` once with no data before reading, we give it the chance to process
   // all previous output one by one before reading from the child process again.
-  if (!parser(context, "", 0)) {
+  if (!parser("", 0, context)) {
     return REPROC_SUCCESS;
   }
 
@@ -83,7 +83,7 @@ REPROC_ERROR reproc_parse(reproc_t *process,
     }
 
     // `parser` returns false to tell us to stop reading.
-    if (!parser(context, buffer, bytes_read)) {
+    if (!parser(buffer, bytes_read, context)) {
       break;
     }
   }
@@ -94,7 +94,7 @@ REPROC_ERROR reproc_parse(reproc_t *process,
 REPROC_ERROR
 reproc_drain(reproc_t *process,
              REPROC_STREAM stream,
-             bool (*sink)(void *context, const char *buffer, unsigned int size),
+             bool (*sink)(const char *buffer, unsigned int size, void *context),
              void *context)
 {
   assert(process);
@@ -111,7 +111,7 @@ reproc_drain(reproc_t *process,
     }
 
     // `sink` return false to tell us to stop reading.
-    if (!sink(context, buffer, bytes_read)) {
+    if (!sink(buffer, bytes_read, context)) {
       break;
     }
   }

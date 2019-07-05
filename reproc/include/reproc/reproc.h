@@ -169,9 +169,9 @@ Possible errors:
 */
 REPROC_EXPORT REPROC_ERROR reproc_parse(reproc_t *process,
                                         REPROC_STREAM stream,
-                                        bool (*parser)(void *context,
-                                                       const char *buffer,
-                                                       unsigned int size),
+                                        bool (*parser)(const char *buffer,
+                                                       unsigned int size,
+                                                       void *context),
                                         void *context);
 
 /*!
@@ -186,9 +186,9 @@ Possible errors:
 */
 REPROC_EXPORT REPROC_ERROR reproc_drain(reproc_t *process,
                                         REPROC_STREAM stream,
-                                        bool (*sink)(void *context,
-                                                     const char *buffer,
-                                                     unsigned int size),
+                                        bool (*sink)(const char *buffer,
+                                                     unsigned int size,
+                                                     void *context),
                                         void *context);
 
 /*!
