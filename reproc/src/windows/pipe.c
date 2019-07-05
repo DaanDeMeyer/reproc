@@ -59,7 +59,7 @@ cleanup:
 }
 
 REPROC_ERROR pipe_read(HANDLE pipe,
-                       void *buffer,
+                       uint8_t *buffer,
                        unsigned int size,
                        unsigned int *bytes_read)
 {
@@ -81,8 +81,8 @@ REPROC_ERROR pipe_read(HANDLE pipe,
 }
 
 REPROC_ERROR pipe_write(HANDLE pipe,
-                        const void *buffer,
-                        unsigned int to_write,
+                        const uint8_t *buffer,
+                        unsigned int size,
                         unsigned int *bytes_written)
 {
   assert(pipe);
@@ -90,7 +90,7 @@ REPROC_ERROR pipe_write(HANDLE pipe,
   assert(bytes_written);
 
   // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
-  if (!WriteFile(pipe, buffer, to_write, (LPDWORD) bytes_written, NULL)) {
+  if (!WriteFile(pipe, buffer, size, (LPDWORD) bytes_written, NULL)) {
     switch (GetLastError()) {
       case ERROR_BROKEN_PIPE:
         return REPROC_ERROR_STREAM_CLOSED;
@@ -99,7 +99,7 @@ REPROC_ERROR pipe_write(HANDLE pipe,
     }
   }
 
-  if (*bytes_written != to_write) {
+  if (*bytes_written != size) {
     return REPROC_ERROR_PARTIAL_WRITE;
   }
 

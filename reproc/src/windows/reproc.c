@@ -110,7 +110,7 @@ cleanup:
 
 REPROC_ERROR reproc_read(reproc_t *process,
                          REPROC_STREAM stream,
-                         void *buffer,
+                         uint8_t *buffer,
                          unsigned int size,
                          unsigned int *bytes_read)
 {
@@ -133,8 +133,8 @@ REPROC_ERROR reproc_read(reproc_t *process,
 }
 
 REPROC_ERROR reproc_write(reproc_t *process,
-                          const void *buffer,
-                          unsigned int to_write,
+                          const uint8_t *buffer,
+                          unsigned int size,
                           unsigned int *bytes_written)
 {
   assert(process);
@@ -142,7 +142,7 @@ REPROC_ERROR reproc_write(reproc_t *process,
   assert(buffer);
   assert(bytes_written);
 
-  return pipe_write(process->in, buffer, to_write, bytes_written);
+  return pipe_write(process->in, buffer, size, bytes_written);
 }
 
 void reproc_close(reproc_t *process, REPROC_STREAM stream)

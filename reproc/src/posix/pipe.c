@@ -33,7 +33,10 @@ REPROC_ERROR pipe_init(int *read, int *write)
 }
 
 REPROC_ERROR
-pipe_read(int pipe, void *buffer, unsigned int size, unsigned int *bytes_read)
+pipe_read(int pipe,
+          uint8_t *buffer,
+          unsigned int size,
+          unsigned int *bytes_read)
 {
   assert(buffer);
   assert(bytes_read);
@@ -57,8 +60,8 @@ pipe_read(int pipe, void *buffer, unsigned int size, unsigned int *bytes_read)
 }
 
 REPROC_ERROR pipe_write(int pipe,
-                        const void *buffer,
-                        unsigned int to_write,
+                        const uint8_t *buffer,
+                        unsigned int size,
                         unsigned int *bytes_written)
 {
   assert(buffer);
@@ -66,7 +69,7 @@ REPROC_ERROR pipe_write(int pipe,
 
   *bytes_written = 0;
 
-  ssize_t error = write(pipe, buffer, to_write);
+  ssize_t error = write(pipe, buffer, size);
   if (error == -1) {
     switch (errno) {
       // `write` sets `errno` to `EPIPE` to indicate the other end of the pipe
@@ -79,11 +82,11 @@ REPROC_ERROR pipe_write(int pipe,
   }
 
   // If `error` is not -1 it represents the amount of bytes written.
-  // The cast is safe since it's impossible to write more bytes than `to_write`
+  // The cast is safe since it's impossible to write more bytes than `size`
   // which is an unsigned int.
   *bytes_written = (unsigned int) error;
 
-  if (*bytes_written != to_write) {
+  if (*bytes_written != size) {
     return REPROC_ERROR_PARTIAL_WRITE;
   }
 

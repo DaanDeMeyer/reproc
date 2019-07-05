@@ -69,7 +69,7 @@ std::error_code process::start(int argc,
 }
 
 std::error_code process::read(stream stream,
-                              void *buffer,
+                              uint8_t *buffer,
                               unsigned int size,
                               unsigned int *bytes_read) noexcept
 {
@@ -79,11 +79,11 @@ std::error_code process::read(stream stream,
   return error_to_error_code(error);
 }
 
-std::error_code process::write(const void *buffer,
-                               unsigned int to_write,
+std::error_code process::write(const uint8_t *buffer,
+                               unsigned int size,
                                unsigned int *bytes_written) noexcept
 {
-  REPROC_ERROR error = reproc_write(process_.get(), buffer, to_write,
+  REPROC_ERROR error = reproc_write(process_.get(), buffer, size,
                                     bytes_written);
   return error_to_error_code(error);
 }

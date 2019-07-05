@@ -2,6 +2,8 @@
 
 #include <reproc/error.h>
 
+#include <stdint.h>
+
 // Creates a new anonymous pipe. `read` and `write` are set to the read and
 // write end of the pipe respectively.
 REPROC_ERROR pipe_init(int *read, int *write);
@@ -9,9 +11,12 @@ REPROC_ERROR pipe_init(int *read, int *write);
 // Reads up to `size` bytes from the pipe indicated by `pipe` and stores them
 // them in `buffer`. The amount of bytes read is stored in `bytes_read`.
 REPROC_ERROR
-pipe_read(int pipe, void *buffer, unsigned int size, unsigned int *bytes_read);
+pipe_read(int pipe,
+          uint8_t *buffer,
+          unsigned int size,
+          unsigned int *bytes_read);
 
-// Writes up to `to_write` bytes from `buffer` to the pipe indicated by `pipe`
+// Writes up to `size` bytes from `buffer` to the pipe indicated by `pipe`
 // and stores the amount of bytes written in `bytes_written`.
 //
 // For pipes, the `write` system call on POSIX platforms will block until the
@@ -23,6 +28,6 @@ pipe_read(int pipe, void *buffer, unsigned int size, unsigned int *bytes_read);
 // signal. `pipe_write` will only return `REPROC_ERROR_STREAM_CLOSED` if this
 // signal is ignored by the running process.
 REPROC_ERROR pipe_write(int pipe,
-                        const void *buffer,
-                        unsigned int to_write,
+                        const uint8_t *buffer,
+                        unsigned int size,
                         unsigned int *bytes_written);

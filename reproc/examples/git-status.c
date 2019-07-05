@@ -60,7 +60,7 @@ int main(void)
   }
   output[0] = '\0';
 
-  char buffer[BUFFER_SIZE];
+  uint8_t buffer[BUFFER_SIZE];
 
   /* Read the entire output of the child process. I've found this pattern to be
   the most readable when reading the entire output of a child process. The while

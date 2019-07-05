@@ -6,6 +6,13 @@
 
   `context` is now the last argument instead of the first.
 
+- Use `uint8_t *` as buffer type instead of `char *` or `void *`
+
+  `uint8_t *` more clearly indicates reproc is working with buffers of bytes
+  than `char *` and `void *`. We choose `uint8_t *` over `char *` to avoid
+  errors caused by passing data read by reproc directly to functions that expect
+  null-terminated strings (data read by reproc is not null-terminated).
+
 ## 7.0.0
 
 ## General

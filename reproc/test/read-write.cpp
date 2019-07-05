@@ -14,7 +14,7 @@ TEST_SUITE("reproc")
     CAPTURE(error);
 
     static constexpr unsigned int BUFFER_SIZE = 1024;
-    std::array<char, BUFFER_SIZE> buffer = {};
+    std::array<uint8_t, BUFFER_SIZE> buffer = {};
 
     std::string message;
     unsigned int message_length = 0;
@@ -48,7 +48,8 @@ TEST_SUITE("reproc")
     REQUIRE(!error);
 
     unsigned int bytes_written = 0;
-    error = reproc_write(&io, message.data(), message_length, &bytes_written);
+    error = reproc_write(&io, reinterpret_cast<const uint8_t *>(message.data()),
+                         message_length, &bytes_written);
     REQUIRE(!error);
 
     reproc_close(&io, REPROC_STREAM_IN);
@@ -62,7 +63,7 @@ TEST_SUITE("reproc")
         break;
       }
 
-      output.append(buffer.data(), bytes_read);
+      output.append(reinterpret_cast<const char *>(buffer.data()), bytes_read);
     }
 
     REQUIRE_EQ(output, message);

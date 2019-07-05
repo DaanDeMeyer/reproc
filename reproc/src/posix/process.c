@@ -266,8 +266,8 @@ process_create(int (*action)(const void *),
 
   // `pipe_read` blocks until an error is reported from the child process or the
   // write end of the error pipe in the child process is closed.
-  error = pipe_read(error_pipe_read, &child_error, sizeof(child_error),
-                    &bytes_read);
+  error = pipe_read(error_pipe_read, (uint8_t *) &child_error,
+                    sizeof(child_error), &bytes_read);
   fd_close(&error_pipe_read);
 
   switch (error) {

@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 REPROC_ERROR reproc_stop(reproc_t *process,
                          REPROC_CLEANUP c1,
@@ -57,7 +58,7 @@ REPROC_ERROR reproc_stop(reproc_t *process,
 
 REPROC_ERROR reproc_parse(reproc_t *process,
                           REPROC_STREAM stream,
-                          bool (*parser)(const char *buffer,
+                          bool (*parser)(const uint8_t *buffer,
                                          unsigned int size,
                                          void *context),
                           void *context)
@@ -68,11 +69,11 @@ REPROC_ERROR reproc_parse(reproc_t *process,
   // A single call to `read` might contain multiple messages. By always calling
   // `parser` once with no data before reading, we give it the chance to process
   // all previous output one by one before reading from the child process again.
-  if (!parser("", 0, context)) {
+  if (!parser(NULL, 0, context)) {
     return REPROC_SUCCESS;
   }
 
-  char buffer[BUFFER_SIZE];
+  uint8_t buffer[BUFFER_SIZE];
   REPROC_ERROR error = REPROC_SUCCESS;
 
   while (true) {
@@ -94,13 +95,15 @@ REPROC_ERROR reproc_parse(reproc_t *process,
 REPROC_ERROR
 reproc_drain(reproc_t *process,
              REPROC_STREAM stream,
-             bool (*sink)(const char *buffer, unsigned int size, void *context),
+             bool (*sink)(const uint8_t *buffer,
+                          unsigned int size,
+                          void *context),
              void *context)
 {
   assert(process);
   assert(sink);
 
-  char buffer[BUFFER_SIZE];
+  uint8_t buffer[BUFFER_SIZE];
   REPROC_ERROR error = REPROC_SUCCESS;
 
   while (true) {

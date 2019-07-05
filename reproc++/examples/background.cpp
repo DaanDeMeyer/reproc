@@ -18,10 +18,10 @@ public:
       : out_(out), mutex_(mutex)
   {}
 
-  bool operator()(const char *buffer, unsigned int size)
+  bool operator()(const uint8_t *buffer, unsigned int size)
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    out_.append(buffer, size);
+    out_.append(reinterpret_cast<const char *>(buffer), size);
     return true;
   }
 

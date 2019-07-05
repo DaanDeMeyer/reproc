@@ -4,6 +4,7 @@
 #include <reproc/export.h>
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -110,48 +111,33 @@ Possible errors:
 Assuming no other errors occur this function will return `REPROC_SUCCESS` until
 the stream is closed and all remaining data has been read. This allows the
 function to be used as follows to read all data from a child process' stdout
-stream (`std::string` is used for brevity):
+stream (C++ is used for brevity):
 
 ```c++
-#define BUFFER_SIZE 1024
+static constexpr size_t BUFFER_SIZE = 1024;
 
 ...
 
-char buffer[BUFFER_SIZE];
-std::string output{};
+std::array<uint8_t, BUFFER_SIZE> buffer = {};
+std::string output;
 
 while (true) {
   unsigned int bytes_read = 0;
-  error = reproc_read(process, REPROC_STREAM_OUT, buffer, BUFFER_SIZE,
+  error = reproc_read(process, REPROC_STREAM_OUT, buffer.data(), buffer.size(),
                       &bytes_read);
   if (error) { break; }
 
-  output.append(buffer, bytes_read);
+  output.append(reinterpret_cast<const char *>(buffer), bytes_read);
 }
 
 if (error != REPROC_ERROR_STREAM_CLOSED) { return error; }
 
 // Do something with the output
 ```
-
-Remember that this function reads bytes and not strings. To use `buffer` as a
-null terminated string, A null terminator has to be added after reading. This is
-easily accomplished as long as we make sure to leave space for a null terminator
-when reading:
-
-```c++
-unsigned int bytes_read = 0;
-error = reproc_read(process, REPROC_STREAM_OUT, buffer, BUFFER_SIZE - 1,
-//                                                      ^^^^^^^^^^^^^^^
-                    &bytes_read);
-if (error) { return error; }
-
-buffer[bytes_read] = '\0'; // Add null terminator
-```
 */
 REPROC_EXPORT REPROC_ERROR reproc_read(reproc_t *process,
                                        REPROC_STREAM stream,
-                                       void *buffer,
+                                       uint8_t *buffer,
                                        unsigned int size,
                                        unsigned int *bytes_read);
 
@@ -159,7 +145,7 @@ REPROC_EXPORT REPROC_ERROR reproc_read(reproc_t *process,
 Calls `reproc_read` on `stream` until `parser` returns false or an error occurs.
 `parser` receives the output after each read, along with `context`.
 
-`parser` is always called once with the empty string to give the parser the
+`parser` is always called once with an empty buffer to give the parser the
 chance to process all output from the previous call to `reproc_parse` one by
 one.
 
@@ -169,7 +155,7 @@ Possible errors:
 */
 REPROC_EXPORT REPROC_ERROR reproc_parse(reproc_t *process,
                                         REPROC_STREAM stream,
-                                        bool (*parser)(const char *buffer,
+                                        bool (*parser)(const uint8_t *buffer,
                                                        unsigned int size,
                                                        void *context),
                                         void *context);
@@ -186,14 +172,14 @@ Possible errors:
 */
 REPROC_EXPORT REPROC_ERROR reproc_drain(reproc_t *process,
                                         REPROC_STREAM stream,
-                                        bool (*sink)(const char *buffer,
+                                        bool (*sink)(const uint8_t *buffer,
                                                      unsigned int size,
                                                      void *context),
                                         void *context);
 
 /*!
-Writes up to `to_write` bytes from `buffer` to the standard input (stdin) of
-the child process and stores the amount of bytes written in `bytes_written`.
+Writes up to `size` bytes from `buffer` to the standard input (stdin) of the
+child process and stores the amount of bytes written in `bytes_written`.
 
 For pipes, the `write` system call on both Windows and POSIX platforms will
 block until the requested amount of bytes have been written to the pipe so this
@@ -210,8 +196,8 @@ Possible errors:
 - `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_write(reproc_t *process,
-                                        const void *buffer,
-                                        unsigned int to_write,
+                                        const uint8_t *buffer,
+                                        unsigned int size,
                                         unsigned int *bytes_written);
 
 /*!

@@ -3,6 +3,7 @@
 #include <reproc/error.h>
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <windows.h>
 
 // Creates a new anonymous pipe. `read` and `write` are set to the read and
@@ -15,11 +16,11 @@ pipe_init(HANDLE *read, bool inherit_read, HANDLE *write, bool inherit_write);
 // Reads up to `size` bytes from the pipe indicated by `handle` and stores them
 // them in `buffer`. The amount of bytes read is stored in `bytes_read`.
 REPROC_ERROR pipe_read(HANDLE pipe,
-                       void *buffer,
+                       uint8_t *buffer,
                        unsigned int size,
                        unsigned int *bytes_read);
 
-// Writes up to `to_write` bytes from `buffer` to the pipe indicated by `handle`
+// Writes up to `size` bytes from `buffer` to the pipe indicated by `handle`
 // and stores the amount of bytes written in `bytes_written`.
 //
 // For pipes, the `write` system call on Windows platforms will block until the
@@ -27,6 +28,6 @@ REPROC_ERROR pipe_read(HANDLE pipe,
 // should only rarely succeed without writing the full amount of bytes
 // requested.
 REPROC_ERROR pipe_write(HANDLE pipe,
-                        const void *buffer,
-                        unsigned int to_write,
+                        const uint8_t *buffer,
+                        unsigned int size,
                         unsigned int *bytes_written);

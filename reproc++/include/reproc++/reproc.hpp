@@ -4,6 +4,7 @@
 #include <reproc++/export.hpp>
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -70,13 +71,12 @@ public:
   The default arguments instruct the destructor to wait indefinitely for the
   child process to exit.
   */
-  REPROCXX_EXPORT explicit process(
-      cleanup c1 = cleanup::wait,
-      milliseconds t1 = infinite,
-      cleanup c2 = cleanup::noop,
-      milliseconds t2 = milliseconds(0),
-      cleanup c3 = cleanup::noop,
-      milliseconds t3 = milliseconds(0));
+  REPROCXX_EXPORT explicit process(cleanup c1 = cleanup::wait,
+                                   milliseconds t1 = infinite,
+                                   cleanup c2 = cleanup::noop,
+                                   milliseconds t2 = milliseconds(0),
+                                   cleanup c3 = cleanup::noop,
+                                   milliseconds t3 = milliseconds(0));
 
   /*! Calls `stop` with the arguments provided in the constructor if the child
   process is still running and frees all allocated resources. */
@@ -112,7 +112,7 @@ public:
 
   /*! `reproc_read` */
   REPROCXX_EXPORT std::error_code read(stream stream,
-                                       void *buffer,
+                                       uint8_t *buffer,
                                        unsigned int size,
                                        unsigned int *bytes_read) noexcept;
 
@@ -120,13 +120,13 @@ public:
   Calls `read` on `stream` until `parser` returns false or an error occurs.
   `parser` receives the output after each read.
 
-  `parser` is always called once with the empty string to give the parser the
+  `parser` is always called once with an empty buffer to give the parser the
   chance to process all output from the previous call to `parse` one by one.
 
   `Parser` expects the following signature:
 
   ```c++
-  bool parser(const char *buffer, unsigned int size);
+  bool parser(const uint8_t *buffer, unsigned int size);
   ```
   */
   template <typename Parser>
@@ -142,17 +142,16 @@ public:
   `Sink` expects the following signature:
 
   ```c++
-  bool sink(const char *buffer, unsigned int size);
+  bool sink(const uint8_t *buffer, unsigned int size);
   ```
 
   For examples of sinks, see `sink.hpp`
   */
-  template <typename Sink>
-  std::error_code drain(stream stream, Sink &&sink);
+  template <typename Sink> std::error_code drain(stream stream, Sink &&sink);
 
   /*! `reproc_write` */
-  REPROCXX_EXPORT std::error_code write(const void *buffer,
-                                        unsigned int to_write,
+  REPROCXX_EXPORT std::error_code write(const uint8_t *buffer,
+                                        unsigned int size,
                                         unsigned int *bytes_written) noexcept;
 
   /*! `reproc_close` */
@@ -237,7 +236,7 @@ std::error_code process::parse(stream stream, Parser &&parser)
     return {};
   }
 
-  char buffer[BUFFER_SIZE]; // NOLINT
+  uint8_t buffer[BUFFER_SIZE]; // NOLINT
   std::error_code ec;
 
   while (true) {
@@ -259,7 +258,7 @@ std::error_code process::parse(stream stream, Parser &&parser)
 template <typename Sink>
 std::error_code process::drain(stream stream, Sink &&sink)
 {
-  char buffer[BUFFER_SIZE]; // NOLINT
+  uint8_t buffer[BUFFER_SIZE]; // NOLINT
   std::error_code ec;
 
   while (true) {
