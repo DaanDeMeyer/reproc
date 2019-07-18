@@ -9,11 +9,7 @@ if(REPROC_SANITIZERS)
   target_compile_definitions(reproc PRIVATE ADDRESS_SANITIZERS)
 endif()
 
-target_sources(reproc PRIVATE
-  src/common/error.c
-  src/common/infinite.c
-  src/common/reproc.c
-)
+target_sources(reproc PRIVATE src/common.c)
 
 if(WIN32)
   target_sources(reproc PRIVATE

@@ -1,8 +1,28 @@
 #include <reproc/reproc.h>
 
 #include <assert.h>
-#include <stdbool.h>
 #include <stddef.h>
+
+// Same value as `INFINITE` on Windows.
+const unsigned int REPROC_INFINITE = 0xFFFFFFFF;
+
+const char *reproc_strerror(REPROC_ERROR error)
+{
+  switch (error) {
+    case REPROC_SUCCESS:
+      return "success";
+    case REPROC_ERROR_WAIT_TIMEOUT:
+      return "wait timeout";
+    case REPROC_ERROR_STREAM_CLOSED:
+      return "stream closed";
+    case REPROC_ERROR_PARTIAL_WRITE:
+      return "partial write";
+    case REPROC_ERROR_SYSTEM:
+      return "system error";
+  }
+
+  return "unknown error";
+}
 
 REPROC_ERROR reproc_stop(reproc_t *process,
                          REPROC_CLEANUP c1,
