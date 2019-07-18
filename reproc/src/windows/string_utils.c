@@ -34,8 +34,7 @@ string_join(const char *const *string_array, int array_length, char **result)
   char *current = string; // Keeps track of where we are in the result.
   for (int i = 0; i < array_length; i++) {
     size_t part_length = strlen(string_array[i]);
-    // NOLINTNEXTLINE(clang-analyzer-security.insecureAPI.strcpy)
-    strcpy(current, string_array[i]);
+    memcpy(current, string_array[i], part_length * sizeof(char));
     current += part_length;
 
     // We add a space after every part of the string except for the last one.
@@ -66,7 +65,9 @@ REPROC_ERROR string_to_wstring(const char *string, wchar_t **result)
     return REPROC_ERROR_SYSTEM;
   }
 
-  wchar_t *wstring = malloc(sizeof(wchar_t) * wstring_length);
+  // `MultiByteToWideChar` does not return negatives values so the case to
+  // `size_t` is safe.
+  wchar_t *wstring = malloc(sizeof(wchar_t) * (size_t) wstring_length);
   if (!wstring) {
     return REPROC_ERROR_SYSTEM;
   }
