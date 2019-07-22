@@ -10,7 +10,7 @@ jobs:
   # Download CMake manually because brew is too slow.
   - script: |
       brew uninstall cmake;
-      curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.4/cmake-3.13.4-Darwin-x86_64.tar.gz -o cmake.tar.gz;
+      curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Darwin-x86_64.tar.gz -o cmake.tar.gz;
       sudo tar xf cmake.tar.gz --strip 1 -C /Applications;
       sudo /Applications/CMake.app/Contents/bin/cmake-gui --install;
     displayName: Install

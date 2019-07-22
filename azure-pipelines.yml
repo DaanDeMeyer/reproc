@@ -107,21 +107,30 @@ jobs:
 
 - template: ci/linux.yml
   parameters:
-    name: linux_clang_6_0
-    variables:
-      PACKAGE: clang-6.0
-      REPOSITORY: deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main
-      CC: clang-6.0
-      CXX: clang++-6.0
-
-- template: ci/linux.yml
-  parameters:
     name: linux_gcc_8
     variables:
       PACKAGE: g++-8
       REPOSITORY: ppa:ubuntu-toolchain-r/test
       CC: gcc-8
       CXX: g++-8
+
+- template: ci/linux.yml
+  parameters:
+    name: linux_gcc_9
+    variables:
+      PACKAGE: g++-9
+      REPOSITORY: ppa:ubuntu-toolchain-r/test
+      CC: gcc-9
+      CXX: g++-9
+
+- template: ci/linux.yml
+  parameters:
+    name: linux_clang_6_0
+    variables:
+      PACKAGE: clang-6.0
+      REPOSITORY: deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main
+      CC: clang-6.0
+      CXX: clang++-6.0
 
 - template: ci/linux.yml
   parameters:

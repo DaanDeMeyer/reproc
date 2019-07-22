@@ -14,7 +14,7 @@ jobs:
       sudo apt-get update
       sudo apt-get install $(PACKAGE)
 
-      curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.4/cmake-3.13.4-Linux-x86_64.tar.gz -o cmake.tar.gz;
+      curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Linux-x86_64.tar.gz -o cmake.tar.gz;
       sudo tar xf cmake.tar.gz --strip 1 -C /usr/local;
     displayName: Install
 
