@@ -17,6 +17,13 @@ struct process_options {
   HANDLE stderr_handle;
 };
 
+// Escapes and joins the arguments in `argv` into a single string as expected by
+// `CreateProcess`.
+char *argv_join(int argc, const char *const *argv);
+
+// Converts the UTF-8 string in `string` to a UTF-16 string.
+wchar_t *string_to_wstring(const char *string);
+
 // Spawns a child process that executes the command stored in `command_line`.
 // The process id and handle of the new child process are assigned to `pid` and
 // `handle` respectively. `options` contains options that modify how the child

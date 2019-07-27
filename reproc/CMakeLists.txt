@@ -18,7 +18,6 @@ if(WIN32)
     src/windows/pipe.c
     src/windows/process.c
     src/windows/reproc.c
-    src/windows/string_utils.c
   )
 elseif(UNIX)
   target_sources(reproc PRIVATE

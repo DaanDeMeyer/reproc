@@ -2,6 +2,156 @@
 #include "handle.h"
 
 #include <assert.h>
+#include <stdbool.h>
+#include <stdlib.h>
+
+// Argument escaping implementation is based on the following blog post:
+// https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
+
+static bool argument_should_escape(const char *argument)
+{
+  bool should_escape = false;
+
+  for (size_t i = 0; i < strlen(argument); i++) {
+    should_escape = should_escape || argument[i] == ' ' ||
+                    argument[i] == '\t' || argument[i] == '\n' ||
+                    argument[i] == '\v' || argument[i] == '\"';
+  }
+
+  return should_escape;
+}
+
+static size_t argument_escaped_length(const char *argument)
+{
+  assert(argument);
+
+  if (!argument_should_escape(argument)) {
+    return strlen(argument);
+  }
+
+  size_t length = 2; // double quotes
+
+  for (size_t i = 0; i < strlen(argument); i++) {
+    size_t num_backslashes = 0;
+
+    while (i < strlen(argument) && argument[i] == '\\') {
+      i++;
+      num_backslashes++;
+    }
+
+    if (i == strlen(argument)) {
+      length += num_backslashes * 2;
+    } else if (argument[i] == '"') {
+      length += num_backslashes * 2 + 1;
+    } else {
+      length += num_backslashes + 1;
+    }
+  }
+
+  return length;
+}
+
+static size_t argument_escape(char *dest, const char *argument)
+{
+  assert(argument);
+  assert(dest);
+
+  if (!argument_should_escape(argument)) {
+    memcpy(dest, argument, strlen(argument));
+    return strlen(argument);
+  }
+
+  *dest++ = '"';
+
+  for (size_t i = 0; i < strlen(argument); i++) {
+    size_t num_backslashes = 0;
+
+    while (i < strlen(argument) && argument[i] == '\\') {
+      i++;
+      num_backslashes++;
+    }
+
+    if (i == strlen(argument)) {
+      memset(dest, '\\', num_backslashes * 2);
+      dest += num_backslashes * 2;
+    } else if (argument[i] == '"') {
+      memset(dest, '\\', num_backslashes * 2 + 1);
+      dest += num_backslashes * 2 + 1;
+      *dest++ = '"';
+    } else {
+      memset(dest, '\\', num_backslashes);
+      dest += num_backslashes;
+      *dest++ = argument[i];
+    }
+  }
+
+  *dest++ = '"';
+
+  return argument_escaped_length(argument);
+}
+
+char *argv_join(int argc, const char *const *argv)
+{
+  // Determine the length of the concatenated string first.
+  size_t joined_length = 1; // Count the null terminator.
+  for (int i = 0; i < argc; i++) {
+    joined_length += argument_escaped_length(argv[i]);
+
+    if (i < argc - 1) {
+      joined_length++; // Count whitespace.
+    }
+  }
+
+  char *joined = malloc(sizeof(char) * joined_length);
+  if (joined == NULL) {
+    return NULL;
+  }
+
+  char *current = joined;
+  for (int i = 0; i < argc; i++) {
+    current += argument_escape(current, argv[i]);
+
+    // We add a space after every part of the joined except for the last one.
+    if (i < argc - 1) {
+      *current++ = ' ';
+    }
+  }
+
+  *current = '\0';
+
+  return joined;
+}
+
+wchar_t *string_to_wstring(const char *string)
+{
+  assert(string);
+
+  // Determine wstring length (`MultiByteToWideChar` returns the required size
+  // if its last two arguments are `NULL` and 0).
+  int rv = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string, -1, NULL,
+                               0);
+  if (rv == 0) {
+    return NULL;
+  }
+
+  // `MultiByteToWideChar` does not return negatives values so the case to
+  // `size_t` is safe.
+  wchar_t *wstring = malloc(sizeof(wchar_t) * (size_t) rv);
+  if (wstring == NULL) {
+    return NULL;
+  }
+
+  // Now we pass our allocated string and its length as the last two arguments
+  // instead of `NULL` and 0 which makes `MultiByteToWideChar` actually perform
+  // the conversion.
+  rv = MultiByteToWideChar(CP_UTF8, 0, string, -1, wstring, rv);
+  if (rv == 0) {
+    free(wstring);
+    return NULL;
+  }
+
+  return wstring;
+}
 
 #if defined(ATTRIBUTE_LIST_FOUND)
 #include <stdlib.h>

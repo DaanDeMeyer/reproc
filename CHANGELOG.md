@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.0.1
+
+- Correctly escape arguments on Windows.
+
+  See #18 for more information.
+
 ## 8.0.0
 
 - Change `reproc_parse` and `reproc_drain` argument order.

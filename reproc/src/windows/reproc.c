@@ -3,7 +3,6 @@
 #include "handle.h"
 #include "pipe.h"
 #include "process.h"
-#include "string_utils.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -32,11 +31,13 @@ REPROC_ERROR reproc_start(reproc_t *process,
   HANDLE child_stdout = NULL;
   HANDLE child_stderr = NULL;
 
-  char *command_line_string = NULL;
+  char *command_line = NULL;
   wchar_t *command_line_wstring = NULL;
   wchar_t *working_directory_wstring = NULL;
 
-  REPROC_ERROR error = REPROC_SUCCESS;
+  // Initialize to `REPROC_ERROR_SYSTEM` so we don't accidentally return
+  // `REPROC_SUCCESS`.
+  REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
   // While we already make sure the child process only inherits the child pipe
   // handles using `STARTUPINFOEXW` (see `process.c`) we still disable
@@ -59,23 +60,23 @@ REPROC_ERROR reproc_start(reproc_t *process,
 
   // Join `argv` to a whitespace delimited string as required by
   // `CreateProcessW`.
-  error = string_join(argv, argc, &command_line_string);
-  if (error) {
+  command_line = argv_join(argc, argv);
+  if (command_line == NULL) {
     goto cleanup;
   }
 
   // Convert UTF-8 to UTF-16 as required by `CreateProcessW`.
-  error = string_to_wstring(command_line_string, &command_line_wstring);
-  if (error) {
+  command_line_wstring = string_to_wstring(command_line);
+  if (command_line_wstring == NULL) {
     goto cleanup;
   }
 
   // Do the same for `working_directory` if it isn't `NULL`.
-  error = working_directory
-              ? string_to_wstring(working_directory, &working_directory_wstring)
-              : REPROC_SUCCESS;
-  if (error) {
-    goto cleanup;
+  if (working_directory != NULL) {
+    working_directory_wstring = string_to_wstring(working_directory);
+    if (working_directory_wstring == NULL) {
+      goto cleanup;
+    }
   }
 
   struct process_options options = {
@@ -87,6 +88,11 @@ REPROC_ERROR reproc_start(reproc_t *process,
 
   error = process_create(command_line_wstring, &options, &process->id,
                          &process->handle);
+  if (error) {
+    goto cleanup;
+  }
+
+  error = REPROC_SUCCESS;
 
 cleanup:
   // Either an error has ocurred or the child pipe endpoints have been copied to
@@ -96,6 +102,7 @@ cleanup:
   handle_close(&child_stdout);
   handle_close(&child_stderr);
 
+  free(command_line);
   free(command_line_wstring);
   free(working_directory_wstring);
 
