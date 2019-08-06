@@ -4,7 +4,8 @@
 
 - Correctly escape arguments on Windows.
 
-  See #18 for more information.
+  See [#18](https://github.com/DaanDeMeyer/reproc/issues/18) for more
+  information.
 
 ## 8.0.0
 
