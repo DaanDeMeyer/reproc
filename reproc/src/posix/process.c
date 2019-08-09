@@ -9,7 +9,12 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
+
+#if defined(__APPLE__)
+#include <sys/event.h>
+#endif
 
 #if defined(REPROC_MULTITHREADED)
 #define SIGMASK_SAFE pthread_sigmask
@@ -188,18 +193,6 @@ process_create(int (*action)(const void *),
     // error. Why `_exit`? See:
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
 
-    /* Normally there might be a race condition if the parent process waits for
-    the child process before the child process puts itself in its own process
-    group (using `setpgid`) but this is avoided because we always read from the
-    error pipe in the parent process after forking. When `read` returns the
-    child process will either have returned an error (and waiting won't be
-    valid) or will have executed `_exit` or `exec` (and as a result `setpgid`
-    as well). */
-    if (setpgid(0, options->process_group) == -1) {
-      write(error_pipe_write, &errno, sizeof(errno));
-      _exit(errno);
-    }
-
     if (options->working_directory && chdir(options->working_directory) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
@@ -364,22 +357,20 @@ static REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
   return REPROC_SUCCESS;
 }
 
-// Makeshift C lambda which is passed to `process_create`.
-static int timeout_process(const void *context)
+static struct timespec timespec_subtract(struct timespec lhs,
+                                         struct timespec rhs)
 {
-  unsigned int milliseconds = *((const unsigned int *) context);
+  struct timespec result = { 0 };
 
-  struct timeval tv;
-  tv.tv_sec = milliseconds / 1000;           // ms -> s
-  tv.tv_usec = (milliseconds % 1000) * 1000; // leftover ms -> us
+  result.tv_sec = lhs.tv_sec - rhs.tv_sec;
+  result.tv_nsec = lhs.tv_nsec - rhs.tv_nsec;
 
-  // `select` with no file descriptors can be used as a makeshift sleep function
-  // that can still be interrupted.
-  if (select(0, NULL, NULL, NULL, &tv) == -1) {
-    return errno;
+  while (result.tv_nsec < 0) {
+    result.tv_nsec += 1000000000;
+    result.tv_sec--;
   }
 
-  return 0;
+  return result;
 }
 
 static REPROC_ERROR
@@ -388,80 +379,112 @@ wait_timeout(pid_t pid, unsigned int timeout, unsigned int *exit_status)
   assert(timeout > 0);
   assert(exit_status);
 
-  REPROC_ERROR error = REPROC_SUCCESS;
+  REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
-  // Check if the child process has already exited before starting a
-  // possibly expensive timeout process. If `wait_no_hang` doesn't time out we
-  // can return early.
-  error = wait_no_hang(pid, exit_status);
-  if (error != REPROC_ERROR_WAIT_TIMEOUT) {
-    return error;
-  }
+  struct timespec remaining;
+  remaining.tv_sec = timeout / 1000;              // ms -> s
+  remaining.tv_nsec = (timeout % 1000) * 1000000; // leftover ms -> ns
 
-  struct process_options options = {
-    // `waitpid` supports waiting for the first process that exits in a process
-    // group. To take advantage of this we put the timeout process in the same
-    // process group as the process we're waiting for.
-    .process_group = pid,
-    // Return early so `process_create` doesn't block until the timeout has
-    // expired.
-    .return_early = true,
-    // Don't `vfork` because when `vfork` is used the parent process is
-    // suspended until the child process calls `exec` or `_exit`.
-    // `timeout_process` doesn't call either which results in the parent process
-    // being suspended until the timeout process exits. This prevents the parent
-    // process from waiting until either the child process or the timeout
-    // process expires (which is what we need to do) so we don't use `vfork` to
-    // avoid this.
-    .vfork = false
-  };
+  sigset_t chld_mask;
+  sigset_t old_mask;
 
-  pid_t timeout_pid = 0;
-  error = process_create(timeout_process, &timeout, &options, &timeout_pid);
-  if (error) {
-    return error;
-  }
+  sigemptyset(&chld_mask);
+  sigaddset(&chld_mask, SIGCHLD);
 
-  // Passing `-reproc->pid` to `waitpid` makes it wait for the first process in
-  // the `reproc->pid` process group to exit. The `reproc->pid` process group
-  // consists out of the child process we're waiting for and the timeout
-  // process. As a result, calling `waitpid` on the `reproc->pid` process group
-  // translates to waiting for either the child process or the timeout process
-  // to exit.
-  int status = 0;
-  pid_t exit_pid = waitpid(-pid, &status, 0);
-
-  // If the timeout process exits first the timeout will have expired.
-  if (exit_pid == timeout_pid) {
-    return REPROC_ERROR_WAIT_TIMEOUT;
-  }
-
-  // If the child process exits first we clean up the timeout process.
-  error = process_terminate(timeout_pid);
-  if (error) {
-    return error;
-  }
-
-  unsigned int timeout_exit_status = 0;
-  error = wait_infinite(timeout_pid, &timeout_exit_status);
-  if (error) {
-    return error;
-  }
-
-  if (timeout_exit_status != 0 && timeout_exit_status != SIGTERM) {
-    errno = (int) timeout_exit_status;
+  // We block `SIGCHLD` to avoid a race condition between `wait_no_hang` and
+  // `sigtimedwait` where the child process is still running when `wait_no_hang`
+  // returns but exits before we call `sigtimedwait`. By blocking the signal, it
+  // stays pending when we receive the signal and since `sigtimedwait` watches
+  // for pending signals the race condition is solved.
+  if (SIGMASK_SAFE(SIG_BLOCK, &chld_mask, &old_mask) == -1) {
     return REPROC_ERROR_SYSTEM;
   }
 
-  // After cleaning up the timeout process we can check if `waitpid` returned an
-  // error.
-  if (exit_pid == -1) {
+  // MacOS does not support `sigtimedwait` so we use `kqueue` instead.
+#if defined(__APPLE__)
+  int kq = kqueue();
+  struct kevent ke;
+  EV_SET(&ke, SIGCHLD, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+  kevent(kq, &ke, 1, NULL, 0, NULL);
+#endif
+
+  while (true) {
+    error = wait_no_hang(pid, exit_status);
+    if (error != REPROC_ERROR_WAIT_TIMEOUT) {
+      goto cleanup;
+    }
+
+    struct timespec before;
+    int rv = clock_gettime(CLOCK_REALTIME, &before);
+    if (rv == -1) {
+      error = REPROC_ERROR_SYSTEM;
+      goto cleanup;
+    }
+
+#if defined(__APPLE__)
+    rv = kevent(kq, NULL, 0, &ke, 1, &remaining);
+
+    // Convert `kqueue` timeout to `sigtimedwait` timeout.
+    if (rv == 0) {
+      rv = -1;
+      errno = EAGAIN;
+    }
+
+    // Translate errors put into the event list to `rv` and `errno`.
+    if (rv > 0 && ke.flags & EV_ERROR) {
+      rv = -1;
+      errno = (int) ke.data;
+    }
+#else
+    rv = sigtimedwait(&chld_mask, NULL, &remaining);
+#endif
+
+    // Check if timeout has expired.
+    if (rv == -1 && errno == EAGAIN) {
+      error = REPROC_ERROR_WAIT_TIMEOUT;
+      break;
+    }
+
+    // Anything other than `EINTR` means system failure. If `EINTR` occurs or we
+    // get a `SIGCHLD`, we subtract the passed time from `remaining` and try
+    // again. Note that a `SIGCHLD` doesn't necessarily mean that the child
+    // process we're waiting for has exited so we keep looping until the timeout
+    // expires or `wait_no_hang` returns something different then
+    // `REPROC_ERROR_WAIT_TIMEOUT`.
+
+    if (rv == -1 && errno != EINTR) {
+      error = REPROC_ERROR_SYSTEM;
+      goto cleanup;
+    }
+
+    struct timespec after;
+    rv = clock_gettime(CLOCK_REALTIME, &after);
+    if (rv == -1) {
+      error = REPROC_ERROR_SYSTEM;
+      goto cleanup;
+    }
+
+    struct timespec passed = timespec_subtract(after, before);
+
+    remaining = timespec_subtract(remaining, passed);
+
+    // Avoid passing a negative timeout to `sigtimedwait`.
+    if (remaining.tv_sec < 0) {
+      remaining.tv_sec = 0;
+      remaining.tv_nsec = 0;
+    }
+  }
+
+cleanup:
+#if defined(__APPLE__)
+  close(kq);
+#endif
+
+  if (SIGMASK_SAFE(SIG_SETMASK, &old_mask, NULL) == -1) {
     return REPROC_ERROR_SYSTEM;
   }
 
-  *exit_status = parse_exit_status(status);
-
-  return REPROC_SUCCESS;
+  return error;
 }
 
 REPROC_ERROR

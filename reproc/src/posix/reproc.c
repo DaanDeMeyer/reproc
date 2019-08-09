@@ -73,9 +73,6 @@ REPROC_ERROR reproc_start(reproc_t *process,
     .stdin_fd = child_stdin,
     .stdout_fd = child_stdout,
     .stderr_fd = child_stderr,
-    // We put the child process in its own process group which is needed by
-    // `wait_timeout` in `process.c` (see `wait_timeout` for extra information).
-    .process_group = 0,
     // Don't return early to make sure we receive errors reported by `execve`.
     .return_early = false,
     // Use vfork to increase performance when forking from a large parent

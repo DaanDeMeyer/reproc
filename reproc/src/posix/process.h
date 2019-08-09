@@ -14,10 +14,6 @@ struct process_options {
   int stdin_fd;
   int stdout_fd;
   int stderr_fd;
-  // `process_group` is passed directly to `setpgid`'s second argument (passing
-  // 0 will create a new process group with the same value as the new child
-  // process' pid).
-  pid_t process_group;
   // Don't wait for `action` to complete in the child process before returning
   // from `process_create`. Returning early also results in errors from `action`
   // not being reported.
