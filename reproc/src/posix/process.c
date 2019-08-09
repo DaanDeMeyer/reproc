@@ -28,14 +28,16 @@
 __attribute__((no_sanitize("address")))
 #endif
 REPROC_ERROR
-process_create(int (*action)(const void *),
-               const void *context,
-               struct process_options *options,
+process_create(const char *const *argv,
+               const char *working_directory,
+               int stdin_fd,
+               int stdout_fd,
+               int stderr_fd,
                pid_t *pid)
 {
-  assert(options->stdin_fd >= 0);
-  assert(options->stdout_fd >= 0);
-  assert(options->stderr_fd >= 0);
+  assert(stdin_fd >= 0);
+  assert(stdout_fd >= 0);
+  assert(stderr_fd >= 0);
   assert(pid);
 
   // Predeclare variables so we can use `goto`.
@@ -62,127 +64,122 @@ process_create(int (*action)(const void *),
     goto cleanup;
   }
 
-  if (options->vfork) {
-    // The code inside this block is based on code written by a Redhat employee.
-    // The original code along with detailed comments can be found here:
-    // https://bugzilla.redhat.com/attachment.cgi?id=941229.
-    //
-    // Copyright (c) 2014 Red Hat Inc.
-    //
-    // Written by Carlos O'Donell <codonell@redhat.com>
-    //
-    // Permission is hereby granted, free of charge, to any person obtaining a
-    // copy of this software and associated documentation files (the
-    // "Software"), to deal in the Software without restriction, including
-    // without limitation the rights to use, copy, modify, merge, publish,
-    // distribute, sublicense, and/or sell copies of the Software, and to permit
-    // persons to whom the Software is furnished to do so, subject to the
-    // following conditions:
-    //
-    // The above copyright notice and this permission notice shall be included
-    // in all copies or substantial portions of the Software.
-    //
-    // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-    // OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-    // NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-    // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-    // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-    // USE OR OTHER DEALINGS IN THE SOFTWARE.
+  // The code inside this block is based on code written by a Redhat employee.
+  // The original code along with detailed comments can be found here:
+  // https://bugzilla.redhat.com/attachment.cgi?id=941229.
+  //
+  // Copyright (c) 2014 Red Hat Inc.
+  //
+  // Written by Carlos O'Donell <codonell@redhat.com>
+  //
+  // Permission is hereby granted, free of charge, to any person obtaining a
+  // copy of this software and associated documentation files (the
+  // "Software"), to deal in the Software without restriction, including
+  // without limitation the rights to use, copy, modify, merge, publish,
+  // distribute, sublicense, and/or sell copies of the Software, and to permit
+  // persons to whom the Software is furnished to do so, subject to the
+  // following conditions:
+  //
+  // The above copyright notice and this permission notice shall be included
+  // in all copies or substantial portions of the Software.
+  //
+  // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+  // OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+  // NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+  // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+  // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+  // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-    sigset_t all_blocked;
-    sigset_t old_mask;
+  sigset_t all_blocked;
+  sigset_t old_mask;
 
-    // Block all signals in the parent before calling vfork. This is for the
-    // safety of the child which inherits signal dispositions and handlers. The
-    // child, running in the parent's stack, may be delivered a signal. For
-    // example on Linux a killpg call delivering a signal to a process group may
-    // deliver the signal to the vfork-ing child and you want to avoid this. The
-    // easy way to do this is via: sigemptyset, sigaction, and then undo this
-    // when you return to the parent. To be completely correct the child should
-    // set all non-SIG_IGN signals to SIG_DFL and the restore the original
-    // signal mask, thus allowing the vforking child to receive signals that
-    // were actually intended for it, but without executing any handlers the
-    // parent had setup that could corrupt state. When using glibc and Linux
-    // these functions i.e. sigemtpyset, sigaction, etc. are safe to use after
-    // vfork.
+  // Block all signals in the parent before calling vfork. This is for the
+  // safety of the child which inherits signal dispositions and handlers. The
+  // child, running in the parent's stack, may be delivered a signal. For
+  // example on Linux a killpg call delivering a signal to a process group may
+  // deliver the signal to the vfork-ing child and you want to avoid this. The
+  // easy way to do this is via: sigemptyset, sigaction, and then undo this
+  // when you return to the parent. To be completely correct the child should
+  // set all non-SIG_IGN signals to SIG_DFL and the restore the original
+  // signal mask, thus allowing the vforking child to receive signals that
+  // were actually intended for it, but without executing any handlers the
+  // parent had setup that could corrupt state. When using glibc and Linux
+  // these functions i.e. sigemtpyset, sigaction, etc. are safe to use after
+  // vfork.
 
-    if (sigfillset(&all_blocked) == -1) {
-      error = REPROC_ERROR_SYSTEM;
-      goto cleanup;
+  if (sigfillset(&all_blocked) == -1) {
+    error = REPROC_ERROR_SYSTEM;
+    goto cleanup;
+  }
+
+  if (SIGMASK_SAFE(SIG_BLOCK, &all_blocked, &old_mask) == -1) {
+    error = REPROC_ERROR_SYSTEM;
+    goto cleanup;
+  }
+
+  child_pid = vfork(); // NOLINT
+
+  if (child_pid == 0) {
+    // `vfork` succeeded and we're in the child process. This block contains
+    // all `vfork` specific child process code.
+
+    // We reset all signal dispositions that aren't SIG_IGN to SIG_DFL. This
+    // is done because the child may have a legitimate need to receive a
+    // signal and the default actions should be taken for those signals. Those
+    // default actions will not corrupt state in the parent.
+
+    sigset_t empty_mask;
+
+    if (sigemptyset(&empty_mask) == -1) {
+      write(error_pipe_write, &errno, sizeof(errno));
+      _exit(errno);
     }
 
-    if (SIGMASK_SAFE(SIG_BLOCK, &all_blocked, &old_mask) == -1) {
-      error = REPROC_ERROR_SYSTEM;
-      goto cleanup;
-    }
+    struct sigaction old_sa;
+    struct sigaction new_sa = { .sa_handler = SIG_DFL, .sa_mask = empty_mask };
 
-    child_pid = vfork(); // NOLINT
+    for (int i = 0; i < NSIG; i++) {
+      // Continue if the signal does not exist, is ignored or is already set
+      // to the default signal handler.
+      if (sigaction(i, NULL, &old_sa) == -1 || old_sa.sa_handler == SIG_IGN ||
+          old_sa.sa_handler == SIG_DFL) {
+        continue;
+      }
 
-    if (child_pid == 0) {
-      // `vfork` succeeded and we're in the child process. This block contains
-      // all `vfork` specific child process code.
+      // POSIX says it is unspecified whether an attempt to set the action for
+      // a signal that cannot be caught or ignored to SIG_DFL is ignored or
+      // causes an error to be returned with errno set to [EINVAL].
 
-      // We reset all signal dispositions that aren't SIG_IGN to SIG_DFL. This
-      // is done because the child may have a legitimate need to receive a
-      // signal and the default actions should be taken for those signals. Those
-      // default actions will not corrupt state in the parent.
-
-      sigset_t empty_mask;
-
-      if (sigemptyset(&empty_mask) == -1) {
+      // Ignore errors if it's EINVAL since those are likely signals we can't
+      // change.
+      if (sigaction(i, &new_sa, NULL) == -1 && errno != EINVAL) {
         write(error_pipe_write, &errno, sizeof(errno));
         _exit(errno);
       }
-
-      struct sigaction old_sa;
-      struct sigaction new_sa = { .sa_handler = SIG_DFL,
-                                  .sa_mask = empty_mask };
-
-      for (int i = 0; i < NSIG; i++) {
-        // Continue if the signal does not exist, is ignored or is already set
-        // to the default signal handler.
-        if (sigaction(i, NULL, &old_sa) == -1 || old_sa.sa_handler == SIG_IGN ||
-            old_sa.sa_handler == SIG_DFL) {
-          continue;
-        }
-
-        // POSIX says it is unspecified whether an attempt to set the action for
-        // a signal that cannot be caught or ignored to SIG_DFL is ignored or
-        // causes an error to be returned with errno set to [EINVAL].
-
-        // Ignore errors if it's EINVAL since those are likely signals we can't
-        // change.
-        if (sigaction(i, &new_sa, NULL) == -1 && errno != EINVAL) {
-          write(error_pipe_write, &errno, sizeof(errno));
-          _exit(errno);
-        }
-      }
-
-      // Restore the old signal mask from the parent process.
-      if (SIGMASK_SAFE(SIG_SETMASK, &old_mask, NULL) != 0) {
-        write(error_pipe_write, &errno, sizeof(errno));
-        _exit(errno);
-      }
-
-      // At this point we can carry out anything else we need to do before exec
-      // like changing directory etc.  Signals are enabled in the child and will
-      // do their default actions, and the parent's handlers do not run. The
-      // caller has ensured not to call set*id functions. The only remaining
-      // general restriction is not to corrupt the parent's state by calling
-      // complex functions (the safe functions should be documented by glibc but
-      // aren't).
-
-    } else {
-      // In the parent process we restore the old signal mask regardless of
-      // whether `vfork` succeeded or not.
-      if (SIGMASK_SAFE(SIG_SETMASK, &old_mask, NULL) != 0) {
-        error = REPROC_ERROR_SYSTEM;
-        goto cleanup;
-      }
     }
+
+    // Restore the old signal mask from the parent process.
+    if (SIGMASK_SAFE(SIG_SETMASK, &old_mask, NULL) != 0) {
+      write(error_pipe_write, &errno, sizeof(errno));
+      _exit(errno);
+    }
+
+    // At this point we can carry out anything else we need to do before exec
+    // like changing directory etc.  Signals are enabled in the child and will
+    // do their default actions, and the parent's handlers do not run. The
+    // caller has ensured not to call set*id functions. The only remaining
+    // general restriction is not to corrupt the parent's state by calling
+    // complex functions (the safe functions should be documented by glibc but
+    // aren't).
+
   } else {
-    child_pid = fork();
+    // In the parent process we restore the old signal mask regardless of
+    // whether `vfork` succeeded or not.
+    if (SIGMASK_SAFE(SIG_SETMASK, &old_mask, NULL) != 0) {
+      error = REPROC_ERROR_SYSTEM;
+      goto cleanup;
+    }
   }
 
   // The rest of the code is identical regardless of whether `fork` or `vfork`
@@ -193,7 +190,7 @@ process_create(int (*action)(const void *),
     // error. Why `_exit`? See:
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
 
-    if (options->working_directory && chdir(options->working_directory) == -1) {
+    if (working_directory && chdir(working_directory) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
@@ -201,15 +198,15 @@ process_create(int (*action)(const void *),
     // Redirect stdin, stdout and stderr if required.
     // `_exit` ensures open file descriptors (pipes) are closed.
 
-    if (options->stdin_fd && dup2(options->stdin_fd, STDIN_FILENO) == -1) {
+    if (stdin_fd && dup2(stdin_fd, STDIN_FILENO) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
-    if (options->stdout_fd && dup2(options->stdout_fd, STDOUT_FILENO) == -1) {
+    if (stdout_fd && dup2(stdout_fd, STDOUT_FILENO) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
-    if (options->stderr_fd && dup2(options->stderr_fd, STDERR_FILENO) == -1) {
+    if (stderr_fd && dup2(stderr_fd, STDERR_FILENO) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
@@ -229,23 +226,14 @@ process_create(int (*action)(const void *),
     // Ignore `close` errors since we try to close every file descriptor and
     // `close` sets `errno` when an invalid file descriptor is passed.
 
-    // Closing the error pipe write end will unblock the `pipe_read` call in the
-    // parent process which allows it to continue executing.
-    if (options->return_early) {
-      fd_close(&error_pipe_write);
+    // Replace the forked process with the process specified in `argv`'s first
+    // element. The cast is safe since `execvp` doesn't actually change the
+    // contents of `argv`.
+    if (execvp(argv[0], (char **) argv) == -1) {
+      write(error_pipe_write, &errno, sizeof(errno));
     }
 
-    // Finally, call the makeshift lambda provided by the caller with the
-    // accompanying context object.
-    int action_error = action(context);
-
-    // If we didn't return early the error pipe write end is still open and we
-    // can use it to report an optional error from action.
-    if (!options->return_early) {
-      write(error_pipe_write, &action_error, sizeof(action_error));
-    }
-
-    _exit(action_error);
+    _exit(errno);
   }
 
   if (child_pid == -1) {
@@ -307,6 +295,7 @@ cleanup:
   }
 
   *pid = child_pid;
+
   return REPROC_SUCCESS;
 }
 

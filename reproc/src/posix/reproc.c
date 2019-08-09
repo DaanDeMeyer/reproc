@@ -10,21 +10,6 @@
 #include <string.h>
 #include <unistd.h>
 
-// Makeshift C lambda which is passed to `process_create`.
-static int exec_process(const void *context)
-{
-  const char *const *argv = context;
-
-  // Replace the forked process with the process specified in `argv`'s first
-  // element. The cast is safe since `execvp` doesn't actually change the
-  // contents of `argv`.
-  if (execvp(argv[0], (char **) argv) == -1) {
-    return errno;
-  }
-
-  return 0;
-}
-
 REPROC_ERROR reproc_start(reproc_t *process,
                           int argc,
                           const char *const *argv,
@@ -68,20 +53,9 @@ REPROC_ERROR reproc_start(reproc_t *process,
     goto cleanup;
   }
 
-  struct process_options options = {
-    .working_directory = working_directory,
-    .stdin_fd = child_stdin,
-    .stdout_fd = child_stdout,
-    .stderr_fd = child_stderr,
-    // Don't return early to make sure we receive errors reported by `execve`.
-    .return_early = false,
-    // Use vfork to increase performance when forking from a large parent
-    // process (`vfork` avoids copying the entire page table).
-    .vfork = true
-  };
-
   // Fork a child process and call `execve`.
-  error = process_create(exec_process, argv, &options, &process->id);
+  error = process_create(argv, working_directory, child_stdin, child_stdout,
+                         child_stderr, &process->id);
 
 cleanup:
   // Either an error has ocurred or the child pipe endpoints have been copied to
