@@ -1,3 +1,4 @@
 #pragma once
 
 #cmakedefine REPROC_MULTITHREADED
+#cmakedefine REPROC_VFORK

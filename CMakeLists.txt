@@ -12,6 +12,7 @@ option(REPROC++ "Build reproc++.")
 option(REPROC_TEST "Build tests.")
 option(REPROC_EXAMPLES "Build examples.")
 option(REPROC_MULTITHREADED "Use `pthread_sigmask` instead of `sigprocmask`." ON)
+option(REPROC_VFORK "Use `vfork` instead of `fork`." OFF)
 
 # Enable languages before configuring all enabled languages in reproc.cmake.
 if(REPROC++ OR REPROC_TEST)

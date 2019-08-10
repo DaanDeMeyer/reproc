@@ -60,6 +60,7 @@ process_create(const char *const *argv,
     goto cleanup;
   }
 
+#if defined(REPROC_VFORK)
   // The code inside this block is based on code written by a Redhat employee.
   // The original code along with detailed comments can be found here:
   // https://bugzilla.redhat.com/attachment.cgi?id=941229.
@@ -177,6 +178,9 @@ process_create(const char *const *argv,
       goto cleanup;
     }
   }
+#else
+  child_pid = fork();
+#endif
 
   // The rest of the code is identical regardless of whether `fork` or `vfork`
   // was used.

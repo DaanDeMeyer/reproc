@@ -154,6 +154,18 @@ reproc's build can be configured using the following CMake options:
   variable influences the behaviour of `find_package(Threads)`. if it is not
   defined, reproc's build enables it before calling `find_package(Threads)`.
 
+- `REPROC_VFORK`: Use `vfork` instead of `fork` (default: `OFF`).
+
+  Depending on the memory used by the parent process when forking, using `vfork`
+  might offer a performance benefit over using `fork`. However, using `vfork`
+  can be more dangerous and insecure compared to normal `fork` usage. While all
+  tests pass when `vfork` is enabled, we don't have the resources to write an
+  extensive test suite for our `vfork` implementation, nor do we have the
+  expertise to verify our `vfork` implementation is without flaws. Finally, in
+  most cases, `vfork` will not offer a noticeable performance benefit over
+  `fork`. Because of these considerations, we do not enable usage of `vfork` by
+  default.
+
 ### Developer
 
 - `REPROC_SANITIZERS`: Build with sanitizers (default: `OFF`).
@@ -271,10 +283,10 @@ to work with reproc from multiple threads.
   `reproc_wait` to stop working as expected. Read the Notes section of the
   `waitpid` man page for more information.
 
-- (POSIX) Don't call any `set*id` functions when a call to `reproc_start` is in
-  progress. This is necessary because `reproc_start` uses `vfork` under the
-  hood. See <http://ewontfix.com/7/> for more information on why calling
-  `set*id` functions when `vfork` is in progress is dangerous.
+- (POSIX) Don't call any `set*id` functions when `REPROC_VFORK` is enabled and a
+  call to `reproc_start` is in progress. See <http://ewontfix.com/7/> for more
+  information on why calling `set*id` functions when `vfork` is in progress is
+  dangerous.
 
 ## Avoiding resource leaks
 
