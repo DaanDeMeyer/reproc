@@ -192,10 +192,6 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
     set(HEADER_EXT hpp)
   endif()
 
-  # Replace - with / in the target name to get the nested include directory of
-  # the target. For example, `reproc-async` becomes `reproc/async`.
-  string(REPLACE - / EXPORT_FILE_DIRECTORY ${TARGET})
-
   # Generate export headers. We generate export headers using CMake since
   # different export files are required depending on whether a library is shared
   # or static and we can't determine whether a library is shared or static from
@@ -204,7 +200,7 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
   generate_export_header(${TARGET}
     BASE_NAME ${EXPORT_MACRO_UPPER}
     EXPORT_FILE_NAME
-      ${CMAKE_CURRENT_BINARY_DIR}/include/${EXPORT_FILE_DIRECTORY}/export.${HEADER_EXT}
+      ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}/export.${HEADER_EXT}
   )
 
   # Make sure we follow the popular naming convention for shared libraries on
