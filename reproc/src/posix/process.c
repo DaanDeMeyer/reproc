@@ -23,11 +23,6 @@
 #define SIGMASK_SAFE sigprocmask
 #endif
 
-// Disable address sanitizers for `process_create` to avoid a false positive
-// when using `vfork` and `sigprocmask` simultaneously.
-#if !defined(REPROC_MULTITHREADED) && defined(ADDRESS_SANITIZERS)
-__attribute__((no_sanitize("address")))
-#endif
 REPROC_ERROR
 process_create(const char *const *argv,
                const char *working_directory,

@@ -4,10 +4,6 @@ if(REPROC_MULTITHREADED)
   target_link_libraries(reproc PRIVATE Threads::Threads)
 endif()
 
-if(REPROC_SANITIZERS)
-  target_compile_definitions(reproc PRIVATE ADDRESS_SANITIZERS)
-endif()
-
 target_sources(reproc PRIVATE src/common.c)
 
 if(WIN32)
