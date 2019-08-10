@@ -51,139 +51,7 @@ process_create(const char *const *argv,
     goto cleanup;
   }
 
-  // `sysconf` is not signal safe so we retrieve the fd limit before forking.
-  // This results in the same value as calling it in the child since the child
-  // inherits the parent's resource limits.
-  int max_fd = (int) sysconf(_SC_OPEN_MAX);
-  if (max_fd == -1) {
-    error = REPROC_ERROR_SYSTEM;
-    goto cleanup;
-  }
-
-#if defined(REPROC_VFORK)
-  // The code inside this block is based on code written by a Redhat employee.
-  // The original code along with detailed comments can be found here:
-  // https://bugzilla.redhat.com/attachment.cgi?id=941229.
-  //
-  // Copyright (c) 2014 Red Hat Inc.
-  //
-  // Written by Carlos O'Donell <codonell@redhat.com>
-  //
-  // Permission is hereby granted, free of charge, to any person obtaining a
-  // copy of this software and associated documentation files (the
-  // "Software"), to deal in the Software without restriction, including
-  // without limitation the rights to use, copy, modify, merge, publish,
-  // distribute, sublicense, and/or sell copies of the Software, and to permit
-  // persons to whom the Software is furnished to do so, subject to the
-  // following conditions:
-  //
-  // The above copyright notice and this permission notice shall be included
-  // in all copies or substantial portions of the Software.
-  //
-  // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-  // OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-  // NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-  // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-  // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-  // USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-  sigset_t all_blocked;
-  sigset_t old_mask;
-
-  // Block all signals in the parent before calling vfork. This is for the
-  // safety of the child which inherits signal dispositions and handlers. The
-  // child, running in the parent's stack, may be delivered a signal. For
-  // example on Linux a killpg call delivering a signal to a process group may
-  // deliver the signal to the vfork-ing child and you want to avoid this. The
-  // easy way to do this is via: sigemptyset, sigaction, and then undo this
-  // when you return to the parent. To be completely correct the child should
-  // set all non-SIG_IGN signals to SIG_DFL and the restore the original
-  // signal mask, thus allowing the vforking child to receive signals that
-  // were actually intended for it, but without executing any handlers the
-  // parent had setup that could corrupt state. When using glibc and Linux
-  // these functions i.e. sigemtpyset, sigaction, etc. are safe to use after
-  // vfork.
-
-  if (sigfillset(&all_blocked) == -1) {
-    error = REPROC_ERROR_SYSTEM;
-    goto cleanup;
-  }
-
-  if (SIGMASK_SAFE(SIG_BLOCK, &all_blocked, &old_mask) == -1) {
-    error = REPROC_ERROR_SYSTEM;
-    goto cleanup;
-  }
-
-  child_pid = vfork(); // NOLINT
-
-  if (child_pid == 0) {
-    // `vfork` succeeded and we're in the child process. This block contains
-    // all `vfork` specific child process code.
-
-    // We reset all signal dispositions that aren't SIG_IGN to SIG_DFL. This
-    // is done because the child may have a legitimate need to receive a
-    // signal and the default actions should be taken for those signals. Those
-    // default actions will not corrupt state in the parent.
-
-    sigset_t empty_mask;
-
-    if (sigemptyset(&empty_mask) == -1) {
-      write(error_pipe_write, &errno, sizeof(errno));
-      _exit(errno);
-    }
-
-    struct sigaction old_sa;
-    struct sigaction new_sa = { .sa_handler = SIG_DFL, .sa_mask = empty_mask };
-
-    for (int i = 0; i < NSIG; i++) {
-      // Continue if the signal does not exist, is ignored or is already set
-      // to the default signal handler.
-      if (sigaction(i, NULL, &old_sa) == -1 || old_sa.sa_handler == SIG_IGN ||
-          old_sa.sa_handler == SIG_DFL) {
-        continue;
-      }
-
-      // POSIX says it is unspecified whether an attempt to set the action for
-      // a signal that cannot be caught or ignored to SIG_DFL is ignored or
-      // causes an error to be returned with errno set to [EINVAL].
-
-      // Ignore errors if it's EINVAL since those are likely signals we can't
-      // change.
-      if (sigaction(i, &new_sa, NULL) == -1 && errno != EINVAL) {
-        write(error_pipe_write, &errno, sizeof(errno));
-        _exit(errno);
-      }
-    }
-
-    // Restore the old signal mask from the parent process.
-    if (SIGMASK_SAFE(SIG_SETMASK, &old_mask, NULL) != 0) {
-      write(error_pipe_write, &errno, sizeof(errno));
-      _exit(errno);
-    }
-
-    // At this point we can carry out anything else we need to do before exec
-    // like changing directory etc.  Signals are enabled in the child and will
-    // do their default actions, and the parent's handlers do not run. The
-    // caller has ensured not to call set*id functions. The only remaining
-    // general restriction is not to corrupt the parent's state by calling
-    // complex functions (the safe functions should be documented by glibc but
-    // aren't).
-
-  } else {
-    // In the parent process we restore the old signal mask regardless of
-    // whether `vfork` succeeded or not.
-    if (SIGMASK_SAFE(SIG_SETMASK, &old_mask, NULL) != 0) {
-      error = REPROC_ERROR_SYSTEM;
-      goto cleanup;
-    }
-  }
-#else
   child_pid = fork();
-#endif
-
-  // The rest of the code is identical regardless of whether `fork` or `vfork`
-  // was used.
 
   if (child_pid == 0) {
     // Child process code. Since we're in the child process we can exit on
@@ -209,6 +77,12 @@ process_create(const char *const *argv,
     if (stderr_fd && dup2(stderr_fd, STDERR_FILENO) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
+    }
+
+    int max_fd = (int) sysconf(_SC_OPEN_MAX);
+    if (max_fd == -1) {
+      error = REPROC_ERROR_SYSTEM;
+      goto cleanup;
     }
 
     // Close open file descriptors in the child process.

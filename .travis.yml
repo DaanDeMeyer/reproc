@@ -12,7 +12,7 @@ notifications:
 matrix:
   fast_finish: true
 
-env: REPROC_TIDY=ON REPROC_VFORK=OFF
+env: REPROC_TIDY=ON
 
 matrix:
   fast_finish: true
@@ -42,7 +42,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-9
-      env: CC=gcc-9 CXX=g++-9 REPROC_VFORK=ON
+      env: CC=gcc-9 CXX=g++-9
 
     - os: linux
       addons:
@@ -61,11 +61,11 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - clang-8
-      env: CC=clang-8 CXX=clang++-8 REPROC_VFORK=ON
+      env: CC=clang-8 CXX=clang++-8
 
     - os: osx
       osx_image: xcode10
-      env: CC=clang CXX=clang++ REPROC_TIDY=OFF REPROC_VFORK=ON
+      env: CC=clang CXX=clang++ REPROC_TIDY=OFF
 
 install:
   # Download CMake manually because brew is too slow on MacOS and Xenial's
@@ -93,7 +93,6 @@ script:
       -DREPROC_WARNINGS_AS_ERRORS=ON
       -DREPROC_TIDY=$REPROC_TIDY
       -DREPROC_SANITIZERS=ON
-      -DREPROC_VFORK=$REPROC_VFORK
   - cmake --build build --parallel 2
   - build/test
   # Make sure the examples don't crash or return a non-zero exit code.
