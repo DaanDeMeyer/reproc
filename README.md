@@ -138,6 +138,9 @@ reproc's build can be configured using the following CMake options:
 - `REPROC_INSTALL_PKGCONFIG`: Install pkg-config files (default: `ON`)
 - `REPROC_INSTALL_PKGCONFIGDIR`: pkg-config files installation directory
   (default: `${CMAKE_INSTALL_LIBDIR}/pkgconfig`).
+
+POSIX only:
+
 - `REPROC_MULTITHREADED`: Use `pthread_sigmask` instead of `sigprocmask`
   (default: `ON`).
 
