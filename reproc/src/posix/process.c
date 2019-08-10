@@ -3,6 +3,7 @@
 #include "fd.h"
 #include "pipe.h"
 
+#include <reproc/config.h>
 #include <reproc/reproc.h>
 
 #include <assert.h>

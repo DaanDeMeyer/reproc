@@ -2,7 +2,6 @@ reproc_add_library(reproc C 99)
 
 if(REPROC_MULTITHREADED)
   target_link_libraries(reproc PRIVATE Threads::Threads)
-  target_compile_definitions(reproc PRIVATE REPROC_MULTITHREADED)
 endif()
 
 if(REPROC_SANITIZERS)
