@@ -53,8 +53,12 @@ that happen after forking with this function (for example in `chdir` or `exec`).
 */
 REPROC_EXPORT unsigned int reproc_system_error(void);
 
-/*! Returns a string describing `error`. This string must not be modified by the
-caller. */
+/*!
+Returns a string describing `error`. This string must not be modified by the
+caller.
+
+This function is not thread-safe.
+*/
 REPROC_EXPORT const char *reproc_strerror(REPROC_ERROR error);
 
 #ifdef __cplusplus
