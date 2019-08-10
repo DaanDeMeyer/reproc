@@ -134,7 +134,7 @@ wchar_t *string_to_wstring(const char *string)
     return NULL;
   }
 
-  // `MultiByteToWideChar` does not return negatives values so the case to
+  // `MultiByteToWideChar` does not return negative values so the cast to
   // `size_t` is safe.
   wchar_t *wstring = malloc(sizeof(wchar_t) * (size_t) rv);
   if (wstring == NULL) {
