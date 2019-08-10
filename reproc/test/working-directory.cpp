@@ -14,7 +14,7 @@ TEST_SUITE("reproc")
     const char *working_directory = "reproc/resources";
     static constexpr unsigned int ARGV_SIZE = 2;
 
-#if defined(_WIN32) || defined(__APPLE__)
+#if defined(_WIN32)
     std::array<const char *, ARGV_SIZE> argv{ "reproc/resources/noop",
                                               nullptr };
 #else
