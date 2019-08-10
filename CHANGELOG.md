@@ -1,5 +1,39 @@
 # Changelog
 
+## 8.1.0
+
+- Improve implementation of `reproc_wait` with a timeout on POSIX systems.
+
+  Instead of spawning a new process to implement the timeout, we now use
+  `sigtimedwait` on Linux and `kqueue` on Darwin to wait on `SIGCHLD` signals
+  and check if the process we're waiting on has exited after each received
+  `SIGCHLD` signal.
+
+- Remove `vfork` usage.
+
+  Clang analyzer was indicating a host of errors in our `vfork` implementation.
+  We also discovered tests were behaving differently on macOS depending on
+  whether `vfork` was enabled or disabled. As we do not have the expertise to
+  verify if `vfork` is working correctly, we opt to remove it.
+
+  As disabling `vfork` impacted the working directory test on MacOS, this change
+  will likely break code passing relative paths to the `working_directory`
+  parameter of `reproc_start` on MacOS. With `vfork` enabled, the path was
+  relative to the parent process working directory. With `vfork` removed, the
+  path will be relative to the working directory of the child process (in other
+  words: relative to the working directory passed to the `working_directory`
+  parameter of `reproc_start`).
+
+  As we already recommend not passing relative paths as the working directory to
+  `reproc_start`, we fit this change in a feature release instead of a major
+  release.
+
+- Update `reproc_strerror` to return the actual system error string of the error
+  code returned by `reproc_system_error` instead of "system error" when passed
+  `REPROC_ERROR_SYSTEM` as argument.
+
+  This should make debugging reproc errors a lot easier.
+
 ## 8.0.1
 
 - Correctly escape arguments on Windows.
