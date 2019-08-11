@@ -10,6 +10,8 @@
 
 static bool argument_should_escape(const char *argument)
 {
+  assert(argument);
+
   bool should_escape = false;
 
   for (size_t i = 0; i < strlen(argument); i++) {
@@ -53,8 +55,8 @@ static size_t argument_escaped_length(const char *argument)
 
 static size_t argument_escape(char *dest, const char *argument)
 {
-  assert(argument);
   assert(dest);
+  assert(argument);
 
   if (!argument_should_escape(argument)) {
     memcpy(dest, argument, strlen(argument));
@@ -92,8 +94,9 @@ static size_t argument_escape(char *dest, const char *argument)
 
 char *argv_join(const char *const *argv)
 {
-  int argc = 0;
+  assert(argv);
 
+  int argc = 0;
   while (argv[argc] != NULL)  {
     argc++;
   }

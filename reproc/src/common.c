@@ -131,6 +131,7 @@ reproc_drain(reproc_t *process,
 
 bool reproc_running(reproc_t *process)
 {
+  assert(process);
   return reproc_wait(process, 0) == REPROC_SUCCESS ? false : true;
 }
 
