@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
                           reproc::milliseconds(5000), reproc::cleanup::kill,
                           reproc::milliseconds(2000));
 
-  std::error_code ec = forward.start(argc - 1, argv + 1);
+  std::error_code ec = forward.start(argv + 1);
 
   if (ec == std::errc::no_such_file_or_directory) {
     std::cerr << "Program not found. Make sure it's available from the PATH.";

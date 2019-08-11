@@ -9,14 +9,13 @@ TEST_SUITE("reproc")
   {
     reproc_t infinite;
 
-    static constexpr unsigned int ARGV_SIZE = 2;
-    std::array<const char *, ARGV_SIZE> argv{ "reproc/resources/infinite",
+    std::array<const char *, 2> argv{ "reproc/resources/infinite",
                                               nullptr };
 
     int error = REPROC_SUCCESS;
     CAPTURE(error);
 
-    error = reproc_start(&infinite, ARGV_SIZE - 1, argv.data(), nullptr);
+    error = reproc_start(&infinite, argv.data(), nullptr);
     REQUIRE(!error);
 
     error = reproc_wait(&infinite, 50);

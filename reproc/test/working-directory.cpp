@@ -12,19 +12,18 @@ TEST_SUITE("reproc")
     // Executable path is relative to reproc/resources because we change
     // working directory before executing noop as a child process.
     const char *working_directory = "reproc/resources";
-    static constexpr unsigned int ARGV_SIZE = 2;
 
 #if defined(_WIN32)
-    std::array<const char *, ARGV_SIZE> argv{ "reproc/resources/noop",
+    std::array<const char *, 2> argv{ "reproc/resources/noop",
                                               nullptr };
 #else
-    std::array<const char *, ARGV_SIZE> argv{ "./noop", nullptr };
+    std::array<const char *, 2> argv{ "./noop", nullptr };
 #endif
 
     int error = REPROC_SUCCESS;
     CAPTURE(error);
 
-    error = reproc_start(&noop, ARGV_SIZE - 1, argv.data(), working_directory);
+    error = reproc_start(&noop, argv.data(), working_directory);
     REQUIRE(!error);
 
     error = reproc_wait(&noop, REPROC_INFINITE);

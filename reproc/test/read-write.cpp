@@ -19,8 +19,7 @@ TEST_SUITE("reproc")
     std::string message;
     unsigned int message_length = 0;
 
-    static constexpr unsigned int ARGV_SIZE = 2;
-    std::array<const char *, ARGV_SIZE> argv = { nullptr, nullptr };
+    std::array<const char *, 2> argv = { nullptr, nullptr };
 
     REPROC_STREAM stream = REPROC_STREAM_IN;
 
@@ -44,7 +43,7 @@ TEST_SUITE("reproc")
       stream = REPROC_STREAM_ERR;
     }
 
-    error = reproc_start(&io, ARGV_SIZE - 1, argv.data(), nullptr);
+    error = reproc_start(&io, argv.data(), nullptr);
     REQUIRE(!error);
 
     unsigned int bytes_written = 0;

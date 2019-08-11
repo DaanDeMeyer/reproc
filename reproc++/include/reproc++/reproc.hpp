@@ -92,8 +92,7 @@ public:
 
   /*! `reproc_start` */
   REPROCXX_EXPORT std::error_code
-  start(int argc,
-        const char *const *argv,
+  start(const char *const *argv,
         const char *working_directory = nullptr) noexcept;
 
   /*!
@@ -105,8 +104,13 @@ public:
 
   `working_directory` specifies the working directory. It is optional and
   defaults to `nullptr`.
+
+  To avoid having to add extra SFINAE constructs, this method is selected if
+  `SequenceContainer` has a `value_type` nested type. The implementation has
+  extra checks to verify a valid `SequenceContainer` is passed.
   */
-  template <typename SequenceContainer>
+  template <typename SequenceContainer,
+            typename SequenceContainer::value_type * = nullptr>
   std::error_code start(const SequenceContainer &args,
                         const std::string *working_directory = nullptr);
 
@@ -194,7 +198,7 @@ private:
   static constexpr unsigned int BUFFER_SIZE = 1024;
 };
 
-template <typename SequenceContainer>
+template <typename SequenceContainer, typename SequenceContainer::value_type *>
 std::error_code process::start(const SequenceContainer &args,
                                const std::string *working_directory)
 {
@@ -211,15 +215,12 @@ std::error_code process::start(const SequenceContainer &args,
   }
   argv[args.size()] = nullptr;
 
-  // We assume that `args`'s size fits into an integer.
-  auto argc = static_cast<int>(args.size());
-
   // `std::string *` => `const char *`
   const char *child_working_directory = working_directory != nullptr
                                             ? working_directory->c_str()
                                             : nullptr;
 
-  std::error_code ec = start(argc, argv, child_working_directory);
+  std::error_code ec = start(argv, child_working_directory);
 
   delete[] argv; // NOLINT
 

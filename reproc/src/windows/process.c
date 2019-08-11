@@ -90,8 +90,14 @@ static size_t argument_escape(char *dest, const char *argument)
   return argument_escaped_length(argument);
 }
 
-char *argv_join(int argc, const char *const *argv)
+char *argv_join(const char *const *argv)
 {
+  int argc = 0;
+
+  while (argv[argc] != NULL)  {
+    argc++;
+  }
+
   // Determine the length of the concatenated string first.
   size_t joined_length = 1; // Count the null terminator.
   for (int i = 0; i < argc; i++) {

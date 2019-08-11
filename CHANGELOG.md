@@ -1,6 +1,15 @@
 # Changelog
 
-## 8.1.0
+## 9.0.0
+
+## General
+
+- Remove `argc` parameter from `reproc_start` and `process::start`.
+
+  We can trivially calculate `argc` internally in reproc since `argv` is
+  required to end with a `NULL` value.
+
+## reproc
 
 - Improve implementation of `reproc_wait` with a timeout on POSIX systems.
 

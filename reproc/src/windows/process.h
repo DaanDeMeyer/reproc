@@ -19,7 +19,7 @@ struct process_options {
 
 // Escapes and joins the arguments in `argv` into a single string as expected by
 // `CreateProcess`.
-char *argv_join(int argc, const char *const *argv);
+char *argv_join(const char *const *argv);
 
 // Converts the UTF-8 string in `string` to a UTF-16 string.
 wchar_t *string_to_wstring(const char *string);

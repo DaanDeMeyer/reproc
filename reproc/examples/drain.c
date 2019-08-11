@@ -52,12 +52,11 @@ int main(void)
 {
   reproc_t git_help;
 
-  int argc = 2;
   const char *argv[3] = { "git", "--help", NULL };
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
-  error = reproc_start(&git_help, argc, argv, NULL);
+  error = reproc_start(&git_help, argv, NULL);
   if (error) {
     return fail(error);
   }

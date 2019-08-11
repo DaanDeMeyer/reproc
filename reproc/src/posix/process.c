@@ -31,9 +31,8 @@ process_create(const char *const *argv,
                int stderr_fd,
                pid_t *pid)
 {
-  assert(stdin_fd >= 0);
-  assert(stdout_fd >= 0);
-  assert(stderr_fd >= 0);
+  assert(argv);
+  assert(argv[0] != NULL);
   assert(pid);
 
   // Predeclare variables so we can use `goto`.

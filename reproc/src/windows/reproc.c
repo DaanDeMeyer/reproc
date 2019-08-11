@@ -9,19 +9,12 @@
 #include <windows.h>
 
 REPROC_ERROR reproc_start(reproc_t *process,
-                          int argc,
                           const char *const *argv,
                           const char *working_directory)
 {
   assert(process);
-
-  assert(argc > 0);
   assert(argv);
-  assert(argv[argc] == NULL);
-
-  for (int i = 0; i < argc; i++) {
-    assert(argv[i]);
-  }
+  assert(argv[0] != NULL);
 
   process->running = false;
 
@@ -60,7 +53,7 @@ REPROC_ERROR reproc_start(reproc_t *process,
 
   // Join `argv` to a whitespace delimited string as required by
   // `CreateProcessW`.
-  command_line = argv_join(argc, argv);
+  command_line = argv_join(argv);
   if (command_line == NULL) {
     goto cleanup;
   }

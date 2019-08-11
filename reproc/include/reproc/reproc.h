@@ -74,11 +74,6 @@ the executable. None of these elements can be `NULL`.
 
 Example: ["cmake", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", `NULL`]
 
-`argc` specifies the amount of elements in `argv`. It must NOT count the `NULL`
-value at the end of the array.
-
-Example: if `argv` is `["cmake", "--help", NULL]` then `argc` is 2.
-
 `working_directory` specifies the working directory for the child process. If it
 is `NULL`, the child process runs in the same directory as the parent process.
 
@@ -95,7 +90,6 @@ Possible errors:
 - `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_start(reproc_t *process,
-                                        int argc,
                                         const char *const *argv,
                                         const char *working_directory);
 
