@@ -8,7 +8,7 @@
 struct process_options {
   // If not `NULL`, the working directory of the child process is set to
   // `working_directory`.
-  wchar_t *working_directory;
+  const wchar_t *working_directory;
   // if not `NULL`, the stdin, stdout and stderr of the child process are
   // redirected to `stdin_handle`, `stdout_handle` and `stderr_handle`
   // respectively.
