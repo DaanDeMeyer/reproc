@@ -1,5 +1,5 @@
 # 3.13 is needed for `target_link_options`.
-cmake_minimum_required(VERSION 3.13...3.14)
+cmake_minimum_required(VERSION 3.13...3.15)
 
 project(reproc
   VERSION 9.0.0
