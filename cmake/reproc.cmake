@@ -118,6 +118,7 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       /W4
       /nologo # Silence MSVC compiler version output.
       /wd4068 # Allow unknown pragmas.
+      /wd4221 # Results in false positives.
       $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:/WX> # -Werror
       $<$<BOOL:${REPROC_${LANGUAGE}_HAVE_PERMISSIVE}>:/permissive->
     )
