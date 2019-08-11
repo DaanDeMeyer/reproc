@@ -1,5 +1,12 @@
-# 3.13 is needed for `target_link_options`.
-cmake_minimum_required(VERSION 3.13...3.15)
+
+if(MSVC)
+  # CMake 3.15 does not add /W3 to the compiler flags by default anymore which
+  # saves us from having to do an ugly hack to replace it with /W3.
+  cmake_minimum_required(VERSION 3.15)
+else()
+  # 3.13 is needed for `target_link_options`.
+  cmake_minimum_required(VERSION 3.13...3.15)
+endif()
 
 project(reproc
   VERSION 9.0.0

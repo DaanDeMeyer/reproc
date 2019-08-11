@@ -48,8 +48,7 @@ if(REPROC_TIDY)
 
   if(REPROC_TIDY_PROGRAM)
     if(REPROC_WARNINGS_AS_ERRORS)
-      set(REPROC_TIDY_PROGRAM
-          ${REPROC_TIDY_PROGRAM} -warnings-as-errors=*)
+      set(REPROC_TIDY_PROGRAM ${REPROC_TIDY_PROGRAM} -warnings-as-errors=*)
     endif()
   else()
     message(FATAL_ERROR "clang-tidy not found")
@@ -64,16 +63,6 @@ foreach(LANGUAGE IN ITEMS C CXX)
   endif()
 
   if(MSVC)
-    # CMake adds /W3 to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS by default which
-    # results in cl.exe warnings if we add /W4 as well. To avoid these
-    # warnings we replace /W3 with /W4 instead.
-    string(REGEX REPLACE
-      "[-/]W[1-4]" ""
-      CMAKE_${LANGUAGE}_FLAGS
-      "${CMAKE_${LANGUAGE}_FLAGS}"
-    )
-    set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} /W4")
-
     if(LANGUAGE STREQUAL "C")
       include(CheckCCompilerFlag)
       check_c_compiler_flag(/permissive- REPROC_${LANGUAGE}_HAVE_PERMISSIVE)
@@ -126,6 +115,7 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
 
   if(MSVC)
     target_compile_options(${TARGET} PRIVATE
+      /W4
       /nologo # Silence MSVC compiler version output.
       /wd4068 # Allow unknown pragmas.
       $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:/WX> # -Werror
