@@ -25,10 +25,7 @@
 
 REPROC_ERROR
 process_create(const char *const *argv,
-               const char *working_directory,
-               int stdin_fd,
-               int stdout_fd,
-               int stderr_fd,
+               struct process_options *options,
                pid_t *pid)
 {
   assert(argv);
@@ -57,7 +54,7 @@ process_create(const char *const *argv,
     // error. Why `_exit`? See:
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
 
-    if (working_directory && chdir(working_directory) == -1) {
+    if (options->working_directory && chdir(options->working_directory) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
@@ -65,15 +62,15 @@ process_create(const char *const *argv,
     // Redirect stdin, stdout and stderr if required.
     // `_exit` ensures open file descriptors (pipes) are closed.
 
-    if (stdin_fd && dup2(stdin_fd, STDIN_FILENO) == -1) {
+    if (options->stdin_fd && dup2(options->stdin_fd, STDIN_FILENO) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
-    if (stdout_fd && dup2(stdout_fd, STDOUT_FILENO) == -1) {
+    if (options->stdout_fd && dup2(options->stdout_fd, STDOUT_FILENO) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
-    if (stderr_fd && dup2(stderr_fd, STDERR_FILENO) == -1) {
+    if (options->stderr_fd && dup2(options->stderr_fd, STDERR_FILENO) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }

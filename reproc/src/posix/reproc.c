@@ -46,9 +46,15 @@ REPROC_ERROR reproc_start(reproc_t *process,
     goto cleanup;
   }
 
+  struct process_options options = {
+    .working_directory = working_directory,
+    .stdin_fd = child_stdin,
+    .stdout_fd = child_stdout,
+    .stderr_fd = child_stderr
+  };
+
   // Fork a child process and call `execve`.
-  error = process_create(argv, working_directory, child_stdin, child_stdout,
-                         child_stderr, &process->id);
+  error = process_create(argv, &options, &process->id);
 
 cleanup:
   // Either an error has ocurred or the child pipe endpoints have been copied to
