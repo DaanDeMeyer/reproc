@@ -1,15 +1,15 @@
-include(FetchContent)
-
-FetchContent_Declare(
-  doctest
-  URL https://github.com/onqtam/doctest/archive/2.3.3.tar.gz
-)
-
 if(REPROC_TEST)
-  option(DOCTEST_WITH_TESTS "" OFF)
-  option(DOCTEST_NO_INSTALL "" ON)
+  if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/external/doctest)
+    file(
+      DOWNLOAD
+      https://raw.githubusercontent.com/onqtam/doctest/2.3.3/doctest/doctest.h
+      ${CMAKE_CURRENT_BINARY_DIR}/external/doctest/doctest.h
+    )
+  endif()
 
-  reproc_MakeAvailable(doctest)
+  add_library(doctest INTERFACE IMPORTED GLOBAL)
+  target_compile_features(doctest INTERFACE cxx_std_11)
+  target_include_directories(doctest INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/external/doctest)
 endif()
 
 if(REPROC_MULTITHREADED AND NOT TARGET Threads::Threads)
