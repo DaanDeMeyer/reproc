@@ -49,11 +49,8 @@ void io(const char *program, REPROC_STREAM stream)
   reproc_destroy(&io);
 }
 
-TEST_SUITE("reproc")
+TEST_CASE("io")
 {
-  TEST_CASE("io")
-  {
-    io("reproc/resources/stdout", REPROC_STREAM_OUT);
-    io("reproc/resources/stderr", REPROC_STREAM_ERR);
-  }
+  io("reproc/resources/stdout", REPROC_STREAM_OUT);
+  io("reproc/resources/stderr", REPROC_STREAM_ERR);
 }

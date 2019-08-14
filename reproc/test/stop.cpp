@@ -4,39 +4,35 @@
 
 #include <array>
 
-TEST_SUITE("reproc")
+TEST_CASE("stop")
 {
-  TEST_CASE("stop")
+  reproc_t infinite;
+
+  REPROC_ERROR error = REPROC_SUCCESS;
+  INFO(reproc_strerror(error));
+
+  std::array<const char *, 2> argv{ "reproc/resources/infinite", nullptr };
+
+  error = reproc_start(&infinite, argv.data(), nullptr);
+  REQUIRE(!error);
+
+  error = reproc_wait(&infinite, 50);
+  REQUIRE(error == REPROC_ERROR_WAIT_TIMEOUT);
+
+  SUBCASE("terminate")
   {
-    reproc_t infinite;
-
-    REPROC_ERROR error = REPROC_SUCCESS;
-    INFO(reproc_strerror(error));
-
-    std::array<const char *, 2> argv{ "reproc/resources/infinite",
-                                              nullptr };
-
-    error = reproc_start(&infinite, argv.data(), nullptr);
+    error = reproc_terminate(&infinite);
     REQUIRE(!error);
-
-    error = reproc_wait(&infinite, 50);
-    REQUIRE(error == REPROC_ERROR_WAIT_TIMEOUT);
-
-    SUBCASE("terminate")
-    {
-      error = reproc_terminate(&infinite);
-      REQUIRE(!error);
-    }
-
-    SUBCASE("kill")
-    {
-      error = reproc_kill(&infinite);
-      REQUIRE(!error);
-    }
-
-    error = reproc_wait(&infinite, 50);
-    REQUIRE(!error);
-
-    reproc_destroy(&infinite);
   }
+
+  SUBCASE("kill")
+  {
+    error = reproc_kill(&infinite);
+    REQUIRE(!error);
+  }
+
+  error = reproc_wait(&infinite, 50);
+  REQUIRE(!error);
+
+  reproc_destroy(&infinite);
 }
