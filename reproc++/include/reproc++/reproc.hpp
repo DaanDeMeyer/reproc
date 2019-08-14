@@ -6,7 +6,6 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
-#include <string>
 
 // Forward declare `reproc_t` so we don't have to include reproc.h in the
 // header.
@@ -44,6 +43,16 @@ enum class cleanup {
   /*! `process::kill` */
   kill = 3
 };
+
+namespace detail {
+
+template <typename T>
+using is_char_array = std::is_convertible<T, const char *const *>;
+
+template <bool B, class T = int>
+using enable_if = typename std::enable_if<B, T>::type;
+
+} // namespace detail
 
 /*! Improves on reproc's API by wrapping it in a class. Aside from methods that
 mimick reproc's API it also adds configurable RAII and several methods that
@@ -96,7 +105,29 @@ public:
         const char *working_directory = nullptr) noexcept;
 
   /*!
-  Overload of `start` for convenient usage with C++ containers of `std::string`.
+  Overload of `start` for convenient usage with C++ containers of strings.
+
+  `Container` must satisfy the following concept:
+
+  ```c++
+  concept Container {
+    using size_type = ...;
+    using value_type = ...;
+
+    size_type size() const;
+    const value_type &operator[](size_type index) const;
+  }
+
+  concept Container::value_type {
+    using size_type = ...;
+
+    size_type size() const;
+    char operator[](size_type index) const;
+  };
+  ```
+
+  An example of a type that satisfies this concept is
+  `std::vector<std::string>`.
 
   `args` has the same restrictions as `argv` in `reproc_start` except that it
   should not end with `NULL` (`start` allocates a new array which includes the
@@ -105,14 +136,13 @@ public:
   `working_directory` specifies the working directory. It is optional and
   defaults to `nullptr`.
 
-  To avoid having to add extra SFINAE constructs, this method is selected if
-  `SequenceContainer` has a `value_type` nested type. The implementation has
-  extra checks to verify a valid `SequenceContainer` is passed.
+  This method only participates in overload resolution if `Container` is not
+  convertible to `const char *const *`.
   */
-  template <typename SequenceContainer,
-            typename SequenceContainer::value_type * = nullptr>
-  std::error_code start(const SequenceContainer &args,
-                        const std::string *working_directory = nullptr);
+  template <typename Container,
+            detail::enable_if<!detail::is_char_array<Container>::value> = 0>
+  std::error_code start(const Container &args,
+                        const char *working_directory = nullptr);
 
   /*! `reproc_read` */
   REPROCXX_EXPORT std::error_code read(stream stream,
@@ -198,29 +228,36 @@ private:
   static constexpr unsigned int BUFFER_SIZE = 1024;
 };
 
-template <typename SequenceContainer, typename SequenceContainer::value_type *>
-std::error_code process::start(const SequenceContainer &args,
-                               const std::string *working_directory)
+template <typename Container,
+          detail::enable_if<!detail::is_char_array<Container>::value>>
+std::error_code process::start(const Container &args,
+                               const char *working_directory)
 {
-  using value_type = typename SequenceContainer::value_type;
-  using size_type = typename SequenceContainer::size_type;
-
-  static_assert(std::is_same<value_type, std::string>::value,
-                "Container value_type must be std::string");
+  using size_type = typename Container::size_type;
+  using value_size_type = typename Container::value_type::size_type;
 
   // Turn `args` into an array of C strings.
+
   auto argv = new const char *[args.size() + 1]; // NOLINT
+
   for (size_type i = 0; i < args.size(); i++) {
-    argv[i] = args[i].c_str();
+    auto string = new char[args[i].size() + 1]; // NOLINT
+
+    for (value_size_type j = 0; j < args[i].size(); j++) {
+      string[j] = args[i][j];
+    }
+
+    string[args[i].size()] = '\0';
+    argv[i] = string;
   }
+
   argv[args.size()] = nullptr;
 
-  // `std::string *` => `const char *`
-  const char *child_working_directory = working_directory != nullptr
-                                            ? working_directory->c_str()
-                                            : nullptr;
+  std::error_code ec = start(argv, working_directory);
 
-  std::error_code ec = start(argv, child_working_directory);
+  for (size_type i = 0; i < args.size(); i++) {
+    delete[] argv[i]; // NOLINT
+  }
 
   delete[] argv; // NOLINT
 

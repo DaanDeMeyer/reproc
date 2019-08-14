@@ -3,6 +3,7 @@
 #include <future>
 #include <iostream>
 #include <mutex>
+#include <string>
 
 int fail(std::error_code ec)
 {

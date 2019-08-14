@@ -65,6 +65,12 @@
   this is the case, simply start a thread that drains the stream with a
   `discard` sink.
 
+- Update `process::start` to work with any kind of string type.
+
+  Every string type that implements a `size` method and the index operator can
+  now be passed in a container to `process::start`. `working_directory` now
+  takes a `const char *` instead of a `std::string *`.
+
 ## 8.0.1
 
 - Correctly escape arguments on Windows.
