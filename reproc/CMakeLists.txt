@@ -55,7 +55,7 @@ endif()
 if(REPROC_TEST)
   target_sources(reproc-test PRIVATE
     test/argv.cpp
-    test/read-write.cpp
+    test/io.cpp
     test/stop.cpp
     test/working-directory.cpp
   )
