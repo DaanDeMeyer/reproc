@@ -77,8 +77,8 @@ process_create(const char *const *argv,
 
     int max_fd = (int) sysconf(_SC_OPEN_MAX);
     if (max_fd == -1) {
-      error = REPROC_ERROR_SYSTEM;
-      goto cleanup;
+      write(error_pipe_write, &errno, sizeof(errno));
+      _exit(errno);
     }
 
     // Close open file descriptors in the child process.
