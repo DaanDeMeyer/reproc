@@ -11,10 +11,13 @@ TEST_SUITE("reproc")
   {
     reproc_t process;
 
+    REPROC_ERROR error = REPROC_SUCCESS;
+    INFO(reproc_strerror(error));
+
     std::array<const char *, 4> argv = { "reproc/resources/argv", "argument 1",
                                          "argument 2", nullptr };
 
-    REPROC_ERROR error = reproc_start(&process, argv.data(), nullptr);
+    error = reproc_start(&process, argv.data(), nullptr);
     REQUIRE(!error);
 
     std::string output;

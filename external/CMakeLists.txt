@@ -2,7 +2,7 @@ if(REPROC_TEST)
   if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/external/doctest)
     file(
       DOWNLOAD
-      https://raw.githubusercontent.com/onqtam/doctest/2.3.3/doctest/doctest.h
+      https://raw.githubusercontent.com/onqtam/doctest/2.3.4/doctest/doctest.h
       ${CMAKE_CURRENT_BINARY_DIR}/external/doctest/doctest.h
     )
   endif()

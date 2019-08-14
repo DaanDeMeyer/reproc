@@ -1,4 +1,5 @@
 #include <doctest.h>
+
 #include <reproc/reproc.h>
 
 #include <array>
@@ -9,11 +10,11 @@ TEST_SUITE("reproc")
   {
     reproc_t infinite;
 
+    REPROC_ERROR error = REPROC_SUCCESS;
+    INFO(reproc_strerror(error));
+
     std::array<const char *, 2> argv{ "reproc/resources/infinite",
                                               nullptr };
-
-    int error = REPROC_SUCCESS;
-    CAPTURE(error);
 
     error = reproc_start(&infinite, argv.data(), nullptr);
     REQUIRE(!error);

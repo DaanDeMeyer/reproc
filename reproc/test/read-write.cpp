@@ -1,4 +1,5 @@
 #include <doctest.h>
+
 #include <reproc/reproc.h>
 
 #include <array>
@@ -10,8 +11,8 @@ TEST_SUITE("reproc")
   {
     reproc_t io;
 
-    int error = REPROC_SUCCESS;
-    CAPTURE(error);
+    REPROC_ERROR error = REPROC_SUCCESS;
+    INFO(reproc_strerror(error));
 
     static constexpr unsigned int BUFFER_SIZE = 1024;
     std::array<uint8_t, BUFFER_SIZE> buffer = {};

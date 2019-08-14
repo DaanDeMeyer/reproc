@@ -9,6 +9,9 @@ TEST_SUITE("reproc")
   {
     reproc_t noop;
 
+    REPROC_ERROR error = REPROC_SUCCESS;
+    INFO(reproc_strerror(error));
+
     // Executable path is relative to reproc/resources because we change
     // working directory before executing noop as a child process.
     const char *working_directory = "reproc/resources";
@@ -19,9 +22,6 @@ TEST_SUITE("reproc")
 #else
     std::array<const char *, 2> argv{ "./noop", nullptr };
 #endif
-
-    int error = REPROC_SUCCESS;
-    CAPTURE(error);
 
     error = reproc_start(&noop, argv.data(), working_directory);
     REQUIRE(!error);
