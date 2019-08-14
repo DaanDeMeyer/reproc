@@ -8,23 +8,11 @@ target_sources(reproc++ PRIVATE
 )
 
 if(REPROC_EXAMPLES)
-  function(reprocxx_add_example TARGET)
-    add_executable(reproc++-${TARGET})
-
-    reproc_add_common(reproc++-${TARGET} CXX 11 examples)
-    target_link_libraries(reproc++-${TARGET} PRIVATE reproc++)
-    target_sources(reproc++-${TARGET} PRIVATE examples/${TARGET}.cpp)
-    set_target_properties(reproc++-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
-  endfunction()
-
-  reprocxx_add_example(cmake-help)
+  reproc_add_example(cmake-help CXX 11 reproc++)
 
   if(Threads_FOUND)
-    reprocxx_add_example(forward CXX)
-    target_link_libraries(reproc++-forward PRIVATE Threads::Threads)
-
-    reprocxx_add_example(background CXX)
-    target_link_libraries(reproc++-background PRIVATE Threads::Threads)
+    reproc_add_example(forward CXX 11 reproc++ Threads::Threads)
+    reproc_add_example(background CXX 11 reproc++ Threads::Threads)
   else()
     message(STATUS "Threads package not found. Not building threaded reproc++ examples.")
   endif()

@@ -298,3 +298,25 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
     endif()
   endif()
 endfunction()
+
+function(reproc_add_example TARGET LANGUAGE STANDARD)
+  add_executable(reproc-${TARGET})
+
+  if(LANGUAGE STREQUAL "C")
+    set(SOURCE_EXT c)
+  else()
+    set(SOURCE_EXT cpp)
+  endif()
+
+  reproc_add_common(reproc-${TARGET} ${LANGUAGE} ${STANDARD} examples)
+  target_sources(reproc-${TARGET} PRIVATE examples/${TARGET}.${SOURCE_EXT})
+  target_link_libraries(reproc-${TARGET} PRIVATE ${ARGN})
+  set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
+
+  if(LANGUAGE STREQUAL "C" AND REPROC_SANITIZERS)
+    set_target_properties(reproc-${TARGET} PROPERTIES
+      # Hack to avoid UBSan undefined reference errors.
+      LINKER_LANGUAGE CXX
+    )
+  endif()
+endfunction()

@@ -82,22 +82,6 @@ if(REPROC_TEST)
 endif()
 
 if(REPROC_EXAMPLES)
-  function(reproc_add_example TARGET)
-    add_executable(reproc-${TARGET})
-
-    reproc_add_common(reproc-${TARGET} C 99 examples)
-    target_sources(reproc-${TARGET} PRIVATE examples/${TARGET}.c)
-    target_link_libraries(reproc-${TARGET} PRIVATE reproc)
-    set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
-
-    if(REPROC_SANITIZERS)
-      set_target_properties(reproc-${TARGET} PROPERTIES
-        # Hack to avoid UBSan undefined reference errors.
-        LINKER_LANGUAGE CXX
-      )
-    endif()
-  endfunction()
-
-  reproc_add_example(git-status C)
-  reproc_add_example(drain C)
+  reproc_add_example(git-status C 99 reproc)
+  reproc_add_example(drain C 99 reproc)
 endif()
