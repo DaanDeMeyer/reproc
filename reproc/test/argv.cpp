@@ -21,7 +21,7 @@ TEST_CASE("argv")
 
   std::string output;
 
-  static constexpr unsigned int BUFFER_SIZE = 4;
+  static constexpr unsigned int BUFFER_SIZE = 1024;
   std::array<uint8_t, BUFFER_SIZE> buffer = {};
 
   while (true) {
