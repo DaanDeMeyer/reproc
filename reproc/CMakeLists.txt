@@ -18,6 +18,7 @@ elseif(UNIX)
   target_sources(reproc PRIVATE
     src/posix/error.c
     src/posix/fd.c
+    src/posix/path.c
     src/posix/pipe.c
     src/posix/process.c
     src/posix/reproc.c

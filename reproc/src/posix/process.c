@@ -1,6 +1,7 @@
 #include "process.h"
 
 #include "fd.h"
+#include "path.h"
 #include "pipe.h"
 
 #include <reproc/config.h>
@@ -54,9 +55,26 @@ process_create(const char *const *argv,
     // error. Why `_exit`? See:
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
 
-    if (options->working_directory && chdir(options->working_directory) == -1) {
-      write(error_pipe_write, &errno, sizeof(errno));
-      _exit(errno);
+    const char *program = argv[0];
+
+    if (options->working_directory) {
+      // We prepend the parent working directory to `program` if it is relative
+      // so that it will always be searched for relative to the parent working
+      // directory even after executing `chdir`.
+      if (path_is_relative(program)) {
+        // We don't have to free `program` manually as it will be automatically
+        // freed when `_exit` or `execvp` is called.
+        program = path_prepend_cwd(program);
+        if (program == NULL) {
+          write(error_pipe_write, &errno, sizeof(errno));
+          _exit(errno);
+        }
+      }
+
+      if (chdir(options->working_directory) == -1) {
+        write(error_pipe_write, &errno, sizeof(errno));
+        _exit(errno);
+      }
     }
 
     // Redirect stdin, stdout and stderr if required.
@@ -99,7 +117,7 @@ process_create(const char *const *argv,
     // Replace the forked process with the process specified in `argv`'s first
     // element. The cast is safe since `execvp` doesn't actually change the
     // contents of `argv`.
-    if (execvp(argv[0], (char **) argv) == -1) {
+    if (execvp(program, (char **) argv) == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
     }
 

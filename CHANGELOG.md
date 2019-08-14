@@ -9,8 +9,6 @@
   We can trivially calculate `argc` internally in reproc since `argv` is
   required to end with a `NULL` value.
 
-## reproc
-
 - Improve implementation of `reproc_wait` with a timeout on POSIX systems.
 
   Instead of spawning a new process to implement the timeout, we now use
@@ -36,6 +34,19 @@
   As we already recommend not passing relative paths as the working directory to
   `reproc_start`, we fit this change in a feature release instead of a major
   release.
+
+- Ensure passing a custom working directory and a relative executable path
+  behaves consistently on all supported platforms.
+
+  Previously, calling `reproc_start` with a relative executable path combined
+  with a custom working directory would behave differently depending on which
+  platform the code was executed on. On POSIX systems, the relative executable
+  path would be resolved relative to the custom working directory. On Windows,
+  the relative executable path would be resolved relative to the parent process
+  working directory. Now, relative executable paths are always resolved relative
+  to the parent process working directory.
+
+## reproc
 
 - Update `reproc_strerror` to return the actual system error string of the error
   code returned by `reproc_system_error` instead of "system error" when passed
