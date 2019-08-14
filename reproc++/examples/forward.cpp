@@ -71,12 +71,12 @@ int main(int argc, char *argv[])
 
   // Pipe child process stdout output to stdout of the parent process.
   auto drain_stdout = std::async(std::launch::async, [&forward]() {
-    return forward.drain(reproc::stream::out, reproc::ostream_sink(std::cout));
+    return forward.drain(reproc::stream::out, reproc::sink::ostream(std::cout));
   });
 
   // Pipe child process stderr output to stderr of the parent process.
   auto drain_stderr = std::async(std::launch::async, [&forward]() {
-    return forward.drain(reproc::stream::err, reproc::ostream_sink(std::cerr));
+    return forward.drain(reproc::stream::err, reproc::sink::ostream(std::cerr));
   });
 
   /* Call `process::stop` ourselves to get the exit status. We add

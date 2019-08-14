@@ -54,6 +54,17 @@
 
   This should make debugging reproc errors a lot easier.
 
+# reproc++
+
+- Move sinks into `sink` namespace and remove `_sink` suffix from all sinks.
+
+- Add `discard` sink that discards all output read from a stream.
+
+  This is useful when a child process produces a lot of output that we're not
+  interested in and cannot handle the output stream being closed or full. When
+  this is the case, simply start a thread that drains the stream with a
+  `discard` sink.
+
 ## 8.0.1
 
 - Correctly escape arguments on Windows.

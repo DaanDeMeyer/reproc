@@ -55,7 +55,7 @@ int main()
   /* `process::drain` reads from a stream until it is closed or an error occurs.
   Providing it with a `string_sink` makes it store all output is stored in
   the string passed to the string sink. */
-  ec = cmake_help.drain(reproc::stream::out, reproc::string_sink(output));
+  ec = cmake_help.drain(reproc::stream::out, reproc::sink::string(output));
   if (ec) {
     return fail(ec);
   }
@@ -64,7 +64,7 @@ int main()
 
   // You can also pass an `ostream_sink` to write the output directly to an
   // output stream such as `std::cerr`.
-  ec = cmake_help.drain(reproc::stream::err, reproc::ostream_sink(std::cerr));
+  ec = cmake_help.drain(reproc::stream::err, reproc::sink::ostream(std::cerr));
   if (ec) {
     return fail(ec);
   }
