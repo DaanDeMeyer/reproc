@@ -6,6 +6,7 @@
 #include <sys/types.h>
 
 struct process_options {
+  const char *const *environment;
   // If not `NULL`, the working directory of the child process is set to
   // `working_directory`.
   const char *working_directory;

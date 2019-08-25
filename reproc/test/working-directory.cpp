@@ -14,7 +14,7 @@ TEST_CASE("working-directory")
   const char *working_directory = "reproc/resources";
   std::array<const char *, 2> argv{ "reproc/resources/noop", nullptr };
 
-  error = reproc_start(&noop, argv.data(), working_directory);
+  error = reproc_start(&noop, argv.data(), nullptr, working_directory);
   REQUIRE(!error);
 
   error = reproc_wait(&noop, REPROC_INFINITE);

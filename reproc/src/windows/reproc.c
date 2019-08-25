@@ -10,6 +10,7 @@
 
 REPROC_ERROR reproc_start(reproc_t *process,
                           const char *const *argv,
+                          const char *const *environment,
                           const char *working_directory)
 {
   assert(process);
@@ -26,6 +27,8 @@ REPROC_ERROR reproc_start(reproc_t *process,
 
   char *command_line = NULL;
   wchar_t *command_line_wstring = NULL;
+  char *environment_line = NULL;
+  wchar_t *environment_line_wstring = NULL;
   wchar_t *working_directory_wstring = NULL;
 
   // Initialize to `REPROC_ERROR_SYSTEM` so we don't accidentally return
@@ -59,20 +62,38 @@ REPROC_ERROR reproc_start(reproc_t *process,
   }
 
   // Convert UTF-8 to UTF-16 as required by `CreateProcessW`.
-  command_line_wstring = string_to_wstring(command_line);
+  command_line_wstring = string_to_wstring(command_line,
+                                           strlen(command_line) + 1);
   if (command_line_wstring == NULL) {
     goto cleanup;
   }
 
-  // Do the same for `working_directory` if it isn't `NULL`.
+  // Idem for `environment` if it isn't `NULL`.
+  if (environment != NULL) {
+    environment_line = environment_join(environment);
+    if (environment_line == NULL) {
+      goto cleanup;
+    }
+
+    environment_line_wstring =
+        string_to_wstring(environment_line, environment_join_size(environment));
+    if (environment_line_wstring == NULL) {
+      goto cleanup;
+    }
+  }
+
+  // Convert `working_directory` to UTF-16 if it isn't `NULL`.
   if (working_directory != NULL) {
-    working_directory_wstring = string_to_wstring(working_directory);
+    size_t working_directory_size = strlen(working_directory) + 1;
+    working_directory_wstring = string_to_wstring(working_directory,
+                                                  working_directory_size);
     if (working_directory_wstring == NULL) {
       goto cleanup;
     }
   }
 
   struct process_options options = {
+    .environment = environment_line_wstring,
     .working_directory = working_directory_wstring,
     .stdin_handle = child_stdin,
     .stdout_handle = child_stdout,
@@ -97,6 +118,8 @@ cleanup:
 
   free(command_line);
   free(command_line_wstring);
+  free(environment_line);
+  free(environment_line_wstring);
   free(working_directory_wstring);
 
   if (error) {

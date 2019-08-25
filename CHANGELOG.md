@@ -4,6 +4,16 @@
 
 ## General
 
+- Add support for custom environments.
+
+  `reproc_start` and `reproc::process::start` now take an extra `environment`
+  parameter that allows specifying custom environments.
+
+  **IMPORTANT**: The `environment` parameter was inserted before the
+  `working_directory` parameter so make sure to update existing usages of
+  `reproc_start` and `reproc::process::start` so that `environment` and
+  `working_directory` are specified in the correct order.
+
 - Remove `argc` parameter from `reproc_start` and `process::start`.
 
   We can trivially calculate `argc` internally in reproc since `argv` is

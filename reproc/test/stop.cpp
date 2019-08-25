@@ -13,7 +13,7 @@ TEST_CASE("stop")
 
   std::array<const char *, 2> argv{ "reproc/resources/infinite", nullptr };
 
-  error = reproc_start(&infinite, argv.data(), nullptr);
+  error = reproc_start(&infinite, argv.data(), nullptr, nullptr);
   REQUIRE(!error);
 
   error = reproc_wait(&infinite, 50);

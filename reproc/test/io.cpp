@@ -13,7 +13,7 @@ void io(const char *program, REPROC_STREAM stream)
   reproc_t io;
   std::array<const char *, 2> argv = { program, nullptr };
 
-  error = reproc_start(&io, argv.data(), nullptr);
+  error = reproc_start(&io, argv.data(), nullptr, nullptr);
   REQUIRE(!error);
 
   std::string message = "reproc stands for REdirected PROCess";

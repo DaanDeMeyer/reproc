@@ -24,6 +24,12 @@
 #define SIGMASK_SAFE sigprocmask
 #endif
 
+#if defined(__APPLE__)
+#define EXECVPE execve
+#else
+#define EXECVPE execvpe
+#endif
+
 REPROC_ERROR
 process_create(const char *const *argv,
                struct process_options *options,
@@ -111,13 +117,24 @@ process_create(const char *const *argv,
 
       close(i);
     }
+
     // Ignore `close` errors since we try to close every file descriptor and
     // `close` sets `errno` when an invalid file descriptor is passed.
 
     // Replace the forked process with the process specified in `argv`'s first
-    // element. The cast is safe since `execvp` doesn't actually change the
-    // contents of `argv`.
-    if (execvp(program, (char **) argv) == -1) {
+    // element. The casts are safe since `execvpe` doesn't actually change the
+    // contents of `argv` and `envp`.
+
+    int err = 0;
+
+    if (options->environment != NULL) {
+      err = EXECVPE(program, (char *const *) argv,
+                    (char *const *) options->environment);
+    } else {
+      err = execvp(program, (char *const *) argv);
+    }
+
+    if (err == -1) {
       write(error_pipe_write, &errno, sizeof(errno));
     }
 

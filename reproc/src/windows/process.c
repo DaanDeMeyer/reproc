@@ -96,17 +96,12 @@ char *argv_join(const char *const *argv)
 {
   assert(argv);
 
-  int argc = 0;
-  while (argv[argc] != NULL)  {
-    argc++;
-  }
-
   // Determine the length of the concatenated string first.
   size_t joined_length = 1; // Count the null terminator.
-  for (int i = 0; i < argc; i++) {
+  for (int i = 0; argv[i] != NULL; i++) {
     joined_length += argument_escaped_length(argv[i]);
 
-    if (i < argc - 1) {
+    if (argv[i + 1] != NULL) {
       joined_length++; // Count whitespace.
     }
   }
@@ -117,11 +112,11 @@ char *argv_join(const char *const *argv)
   }
 
   char *current = joined;
-  for (int i = 0; i < argc; i++) {
+  for (int i = 0; argv[i] != NULL; i++) {
     current += argument_escape(current, argv[i]);
 
     // We add a space after every part of the joined except for the last one.
-    if (i < argc - 1) {
+    if (argv[i + 1] != NULL) {
       *current++ = ' ';
     }
   }
@@ -131,14 +126,48 @@ char *argv_join(const char *const *argv)
   return joined;
 }
 
-wchar_t *string_to_wstring(const char *string)
+size_t environment_join_size(const char *const *environment)
+{
+  size_t joined_size = 1; // Count the null terminator.
+  for (int i = 0; environment[i] != NULL; i++) {
+    joined_size += strlen(environment[i]) + 1; // Count the null terminator.
+  }
+
+  return joined_size;
+}
+
+char *environment_join(const char *const *environment)
+{
+  assert(environment);
+
+  char *joined = malloc(sizeof(char) * environment_join_size(environment));
+  if (joined == NULL) {
+    return NULL;
+  }
+
+  char *current = joined;
+  for (int i = 0; environment[i] != NULL; i++) {
+    size_t to_copy = strlen(environment[i]) + 1; // Include null terminator.
+    memcpy(current, environment[i], to_copy);
+    current += to_copy;
+  }
+
+  *current = '\0';
+
+  return joined;
+}
+
+wchar_t *string_to_wstring(const char *string, size_t size)
 {
   assert(string);
+  // Overflow check although we really don't expect this to ever happen. This
+  // makes the following casts to `int` safe.
+  assert(size <= INT_MAX);
 
   // Determine wstring length (`MultiByteToWideChar` returns the required size
   // if its last two arguments are `NULL` and 0).
-  int rv = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string, -1, NULL,
-                               0);
+  int rv = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string,
+                               (int) size, NULL, 0);
   if (rv == 0) {
     return NULL;
   }
@@ -153,7 +182,7 @@ wchar_t *string_to_wstring(const char *string)
   // Now we pass our allocated string and its length as the last two arguments
   // instead of `NULL` and 0 which makes `MultiByteToWideChar` actually perform
   // the conversion.
-  rv = MultiByteToWideChar(CP_UTF8, 0, string, -1, wstring, rv);
+  rv = MultiByteToWideChar(CP_UTF8, 0, string, (int) size, wstring, rv);
   if (rv == 0) {
     free(wstring);
     return NULL;
@@ -218,7 +247,9 @@ REPROC_ERROR process_create(wchar_t *command_line,
 
   // Create each child process in a new process group so we don't send
   // `CTRL-BREAK` signals to more than one child process in `process_terminate`.
-  DWORD creation_flags = CREATE_NEW_PROCESS_GROUP;
+  // Create each child process with a Unicode environment as we accept any
+  // UTF-16 encoded environment (including Unicode characters).
+  DWORD creation_flags = CREATE_NEW_PROCESS_GROUP | CREATE_UNICODE_ENVIRONMENT;
 
 #if defined(ATTRIBUTE_LIST_FOUND)
   REPROC_ERROR error = REPROC_SUCCESS;
@@ -282,8 +313,9 @@ REPROC_ERROR process_create(wchar_t *command_line,
   DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
 
   BOOL result = CreateProcessW(NULL, command_line, NULL, NULL, TRUE,
-                               creation_flags, NULL, options->working_directory,
-                               startup_info_address, &info);
+                               creation_flags, options->environment,
+                               options->working_directory, startup_info_address,
+                               &info);
 
   SetErrorMode(previous_error_mode);
 

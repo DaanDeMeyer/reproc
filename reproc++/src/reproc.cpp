@@ -60,9 +60,11 @@ process::process(process &&) noexcept = default; // NOLINT
 process &process::operator=(process &&) noexcept = default;
 
 std::error_code process::start(const char *const *argv,
+                               const char *const *environment,
                                const char *working_directory) noexcept
 {
-  REPROC_ERROR error = reproc_start(process_.get(), argv, working_directory);
+  REPROC_ERROR error = reproc_start(process_.get(), argv, environment,
+                                    working_directory);
   return error_to_error_code(error);
 }
 

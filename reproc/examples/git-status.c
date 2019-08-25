@@ -29,9 +29,11 @@ int main(void)
   REPROC_ERROR error = REPROC_SUCCESS;
 
   /* `reproc_start` takes a child process instance (`reproc_t`), argv
-  and the working directory of the child process. If the working directory is
-  `NULL` the working directory of the parent process is used. */
-  error = reproc_start(&git_status, argv, NULL);
+  and optionally the working directory and the environment of the child process.
+  If the working directory is `NULL` the working directory of the parent process
+  is used. If the environment is `NULL`, the environment of the parent process
+  is used. */
+  error = reproc_start(&git_status, argv, NULL, NULL);
 
   /* reproc exposes a single error enum `REPROC_ERROR` which contains errors
   specific to reproc and `REPROC_ERROR_SYSTEM` to indicate a system error

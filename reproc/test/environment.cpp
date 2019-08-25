@@ -2,21 +2,23 @@
 
 #include <reproc/reproc.h>
 
-#include <algorithm>
 #include <array>
-#include <string>
+#include <iterator>
+#include <sstream>
 
-TEST_CASE("argv")
+TEST_CASE("environment")
 {
   reproc_t process;
 
   REPROC_ERROR error = REPROC_SUCCESS;
   INFO(reproc_strerror(error));
 
-  std::array<const char *, 4> argv = { "reproc/resources/argv", "argument 1",
-                                       "argument 2", nullptr };
+  std::array<const char *, 2> argv = { "reproc/resources/environment",
+                                       nullptr };
+  std::array<const char *, 3> environment = { "IP=127.0.0.1", "PORT=8080",
+                                              nullptr };
 
-  error = reproc_start(&process, argv.data(), nullptr, nullptr);
+  error = reproc_start(&process, argv.data(), environment.data(), nullptr);
   REQUIRE(!error);
 
   std::string output;
@@ -36,5 +38,10 @@ TEST_CASE("argv")
   }
 
   REQUIRE(error == REPROC_ERROR_STREAM_CLOSED);
-  REQUIRE(std::count(output.begin(), output.end(), '\n') == argv.size() - 1);
+
+  std::ostringstream concatenated;
+  std::copy(environment.begin(), environment.end() - 1,
+            std::ostream_iterator<const char *>(concatenated, ""));
+
+  REQUIRE(output == concatenated.str());
 }

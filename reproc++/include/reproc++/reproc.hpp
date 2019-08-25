@@ -102,6 +102,7 @@ public:
   /*! `reproc_start` */
   REPROCXX_EXPORT std::error_code
   start(const char *const *argv,
+        const char *const *environment = nullptr,
         const char *working_directory = nullptr) noexcept;
 
   /*!
@@ -133,6 +134,10 @@ public:
   should not end with `NULL` (`start` allocates a new array which includes the
   missing `NULL` value).
 
+  `environment` is passed unmodified to `reproc_start`. It defaults to
+  `nullptr`. See `reproc_start` for more information on the format required by
+  `environment`.
+
   `working_directory` specifies the working directory. It is optional and
   defaults to `nullptr`.
 
@@ -142,6 +147,7 @@ public:
   template <typename Container,
             detail::enable_if<!detail::is_char_array<Container>::value> = 0>
   std::error_code start(const Container &args,
+                        const char *const *environment = nullptr,
                         const char *working_directory = nullptr);
 
   /*! `reproc_read` */
@@ -231,6 +237,7 @@ private:
 template <typename Container,
           detail::enable_if<!detail::is_char_array<Container>::value>>
 std::error_code process::start(const Container &args,
+                               const char *const *environment,
                                const char *working_directory)
 {
   using size_type = typename Container::size_type;
@@ -253,7 +260,7 @@ std::error_code process::start(const Container &args,
 
   argv[args.size()] = nullptr;
 
-  std::error_code ec = start(argv, working_directory);
+  std::error_code ec = start(argv, environment, working_directory);
 
   for (size_type i = 0; i < args.size(); i++) {
     delete[] argv[i]; // NOLINT

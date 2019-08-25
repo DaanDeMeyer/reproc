@@ -74,6 +74,17 @@ the executable. None of these elements can be `NULL`.
 
 Example: ["cmake", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", `NULL`]
 
+`environment` is an array of UTF-8 encoded, null terminated strings that
+specifies the environment for the child process. It has the following layout:
+
+- All elements except the last must be of the format `NAME=VALUE`.
+- The final element must be `NULL`.
+
+Example: ["IP=127.0.0.1", "PORT=8080", `NULL`]
+
+If `environment` is `NULL`, the child process inherits the environment of the
+current process.
+
 `working_directory` specifies the working directory for the child process. If it
 is `NULL`, the child process runs in the same directory as the parent process.
 
@@ -85,6 +96,7 @@ Possible errors:
 */
 REPROC_EXPORT REPROC_ERROR reproc_start(reproc_t *process,
                                         const char *const *argv,
+                                        const char *const *environment,
                                         const char *working_directory);
 
 /*!

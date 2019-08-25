@@ -56,7 +56,7 @@ int main(void)
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
-  error = reproc_start(&git_help, argv, NULL);
+  error = reproc_start(&git_help, argv, NULL, NULL);
   if (error) {
     return fail(error);
   }

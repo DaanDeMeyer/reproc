@@ -12,6 +12,7 @@
 
 REPROC_ERROR reproc_start(reproc_t *process,
                           const char *const *argv,
+                          const char *const *environment,
                           const char *working_directory)
 {
   assert(process);
@@ -46,12 +47,11 @@ REPROC_ERROR reproc_start(reproc_t *process,
     goto cleanup;
   }
 
-  struct process_options options = {
-    .working_directory = working_directory,
-    .stdin_fd = child_stdin,
-    .stdout_fd = child_stdout,
-    .stderr_fd = child_stderr
-  };
+  struct process_options options = { .environment = environment,
+                                     .working_directory = working_directory,
+                                     .stdin_fd = child_stdin,
+                                     .stdout_fd = child_stdout,
+                                     .stderr_fd = child_stderr };
 
   // Fork a child process and call `execve`.
   error = process_create(argv, &options, &process->id);
