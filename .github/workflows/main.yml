@@ -1,0 +1,213 @@
+name: CI
+
+on: push
+
+jobs:
+  ci:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        # Github Actions requires a single row to be added to the build matrix.
+        # See https://help.github.com/en/articles/workflow-syntax-for-github-actions.
+        name: [
+          windows-vs2017-cl-msvc,
+          windows-vs2017-clang-msvc,
+          windows-vs2017-clang-gnu,
+          windows-vs2019-cl-msvc,
+          windows-vs2019-clang-msvc,
+          windows-vs2019-clang-gnu,
+          linux-gcc-6,
+          linux-gcc-9,
+          linux-clang-6,
+          linux-clang-8,
+          macos
+        ]
+
+        include:
+          - name: windows-vs2017-cl-msvc
+            os: windows-2016
+            vcvarsall: C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+            cc: cl
+            cxx: cl
+
+          - name: windows-vs2017-clang-msvc
+            os: windows-2016
+            vcvarsall: C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+            cc: clang-cl
+            cxx: clang-cl
+
+          - name: windows-vs2017-clang-gnu
+            os: windows-2016
+            vcvarsall: C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+            cc: clang
+            cxx: clang++
+
+          - name: windows-vs2019-cl-msvc
+            os: windows-2019
+            vcvarsall: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+            cc: cl
+            cxx: cl
+
+          - name: windows-vs2019-clang-msvc
+            os: windows-2019
+            vcvarsall: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+            cc: clang-cl
+            cxx: clang-cl
+
+          - name: windows-vs2019-clang-gnu
+            os: windows-2019
+            vcvarsall: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+            cc: clang
+            cxx: clang++
+
+          - name: linux-gcc-6
+            os: ubuntu-latest
+            repository: ppa:ubuntu-toolchain-r/test
+            package: g++-6
+            cc: gcc-6
+            cxx: g++-6
+
+          - name: linux-gcc-9
+            os: ubuntu-latest
+            repository: ppa:ubuntu-toolchain-r/test
+            package: g++-9
+            cc: gcc-9
+            cxx: g++-9
+
+          - name: linux-clang-6
+            os: ubuntu-latest
+            repository: deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main
+            package: clang-6.0
+            cc: clang-6.0
+            cxx: clang++-6.0
+
+          - name: linux-clang-8
+            os: ubuntu-latest
+            repository: deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-8 main
+            package: clang-8
+            cc: clang-8
+            cxx: clang++-8
+
+          - name: macos
+            os: macOS-latest
+            cc: clang
+            cxx: clang++
+
+    # Github Actions resets environment variables between steps so we have to
+    # add the required environment variables at the start of each step.
+    # See https://github.community/t5/GitHub-Actions/Support-global-environment-variables/td-p/30481.
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Install (Linux)
+        if: startsWith(matrix.name, 'linux')
+        run: |
+          sudo add-apt-repository "${{ matrix.repository }}"
+          sudo apt-get update
+          sudo apt-get install -y ${{ matrix.package }}
+
+          # CMake is not up-to-date so we install CMake manually.
+          curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Linux-x86_64.tar.gz -o cmake.tar.gz
+          sudo tar xf cmake.tar.gz --strip 1 -C /usr/local
+
+      - name: Install (MacOS)
+        if: startsWith(matrix.name, 'macos')
+        run: |
+          # CMake is not up-to-date and brew is slow so we install CMake
+          # manually.
+          brew uninstall cmake
+          curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Darwin-x86_64.tar.gz -o cmake.tar.gz
+          sudo tar xf cmake.tar.gz --strip 1 -C /Applications
+          sudo /Applications/CMake.app/Contents/bin/cmake-gui --install
+
+      - name: Install (Windows)
+        if: startsWith(matrix.name, 'windows')
+        shell: powershell
+        run: |
+          # LLVM's (clang-cl) MSBuild integration is outdated so we use Ninja
+          # instead. CMake is not up-to-date and LLVM is not installed by
+          # default so we install them using scoop.
+          iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
+          scoop install ninja cmake llvm --global
+
+      # We build reproc as a shared library to verify all the necessary symbols
+      # are exported.
+
+      - name: Configure (Linux/MacOS)
+        if: startsWith(matrix.name, 'linux') || startsWith(matrix.name, 'macos')
+        run: |
+          export PATH=/usr/local/bin:$PATH
+          cmake \
+            -B build \
+            -S . \
+            -DCMAKE_C_COMPILER=${{ matrix.cc }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DBUILD_SHARED_LIBS=ON \
+            -DREPROC++=ON \
+            -DREPROC_TEST=ON \
+            -DREPROC_EXAMPLES=ON \
+            -DREPROC_WARNINGS_AS_ERRORS=ON \
+            -DREPROC_SANITIZERS=ON
+
+      - name: Configure (Windows)
+        if: startsWith(matrix.name, 'windows')
+        run: |
+          set PATH=C:\ProgramData\scoop\shims;%PATH%
+          call "${{ matrix.vcvarsall }}" x64
+          cmake ^
+            -B build ^
+            -S . ^
+            -G Ninja ^
+            -DCMAKE_C_COMPILER=${{ matrix.cc }} ^
+            -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} ^
+            -DCMAKE_BUILD_TYPE=Debug ^
+            -DBUILD_SHARED_LIBS=ON ^
+            -DREPROC++=ON ^
+            -DREPROC_TEST=ON ^
+            -DREPROC_EXAMPLES=ON ^
+            -DREPROC_WARNINGS_AS_ERRORS=ON ^
+            -DREPROC_TIDY=ON
+
+      - name: Build (Linux/MacOS)
+        if: startsWith(matrix.name, 'linux') || startsWith(matrix.name, 'macos')
+        run: |
+          export PATH=/usr/local/bin:$PATH;
+          cmake --build build --parallel 2
+
+      - name: Build (Windows)
+        if: startsWith(matrix.name, 'windows')
+        run: |
+          set PATH=C:\ProgramData\scoop\shims;%PATH%
+          call "${{ matrix.vcvarsall }}" x64
+          cmake --build build --parallel 2
+
+      # Aside from running the tests we also make sure the examples don't crash
+      # or return a non-zero exit code.
+
+      - name: Test (Linux/MacOS)
+        if: startsWith(matrix.name, 'linux') || startsWith(matrix.name, 'macos')
+        run: |
+          build/test
+          build/reproc/examples/drain
+          build/reproc/examples/git-status
+          build/reproc++/examples/background cmake --help
+          build/reproc++/examples/cmake-help
+          build/reproc++/examples/forward cmake --help
+
+      - name: Test (Windows)
+        if: startsWith(matrix.name, 'windows')
+        run: |
+          # Make sure the tests and examples can find the reproc and reproc++
+          # DLL's.
+          set PATH=%cd%\build\reproc\lib;%PATH%
+          set PATH=%cd%\build\reproc++\lib;%PATH%
+          build\test
+          build\reproc\examples\drain
+          build\reproc\examples\git-status
+          build\reproc++\examples\background cmake --help
+          build\reproc++\examples\cmake-help
+          build\reproc++\examples\forward cmake --help
