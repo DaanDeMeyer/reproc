@@ -1,7 +1,5 @@
 # reproc
 
-[![Join the chat at https://gitter.im/reproc/Lobby](https://badges.gitter.im/reproc/Lobby.svg)](https://gitter.im/reproc/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 - [What is reproc?](#what-is-reproc)
 - [Features](#features)
 - [Questions](#questions)
