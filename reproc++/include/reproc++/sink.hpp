@@ -32,8 +32,6 @@ public:
 /*! Discards all output. */
 class discard {
 public:
-  REPROCXX_EXPORT explicit discard() = default;
-
   REPROCXX_EXPORT bool operator()(const uint8_t *buffer,
                                   unsigned int size) noexcept;
 };
