@@ -105,8 +105,8 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
 
   if(REPROC_TIDY AND REPROC_TIDY_PROGRAM)
     set_target_properties(${TARGET} PROPERTIES
-      # CLANG_TIDY_PROGRAM is a list so we surround it with quotes to pass it as
-      # a single argument.
+      # `REPROC_TIDY_PROGRAM` is a list so we surround it with quotes to pass it
+      # as a single argument.
       ${LANGUAGE}_CLANG_TIDY "${REPROC_TIDY_PROGRAM}"
     )
   endif()
