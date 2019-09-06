@@ -28,6 +28,7 @@ REPROCXX_EXPORT std::error_code make_error_code(error error) noexcept;
 
 namespace std {
 
-template <> struct is_error_code_enum<reproc::error> : true_type {};
+template <>
+struct is_error_code_enum<reproc::error> : true_type {};
 
 } // namespace std

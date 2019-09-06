@@ -2,6 +2,7 @@
 BasedOnStyle: LLVM
 ---
 Language: Cpp
+AlwaysBreakTemplateDeclarations: Yes
 AllowShortFunctionsOnASingleLine: Empty
 BinPackParameters: false
 BreakBeforeBraces: Custom

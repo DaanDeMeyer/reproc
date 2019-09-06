@@ -192,7 +192,8 @@ public:
 
   For examples of sinks, see `sink.hpp`
   */
-  template <typename Sink> std::error_code drain(stream stream, Sink &&sink);
+  template <typename Sink>
+  std::error_code drain(stream stream, Sink &&sink);
 
   /*! `reproc_write` */
   REPROCXX_EXPORT std::error_code write(const uint8_t *buffer,
