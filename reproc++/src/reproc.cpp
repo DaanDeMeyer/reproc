@@ -135,4 +135,36 @@ unsigned int process::exit_status() noexcept
   return reproc_exit_status(process_.get());
 }
 
+process::arguments::~arguments()
+{
+  for (size_t i = 0; data_[i] != nullptr; i++) {
+    delete[] data_[i]; // NOLINT
+  }
+
+  delete[] data_; // NOLINT
+}
+
+const char *const *process::arguments::data() const noexcept
+{
+  return data_;
+}
+
+process::environment::~environment()
+{
+  if (data_ == nullptr) {
+    return;
+  }
+
+  for (size_t i = 0; data_[i] != nullptr; i++) {
+    delete[] data_[i]; // NOLINT
+  }
+
+  delete[] data_; // NOLINT
+}
+
+const char *const *process::environment::data() const noexcept
+{
+  return data_;
+}
+
 } // namespace reproc

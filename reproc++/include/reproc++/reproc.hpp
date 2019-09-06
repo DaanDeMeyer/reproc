@@ -46,11 +46,14 @@ enum class cleanup {
 
 namespace detail {
 
+template <bool B, typename T = void>
+using enable_if = typename std::enable_if<B, T>::type;
+
 template <typename T>
 using is_char_array = std::is_convertible<T, const char *const *>;
 
-template <bool B, class T = int>
-using enable_if = typename std::enable_if<B, T>::type;
+template <typename T>
+using is_container = enable_if<!is_char_array<T>::value>;
 
 } // namespace detail
 
@@ -108,46 +111,48 @@ public:
   /*!
   Overload of `start` for convenient usage with C++ containers of strings.
 
-  `Container` must satisfy the following concept:
+  `Arguments` must be a `Container` containing `SequenceContainer` containing
+  characters. Examples of types that satisfy this requirement are
+  `std::vector<std::string>` and `std::array<std::string>`.
 
-  ```c++
-  concept Container {
-    using size_type = ...;
-    using value_type = ...;
+  `Environment` must be a `Container` containing `pair` of `SequenceContainer`
+  containing characters. Examples of types that satisfy this requirement are
+  `std::vector<std::pair<std::string, std::string>>` and
+  `std::map<std::string, std::string>`.
 
-    size_type size() const;
-    const value_type &operator[](size_type index) const;
-  }
+  - `Container`: https://en.cppreference.com/w/cpp/named_req/Container
+  - `SequenceContainer`:
+  https://en.cppreference.com/w/cpp/named_req/SequenceContainer
+  - `pair`: Anything that resembles `std::pair`
+  (https://en.cppreference.com/w/cpp/utility/pair).
 
-  concept Container::value_type {
-    using size_type = ...;
+  `arguments` has the same restrictions as `argv` in `reproc_start` except that
+  it should not end with `NULL` (`start` allocates a new array which includes
+  the missing `NULL` value).
 
-    size_type size() const;
-    char operator[](size_type index) const;
-  };
-  ```
-
-  An example of a type that satisfies this concept is
-  `std::vector<std::string>`.
-
-  `args` has the same restrictions as `argv` in `reproc_start` except that it
-  should not end with `NULL` (`start` allocates a new array which includes the
-  missing `NULL` value).
-
-  `environment` is passed unmodified to `reproc_start`. It defaults to
-  `nullptr`. See `reproc_start` for more information on the format required by
-  `environment`.
+  The pairs in `environment` represent the environment variables of the child
+  process and are converted to the right format before being passed as the
+  environment to `reproc_start`. If `environment` is `nullptr`, the environment
+  of the parent process is used as the environment of the child process.
 
   `working_directory` specifies the working directory. It is optional and
   defaults to `nullptr`.
 
-  This method only participates in overload resolution if `Container` is not
-  convertible to `const char *const *`.
+  This method only participates in overload resolution if `Arguments` and
+  `Environment` are not convertible to `const char *const *`.
   */
-  template <typename Container,
-            detail::enable_if<!detail::is_char_array<Container>::value> = 0>
-  std::error_code start(const Container &args,
-                        const char *const *environment = nullptr,
+  template <typename Arguments,
+            typename Environment,
+            typename = detail::is_container<Arguments>,
+            typename = detail::is_container<Environment>>
+  std::error_code start(const Arguments &arguments,
+                        const Environment *environment,
+                        const char *working_directory = nullptr);
+
+  // Extra overload to avoid having to specify the type for `Environment` when
+  // passing `nullptr` as the environment.
+  template <typename Arguments, typename = detail::is_container<Arguments>>
+  std::error_code start(const Arguments &arguments,
                         const char *working_directory = nullptr);
 
   /*! `reproc_read` */
@@ -232,43 +237,54 @@ private:
   milliseconds t3_;
 
   static constexpr unsigned int BUFFER_SIZE = 1024;
+
+  class REPROCXX_EXPORT arguments {
+    char **data_;
+
+  public:
+    template <typename Arguments>
+    explicit arguments(const Arguments &arguments);
+
+    arguments(const arguments &) = delete;
+
+    ~arguments();
+
+    const char *const *data() const noexcept;
+  };
+
+  class REPROCXX_EXPORT environment {
+    char **data_;
+
+  public:
+    template <typename Environment>
+    explicit environment(const Environment *environment);
+
+    environment(const environment &) = delete;
+
+    ~environment();
+
+    const char *const *data() const noexcept;
+  };
 };
 
-template <typename Container,
-          detail::enable_if<!detail::is_char_array<Container>::value>>
-std::error_code process::start(const Container &args,
-                               const char *const *environment,
+template <typename Arguments, typename Environment, typename, typename>
+std::error_code process::start(const Arguments &arguments,
+                               const Environment *environment,
                                const char *working_directory)
 {
-  using size_type = typename Container::size_type;
-  using value_size_type = typename Container::value_type::size_type;
+  process::arguments args(arguments);
+  process::environment env(environment);
 
-  // Turn `args` into an array of C strings.
+  return start(args.data(), env.data(), working_directory);
+}
 
-  auto argv = new const char *[args.size() + 1]; // NOLINT
+template <typename Arguments, typename>
+std::error_code process::start(const Arguments &arguments,
+                               const char *working_directory)
+{
+  process::arguments args(arguments);
 
-  for (size_type i = 0; i < args.size(); i++) {
-    auto string = new char[args[i].size() + 1]; // NOLINT
-
-    for (value_size_type j = 0; j < args[i].size(); j++) {
-      string[j] = args[i][j];
-    }
-
-    string[args[i].size()] = '\0';
-    argv[i] = string;
-  }
-
-  argv[args.size()] = nullptr;
-
-  std::error_code ec = start(argv, environment, working_directory);
-
-  for (size_type i = 0; i < args.size(); i++) {
-    delete[] argv[i]; // NOLINT
-  }
-
-  delete[] argv; // NOLINT
-
-  return ec;
+  return start(args.data(), nullptr, working_directory);
 }
 
 template <typename Parser>
@@ -325,6 +341,67 @@ std::error_code process::drain(stream stream, Sink &&sink)
   }
 
   return ec;
+}
+
+template <typename Arguments>
+process::arguments::arguments(const Arguments &arguments)
+    : data_(new char *[arguments.size() + 1]) // NOLINT
+{
+  using value_size_type = typename Arguments::value_type::size_type;
+
+  size_t current = 0;
+
+  for (const auto &entry : arguments) {
+    auto string = new char[entry.size() + 1]; // NOLINT
+
+    data_[current++] = string;
+
+    for (value_size_type i = 0; i < entry.size(); i++) {
+      *string++ = entry[i];
+    }
+
+    *string = '\0';
+  }
+
+  data_[current] = nullptr;
+}
+
+template <typename Environment>
+process::environment::environment(const Environment *environment)
+    : data_(environment ? new char *[environment->size() + 1] // NOLINT
+                        : nullptr)
+{
+  if (environment == nullptr) {
+    return;
+  }
+
+  using key_size_type = typename Environment::value_type::first_type::size_type;
+  using value_size_type =
+      typename Environment::value_type::second_type::size_type;
+
+  size_t current = 0;
+
+  for (const auto &entry : *environment) {
+    // +2 => '=' + '\0'
+    size_t size = entry.first.size() + entry.second.size() + 2;
+    auto string = new char[size]; // NOLINT
+
+    data_[current++] = string;
+
+    for (key_size_type i = 0; i < entry.first.size(); i++) {
+      *string++ = entry.first[i];
+    }
+
+    *string++ = '=';
+
+    for (value_size_type i = 0; i < entry.second.size(); i++) {
+      *string++ = entry.second[i];
+    }
+
+    *string = '\0';
+  }
+
+  data_[current] = nullptr;
 }
 
 } // namespace reproc
