@@ -17,10 +17,8 @@ struct process_options {
   int stderr_fd;
 };
 
-/*
-Creates a child process and calls `execvp` with the arguments in `argv`. The
-process id of the new child process is assigned to `pid`.
-*/
+// Creates a child process and calls `execvp` with the arguments in `argv`. The
+// process id of the new child process is assigned to `pid`.
 REPROC_ERROR
 process_create(const char *const *argv,
                struct process_options *options,
