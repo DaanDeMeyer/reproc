@@ -172,7 +172,10 @@ represents all possible errors that can occur when calling reproc API functions.
 Not all errors apply to each function so the documentation of each function
 includes a section detailing which errors can occur. System errors are
 represented by `REPROC_ERROR_SYSTEM`. The `reproc_system_error` error can be
-used to retrieve the actual system error.
+used to retrieve the actual system error. To get a string representation of the
+error, pass the error code to `reproc_strerror`. If the error code passed to
+`reproc_strerror` is `REPROC_ERROR_SYSTEM`, `reproc_strerror` returns a string
+representation of the error returned by `reproc_system_error`.
 
 reproc++'s API integrates with the C++ standard library error codes mechanism
 (`std::error_code` and `std::error_condition`). All functions in reproc++'s API
