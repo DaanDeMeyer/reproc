@@ -113,6 +113,9 @@ jobs:
           curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Linux-x86_64.tar.gz -o cmake.tar.gz
           sudo tar xf cmake.tar.gz --strip 1 -C /usr/local
 
+          curl -sSL https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-linux.zip -o ninja.zip
+          sudo unzip ninja.zip -d /usr/local/bin
+
       - name: Install (MacOS)
         if: startsWith(matrix.name, 'macos')
         run: |
@@ -122,6 +125,9 @@ jobs:
           curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Darwin-x86_64.tar.gz -o cmake.tar.gz
           sudo tar xf cmake.tar.gz --strip 1 -C /Applications
           sudo /Applications/CMake.app/Contents/bin/cmake-gui --install
+
+          curl -sSL https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-mac.zip -o ninja.zip
+          sudo unzip ninja.zip -d /usr/local/bin
 
       - name: Install (Windows)
         if: startsWith(matrix.name, 'windows')
@@ -143,6 +149,7 @@ jobs:
           cmake \
             -B build \
             -S . \
+            -G Ninja \
             -DCMAKE_C_COMPILER=${{ matrix.cc }} \
             -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
             -DCMAKE_BUILD_TYPE=Debug \
@@ -176,14 +183,14 @@ jobs:
         if: startsWith(matrix.name, 'linux') || startsWith(matrix.name, 'macos')
         run: |
           export PATH=/usr/local/bin:$PATH;
-          cmake --build build --parallel 2
+          cmake --build build
 
       - name: Build (Windows)
         if: startsWith(matrix.name, 'windows')
         run: |
           set PATH=C:\ProgramData\scoop\shims;%PATH%
           call "${{ matrix.vcvarsall }}" x64
-          cmake --build build --parallel 2
+          cmake --build build
 
       # Aside from running the tests we also make sure the examples don't crash
       # or return a non-zero exit code.
