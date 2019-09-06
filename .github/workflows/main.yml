@@ -141,7 +141,6 @@ jobs:
       - name: Configure (Linux/MacOS)
         if: startsWith(matrix.name, 'linux') || startsWith(matrix.name, 'macos')
         run: |
-          export PATH=/usr/local/bin:$PATH
           cmake \
             -B build \
             -S . \
@@ -177,9 +176,7 @@ jobs:
 
       - name: Build (Linux/MacOS)
         if: startsWith(matrix.name, 'linux') || startsWith(matrix.name, 'macos')
-        run: |
-          export PATH=/usr/local/bin:$PATH;
-          cmake --build build
+        run: cmake --build build
 
       - name: Build (Windows)
         if: startsWith(matrix.name, 'windows')
