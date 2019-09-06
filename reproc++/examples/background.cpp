@@ -31,14 +31,12 @@ private:
   std::mutex &mutex_;
 };
 
-/*
-The background example reads the output of a child process in a background
-thread and shows how to access the current output in the main thread while the
-background thread is still running.
+// The background example reads the output of a child process in a background
+// thread and shows how to access the current output in the main thread while
+// the background thread is still running.
 
-Like the forward example it forwards its arguments to a child process and prints
-the child process output on stdout.
-*/
+// Like the forward example it forwards its arguments to a child process and
+// prints the child process output on stdout.
 int main(int argc, char *argv[])
 {
   if (argc <= 1) {
@@ -60,9 +58,9 @@ int main(int argc, char *argv[])
     return fail(ec);
   }
 
-  /* We need a mutex along with `output` to prevent the main thread and
-  background thread from modifying `output` at the same time (`std::string`
-  is not thread safe). */
+  // We need a mutex along with `output` to prevent the main thread and
+  // background thread from modifying `output` at the same time (`std::string`
+  // is not thread safe).
   std::string output;
   std::mutex mutex;
 
@@ -90,10 +88,10 @@ int main(int argc, char *argv[])
     return fail(ec);
   }
 
-  /* Only the background thread has stopped by this point. We can't be certain
-  that `background` has stopped as well. Since we can't be sure what process
-  we're running (the child process to run is determined by the user) we send a
-  `SIGTERM` signal and `SIGKILL` if necessary (or the Windows equivalents). */
+  // Only the background thread has stopped by this point. We can't be certain
+  // that `background` has stopped as well. Since we can't be sure what process
+  // we're running (the child process to run is determined by the user) we send
+  // a `SIGTERM` signal and `SIGKILL` if necessary (or the Windows equivalents).
   ec = background.stop(reproc::cleanup::terminate, reproc::milliseconds(5000),
                        reproc::cleanup::kill, reproc::milliseconds(2000));
   if (ec) {
