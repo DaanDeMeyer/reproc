@@ -109,7 +109,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ${{ matrix.package }}
 
-          # CMake is not up-to-date so we install CMake manually.
           curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Linux-x86_64.tar.gz -o cmake.tar.gz
           sudo tar xf cmake.tar.gz --strip 1 -C /usr/local
 
@@ -119,9 +118,9 @@ jobs:
       - name: Install (MacOS)
         if: startsWith(matrix.name, 'macos')
         run: |
-          # CMake is not up-to-date and brew is slow so we install CMake
-          # manually.
+          # Uninstall brew CMake so it doesn't conflict with our own.
           brew uninstall cmake
+
           curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Darwin-x86_64.tar.gz -o cmake.tar.gz
           sudo tar xf cmake.tar.gz --strip 1 -C /Applications
           sudo /Applications/CMake.app/Contents/bin/cmake-gui --install
@@ -133,9 +132,6 @@ jobs:
         if: startsWith(matrix.name, 'windows')
         shell: powershell
         run: |
-          # LLVM's (clang-cl) MSBuild integration is outdated so we use Ninja
-          # instead. CMake is not up-to-date and LLVM is not installed by
-          # default so we install them using scoop.
           iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
           scoop install ninja cmake llvm --global
 
