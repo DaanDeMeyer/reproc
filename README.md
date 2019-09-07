@@ -3,7 +3,7 @@
 - [What is reproc?](#what-is-reproc)
 - [Features](#features)
 - [Questions](#questions)
-- [Retrieving reproc](#retrieving-reproc)
+- [Installation](#installation)
 - [Dependencies](#dependencies)
 - [CMake options](#cmake-options)
 - [Documentation](#documentation)
@@ -42,7 +42,7 @@ If you have any questions after reading the readme and documentation you can
 either make an issue or ask questions directly in the reproc
 [gitter](https://gitter.im/reproc/Lobby) channel.
 
-## Retrieving reproc
+## Installation
 
 There are multiple ways to get reproc into your project. One way is to build
 reproc as part of your project using CMake. To do this, we first have to get the
