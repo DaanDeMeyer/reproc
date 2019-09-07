@@ -56,6 +56,11 @@
   working directory. Now, relative executable paths are always resolved relative
   to the parent process working directory.
 
+- Rename the tests executable to `tests` instead of `test` and add a CMake
+  `test` target that runs the tests executable when built.
+
+  The `test` target is only added if reproc is not used via `add_subdirectory`.
+
 ## reproc
 
 - Update `reproc_strerror` to return the actual system error string of the error

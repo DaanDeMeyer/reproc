@@ -191,7 +191,7 @@ jobs:
       - name: Test (Linux/MacOS)
         if: startsWith(matrix.name, 'linux') || startsWith(matrix.name, 'macos')
         run: |
-          build/test
+          cmake --build build --target test
           build/reproc/examples/drain
           build/reproc/examples/git-status
           build/reproc++/examples/background cmake --help
@@ -201,11 +201,12 @@ jobs:
       - name: Test (Windows)
         if: startsWith(matrix.name, 'windows')
         run: |
+          set PATH=C:\ProgramData\scoop\shims;%PATH%
           # Make sure the tests and examples can find the reproc and reproc++
           # DLL's.
           set PATH=%cd%\build\reproc\lib;%PATH%
           set PATH=%cd%\build\reproc++\lib;%PATH%
-          build\test
+          cmake --build build --target test
           build\reproc\examples\drain
           build\reproc\examples\git-status
           build\reproc++\examples\background cmake --help

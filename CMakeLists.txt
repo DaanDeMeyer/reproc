@@ -28,26 +28,29 @@ if(REPROC++ OR REPROC_TEST)
 endif()
 
 include(cmake/reproc.cmake)
-
-include(external/CMakeLists.txt)
+include(cmake/external.cmake)
 
 if(REPROC_TEST)
   # reproc uses the doctest testing framework. All tests are grouped inside a
   # single executable. Use `target_sources(reproc-test PRIVATE <file>)` to add
-  # new tests. Tests are executed by running the build/test executable.
+  # new tests. Tests are executed by building the `test` target or running the
+  # tests executable from within the build directory.
   add_executable(reproc-test)
 
   reproc_add_common(reproc-test CXX 11 "")
   target_link_libraries(reproc-test PRIVATE doctest)
-  set_target_properties(reproc-test PROPERTIES OUTPUT_NAME test)
+  set_target_properties(reproc-test PROPERTIES OUTPUT_NAME tests)
 
-  # We change the working directory to the build directory before executing the
-  # tests so tests can reliably find any required resources.
-  target_compile_definitions(reproc-test PRIVATE
-    DOCTEST_WORKING_DIRECTORY="${PROJECT_BINARY_DIR}"
-  )
-
-  target_sources(reproc-test PRIVATE external/doctest/main.cpp)
+  if(NOT REPROC_IS_SUBDIRECTORY)
+    add_custom_target(
+      test
+      COMMAND ./tests -force-colors
+      DEPENDS reproc-test
+      # Tests include relative paths to some external test programs and can
+      # only be executed from inside the build folder as a result.
+      WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    )
+  endif()
 endif()
 
 add_subdirectory(reproc)

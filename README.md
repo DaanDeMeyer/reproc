@@ -119,7 +119,14 @@ reproc's build can be configured using the following CMake options:
 
 - `REPROC++`: Build reproc++ (default: `OFF`).
 - `REPROC_TEST`: Build tests (default: `OFF`).
+
+  Run the tests by building the `test` target or running the `tests` executable
+  from within the build directory.
+
 - `REPROC_EXAMPLES`: Build examples (default: `OFF`).
+
+  The built executables will be located in the examples folder of each project
+  subdirectory in the build directory.
 
 ### Advanced
 

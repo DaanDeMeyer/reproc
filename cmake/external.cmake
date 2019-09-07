@@ -1,15 +1,27 @@
 if(REPROC_TEST)
-  if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/external/doctest)
+  if(NOT EXISTS ${PROJECT_BINARY_DIR}/doctest)
     file(
       DOWNLOAD
       https://raw.githubusercontent.com/onqtam/doctest/2.3.4/doctest/doctest.h
-      ${CMAKE_CURRENT_BINARY_DIR}/external/doctest/doctest.h
+      ${PROJECT_BINARY_DIR}/doctest/doctest.h
     )
   endif()
 
-  add_library(doctest INTERFACE IMPORTED GLOBAL)
-  target_compile_features(doctest INTERFACE cxx_std_11)
-  target_include_directories(doctest INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/external/doctest)
+  # Generate the doctest implementation file.
+  file(
+    GENERATE
+    OUTPUT ${PROJECT_BINARY_DIR}/doctest/impl.cpp
+    CONTENT
+      "
+      #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN\n
+      #define DOCTEST_CONFIG_NO_POSIX_SIGNALS\n
+      #include <doctest.h>
+      "
+  )
+
+  add_library(doctest OBJECT ${PROJECT_BINARY_DIR}/doctest/impl.cpp)
+  target_compile_features(doctest PUBLIC cxx_std_11)
+  target_include_directories(doctest PUBLIC ${PROJECT_BINARY_DIR}/doctest)
 endif()
 
 # Search for `Threads` module ourselves if the user has not already done so.
