@@ -105,7 +105,25 @@ process_create(const char *const *argv,
       _exit(errno);
     }
 
-    // Close open file descriptors in the child process.
+    // While using `pipe2` prevents file descriptors created by reproc from
+    // leaking into other child processes, file descriptors created outside of
+    // reproc without the `FD_CLOEXEC` flag set will still leak into reproc
+    // child processes. To mostly get around this after forking and redirecting
+    // the standard streams (stdin, stdout, stderr) of the child process we
+    // close all file descriptors (except the standard streams) up to
+    // `_SC_OPEN_MAX` (obtained with `sysconf`) in the child process.
+    // `_SC_OPEN_MAX` describes the maximum number of files that a process can
+    // have open at any time. As a result, trying to close every file descriptor
+    // up to this number closes all file descriptors of the child process which
+    // includes file descriptors that were leaked into the child process.
+    // However, an application can manually lower the resource limit at any time
+    // (for example with `setrlimit(RLIMIT_NOFILE)`), which can lead to open
+    // file descriptors with a value above the new resource limit if they were
+    // created before the resource limit was lowered. These file descriptors
+    // will not be closed in the child process since only the file descriptors
+    // up to the latest resource limit are closed. Of course, this only happens
+    // if the application manually lowers the resource limit.
+
     for (int i = 3; i < max_fd; i++) {
       // We might still need the error pipe so we don't close it. The error pipe
       // is created with `FD_CLOEXEC` which results in it being closed

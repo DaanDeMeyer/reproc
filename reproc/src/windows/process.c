@@ -254,8 +254,14 @@ REPROC_ERROR process_create(wchar_t *command_line,
 #if defined(ATTRIBUTE_LIST_FOUND)
   REPROC_ERROR error = REPROC_SUCCESS;
 
-  // To ensure no handles other than those necessary are inherited we use the
-  // approach detailed in https://stackoverflow.com/a/2345126.
+  // Windows Vista added the `STARTUPINFOEXW` structure in which we can put a
+  // list of handles that should be inherited. Only these handles are inherited
+  // by the child process. Other code in an application that calls
+  // `CreateProcess` without passing a `STARTUPINFOEXW` struct containing the
+  // handles it should inherit can still unintentionally inherit handles meant
+  // for a reproc child process. See https://stackoverflow.com/a/2345126 for
+  // more information.
+
   HANDLE to_inherit[3];
   int i = 0; // to_inherit_size
 

@@ -12,7 +12,22 @@ REPROC_ERROR pipe_init(int *read, int *write)
 
   int pipefd[2];
 
-  // See avoiding resource leaks section in readme for a detailed explanation.
+  // On POSIX systems, by default file descriptors are inherited by child
+  // processes when calling `exec`. To prevent unintended leaking of file
+  // descriptors to child processes, POSIX provides a function `fcntl` which can
+  // be used to set the `FD_CLOEXEC` flag which closes a file descriptor when
+  // `exec` (or one of its variants) is called. However, using `fcntl`
+  // introduces a race condition since any process spawned in another thread
+  // after a file descriptor is created (for example using `pipe`) but before
+  // `fcntl` is called to set `FD_CLOEXEC` on the file descriptor will still
+  // inherit that file descriptor.
+
+  // To get around this race condition we use the `pipe2` function when it
+  // is available which takes the `O_CLOEXEC` flag as an argument. This ensures
+  // the file descriptors of the created pipe are closed when `exec` is called.
+  // If `pipe2` is not available we fall back to calling `fcntl` to set
+  // `FD_CLOEXEC` immediately after creating a pipe.
+
 #if defined(PIPE2_FOUND)
   int result = pipe2(pipefd, O_CLOEXEC);
 #else

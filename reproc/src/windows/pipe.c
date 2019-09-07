@@ -29,6 +29,22 @@ pipe_init(HANDLE *read, bool inherit_read, HANDLE *write, bool inherit_write)
   assert(read);
   assert(write);
 
+  // On Windows the `CreatePipe` function receives a flag as part of its
+  // arguments that specifies if the returned handles can be inherited by child
+  // processes or not. Inheritance for endpoints of a single pipe can be
+  // configured after the `CreatePipe` call using the function
+  // `SetHandleInformation`. A race condition occurs after calling `CreatePipe`
+  // (allowing inheritance) but before calling `SetHandleInformation` in one
+  // thread and calling `CreateProcess` (configured to inherit pipes) in another
+  // thread. In this scenario handles are unintentionally leaked into a child
+  // process. We try to mitigate this by calling `SetHandleInformation` after
+  // `CreatePipe` for the handles that should not be inherited by any process to
+  // lower the chance of them accidentally being inherited (just like with
+  // `fnctl` on POSIX if `pipe2` is not available). This only works for half of
+  // the endpoints created (the ones intended to be used by the parent process)
+  // since the endpoints intended to be used by the child actually need to be
+  // inherited by their corresponding child process.
+
   if (!CreatePipe(read, write, &security_attributes, 0)) {
     return REPROC_ERROR_SYSTEM;
   }
