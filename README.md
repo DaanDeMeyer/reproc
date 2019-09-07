@@ -14,24 +14,21 @@
 
 ## What is reproc?
 
-reproc (Redirected Process) is a cross-platform library that starts external
-processes from within a C or C++ application, reads/writes to their
-stdin/stdout/stderr streams and waits for them to exit or forcefully stops them.
-
-The main use case is executing command line applications directly from C or C++
-code and retrieving their output.
+reproc (Redirected Process) is a cross-platform C/C++ library that simplifies
+starting, stopping and communicating with external programs. The main use case
+is executing command line applications directly from C or C++ code and
+retrieving their output.
 
 reproc consists out of two libraries: reproc and reproc++. reproc is a C99
-library that contains all the actual code for interacting with child processes.
+library that contains the actual code for working with external programs.
 reproc++ depends on reproc and adapts its API to an idiomatic C++11 API. It also
-adds a few extras that make working with child processes from C++ easier.
+adds a few extras that simplify working with external programs from C++.
 
 ## Features
 
 - Start any program directly from C or C++ code.
-- Write to its standard input stream and read from its standard output and
-  standard error streams.
-- Wait for the program to exit or forcefully stop it yourself. When forcefully
+- Communicate with a program via its standard streams.
+- Wait for a program to exit or forcefully stop it yourself. When forcefully
   stopping a process you can either allow the process to clean up its resources
   or stop it immediately.
 - The core library (reproc) is written in C99. An optional C++11 wrapper library
