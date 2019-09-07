@@ -1,4 +1,3 @@
-
 if(MSVC)
   # CMake 3.15 does not add /W3 to the compiler flags by default anymore which
   # saves us from having to do an ugly hack to replace it with /W3.
