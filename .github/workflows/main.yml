@@ -12,160 +12,160 @@ jobs:
         # Github Actions requires a single row to be added to the build matrix.
         # See https://help.github.com/en/articles/workflow-syntax-for-github-actions.
         name: [
-          windows-vs2017-cl-msvc,
-          windows-vs2017-clang-msvc,
-          windows-vs2017-clang-gnu,
-          windows-vs2019-cl-msvc,
-          windows-vs2019-clang-msvc,
-          windows-vs2019-clang-gnu,
-          linux-gcc-6,
-          linux-gcc-9,
-          linux-clang-6,
-          linux-clang-8,
-          macos
+          ubuntu-18.04-gcc-6,
+          ubuntu-18.04-gcc-9,
+          ubuntu-18.04-clang-6,
+          ubuntu-18.04-clang-8,
+          windows-2016-cl,
+          windows-2016-clang-cl,
+          windows-2016-clang,
+          windows-2019-cl,
+          windows-2019-clang-cl,
+          windows-2019-clang,
+          macOS-10.14-clang
         ]
 
         include:
-          - name: windows-vs2017-cl-msvc
+          - name: ubuntu-18.04-gcc-6
+            os: ubuntu-18.04
+            compiler: gcc
+            version: "6"
+
+          - name: ubuntu-18.04-gcc-9
+            os: ubuntu-18.04
+            compiler: gcc
+            version: "9"
+
+          - name: ubuntu-18.04-clang-6
+            os: ubuntu-18.04
+            compiler: clang
+            version: "6.0"
+
+          - name: ubuntu-18.04-clang-8
+            os: ubuntu-18.04
+            compiler: clang
+            version: "8"
+
+          - name: windows-2016-cl
             os: windows-2016
-            vs: 2017
-            cc: cl
-            cxx: cl
+            compiler: cl
 
-          - name: windows-vs2017-clang-msvc
+          - name: windows-2016-clang-cl
             os: windows-2016
-            vs: 2017
-            cc: clang-cl
-            cxx: clang-cl
+            compiler: clang-cl
 
-          - name: windows-vs2017-clang-gnu
+          - name: windows-2016-clang
             os: windows-2016
-            vs: 2017
-            cc: clang
-            cxx: clang++
+            compiler: clang
 
-          - name: windows-vs2019-cl-msvc
+          - name: windows-2019-cl
             os: windows-2019
-            vs: 2019
-            cc: cl
-            cxx: cl
+            compiler: cl
 
-          - name: windows-vs2019-clang-msvc
+          - name: windows-2019-clang-cl
             os: windows-2019
-            vs: 2019
-            cc: clang-cl
-            cxx: clang-cl
+            compiler: clang-cl
 
-          - name: windows-vs2019-clang-gnu
+          - name: windows-2019-clang
             os: windows-2019
-            vs: 2019
-            cc: clang
-            cxx: clang++
+            compiler: clang
 
-          - name: linux-gcc-6
-            os: ubuntu-latest
-            repository: ppa:ubuntu-toolchain-r/test
-            package: g++-6
-            cc: gcc-6
-            cxx: g++-6
-
-          - name: linux-gcc-9
-            os: ubuntu-latest
-            repository: ppa:ubuntu-toolchain-r/test
-            package: g++-9
-            cc: gcc-9
-            cxx: g++-9
-
-          - name: linux-clang-6
-            os: ubuntu-latest
-            repository: deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main
-            package: clang-6.0
-            cc: clang-6.0
-            cxx: clang++-6.0
-
-          - name: linux-clang-8
-            os: ubuntu-latest
-            repository: deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-8 main
-            package: clang-8
-            cc: clang-8
-            cxx: clang++-8
-
-          - name: macos
-            os: macOS-latest
-            cc: clang
-            cxx: clang++
+          - name: macOS-10.14-clang
+            os: macOS-10.14
+            compiler: clang
 
     # Github Actions resets environment variables between steps so we have to
     # add the required environment variables at the start of each step.
     # See https://github.community/t5/GitHub-Actions/Support-global-environment-variables/td-p/30481.
 
+    # Because we cannot set the `CC` and `CXX` environment variables, we
+    # override the `/usr/bin/cc` and `/usr/bin/c++` symlinks on Linux instead.
+
     steps:
       - uses: actions/checkout@v1
 
-      - name: Install (Linux)
-        if: startsWith(matrix.name, 'linux')
+      - name: Install (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
-          sudo add-apt-repository "${{ matrix.repository }}"
-          sudo apt-get update
-          sudo apt-get install -y ${{ matrix.package }}
-
           curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Linux-x86_64.tar.gz -o cmake.tar.gz
           sudo tar xf cmake.tar.gz --strip 1 -C /usr/local
 
-          curl -sSL https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-linux.zip -o ninja.zip
-          sudo unzip ninja.zip -d /usr/local/bin
+          sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-8 main"
+          sudo apt-get update
 
-      - name: Install (MacOS)
-        if: startsWith(matrix.name, 'macos')
+          sudo apt-get install -y ninja-build clang-tidy-8
+          sudo ln -s /usr/bin/clang-tidy-8 /usr/bin/clang-tidy
+
+      - name: Install (Ubuntu GCC)
+        if: startsWith(matrix.os, 'ubuntu') && matrix.compiler == 'gcc'
         run: |
-          # Uninstall brew CMake so it doesn't conflict with our own.
-          brew uninstall cmake
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+          sudo apt-get install -y g++-${{ matrix.version }}
 
-          curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Darwin-x86_64.tar.gz -o cmake.tar.gz
-          sudo tar xf cmake.tar.gz --strip 1 -C /Applications
-          sudo /Applications/CMake.app/Contents/bin/cmake-gui --install
+          sudo ln -sf /usr/bin/gcc-${{ matrix.version }} /usr/bin/cc
+          sudo ln -sf /usr/bin/g++-${{ matrix.version }} /usr/bin/c++
 
-          curl -sSL https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-mac.zip -o ninja.zip
-          sudo unzip ninja.zip -d /usr/local/bin
+      - name: Install (Ubuntu Clang)
+        if: startsWith(matrix.os, 'ubuntu') && matrix.compiler == 'clang'
+        run: |
+          sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-${{ matrix.version }} main"
+          sudo apt-get update
+          sudo apt-get install -y clang-${{ matrix.version }}
+
+          sudo ln -sf /usr/bin/clang-${{ matrix.version }} /usr/bin/cc
+          sudo ln -sf /usr/bin/clang++-${{ matrix.version }} /usr/bin/c++
+
+      - name: Install (macOS)
+        if: startsWith(matrix.os, 'macOS')
+        run: |
+          brew install ninja llvm
+          sudo ln -s /usr/local/opt/llvm/bin/clang-tidy /usr/local/bin/clang-tidy
 
       - name: Install (Windows)
-        if: startsWith(matrix.name, 'windows')
+        if: startsWith(matrix.os, 'windows')
         shell: powershell
         run: |
           iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
-          scoop install ninja cmake llvm --global
+          scoop install ninja llvm --global
 
       # We build reproc as a shared library to verify all the necessary symbols
       # are exported.
 
-      - name: Configure (Linux/MacOS)
-        if: startsWith(matrix.name, 'linux') || startsWith(matrix.name, 'macos')
+      - name: Configure (Ubuntu && macOS)
+        if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macOS')
         run: |
           cmake \
             -B build \
             -S . \
             -G Ninja \
-            -DCMAKE_C_COMPILER=${{ matrix.cc }} \
-            -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
             -DCMAKE_BUILD_TYPE=Debug \
             -DBUILD_SHARED_LIBS=ON \
             -DREPROC++=ON \
             -DREPROC_TEST=ON \
             -DREPROC_EXAMPLES=ON \
             -DREPROC_WARNINGS_AS_ERRORS=ON \
+            -DREPROC_TIDY=ON \
             -DREPROC_SANITIZERS=ON
 
       - name: Configure (Windows)
-        if: startsWith(matrix.name, 'windows')
+        if: startsWith(matrix.os, 'windows')
         run: |
           set PATH=C:\ProgramData\scoop\shims;%PATH%
-          call "C:\Program Files (x86)\Microsoft Visual Studio\${{ matrix.vs }}\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          call .github\workflows\vsenv.bat -arch=x64 -host_arch=x64
+
+          if ${{ matrix.compiler }} == "clang" (
+            set CC=clang
+            set CXX=clang++
+          ) else (
+            set CC=${{ matrix.compiler }}
+            set CXX=${{ matrix.compiler }}
+          )
+
           cmake ^
             -B build ^
             -S . ^
             -G Ninja ^
-            -DCMAKE_C_COMPILER=${{ matrix.cc }} ^
-            -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} ^
             -DCMAKE_BUILD_TYPE=Debug ^
             -DBUILD_SHARED_LIBS=ON ^
             -DREPROC++=ON ^
@@ -174,22 +174,21 @@ jobs:
             -DREPROC_WARNINGS_AS_ERRORS=ON ^
             -DREPROC_TIDY=ON
 
-      - name: Build (Linux/MacOS)
-        if: startsWith(matrix.name, 'linux') || startsWith(matrix.name, 'macos')
+      - name: Build (Ubuntu && macOS)
+        if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macOS')
         run: cmake --build build
 
       - name: Build (Windows)
-        if: startsWith(matrix.name, 'windows')
+        if: startsWith(matrix.os, 'windows')
         run: |
-          set PATH=C:\ProgramData\scoop\shims;%PATH%
-          call "C:\Program Files (x86)\Microsoft Visual Studio\${{ matrix.vs }}\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          call .github\workflows\vsenv.bat -arch=x64 -host_arch=x64
           cmake --build build
 
       # Aside from running the tests we also make sure the examples don't crash
       # or return a non-zero exit code.
 
-      - name: Test (Linux/MacOS)
-        if: startsWith(matrix.name, 'linux') || startsWith(matrix.name, 'macos')
+      - name: Test (Ubuntu && macOS)
+        if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macOS')
         run: |
           cmake --build build --target test
           build/reproc/examples/drain
@@ -198,12 +197,12 @@ jobs:
           build/reproc++/examples/cmake-help
           build/reproc++/examples/forward cmake --help
 
+      # We add the output directories to the PATH to make sure the tests and
+      # examples can find the reproc and reproc++ DLL's.
+
       - name: Test (Windows)
-        if: startsWith(matrix.name, 'windows')
+        if: startsWith(matrix.os, 'windows')
         run: |
-          set PATH=C:\ProgramData\scoop\shims;%PATH%
-          # Make sure the tests and examples can find the reproc and reproc++
-          # DLL's.
           set PATH=%cd%\build\reproc\lib;%PATH%
           set PATH=%cd%\build\reproc++\lib;%PATH%
           cmake --build build --target test
