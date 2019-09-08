@@ -115,13 +115,18 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
 
   if(MSVC)
     target_compile_options(${TARGET} PRIVATE
-      /W4
       /nologo # Silence MSVC compiler version output.
       /wd4068 # Allow unknown pragmas.
       /wd4221 # Results in false positives.
       $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:/WX> # -Werror
       $<$<BOOL:${REPROC_${LANGUAGE}_HAVE_PERMISSIVE}>:/permissive->
     )
+
+    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.15.0")
+      # CMake 3.15 does not add /W3 to the compiler flags by default anymore
+      # so we add /W4 instead.
+      target_compile_options(${TARGET} PRIVATE /W4)
+    endif()
 
     if(NOT STANDARD STREQUAL "90")
       # MSVC reports non-constant initializers as a nonstandard extension but
