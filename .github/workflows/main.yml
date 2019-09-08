@@ -28,37 +28,37 @@ jobs:
         include:
           - name: windows-vs2017-cl-msvc
             os: windows-2016
-            vcvarsall: C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+            vs: 2017
             cc: cl
             cxx: cl
 
           - name: windows-vs2017-clang-msvc
             os: windows-2016
-            vcvarsall: C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+            vs: 2017
             cc: clang-cl
             cxx: clang-cl
 
           - name: windows-vs2017-clang-gnu
             os: windows-2016
-            vcvarsall: C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+            vs: 2017
             cc: clang
             cxx: clang++
 
           - name: windows-vs2019-cl-msvc
             os: windows-2019
-            vcvarsall: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+            vs: 2019
             cc: cl
             cxx: cl
 
           - name: windows-vs2019-clang-msvc
             os: windows-2019
-            vcvarsall: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+            vs: 2019
             cc: clang-cl
             cxx: clang-cl
 
           - name: windows-vs2019-clang-gnu
             os: windows-2019
-            vcvarsall: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+            vs: 2019
             cc: clang
             cxx: clang++
 
@@ -159,7 +159,7 @@ jobs:
         if: startsWith(matrix.name, 'windows')
         run: |
           set PATH=C:\ProgramData\scoop\shims;%PATH%
-          call "${{ matrix.vcvarsall }}" x64
+          call "C:\Program Files (x86)\Microsoft Visual Studio\${{ matrix.vs }}\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           cmake ^
             -B build ^
             -S . ^
@@ -182,7 +182,7 @@ jobs:
         if: startsWith(matrix.name, 'windows')
         run: |
           set PATH=C:\ProgramData\scoop\shims;%PATH%
-          call "${{ matrix.vcvarsall }}" x64
+          call "C:\Program Files (x86)\Microsoft Visual Studio\${{ matrix.vs }}\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           cmake --build build
 
       # Aside from running the tests we also make sure the examples don't crash
