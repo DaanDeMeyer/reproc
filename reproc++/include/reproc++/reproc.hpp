@@ -53,7 +53,7 @@ template <typename T>
 using is_char_array = std::is_convertible<T, const char *const *>;
 
 template <typename T>
-using enable_if_container = enable_if<!is_char_array<T>::value>;
+using enable_if_not_char_array = enable_if<!is_char_array<T>::value>;
 
 } // namespace detail
 
@@ -143,8 +143,8 @@ public:
   */
   template <typename Arguments,
             typename Environment,
-            typename = detail::enable_if_container<Arguments>,
-            typename = detail::enable_if_container<Environment>>
+            typename = detail::enable_if_not_char_array<Arguments>,
+            typename = detail::enable_if_not_char_array<Environment>>
   std::error_code start(const Arguments &arguments,
                         const Environment *environment,
                         const char *working_directory = nullptr);
@@ -152,7 +152,7 @@ public:
   // Extra overload to avoid having to specify the type for `Environment` when
   // passing `nullptr` as the environment.
   template <typename Arguments,
-            typename = detail::enable_if_container<Arguments>>
+            typename = detail::enable_if_not_char_array<Arguments>>
   std::error_code start(const Arguments &arguments,
                         const char *working_directory = nullptr);
 
