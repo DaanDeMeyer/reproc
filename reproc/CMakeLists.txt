@@ -27,7 +27,7 @@ endif()
 
 include(CheckSymbolExists)
 
-if(MSVC)
+if(WIN32)
   # Check if `STARTUPINFOEX` and functions related to it are available.
   check_symbol_exists(InitializeProcThreadAttributeList windows.h
                       REPROC_ATTRIBUTE_LIST_FOUND)
@@ -40,7 +40,7 @@ if(MSVC)
     VC_EXTRALEAN
     NOMINMAX
   )
-elseif(UNIX)
+else()
   # Check if `pipe2` is available.
   list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
   check_symbol_exists(pipe2 unistd.h REPROC_PIPE2_FOUND)
