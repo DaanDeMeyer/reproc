@@ -196,11 +196,10 @@ wchar_t *string_to_wstring(const char *string, size_t size)
 
 REPROC_ERROR
 static handle_inherit_list_create(HANDLE *handles,
-                                  int amount,
+                                  size_t amount,
                                   LPPROC_THREAD_ATTRIBUTE_LIST *result)
 {
   assert(handles);
-  assert(amount >= 0);
   assert(result);
 
   // Get the required size for `attribute_list`.
@@ -263,7 +262,7 @@ REPROC_ERROR process_create(wchar_t *command_line,
   // more information.
 
   HANDLE to_inherit[3];
-  int i = 0; // to_inherit_size
+  size_t i = 0; // to_inherit_size
 
   if (options->stdin_handle) {
     to_inherit[i++] = options->stdin_handle;
