@@ -19,9 +19,11 @@ jobs:
           windows-2016-cl,
           windows-2016-clang-cl,
           windows-2016-clang,
+          windows-2016-gcc,
           windows-2019-cl,
           windows-2019-clang-cl,
           windows-2019-clang,
+          windows-2019-gcc,
           macOS-10.14-clang
         ]
 
@@ -61,6 +63,11 @@ jobs:
             CC: clang
             CXX: clang++
 
+          - name: windows-2016-gcc
+            os: windows-2016
+            CC: gcc
+            CXX: g++
+
           - name: windows-2019-cl
             os: windows-2019
             CC: cl
@@ -75,6 +82,11 @@ jobs:
             os: windows-2019
             CC: clang
             CXX: clang++
+
+          - name: windows-2019-gcc
+            os: windows-2019
+            CC: gcc
+            CXX: g++
 
           - name: macOS-10.14-clang
             os: macOS-10.14
