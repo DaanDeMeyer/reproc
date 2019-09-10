@@ -178,6 +178,15 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
     VISIBILITY_INLINES_HIDDEN true
   )
 
+  # clang-tidy errors with error: unknown argument: '-fno-keep-inline-dllexport'
+  # when enabling `VISIBILITY_INLINES_HIDDEN` on MinGW so we disable it when
+  # running clang-tidy on MinGW.
+  if(MINGW AND REPROC_TIDY)
+    set_target_properties(${TARGET} PROPERTIES
+      VISIBILITY_INLINES_HIDDEN false
+    )
+  endif()
+
   # A preprocesor macro cannot contain + so we replace it with x.
   string(REPLACE + x EXPORT_MACRO ${TARGET})
   string(TOUPPER ${EXPORT_MACRO} EXPORT_MACRO_UPPER)
