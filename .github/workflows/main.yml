@@ -14,7 +14,7 @@ jobs:
         name: [
           ubuntu-18.04-gcc-6,
           ubuntu-18.04-gcc-9,
-          ubuntu-18.04-clang-6,
+          ubuntu-18.04-clang-6.0,
           ubuntu-18.04-clang-8,
           windows-2016-cl,
           windows-2016-clang-cl,
@@ -28,58 +28,62 @@ jobs:
         include:
           - name: ubuntu-18.04-gcc-6
             os: ubuntu-18.04
-            compiler: gcc
-            version: "6"
+            CC: gcc-6
+            CXX: g++-6
 
           - name: ubuntu-18.04-gcc-9
             os: ubuntu-18.04
-            compiler: gcc
-            version: "9"
+            CC: gcc-9
+            CXX: g++-9
 
-          - name: ubuntu-18.04-clang-6
+          - name: ubuntu-18.04-clang-6.0
             os: ubuntu-18.04
-            compiler: clang
-            version: "6.0"
+            CC: clang-6.0
+            CXX: clang++-6.0
 
           - name: ubuntu-18.04-clang-8
             os: ubuntu-18.04
-            compiler: clang
-            version: "8"
+            CC: clang-8
+            CXX: clang++-8
 
           - name: windows-2016-cl
             os: windows-2016
-            compiler: cl
+            CC: cl
+            CXX: cl
 
           - name: windows-2016-clang-cl
             os: windows-2016
-            compiler: clang-cl
+            CC: clang-cl
+            CXX: clang-cl
 
           - name: windows-2016-clang
             os: windows-2016
-            compiler: clang
+            CC: clang
+            CXX: clang++
 
           - name: windows-2019-cl
             os: windows-2019
-            compiler: cl
+            CC: cl
+            CXX: cl
 
           - name: windows-2019-clang-cl
             os: windows-2019
-            compiler: clang-cl
+            CC: clang-cl
+            CXX: clang-cl
 
           - name: windows-2019-clang
             os: windows-2019
-            compiler: clang
+            CC: clang
+            CXX: clang++
 
           - name: macOS-10.14-clang
             os: macOS-10.14
-            compiler: clang
+            CC: clang
+            CXX: clang++
 
     # Github Actions resets environment variables between steps so we have to
     # add the required environment variables at the start of each step.
     # See https://github.community/t5/GitHub-Actions/Support-global-environment-variables/td-p/30481.
-
-    # Because we cannot set the `CC` and `CXX` environment variables, we
-    # override the `/usr/bin/cc` and `/usr/bin/c++` symlinks on Linux instead.
 
     steps:
       - uses: actions/checkout@v1
@@ -97,24 +101,20 @@ jobs:
           sudo ln -s /usr/bin/clang-tidy-8 /usr/bin/clang-tidy
 
       - name: Install (Ubuntu GCC)
-        if: startsWith(matrix.os, 'ubuntu') && matrix.compiler == 'gcc'
+        if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.CC, 'gcc')
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo apt-get update
-          sudo apt-get install -y g++-${{ matrix.version }}
-
-          sudo ln -sf /usr/bin/gcc-${{ matrix.version }} /usr/bin/cc
-          sudo ln -sf /usr/bin/g++-${{ matrix.version }} /usr/bin/c++
+          sudo apt-get install -y ${{ matrix.CXX }}
 
       - name: Install (Ubuntu Clang)
-        if: startsWith(matrix.os, 'ubuntu') && matrix.compiler == 'clang'
+        if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.CC, 'clang')
         run: |
-          sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-${{ matrix.version }} main"
-          sudo apt-get update
-          sudo apt-get install -y clang-${{ matrix.version }}
+          CLANG_VERSION=`cut -d '-' -f2 <<< ${{ matrix.CC }}`
 
-          sudo ln -sf /usr/bin/clang-${{ matrix.version }} /usr/bin/cc
-          sudo ln -sf /usr/bin/clang++-${{ matrix.version }} /usr/bin/c++
+          sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-$CLANG_VERSION main"
+          sudo apt-get update
+          sudo apt-get install -y ${{ matrix.CC }}
 
       - name: Install (macOS)
         if: startsWith(matrix.os, 'macOS')
@@ -140,6 +140,8 @@ jobs:
             -S . \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER=${{ matrix.CC }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.CXX }} \
             -DBUILD_SHARED_LIBS=ON \
             -DREPROC++=ON \
             -DREPROC_TEST=ON \
@@ -154,19 +156,13 @@ jobs:
           set PATH=C:\ProgramData\scoop\shims;%PATH%
           call .github\workflows\vsenv.bat -arch=x64 -host_arch=x64
 
-          if ${{ matrix.compiler }} == "clang" (
-            set CC=clang
-            set CXX=clang++
-          ) else (
-            set CC=${{ matrix.compiler }}
-            set CXX=${{ matrix.compiler }}
-          )
-
           cmake ^
             -B build ^
             -S . ^
             -G Ninja ^
             -DCMAKE_BUILD_TYPE=Debug ^
+            -DCMAKE_C_COMPILER=${{ matrix.CC }} ^
+            -DCMAKE_CXX_COMPILER=${{ matrix.CXX }} ^
             -DBUILD_SHARED_LIBS=ON ^
             -DREPROC++=ON ^
             -DREPROC_TEST=ON ^
