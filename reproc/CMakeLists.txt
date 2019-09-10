@@ -39,6 +39,7 @@ if(WIN32)
     WIN32_LEAN_AND_MEAN
     VC_EXTRALEAN
     NOMINMAX
+    $<$<BOOL:${MINGW}>:WINVER=0x0600>
   )
 else()
   # Check if `pipe2` is available.
