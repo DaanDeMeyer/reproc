@@ -194,10 +194,8 @@ wchar_t *string_to_wstring(const char *string, size_t size)
 #if defined(ATTRIBUTE_LIST_FOUND)
 #include <stdlib.h>
 
-REPROC_ERROR
-static handle_inherit_list_create(HANDLE *handles,
-                                  size_t amount,
-                                  LPPROC_THREAD_ATTRIBUTE_LIST *result)
+static REPROC_ERROR handle_inherit_list_create(
+    HANDLE *handles, size_t amount, LPPROC_THREAD_ATTRIBUTE_LIST *result)
 {
   assert(handles);
   assert(result);
