@@ -132,8 +132,9 @@ public:
 
   The pairs in `environment` represent the environment variables of the child
   process and are converted to the right format before being passed as the
-  environment to `reproc_start`. If `environment` is `nullptr`, the environment
-  of the parent process is used as the environment of the child process.
+  environment to `reproc_start`. To have the child process inherit the
+  environment of the parent process, use the `start` overload that does not have
+  an environment parameter.
 
   `working_directory` specifies the working directory. It is optional and
   defaults to `nullptr`.
@@ -146,11 +147,11 @@ public:
             typename = detail::enable_if_not_char_array<Arguments>,
             typename = detail::enable_if_not_char_array<Environment>>
   std::error_code start(const Arguments &arguments,
-                        const Environment *environment,
+                        const Environment &environment,
                         const char *working_directory = nullptr);
 
-  // Extra overload to avoid having to specify the type for `Environment` when
-  // passing `nullptr` as the environment.
+  /*! Same as `start` but instead of passing a custom environment, the child
+  process inherits the environment of the parent process. */
   template <typename Arguments,
             typename = detail::enable_if_not_char_array<Arguments>>
   std::error_code start(const Arguments &arguments,
@@ -259,7 +260,7 @@ private:
 
   public:
     template <typename Environment>
-    explicit environment(const Environment *environment);
+    explicit environment(const Environment &environment);
 
     environment(const environment &) = delete;
 
@@ -271,7 +272,7 @@ private:
 
 template <typename Arguments, typename Environment, typename, typename>
 std::error_code process::start(const Arguments &arguments,
-                               const Environment *environment,
+                               const Environment &environment,
                                const char *working_directory)
 {
   process::arguments args(arguments);
@@ -369,21 +370,16 @@ process::arguments::arguments(const Arguments &arguments)
 }
 
 template <typename Environment>
-process::environment::environment(const Environment *environment)
-    : data_(environment ? new char *[environment->size() + 1] // NOLINT
-                        : nullptr)
+process::environment::environment(const Environment &environment)
+    : data_(new char *[environment.size() + 1]) // NOLINT
 {
-  if (environment == nullptr) {
-    return;
-  }
-
   using key_size_type = typename Environment::value_type::first_type::size_type;
   using value_size_type =
       typename Environment::value_type::second_type::size_type;
 
   size_t current = 0;
 
-  for (const auto &entry : *environment) {
+  for (const auto &entry : environment) {
     // +2 => '=' + '\0'
     size_t size = entry.first.size() + entry.second.size() + 2;
     auto string = new char[size]; // NOLINT

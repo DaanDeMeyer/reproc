@@ -151,10 +151,6 @@ const char *const *process::arguments::data() const noexcept
 
 process::environment::~environment()
 {
-  if (data_ == nullptr) {
-    return;
-  }
-
   for (size_t i = 0; data_[i] != nullptr; i++) {
     delete[] data_[i]; // NOLINT
   }
