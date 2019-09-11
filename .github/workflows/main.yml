@@ -145,43 +145,46 @@ jobs:
       # We build reproc as a shared library to verify all the necessary symbols
       # are exported.
 
+      # YAML folded multiline strings ('>') require the same indentation for all
+      # lines in order to turn newlines into spaces.
+
       - name: Configure (Ubuntu && macOS)
         if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macOS')
-        run: |
-          cmake \
-            -B build \
-            -S . \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_C_COMPILER=${{ matrix.CC }} \
-            -DCMAKE_CXX_COMPILER=${{ matrix.CXX }} \
-            -DBUILD_SHARED_LIBS=ON \
-            -DREPROC++=ON \
-            -DREPROC_TEST=ON \
-            -DREPROC_EXAMPLES=ON \
-            -DREPROC_WARNINGS_AS_ERRORS=ON \
-            -DREPROC_TIDY=ON \
-            -DREPROC_SANITIZERS=ON
+        run: >
+          cmake
+          -B build
+          -S .
+          -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_C_COMPILER=${{ matrix.CC }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.CXX }}
+          -DBUILD_SHARED_LIBS=ON
+          -DREPROC++=ON
+          -DREPROC_TEST=ON
+          -DREPROC_EXAMPLES=ON
+          -DREPROC_WARNINGS_AS_ERRORS=ON
+          -DREPROC_TIDY=ON
+          -DREPROC_SANITIZERS=ON
 
       - name: Configure (Windows)
         if: startsWith(matrix.os, 'windows')
-        run: |
-          set PATH=C:\ProgramData\scoop\shims;%PATH%
-          call .github\workflows\vsenv.bat -arch=x64 -host_arch=x64
+        run: >
+          set PATH=C:\ProgramData\scoop\shims;%PATH% &
+          call .github\workflows\vsenv.bat -arch=x64 -host_arch=x64 &
 
-          cmake ^
-            -B build ^
-            -S . ^
-            -G Ninja ^
-            -DCMAKE_BUILD_TYPE=Debug ^
-            -DCMAKE_C_COMPILER=${{ matrix.CC }} ^
-            -DCMAKE_CXX_COMPILER=${{ matrix.CXX }} ^
-            -DBUILD_SHARED_LIBS=ON ^
-            -DREPROC++=ON ^
-            -DREPROC_TEST=ON ^
-            -DREPROC_EXAMPLES=ON ^
-            -DREPROC_WARNINGS_AS_ERRORS=ON ^
-            -DREPROC_TIDY=ON
+          cmake
+          -B build
+          -S .
+          -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_C_COMPILER=${{ matrix.CC }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.CXX }}
+          -DBUILD_SHARED_LIBS=ON
+          -DREPROC++=ON
+          -DREPROC_TEST=ON
+          -DREPROC_EXAMPLES=ON
+          -DREPROC_WARNINGS_AS_ERRORS=ON
+          -DREPROC_TIDY=ON
 
       - name: Build (Ubuntu && macOS)
         if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macOS')
