@@ -142,6 +142,12 @@ jobs:
           iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
           scoop install ninja llvm --global
 
+          # vsenv.bat makes every environment variable global so we conveniently
+          # reuse that to add the DLL output directories to the PATH so they can
+          # be found by the tests and examples later.
+          $env:Path += ";$(pwd)\build\reproc\lib"
+          $env:Path += ";$(pwd)\build\reproc++\lib"
+
           & .github\workflows\vsenv.bat -arch=x64 -host_arch=x64
 
       # We build reproc as a shared library to verify all the necessary symbols
@@ -170,10 +176,12 @@ jobs:
         run: cmake --build build
 
       # Aside from running the tests we also make sure the examples don't crash
-      # or return a non-zero exit code.
+      # or return a non-zero exit code. We use pwsh because the default shells
+      # (cmd and bash) use different path separators while powershell handles
+      # both.
 
-      - name: Test (Ubuntu && macOS)
-        if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macOS')
+      - name: Test
+        shell: pwsh
         run: |
           cmake --build build --target test
           build/reproc/examples/drain
@@ -181,18 +189,3 @@ jobs:
           build/reproc++/examples/background cmake --help
           build/reproc++/examples/cmake-help
           build/reproc++/examples/forward cmake --help
-
-      # We add the output directories to the PATH to make sure the tests and
-      # examples can find the reproc and reproc++ DLL's.
-
-      - name: Test (Windows)
-        if: startsWith(matrix.os, 'windows')
-        run: |
-          set PATH=%cd%\build\reproc\lib;%PATH%
-          set PATH=%cd%\build\reproc++\lib;%PATH%
-          cmake --build build --target test
-          build\reproc\examples\drain
-          build\reproc\examples\git-status
-          build\reproc++\examples\background cmake --help
-          build\reproc++\examples\cmake-help
-          build\reproc++\examples\forward cmake --help
