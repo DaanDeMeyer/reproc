@@ -150,8 +150,7 @@ jobs:
       # YAML folded multiline strings ('>') require the same indentation for all
       # lines in order to turn newlines into spaces.
 
-      - name: Configure (Ubuntu && macOS)
-        if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macOS')
+      - name: Configure
         run: >
           cmake
           -B build
@@ -166,36 +165,9 @@ jobs:
           -DREPROC_EXAMPLES=ON
           -DREPROC_WARNINGS_AS_ERRORS=ON
           -DREPROC_TIDY=ON
-          -DREPROC_SANITIZERS=ON
 
-      - name: Configure (Windows)
-        if: startsWith(matrix.os, 'windows')
-        run: >
-          set PATH=C:\ProgramData\scoop\shims;%PATH% &
-
-          cmake
-          -B build
-          -S .
-          -G Ninja
-          -DCMAKE_BUILD_TYPE=Debug
-          -DCMAKE_C_COMPILER=${{ matrix.CC }}
-          -DCMAKE_CXX_COMPILER=${{ matrix.CXX }}
-          -DBUILD_SHARED_LIBS=ON
-          -DREPROC++=ON
-          -DREPROC_TEST=ON
-          -DREPROC_EXAMPLES=ON
-          -DREPROC_WARNINGS_AS_ERRORS=ON
-          -DREPROC_TIDY=ON
-
-      - name: Build (Ubuntu && macOS)
-        if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macOS')
+      - name: Build
         run: cmake --build build
-
-      - name: Build (Windows)
-        if: startsWith(matrix.os, 'windows')
-        run: |
-          call .github\workflows\vsenv.bat -arch=x64 -host_arch=x64
-          cmake --build build
 
       # Aside from running the tests we also make sure the examples don't crash
       # or return a non-zero exit code.
