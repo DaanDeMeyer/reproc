@@ -142,6 +142,8 @@ jobs:
           iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
           scoop install ninja llvm --global
 
+          & .github\workflows\vsenv.bat -arch=x64 -host_arch=x64
+
       # We build reproc as a shared library to verify all the necessary symbols
       # are exported.
 
@@ -170,7 +172,6 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         run: >
           set PATH=C:\ProgramData\scoop\shims;%PATH% &
-          call .github\workflows\vsenv.bat -arch=x64 -host_arch=x64 &
 
           cmake
           -B build
