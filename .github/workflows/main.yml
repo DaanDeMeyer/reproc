@@ -85,10 +85,6 @@ jobs:
             os: macOS-10.14
             compiler: clang
 
-    # Github Actions resets environment variables between steps so we have to
-    # add the required environment variables at the start of each step.
-    # See https://github.community/t5/GitHub-Actions/Support-global-environment-variables/td-p/30481.
-
     steps:
       - uses: actions/checkout@v1
 
