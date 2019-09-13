@@ -173,6 +173,10 @@ jobs:
           -DREPROC_WARNINGS_AS_ERRORS=ON
           -DREPROC_TIDY=ON
 
+      - name: Configure Sanitizers (Ubuntu && macOS)
+        if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macOS')
+        run: cmake build -DREPROC_SANITIZERS=ON
+
       - name: Build
         run: cmake --build build
 
