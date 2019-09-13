@@ -152,14 +152,7 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   endif()
 
   if(REPROC_SANITIZERS)
-    target_compile_options(${TARGET} PRIVATE
-      -fsanitize=address,undefined
-    )
-    target_link_options(${TARGET} PRIVATE
-      -fsanitize=address,undefined
-      # GCC sanitizers only work when using the gold linker.
-      $<$<${LANGUAGE}_COMPILER_ID:GNU>:-fuse-ld=gold>
-    )
+    target_link_options(${TARGET} PRIVATE -fsanitize=address,undefined)
   endif()
 
   target_compile_options(${TARGET} PRIVATE
