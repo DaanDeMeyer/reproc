@@ -116,7 +116,6 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   if(MSVC)
     target_compile_options(${TARGET} PRIVATE
       /nologo # Silence MSVC compiler version output.
-      /wd4221 # Results in false positives.
       $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:/WX> # -Werror
       $<$<BOOL:${REPROC_${LANGUAGE}_HAVE_PERMISSIVE}>:/permissive->
     )
