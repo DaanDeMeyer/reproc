@@ -153,6 +153,7 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
 
   if(REPROC_SANITIZERS)
     target_link_options(${TARGET} PRIVATE -fsanitize=address,undefined)
+    target_compile_options(${TARGET} PRIVATE -fno-omit-frame-pointer)
   endif()
 
   target_compile_options(${TARGET} PRIVATE
