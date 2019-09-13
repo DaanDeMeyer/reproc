@@ -116,7 +116,6 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   if(MSVC)
     target_compile_options(${TARGET} PRIVATE
       /nologo # Silence MSVC compiler version output.
-      /wd4068 # Allow unknown pragmas.
       /wd4221 # Results in false positives.
       $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:/WX> # -Werror
       $<$<BOOL:${REPROC_${LANGUAGE}_HAVE_PERMISSIVE}>:/permissive->
@@ -145,7 +144,6 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       -pedantic
       -Wconversion
       -Wsign-conversion
-      -Wno-unknown-pragmas
       $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-Werror>
       $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-pedantic-errors>
     )
