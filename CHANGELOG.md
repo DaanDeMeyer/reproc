@@ -90,6 +90,11 @@
 
 - Fix `process::parse` not compiling.
 
+- Reimplement `process::drain` in terms of `process::parse`.
+
+  Like `process::parse`, `process::drain` is now guaranteed to always be called
+  once with an empty buffer before reading any actual data.
+
 ## 8.0.1
 
 - Correctly escape arguments on Windows.

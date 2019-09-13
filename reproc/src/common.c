@@ -105,28 +105,9 @@ reproc_drain(reproc_t *process,
   assert(process);
   assert(sink);
 
-  uint8_t buffer[BUFFER_SIZE];
-  REPROC_ERROR error = REPROC_SUCCESS;
+  REPROC_ERROR error = reproc_parse(process, stream, sink, context);
 
-  while (true) {
-    unsigned int bytes_read = 0;
-    error = reproc_read(process, stream, buffer, BUFFER_SIZE, &bytes_read);
-    if (error) {
-      break;
-    }
-
-    // `sink` return false to tell us to stop reading.
-    if (!sink(buffer, bytes_read, context)) {
-      break;
-    }
-  }
-
-  // The child process closing the stream is not treated as an error.
-  if (error == REPROC_ERROR_STREAM_CLOSED) {
-    return REPROC_SUCCESS;
-  }
-
-  return error;
+  return error == REPROC_ERROR_STREAM_CLOSED ? REPROC_SUCCESS : error;
 }
 
 bool reproc_running(reproc_t *process)

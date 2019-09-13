@@ -180,17 +180,8 @@ public:
   std::error_code parse(stream stream, Parser &&parser);
 
   /*!
-  Calls `read` on `stream` until it is closed, `sink` returns false or an error
-  occurs. `sink` receives the output after each read.
-
-  Note that this method does not report `stream` being closed as an error. This
-  is also the main difference with `parse`.
-
-  `Sink` expects the following signature:
-
-  ```c++
-  bool sink(const uint8_t *buffer, unsigned int size);
-  ```
+  `parse` but `stream_closed` is not treated as an error. `Sink` expects the
+  same signature as `Parser` in `parse`.
 
   For examples of sinks, see `sink.hpp`
   */
@@ -322,28 +313,9 @@ std::error_code process::parse(stream stream, Parser &&parser)
 template <typename Sink>
 std::error_code process::drain(stream stream, Sink &&sink)
 {
-  uint8_t buffer[BUFFER_SIZE]; // NOLINT
-  std::error_code ec;
+  std::error_code ec = parse(stream, std::forward<Sink>(sink));
 
-  while (true) {
-    unsigned int bytes_read = 0;
-    ec = read(stream, buffer, BUFFER_SIZE, &bytes_read);
-    if (ec) {
-      break;
-    }
-
-    // `sink` return false to tell us to stop reading.
-    if (!sink(buffer, bytes_read)) {
-      break;
-    }
-  }
-
-  // The child process closing the stream is not treated as an error.
-  if (ec == error::stream_closed) {
-    return {};
-  }
-
-  return ec;
+  return ec == error::stream_closed ? error::success : ec;
 }
 
 template <typename Arguments>

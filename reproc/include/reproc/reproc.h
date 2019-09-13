@@ -161,11 +161,7 @@ REPROC_EXPORT REPROC_ERROR reproc_parse(reproc_t *process,
                                         void *context);
 
 /*!
-Calls `reproc_read` on `stream` until it is closed, `sink` returns false or an
-error occurs. `sink` receives the output after each read, along with `context`.
-
-Note that this method does not report `stream` being closed as an error. This is
-also the main difference with `reproc_parse`.
+`reproc_parse` but `REPROC_ERROR_STREAM_CLOSED` is not treated as an error.
 
 Possible errors:
 - `REPROC_ERROR_SYSTEM`
