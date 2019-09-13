@@ -176,23 +176,23 @@ jobs:
       - name: Build
         run: cmake --build build
 
-      # We use pwsh because the default shells (cmd and bash) use different path
-      # separators while powershell handles both.
+      # We use bash because the default shells (cmd and bash) use different path
+      # separators.
 
       - name: Test
-        shell: pwsh
+        shell: bash
         run: |
           # We add the output directories to the PATH to make sure the tests and
           # examples can find the reproc and reproc++ DLL's.
-          $env:Path += ";$(pwd)\build\reproc\lib"
-          $env:Path += ";$(pwd)\build\reproc++\lib"
+          export PATH=`pwd`/build/reproc/lib:$PATH
+          export PATH=`pwd`/build/reproc++/lib:$PATH
 
           cmake --build build --target test
 
           # Aside from running the tests we also make sure the examples don't
           # crash or return a non-zero exit code.
-          build/reproc/examples/drain > $null
-          build/reproc/examples/git-status > $null
-          build/reproc++/examples/background cmake --help > $null
-          build/reproc++/examples/cmake-help > $null
-          build/reproc++/examples/forward cmake --help > $null
+          build/reproc/examples/drain > /dev/null
+          build/reproc/examples/git-status > /dev/null
+          build/reproc++/examples/background cmake --help > /dev/null
+          build/reproc++/examples/cmake-help > /dev/null
+          build/reproc++/examples/forward cmake --help > /dev/null
