@@ -191,7 +191,6 @@ wchar_t *string_to_wstring(const char *string, size_t size)
   return wstring;
 }
 
-#if defined(ATTRIBUTE_LIST_FOUND)
 #include <stdlib.h>
 
 static REPROC_ERROR handle_inherit_list_create(
@@ -230,7 +229,6 @@ static REPROC_ERROR handle_inherit_list_create(
 
   return REPROC_SUCCESS;
 }
-#endif
 
 REPROC_ERROR process_create(wchar_t *command_line,
                             struct process_options *options,
@@ -248,7 +246,6 @@ REPROC_ERROR process_create(wchar_t *command_line,
   // UTF-16 encoded environment (including Unicode characters).
   DWORD creation_flags = CREATE_NEW_PROCESS_GROUP | CREATE_UNICODE_ENVIRONMENT;
 
-#if defined(ATTRIBUTE_LIST_FOUND)
   REPROC_ERROR error = REPROC_SUCCESS;
 
   // Windows Vista added the `STARTUPINFOEXW` structure in which we can put a
@@ -292,15 +289,6 @@ REPROC_ERROR process_create(wchar_t *command_line,
   };
 
   LPSTARTUPINFOW startup_info_address = &extended_startup_info.StartupInfo;
-#else
-  STARTUPINFOW startup_info = { .cb = sizeof(startup_info),
-                                .dwFlags = STARTF_USESTDHANDLES,
-                                .hStdInput = options->stdin_handle,
-                                .hStdOutput = options->stdout_handle,
-                                .hStdError = options->stderr_handle };
-
-  LPSTARTUPINFOW startup_info_address = &startup_info;
-#endif
 
   // Make sure the console window of the child process isn't visible. See
   // https://github.com/DaanDeMeyer/reproc/issues/6 and
@@ -322,9 +310,7 @@ REPROC_ERROR process_create(wchar_t *command_line,
 
   SetErrorMode(previous_error_mode);
 
-#if defined(ATTRIBUTE_LIST_FOUND)
   DeleteProcThreadAttributeList(attribute_list);
-#endif
 
   // We don't need the handle to the primary thread of the child process.
   handle_close(&info.hThread);

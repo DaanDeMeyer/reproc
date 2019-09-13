@@ -28,23 +28,12 @@ endif()
 include(CheckSymbolExists)
 
 if(WIN32)
-  # Check if `STARTUPINFOEX` and functions related to it are available.
-  list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_WIN32_WINNT=0x0600 -DWINVER=0x0600)
-  check_symbol_exists(InitializeProcThreadAttributeList Windows.h
-                      REPROC_ATTRIBUTE_LIST_FOUND)
-  list(REMOVE_AT CMAKE_REQUIRED_DEFINITIONS -1)
-
   target_compile_definitions(reproc PRIVATE
     _CRT_SECURE_NO_WARNINGS
-    $<$<BOOL:${REPROC_ATTRIBUTE_LIST_FOUND}>:ATTRIBUTE_LIST_FOUND>
-    # Remove unneeded stuff from windows.h.
-    WIN32_LEAN_AND_MEAN
-    VC_EXTRALEAN
-    NOMINMAX
 
     $<$<BOOL:${MINGW}>:
-      WINVER=0x0600
-      _WIN32_WINNT=0x0600
+      WINVER=0x0600 # `WC_ERR_INVALID_CHARS`
+      _WIN32_WINNT=0x0600 # `InitializeProcThreadAttributeList`
     >
   )
 else()
