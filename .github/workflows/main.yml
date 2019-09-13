@@ -98,17 +98,12 @@ jobs:
           curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Linux-x86_64.tar.gz -o cmake.tar.gz
           sudo tar xf cmake.tar.gz --strip 1 -C /usr/local
 
-          sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-8 main"
-          sudo apt-get update
-
           sudo apt-get install -y ninja-build clang-tidy-8
           sudo ln -s /usr/bin/clang-tidy-8 /usr/local/bin/clang-tidy
 
       - name: Install (Ubuntu GCC)
         if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.compiler, 'gcc')
         run: |
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-          sudo apt-get update
           sudo apt-get install -y g++-${{ matrix.version }}
 
           echo ::set-env name=CC::gcc-${{ matrix.version }}
@@ -117,8 +112,6 @@ jobs:
       - name: Install (Ubuntu Clang)
         if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.compiler, 'clang')
         run: |
-          sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-${{ matrix.version }} main"
-          sudo apt-get update
           sudo apt-get install -y clang-${{ matrix.version }}
 
           echo ::set-env name=CC::clang-${{ matrix.version }}
