@@ -101,21 +101,15 @@ jobs:
           sudo apt-get install -y ninja-build clang-tidy-8
           sudo ln -s /usr/bin/clang-tidy-8 /usr/local/bin/clang-tidy
 
-      - name: Install (Ubuntu GCC)
-        if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.compiler, 'gcc')
-        run: |
-          sudo apt-get install -y g++-${{ matrix.version }}
-
-          echo ::set-env name=CC::gcc-${{ matrix.version }}
-          echo ::set-env name=CXX::g++-${{ matrix.version }}
-
-      - name: Install (Ubuntu Clang)
-        if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.compiler, 'clang')
-        run: |
-          sudo apt-get install -y clang-${{ matrix.version }}
-
-          echo ::set-env name=CC::clang-${{ matrix.version }}
-          echo ::set-env name=CXX::clang++-${{ matrix.version }}
+          if [ "${{ matrix.compiler }}" = "gcc" ]; then
+            sudo apt-get install -y g++-${{ matrix.version }}
+            echo ::set-env name=CC::gcc-${{ matrix.version }}
+            echo ::set-env name=CXX::g++-${{ matrix.version }}
+          else
+            sudo apt-get install -y clang-${{ matrix.version }}
+            echo ::set-env name=CC::clang-${{ matrix.version }}
+            echo ::set-env name=CXX::clang++-${{ matrix.version }}
+          fi
 
       - name: Install (macOS)
         if: startsWith(matrix.os, 'macOS')
