@@ -5,36 +5,30 @@
 #include <stdlib.h>
 #include <string.h>
 
-// A sink function receives a single context parameter. Because we need more
-// than parameter in `string_sink` we take arguments via a struct. Before
-// calling `reproc_drain`, all parameters should be filled in a
-// `string_sink_context` which should then be passed along with `string_sink` as
-// an argument to `reproc_drain`.
-
-// We store the addresses so we can directly use the modified values when
-// `reproc_drain` returns. Another option is to store the values directly and
-// reassign them when `reproc_drain` returns.
-typedef struct {
-  char **buffer;
-  size_t *length;
-} string_sink_context;
+// A sink function receives a single context parameter. For `string_sink` we
+// require a `char **` with its value set to `NULL` to be passed to
+// `reproc_drain`. If more than one parameter is needed, simply store the
+// parameters in a struct and pass the address of the struct as the `context`
+// parameter.
 
 bool string_sink(const uint8_t *buffer, unsigned int size, void *context)
 {
-  // `context` is required to be of type `string_sink_context` when passing
-  // `string_sink` to `reproc_drain` so we cast `context` to the correct type.
-  string_sink_context *ctx = (string_sink_context *) context;
+  // `context` is required to be of type `char **` when passing `string_sink` to
+  // `reproc_drain` so we cast `context` to the correct type.
+  char **string = (char **) context;
+  size_t string_size = *string == NULL ? 0 : strlen(*string);
 
-  char *realloc_result = realloc(*ctx->buffer, *ctx->length + size + 1);
+  char *realloc_result = realloc(*string, string_size + size + 1);
   if (!realloc_result) {
-    fprintf(stderr, "Failed to allocate memory for output\n");
+    free(*string);
+    *string = NULL;
     return false;
   } else {
-    *ctx->buffer = realloc_result;
+    *string = realloc_result;
   }
 
-  memcpy(*ctx->buffer + *ctx->length, buffer, size);
-  *ctx->length += size;
+  memcpy(*string + string_size, buffer, size);
+  (*string)[string_size + size] = '\0';
 
   return true;
 }
@@ -63,26 +57,19 @@ int main(void)
 
   reproc_close(&git_help, REPROC_STREAM_IN);
 
-  size_t output_length = 0;
-  char *output = malloc(1);
-  if (!output) {
-    goto cleanup;
-  }
-  output[0] = '\0';
-
-  // Function pointers passed to reproc_drain receive a single context argument
-  // which we provide when calling `reproc_drain` Because we need access to both
-  // `output` and `output_length` inside `string_sink`, we store both in a
-  // temporary `string_sink_context` struct which we pass as a context to
-  // `reproc_drain`.
-  string_sink_context context = { .buffer = &output, .length = &output_length };
-
-  error = reproc_drain(&git_help, REPROC_STREAM_OUT, string_sink, &context);
+  // Passing the address of `output` to `reproc_drain` as `string_sink`'s
+  // context is safe as it a `char **` with its value set to `NULL`.
+  char *output = NULL;
+  error = reproc_drain(&git_help, REPROC_STREAM_OUT, string_sink, &output);
   if (error) {
     goto cleanup;
   }
 
-  output[output_length] = '\0';
+  if (output == NULL) {
+    fprintf(stderr, "Failed to allocate memory for output\n");
+    goto cleanup;
+  }
+
   printf("%s", output);
 
 cleanup:
