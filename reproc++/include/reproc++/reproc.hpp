@@ -95,10 +95,6 @@ public:
   REPROCXX_EXPORT ~process() noexcept;
 
   // Enforce unique ownership of child processes.
-
-  process(const process &) = delete;
-  process &operator=(const process &) = delete;
-
   REPROCXX_EXPORT process(process &&) noexcept;
   REPROCXX_EXPORT process &operator=(process &&) noexcept;
 
