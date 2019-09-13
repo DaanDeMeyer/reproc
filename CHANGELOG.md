@@ -4,6 +4,8 @@
 
 ## General
 
+- Drop support for Windows XP.
+
 - Add support for custom environments.
 
   `reproc_start` and `reproc::process::start` now take an extra `environment`
