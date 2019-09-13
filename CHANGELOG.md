@@ -88,6 +88,8 @@
   now be passed in a container to `process::start`. `working_directory` now
   takes a `const char *` instead of a `std::string *`.
 
+- Fix `process::parse` not compiling.
+
 ## 8.0.1
 
 - Correctly escape arguments on Windows.
