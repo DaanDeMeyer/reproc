@@ -7,21 +7,9 @@ if(REPROC_TEST)
     )
   endif()
 
-  # Generate the doctest implementation file.
-  file(
-    GENERATE
-    OUTPUT ${PROJECT_BINARY_DIR}/doctest/impl.cpp
-    CONTENT
-      "
-      #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN\n
-      #define DOCTEST_CONFIG_NO_POSIX_SIGNALS\n
-      #include <doctest.h>
-      "
-  )
-
-  add_library(doctest OBJECT ${PROJECT_BINARY_DIR}/doctest/impl.cpp)
-  target_compile_features(doctest PUBLIC cxx_std_11)
-  target_include_directories(doctest PUBLIC ${PROJECT_BINARY_DIR}/doctest)
+  add_library(doctest INTERFACE)
+  target_compile_features(doctest INTERFACE cxx_std_11)
+  target_include_directories(doctest INTERFACE ${PROJECT_BINARY_DIR}/doctest)
 endif()
 
 # Search for `Threads` module ourselves if the user has not already done so.

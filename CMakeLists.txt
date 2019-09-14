@@ -29,7 +29,20 @@ if(REPROC_TEST)
   # single executable. Use `target_sources(reproc-test PRIVATE <file>)` to add
   # new tests. Tests are executed by building the `test` target or running the
   # tests executable from within the build directory.
-  add_executable(reproc-test)
+
+  # Generate the doctest implementation file.
+  file(
+    GENERATE
+    OUTPUT ${PROJECT_BINARY_DIR}/doctest/impl.cpp
+    CONTENT
+      "
+      #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN\n
+      #define DOCTEST_CONFIG_NO_POSIX_SIGNALS\n
+      #include <doctest.h>
+      "
+  )
+
+  add_executable(reproc-test ${PROJECT_BINARY_DIR}/doctest/impl.cpp)
 
   reproc_add_common(reproc-test CXX 11 "")
   target_link_libraries(reproc-test PRIVATE doctest)
