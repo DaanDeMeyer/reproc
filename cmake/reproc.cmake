@@ -151,6 +151,10 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   endif()
 
   if(REPROC_SANITIZERS)
+    set_property(
+      TARGET ${TARGET}
+      PROPERTY MSVC_RUNTIME_LIBRARY MultiThreaded
+    )
     target_compile_options(
       ${TARGET}
       PRIVATE
