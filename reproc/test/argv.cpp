@@ -2,9 +2,9 @@
 
 #include <reproc/reproc.h>
 
-#include <algorithm>
 #include <array>
-#include <string>
+#include <iterator>
+#include <sstream>
 
 TEST_CASE("argv")
 {
@@ -36,5 +36,10 @@ TEST_CASE("argv")
   }
 
   REQUIRE(error == REPROC_ERROR_STREAM_CLOSED);
-  REQUIRE(std::count(output.begin(), output.end(), '\n') == argv.size() - 1);
+
+  std::ostringstream concatenated;
+  std::copy(argv.begin(), argv.end() - 1,
+            std::ostream_iterator<std::string>(concatenated, "$"));
+
+  REQUIRE(output == concatenated.str());
 }
