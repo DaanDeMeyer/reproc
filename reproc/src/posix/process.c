@@ -271,7 +271,7 @@ static REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
 static struct timespec timespec_subtract(struct timespec lhs,
                                          struct timespec rhs)
 {
-  struct timespec result = { 0 };
+  struct timespec result = { 0, 0 };
 
   result.tv_sec = lhs.tv_sec - rhs.tv_sec;
   result.tv_nsec = lhs.tv_nsec - rhs.tv_nsec;
