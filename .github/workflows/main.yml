@@ -114,6 +114,10 @@ jobs:
             echo "::set-env name=CXX::clang++-${{ matrix.version }}"
           fi
 
+          # Allows us to use `> NUL` as a cross platform way to discard output
+          # from examples.
+          sudo ln -s /dev/null NUL
+
       - name: Install (macOS)
         if: runner.os == 'macOS'
         run: |
@@ -124,6 +128,8 @@ jobs:
 
           echo "::set-env name=CC::clang"
           echo "::set-env name=CXX::clang++"
+
+          sudo ln -s /dev/null NUL
 
       - name: Install (Windows)
         if: runner.os == 'Windows'
@@ -187,8 +193,8 @@ jobs:
         run: |
           "build/test"
 
-          "build/reproc/examples/drain"
-          "build/reproc/examples/git-status"
-          "build/reproc++/examples/background" cmake --help
-          "build/reproc++/examples/cmake-help"
-          "build/reproc++/examples/forward" cmake --help
+          "build/reproc/examples/drain" > NUL
+          "build/reproc/examples/git-status" > NUL
+          "build/reproc++/examples/background" cmake --help > NUL
+          "build/reproc++/examples/cmake-help" > NUL
+          "build/reproc++/examples/forward" cmake --help > NUL
