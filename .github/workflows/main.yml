@@ -26,7 +26,9 @@ jobs:
           windows-2019-clang,
           windows-2019-gcc,
           macOS-10.14-xcode-10.0,
-          macOS-10.14-xcode-10.3
+          macOS-10.14-xcode-10.3,
+          macOS-10.14-gcc-4.9,
+          macOS-10.14-gcc-9
         ]
 
         include:
@@ -92,6 +94,16 @@ jobs:
             compiler: xcode
             version: "10.3"
 
+          - name: macOS-10.14-gcc-4.9
+            os: macOS-10.14
+            compiler: gcc
+            version: "4.9"
+
+          - name: macOS-10.14-gcc-9
+            os: macOS-10.14
+            compiler: gcc
+            version: "9"
+
     steps:
       - uses: actions/checkout@v1
 
@@ -128,10 +140,15 @@ jobs:
           brew install ninja llvm
           sudo ln -s /usr/local/opt/llvm/bin/clang-tidy /usr/local/bin/clang-tidy
 
-          sudo xcode-select -switch /Applications/Xcode_${{ matrix.version }}.app
-
-          echo "::set-env name=CC::clang"
-          echo "::set-env name=CXX::clang++"
+          if [ "${{ matrix.compiler }}" = "gcc" ]; then
+            brew install gcc@${{ matrix.version }}
+            echo "::set-env name=CC::gcc-${{ matrix.version }}"
+            echo "::set-env name=CXX::g++-${{ matrix.version }}"
+          else
+            sudo xcode-select -switch /Applications/Xcode_${{ matrix.version }}.app
+            echo "::set-env name=CC::clang"
+            echo "::set-env name=CXX::clang++"
+          fi
 
           sudo ln -s /dev/null NUL
 
