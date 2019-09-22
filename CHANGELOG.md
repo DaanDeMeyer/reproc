@@ -47,10 +47,6 @@
   words: relative to the working directory passed to the `working_directory`
   parameter of `reproc_start`).
 
-  As we already recommend not passing relative paths as the working directory to
-  `reproc_start`, we fit this change in a feature release instead of a major
-  release.
-
 - Ensure passing a custom working directory and a relative executable path
   behaves consistently on all supported platforms.
 
