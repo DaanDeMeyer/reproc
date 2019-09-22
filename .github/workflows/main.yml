@@ -153,7 +153,7 @@ jobs:
           -B build
           -S .
           -G Ninja
-          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_BUILD_TYPE=Release
           -DBUILD_SHARED_LIBS=ON
           -DREPROC++=ON
           -DREPROC_TEST=ON
