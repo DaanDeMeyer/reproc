@@ -36,8 +36,8 @@ if(REPROC_TEST)
     OUTPUT ${PROJECT_BINARY_DIR}/doctest/impl.cpp
     CONTENT
       "
-      #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN\n
-      #define DOCTEST_CONFIG_NO_POSIX_SIGNALS\n
+      #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+      #define DOCTEST_CONFIG_NO_POSIX_SIGNALS
       #include <doctest.h>
       "
   )
