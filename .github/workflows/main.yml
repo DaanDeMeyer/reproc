@@ -16,7 +16,7 @@ jobs:
           ubuntu-18.04-gcc-4.8,
           ubuntu-18.04-gcc-9,
           ubuntu-18.04-clang-4.0,
-          ubuntu-18.04-clang-8,
+          ubuntu-18.04-clang-9,
           windows-2016-cl,
           windows-2016-clang-cl,
           windows-2016-clang,
@@ -45,10 +45,10 @@ jobs:
             compiler: clang
             version: "6.0"
 
-          - name: ubuntu-18.04-clang-8
+          - name: ubuntu-18.04-clang-9
             os: ubuntu-18.04
             compiler: clang
-            version: "8"
+            version: "9"
 
           - name: windows-2016-cl
             os: windows-2016
@@ -101,8 +101,12 @@ jobs:
           curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Linux-x86_64.tar.gz -o cmake.tar.gz
           sudo tar xf cmake.tar.gz --strip 1 -C /usr/local
 
-          sudo apt-get install -y ninja-build clang-tidy-8
-          sudo ln -s /usr/bin/clang-tidy-8 /usr/local/bin/clang-tidy
+          # LLVM 9 is not yet in bionic's repositories.
+          sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main"
+          sudo apt-get update
+
+          sudo apt-get install -y ninja-build clang-tidy-9
+          sudo ln -s /usr/bin/clang-tidy-9 /usr/local/bin/clang-tidy
 
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
             sudo apt-get install -y g++-${{ matrix.version }}
