@@ -95,7 +95,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
-      - name: Install (Ubuntu)
+      - name: Install (Linux)
         if: runner.os == 'Linux'
         run: |
           curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Linux-x86_64.tar.gz -o cmake.tar.gz
@@ -180,7 +180,7 @@ jobs:
           -DREPROC_WARNINGS_AS_ERRORS=ON
           -DREPROC_TIDY=ON
 
-      - name: Configure Sanitizers (Ubuntu && macOS)
+      - name: Configure Sanitizers (Linux && macOS)
         if: runner.os == 'Linux' || runner.os == 'macOS'
         run: cmake build -DREPROC_SANITIZERS=ON
 
