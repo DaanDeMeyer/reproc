@@ -39,14 +39,6 @@
   whether `vfork` was enabled or disabled. As we do not have the expertise to
   verify if `vfork` is working correctly, we opt to remove it.
 
-  As disabling `vfork` impacted the working directory test on MacOS, this change
-  will likely break code passing relative paths to the `working_directory`
-  parameter of `reproc_start` on MacOS. With `vfork` enabled, the path was
-  relative to the parent process working directory. With `vfork` removed, the
-  path will be relative to the working directory of the child process (in other
-  words: relative to the working directory passed to the `working_directory`
-  parameter of `reproc_start`).
-
 - Ensure passing a custom working directory and a relative executable path
   behaves consistently on all supported platforms.
 
