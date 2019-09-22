@@ -1,38 +1,10 @@
 #include <reproc/reproc.h>
+#include <reproc/sink.h>
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// A sink function receives a single context parameter. For `string_sink` we
-// require a `char **` with its value set to `NULL` to be passed to
-// `reproc_drain`. If more than one parameter is needed, simply store the
-// parameters in a struct and pass the address of the struct as the `context`
-// parameter.
-
-bool string_sink(const uint8_t *buffer, unsigned int size, void *context)
-{
-  // `context` is required to be of type `char **` when passing `string_sink` to
-  // `reproc_drain` so we cast `context` to the correct type.
-  char **string = (char **) context;
-  size_t string_size = *string == NULL ? 0 : strlen(*string);
-
-  char *realloc_result = realloc(*string, string_size + size + 1);
-  if (!realloc_result) {
-    free(*string);
-    *string = NULL;
-    return false;
-  } else {
-    *string = realloc_result;
-  }
-
-  memcpy(*string + string_size, buffer, size);  
-
-  (*string)[string_size + size] = '\0';
-
-  return true;
-}
 
 int fail(REPROC_ERROR error)
 {
@@ -58,10 +30,14 @@ int main(void)
 
   reproc_close(&git_help, REPROC_STREAM_IN);
 
-  // Passing the address of `output` to `reproc_drain` as `string_sink`'s
-  // context is safe as it a `char **` with its value set to `NULL`.
+  // A sink function receives a single context parameter. For
+  // `reproc_sink_string` we require a `char **` with its value set to `NULL` to
+  // be passed to `reproc_drain` along with `reproc_sink_string`. If a sink
+  // function needs more than one parameter, simply store the parameters in a
+  // struct and pass the address of the struct as the `context` parameter.
   char *output = NULL;
-  error = reproc_drain(&git_help, REPROC_STREAM_OUT, string_sink, &output);
+  error = reproc_drain(&git_help, REPROC_STREAM_OUT, reproc_sink_string,
+                       &output);
   if (error) {
     goto cleanup;
   }
@@ -74,6 +50,8 @@ int main(void)
   printf("%s", output);
 
 cleanup:
+  // `output` always points to valid memory or is set to `NULL` by
+  // `reproc_sink_string` so it's always safe to call `free` on it.
   free(output);
 
   error = reproc_wait(&git_help, REPROC_INFINITE);

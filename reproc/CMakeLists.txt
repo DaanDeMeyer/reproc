@@ -5,7 +5,7 @@ if(REPROC_MULTITHREADED)
   target_link_libraries(reproc PRIVATE Threads::Threads)
 endif()
 
-target_sources(reproc PRIVATE src/common.c)
+target_sources(reproc PRIVATE src/common.c src/sink.c)
 
 if(WIN32)
   target_sources(reproc PRIVATE
