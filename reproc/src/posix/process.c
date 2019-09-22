@@ -29,6 +29,13 @@
 #define EXECVPE execvpe
 #endif
 
+// https://github.com/neovim/neovim/pull/5243
+#if defined(__APPLE__) && defined(__GNUC__) && !defined(__clang__)
+  #define SIGADDSET(set, signum) sigaddset((int *) (set), (signum))
+#else
+  #define SIGADDSET(set, signum) sigaddset((set), (signum))
+#endif
+
 REPROC_ERROR
 process_create(const char *const *argv,
                struct process_options *options,
@@ -300,7 +307,7 @@ wait_timeout(pid_t pid, unsigned int timeout, unsigned int *exit_status)
   sigset_t old_mask;
 
   sigemptyset(&chld_mask);
-  sigaddset(&chld_mask, SIGCHLD);
+  SIGADDSET(&chld_mask, SIGCHLD);
 
   // We block `SIGCHLD` to avoid a race condition between `wait_no_hang` and
   // `sigtimedwait` where the child process is still running when `wait_no_hang`
