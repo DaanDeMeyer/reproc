@@ -30,7 +30,7 @@ jobs:
         ]
 
         include:
-          - name: ubuntu-18.04-gcc-6
+          - name: ubuntu-18.04-gcc-4.8
             os: ubuntu-18.04
             compiler: gcc
             version: "6"
@@ -40,7 +40,7 @@ jobs:
             compiler: gcc
             version: "9"
 
-          - name: ubuntu-18.04-clang-6.0
+          - name: ubuntu-18.04-clang-4.0
             os: ubuntu-18.04
             compiler: clang
             version: "6.0"
