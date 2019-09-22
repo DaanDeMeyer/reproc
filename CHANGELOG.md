@@ -58,6 +58,9 @@
 
   This should make debugging reproc errors a lot easier.
 
+- Add `reproc_sink_string` in `sink.h`, a sink that stores all process output in
+  a single null-terminated C string.
+
 # reproc++
 
 - Move sinks into `sink` namespace and remove `_sink` suffix from all sinks.
