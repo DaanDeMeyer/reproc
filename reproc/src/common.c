@@ -71,7 +71,7 @@ REPROC_ERROR reproc_parse(reproc_t *process,
   // A single call to `read` might contain multiple messages. By always calling
   // `parser` once with no data before reading, we give it the chance to process
   // all previous output one by one before reading from the child process again.
-  if (!parser(NULL, 0, context)) {
+  if (!parser((uint8_t[]){ 0 }, 0, context)) {
     return REPROC_SUCCESS;
   }
 

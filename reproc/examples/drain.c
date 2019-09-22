@@ -27,9 +27,7 @@ bool string_sink(const uint8_t *buffer, unsigned int size, void *context)
     *string = realloc_result;
   }
 
-  if (buffer != NULL) {
-    memcpy(*string + string_size, buffer, size);
-  }
+  memcpy(*string + string_size, buffer, size);  
 
   (*string)[string_size + size] = '\0';
 

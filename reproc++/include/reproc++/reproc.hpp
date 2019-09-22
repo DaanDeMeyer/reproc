@@ -280,10 +280,13 @@ std::error_code process::start(const Arguments &arguments,
 template <typename Parser>
 std::error_code process::parse(stream stream, Parser &&parser)
 {
+  // We don't have compound literals in C++.
+  static constexpr uint8_t initial = 0;
+
   // A single call to `read` might contain multiple messages. By always calling
   // `parser` once with no data before reading, we give it the chance to process
   // all previous output one by one before reading from the child process again.
-  if (!parser(nullptr, 0)) {
+  if (!parser(&initial, 0)) {
     return {};
   }
 
