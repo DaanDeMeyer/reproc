@@ -61,6 +61,9 @@
 - Add `reproc_sink_string` in `sink.h`, a sink that stores all process output in
   a single null-terminated C string.
 
+- Add `reproc_sink_discard` in `sink.h`, a sink that discards all process
+  output.
+
 # reproc++
 
 - Move sinks into `sink` namespace and remove `_sink` suffix from all sinks.

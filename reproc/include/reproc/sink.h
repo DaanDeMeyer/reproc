@@ -54,6 +54,12 @@ free(output);
 REPROC_EXPORT bool
 reproc_sink_string(const uint8_t *buffer, unsigned int size, void *context);
 
+/*!
+Discards the output of a process.
+*/
+REPROC_EXPORT bool
+reproc_sink_discard(const uint8_t *buffer, unsigned int size, void *context);
+
 #ifdef __cplusplus
 }
 #endif

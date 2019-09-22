@@ -23,3 +23,14 @@ bool reproc_sink_string(const uint8_t *buffer, unsigned int size, void *context)
 
   return true;
 }
+
+bool reproc_sink_discard(const uint8_t *buffer,
+                         unsigned int size,
+                         void *context)
+{
+  (void) buffer;
+  (void) size;
+  (void) context;
+
+  return true;
+}
