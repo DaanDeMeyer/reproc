@@ -210,12 +210,6 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
       ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}/export.${HEADER_EXT}
   )
 
-  set(CONFIG_H include/${TARGET}/config.${HEADER_EXT})
-
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${CONFIG_H}.in)
-    configure_file(${CONFIG_H}.in ${CONFIG_H})
-  endif()
-
   # Make sure we follow the popular naming convention for shared libraries on
   # UNIX systems.
   set_target_properties(${TARGET} PROPERTIES
