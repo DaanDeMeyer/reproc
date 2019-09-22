@@ -16,6 +16,10 @@
   `reproc_start` and `reproc::process::start` so that `environment` and
   `working_directory` are specified in the correct order.
 
+  To keep the previous behaviour, pass `nullptr` as the environment to
+  `reproc_start`/`reproc::process::start` or use the `reproc::process::start`
+  overload without the `environment` parameter.
+
 - Remove `argc` parameter from `reproc_start` and `process::start`.
 
   We can trivially calculate `argc` internally in reproc since `argv` is
