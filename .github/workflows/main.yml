@@ -135,6 +135,11 @@ jobs:
             echo "::set-env name=CXX::${{ matrix.compiler }}"
           }
 
+          # We add the output directories to the PATH to make sure the tests and
+          # examples can find the reproc and reproc++ DLL's.
+          $env:PATH += ";$pwd\build\reproc\lib"
+          $env:PATH += ";$pwd\build\reproc++\lib"
+
           & .github\workflows\vsenv.bat -arch=x64 -host_arch=x64
 
       # We build reproc as a shared library to verify all the necessary symbols
@@ -164,23 +169,18 @@ jobs:
       - name: Build
         run: cmake --build build
 
-      # We use bash because the default shells (cmd and bash) use different path
-      # separators.
+      # Aside from running the tests we also make sure the examples don't
+      # crash or return a non-zero exit code.
+
+      # When surrounding an executable path with quotes, we can use forward
+      # slashes in cmd.exe.
 
       - name: Test
-        shell: bash
         run: |
-          # We add the output directories to the PATH to make sure the tests and
-          # examples can find the reproc and reproc++ DLL's.
-          export PATH=`pwd`/build/reproc/lib:$PATH
-          export PATH=`pwd`/build/reproc++/lib:$PATH
+          "build/test"
 
-          build/test
-
-          # Aside from running the tests we also make sure the examples don't
-          # crash or return a non-zero exit code.
-          build/reproc/examples/drain > /dev/null
-          build/reproc/examples/git-status > /dev/null
-          build/reproc++/examples/background cmake --help > /dev/null
-          build/reproc++/examples/cmake-help > /dev/null
-          build/reproc++/examples/forward cmake --help > /dev/null
+          "build/reproc/examples/drain"
+          "build/reproc/examples/git-status"
+          "build/reproc++/examples/background" cmake --help
+          "build/reproc++/examples/cmake-help"
+          "build/reproc++/examples/forward" cmake --help
