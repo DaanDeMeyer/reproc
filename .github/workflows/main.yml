@@ -25,7 +25,7 @@ jobs:
           windows-2019-clang-cl,
           windows-2019-clang,
           windows-2019-gcc,
-          macOS-10.14-xcode-9.4.1,
+          macOS-10.14-xcode-10.0,
           macOS-10.14-xcode-10.3
         ]
 
@@ -82,10 +82,10 @@ jobs:
             os: windows-2019
             compiler: gcc
 
-          - name: macOS-10.14-xcode-9.4.1
+          - name: macOS-10.14-xcode-10.0
             os: macOS-10.14
             compiler: xcode
-            version: "9.4.1"
+            version: "10"
 
           - name: macOS-10.14-xcode-10.3
             os: macOS-10.14
