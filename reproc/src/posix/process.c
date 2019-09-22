@@ -71,13 +71,13 @@ process_create(const char *const *argv,
         // freed when `_exit` or `execvp` is called.
         program = path_prepend_cwd(program);
         if (program == NULL) {
-          write(error_pipe_write, &errno, sizeof(errno));
+          (void) !write(error_pipe_write, &errno, sizeof(errno));
           _exit(errno);
         }
       }
 
       if (chdir(options->working_directory) == -1) {
-        write(error_pipe_write, &errno, sizeof(errno));
+        (void) !write(error_pipe_write, &errno, sizeof(errno));
         _exit(errno);
       }
     }
@@ -86,21 +86,21 @@ process_create(const char *const *argv,
     // `_exit` ensures open file descriptors (pipes) are closed.
 
     if (options->stdin_fd && dup2(options->stdin_fd, STDIN_FILENO) == -1) {
-      write(error_pipe_write, &errno, sizeof(errno));
+      (void) !write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
     if (options->stdout_fd && dup2(options->stdout_fd, STDOUT_FILENO) == -1) {
-      write(error_pipe_write, &errno, sizeof(errno));
+      (void) !write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
     if (options->stderr_fd && dup2(options->stderr_fd, STDERR_FILENO) == -1) {
-      write(error_pipe_write, &errno, sizeof(errno));
+      (void) !write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
 
     int max_fd = (int) sysconf(_SC_OPEN_MAX);
     if (max_fd == -1) {
-      write(error_pipe_write, &errno, sizeof(errno));
+      (void) !write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
 
@@ -152,7 +152,7 @@ process_create(const char *const *argv,
     }
 
     if (err == -1) {
-      write(error_pipe_write, &errno, sizeof(errno));
+      (void) !write(error_pipe_write, &errno, sizeof(errno));
     }
 
     _exit(errno);
