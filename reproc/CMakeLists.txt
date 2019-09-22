@@ -77,6 +77,12 @@ if(REPROC_TEST)
   reproc_add_test_helper(stderr)
   reproc_add_test_helper(infinite)
   reproc_add_test_helper(noop)
+
+  target_compile_definitions(
+    reproc-test
+    PRIVATE
+      RESOURCE_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/resources"
+  )
 endif()
 
 if(REPROC_EXAMPLES)

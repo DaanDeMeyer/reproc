@@ -175,7 +175,7 @@ jobs:
           export PATH=`pwd`/build/reproc/lib:$PATH
           export PATH=`pwd`/build/reproc++/lib:$PATH
 
-          cmake --build build --target test
+          build/test
 
           # Aside from running the tests we also make sure the examples don't
           # crash or return a non-zero exit code.

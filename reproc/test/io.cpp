@@ -51,6 +51,6 @@ void io(const char *program, REPROC_STREAM stream)
 
 TEST_CASE("io")
 {
-  io("reproc/resources/stdout", REPROC_STREAM_OUT);
-  io("reproc/resources/stderr", REPROC_STREAM_ERR);
+  io(RESOURCE_DIRECTORY "/stdout", REPROC_STREAM_OUT);
+  io(RESOURCE_DIRECTORY "/stderr", REPROC_STREAM_ERR);
 }

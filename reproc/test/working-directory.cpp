@@ -11,8 +11,8 @@ TEST_CASE("working-directory")
   REPROC_ERROR error = REPROC_SUCCESS;
   INFO(reproc_strerror(error));
 
-  const char *working_directory = "reproc/resources";
-  std::array<const char *, 2> argv{ "reproc/resources/noop", nullptr };
+  const char *working_directory = RESOURCE_DIRECTORY;
+  std::array<const char *, 2> argv{ RESOURCE_DIRECTORY "/noop", nullptr };
 
   error = reproc_start(&noop, argv.data(), nullptr, working_directory);
   REQUIRE(!error);

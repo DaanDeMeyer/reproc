@@ -11,7 +11,7 @@ TEST_CASE("stop")
   REPROC_ERROR error = REPROC_SUCCESS;
   INFO(reproc_strerror(error));
 
-  std::array<const char *, 2> argv{ "reproc/resources/infinite", nullptr };
+  std::array<const char *, 2> argv{ RESOURCE_DIRECTORY "/infinite", nullptr };
 
   error = reproc_start(&infinite, argv.data(), nullptr, nullptr);
   REQUIRE(!error);

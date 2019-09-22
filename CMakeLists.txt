@@ -46,18 +46,7 @@ if(REPROC_TEST)
 
   reproc_add_common(reproc-test CXX 11 "")
   target_link_libraries(reproc-test PRIVATE doctest)
-  set_target_properties(reproc-test PROPERTIES OUTPUT_NAME tests)
-
-  if(NOT REPROC_IS_SUBDIRECTORY)
-    add_custom_target(
-      test
-      COMMAND ./tests -force-colors
-      DEPENDS reproc-test
-      # Tests include relative paths to some external test programs and can
-      # only be executed from inside the build folder as a result.
-      WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-    )
-  endif()
+  set_target_properties(reproc-test PROPERTIES OUTPUT_NAME test)
 endif()
 
 add_subdirectory(reproc)

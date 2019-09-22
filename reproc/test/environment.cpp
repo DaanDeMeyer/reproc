@@ -13,7 +13,7 @@ TEST_CASE("environment")
   REPROC_ERROR error = REPROC_SUCCESS;
   INFO(reproc_strerror(error));
 
-  std::array<const char *, 2> argv = { "reproc/resources/environment",
+  std::array<const char *, 2> argv = { RESOURCE_DIRECTORY "/environment",
                                        nullptr };
   std::array<const char *, 3> environment = { "IP=127.0.0.1", "PORT=8080",
                                               nullptr };
