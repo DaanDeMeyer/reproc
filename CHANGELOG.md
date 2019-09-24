@@ -8,17 +8,17 @@
 
 - Add support for custom environments.
 
-  `reproc_start` and `reproc::process::start` now take an extra `environment`
-  parameter that allows specifying custom environments.
+  `reproc_start` and `process::start` now take an extra `environment` parameter
+  that allows specifying custom environments.
 
   **IMPORTANT**: The `environment` parameter was inserted before the
   `working_directory` parameter so make sure to update existing usages of
-  `reproc_start` and `reproc::process::start` so that `environment` and
-  `working_directory` are specified in the correct order.
+  `reproc_start` and `process::start` so that the `environment` and
+  `working_directory` arguments are specified in the correct order.
 
   To keep the previous behaviour, pass `nullptr` as the environment to
-  `reproc_start`/`reproc::process::start` or use the `reproc::process::start`
-  overload without the `environment` parameter.
+  `reproc_start`/`process::start` or use the `process::start` overload without
+  the `environment` parameter.
 
 - Remove `argc` parameter from `reproc_start` and `process::start`.
 
@@ -28,16 +28,16 @@
 - Improve implementation of `reproc_wait` with a timeout on POSIX systems.
 
   Instead of spawning a new process to implement the timeout, we now use
-  `sigtimedwait` on Linux and `kqueue` on Darwin to wait on `SIGCHLD` signals
-  and check if the process we're waiting on has exited after each received
-  `SIGCHLD` signal.
+  `sigtimedwait` on Linux and `kqueue` on macOS to wait on `SIGCHLD` signals and
+  check if the process we're waiting on has exited after each received `SIGCHLD`
+  signal.
 
 - Remove `vfork` usage.
 
-  Clang analyzer was indicating a host of errors in our `vfork` implementation.
-  We also discovered tests were behaving differently on macOS depending on
-  whether `vfork` was enabled or disabled. As we do not have the expertise to
-  verify if `vfork` is working correctly, we opt to remove it.
+  Clang analyzer was indicating a host of errors in our usage of `vfork`. We
+  also discovered tests were behaving differently on macOS depending on whether
+  `vfork` was enabled or disabled. As we do not have the expertise to verify if
+  `vfork` is working correctly, we opt to remove it.
 
 - Ensure passing a custom working directory and a relative executable path
   behaves consistently on all supported platforms.
@@ -49,6 +49,20 @@
   the relative executable path would be resolved relative to the parent process
   working directory. Now, relative executable paths are always resolved relative
   to the parent process working directory.
+
+- Reimplement `reproc_drain`/`process::drain` in terms of
+  `reproc_parse`/`process::parse`.
+
+  Like `reproc_parse` and `process::parse`, `reproc_drain` and `process::drain`
+  are now guaranteed to always be called once with an empty buffer before
+  reading any actual data.
+
+  We now also guarantee that the initial empty buffer is not `NULL` or `nullptr`
+  so the received data and size can always be safely passed to `memcpy`.
+
+- Add MinGW support.
+
+  MinGW CI builds were also added to prevent regressions in MinGW support.
 
 ## reproc
 
@@ -81,12 +95,7 @@
   now be passed in a container to `process::start`. `working_directory` now
   takes a `const char *` instead of a `std::string *`.
 
-- Fix `process::parse` not compiling.
-
-- Reimplement `process::drain` in terms of `process::parse`.
-
-  Like `process::parse`, `process::drain` is now guaranteed to always be called
-  once with an empty buffer before reading any actual data.
+- Fix compilation error when using `process::parse`.
 
 ## 8.0.1
 
