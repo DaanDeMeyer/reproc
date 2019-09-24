@@ -138,10 +138,10 @@ unsigned int process::exit_status() noexcept
 process::arguments::~arguments()
 {
   for (size_t i = 0; data_[i] != nullptr; i++) {
-    delete[] data_[i]; // NOLINT
+    delete[] data_[i];
   }
 
-  delete[] data_; // NOLINT
+  delete[] data_;
 }
 
 const char *const *process::arguments::data() const noexcept
@@ -152,10 +152,10 @@ const char *const *process::arguments::data() const noexcept
 process::environment::~environment()
 {
   for (size_t i = 0; data_[i] != nullptr; i++) {
-    delete[] data_[i]; // NOLINT
+    delete[] data_[i];
   }
 
-  delete[] data_; // NOLINT
+  delete[] data_;
 }
 
 const char *const *process::environment::data() const noexcept

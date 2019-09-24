@@ -319,14 +319,14 @@ std::error_code process::drain(stream stream, Sink &&sink)
 
 template <typename Arguments>
 process::arguments::arguments(const Arguments &arguments)
-    : data_(new char *[arguments.size() + 1]) // NOLINT
+    : data_(new char *[arguments.size() + 1])
 {
   using value_size_type = typename Arguments::value_type::size_type;
 
   size_t current = 0;
 
   for (const auto &entry : arguments) {
-    auto string = new char[entry.size() + 1]; // NOLINT
+    auto string = new char[entry.size() + 1];
 
     data_[current++] = string;
 
@@ -342,7 +342,7 @@ process::arguments::arguments(const Arguments &arguments)
 
 template <typename Environment>
 process::environment::environment(const Environment &environment)
-    : data_(new char *[environment.size() + 1]) // NOLINT
+    : data_(new char *[environment.size() + 1])
 {
   using key_size_type = typename Environment::value_type::first_type::size_type;
   using value_size_type =
@@ -353,7 +353,7 @@ process::environment::environment(const Environment &environment)
   for (const auto &entry : environment) {
     // +2 => '=' + '\0'
     size_t size = entry.first.size() + entry.second.size() + 2;
-    auto string = new char[size]; // NOLINT
+    auto string = new char[size];
 
     data_[current++] = string;
 
