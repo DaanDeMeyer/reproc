@@ -179,7 +179,7 @@ public:
   `parse` but `stream_closed` is not treated as an error. `Sink` expects the
   same signature as `Parser` in `parse`.
 
-  For examples of sinks, see `sink.hpp`
+  For examples of sinks, see `sink.hpp`.
   */
   template <typename Sink>
   std::error_code drain(stream stream, Sink &&sink);
@@ -262,6 +262,8 @@ std::error_code process::start(const Arguments &arguments,
                                const Environment &environment,
                                const char *working_directory)
 {
+  // Convert `arguments` and `environment` to the formats expected by
+  // `reproc_start`.
   process::arguments args(arguments);
   process::environment env(environment);
 
@@ -280,7 +282,8 @@ std::error_code process::start(const Arguments &arguments,
 template <typename Parser>
 std::error_code process::parse(stream stream, Parser &&parser)
 {
-  // We don't have compound literals in C++.
+  // We can't use compound literals in C++ to pass the initial value to `parser`
+  // so we use a constexpr value instead.
   static constexpr uint8_t initial = 0;
 
   // A single call to `read` might contain multiple messages. By always calling
@@ -351,7 +354,8 @@ process::environment::environment(const Environment &environment)
   size_t current = 0;
 
   for (const auto &entry : environment) {
-    // +2 => '=' + '\0'
+    // We add 2 to the size to reserve space for the '=' sign and the null
+    // terminator at the end of the string.
     size_t size = entry.first.size() + entry.second.size() + 2;
     auto string = new char[size];
 

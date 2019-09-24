@@ -19,9 +19,9 @@ struct reproc_t {
   bool running;
   unsigned int exit_status;
 #if defined(_WIN32)
-  // unsigned long = DWORD
+  // `unsigned long` = `DWORD`
   unsigned long id;
-  // void * = HANDLE
+  // `void *` = `HANDLE`
   void *handle;
   void *in;
   void *out;
@@ -87,9 +87,6 @@ current process.
 
 `working_directory` specifies the working directory for the child process. If it
 is `NULL`, the child process runs in the same directory as the parent process.
-
-Relative executable paths are resolved relative to the parent process working
-directory even if a custom working directory is specified.
 
 Possible errors:
 - `REPROC_ERROR_SYSTEM`
@@ -162,6 +159,8 @@ REPROC_EXPORT REPROC_ERROR reproc_parse(reproc_t *process,
 
 /*!
 `reproc_parse` but `REPROC_ERROR_STREAM_CLOSED` is not treated as an error.
+
+For examples of sinks, see `sink.h`.
 
 Possible errors:
 - `REPROC_ERROR_SYSTEM`
