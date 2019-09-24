@@ -2,7 +2,7 @@
 
 ## 9.0.0
 
-## General
+### General
 
 - Drop support for Windows XP.
 
@@ -64,7 +64,7 @@
 
   MinGW CI builds were also added to prevent regressions in MinGW support.
 
-## reproc
+### reproc
 
 - Update `reproc_strerror` to return the actual system error string of the error
   code returned by `reproc_system_error` instead of "system error" when passed
@@ -78,7 +78,7 @@
 - Add `reproc_sink_discard` in `sink.h`, a sink that discards all process
   output.
 
-# reproc++
+### reproc++
 
 - Move sinks into `sink` namespace and remove `_sink` suffix from all sinks.
 
@@ -119,7 +119,7 @@
 
 ## 7.0.0
 
-## General
+### General
 
 - Rework error handling.
 
@@ -154,7 +154,7 @@
 
 - Various smaller improvements and fixes.
 
-## CMake
+### CMake
 
 - Introduce `REPROC_MULTITHREADED` to configure whether reproc should link
   against pthreads.
@@ -171,7 +171,7 @@
 
 ## 6.0.0
 
-## General
+### General
 
 - Added Azure Pipelines CI.
 
@@ -181,12 +181,12 @@
 
 - Code cleanup and refactoring.
 
-## CMake
+### CMake
 
 - Renamed `REPROC_TESTS` to `REPROC_TEST`.
 - Renamed test executable from `tests` to `test`.
 
-## reproc
+### reproc
 
 - Renamed `reproc_type` to `reproc_t`.
 
@@ -212,7 +212,7 @@
 
   Use `reproc_exit_status` instead to retrieve the exit status.
 
-## reproc++
+### reproc++
 
 - Added `process::running` and `process::exit_status`.
 
