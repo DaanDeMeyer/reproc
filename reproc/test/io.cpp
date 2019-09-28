@@ -5,7 +5,7 @@
 #include <array>
 #include <string>
 
-void io(const char *program, REPROC_STREAM stream)
+static void io(const char *program, REPROC_STREAM stream)
 {
   REPROC_ERROR error = REPROC_SUCCESS;
   INFO(reproc_strerror(error));

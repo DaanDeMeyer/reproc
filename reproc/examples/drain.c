@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int fail(REPROC_ERROR error)
+static int fail(REPROC_ERROR error)
 {
   fprintf(stderr, "%s\n", reproc_strerror(error));
   return (int) error;

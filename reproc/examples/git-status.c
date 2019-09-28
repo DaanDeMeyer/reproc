@@ -7,7 +7,7 @@
 
 #define BUFFER_SIZE 1024
 
-int fail(REPROC_ERROR error)
+static int fail(REPROC_ERROR error)
 {
   fprintf(stderr, "%s\n", reproc_strerror(error));
   return (int) error;

@@ -5,7 +5,7 @@
 #include <mutex>
 #include <string>
 
-int fail(std::error_code ec)
+static int fail(std::error_code ec)
 {
   std::cerr << ec.message();
   return 1;
