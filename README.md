@@ -261,9 +261,8 @@ to work with reproc from multiple threads.
   kill child processes on Windows.
 
 - While reproc tries its very best to avoid leaking file descriptors into child
-  processes, there are scenarios where it can't guarantee no file descriptors
-  will be leaked to child processes. See
-  [Avoiding resource leaks](#avoiding-resource-leaks) for more information.
+  processes, there are scenarios where it cannot guarantee that no file
+  descriptors will be leaked to child processes.
 
 - (POSIX) Writing to a closed stdin pipe of a child process will crash the
   parent process with the `SIGPIPE` signal. To avoid this the `SIGPIPE` signal
