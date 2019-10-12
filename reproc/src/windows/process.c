@@ -23,7 +23,7 @@ static bool argument_should_escape(const char *argument)
   return should_escape;
 }
 
-static size_t argument_escaped_length(const char *argument)
+static size_t argument_escaped_size(const char *argument)
 {
   assert(argument);
 
@@ -31,7 +31,7 @@ static size_t argument_escaped_length(const char *argument)
     return strlen(argument);
   }
 
-  size_t length = 2; // double quotes
+  size_t size = 2; // double quotes
 
   for (size_t i = 0; i < strlen(argument); i++) {
     size_t num_backslashes = 0;
@@ -42,15 +42,15 @@ static size_t argument_escaped_length(const char *argument)
     }
 
     if (i == strlen(argument)) {
-      length += num_backslashes * 2;
+      size += num_backslashes * 2;
     } else if (argument[i] == '"') {
-      length += num_backslashes * 2 + 1;
+      size += num_backslashes * 2 + 1;
     } else {
-      length += num_backslashes + 1;
+      size += num_backslashes + 1;
     }
   }
 
-  return length;
+  return size;
 }
 
 static size_t argument_escape(char *dest, const char *argument)
@@ -89,24 +89,24 @@ static size_t argument_escape(char *dest, const char *argument)
 
   *dest++ = '"';
 
-  return argument_escaped_length(argument);
+  return argument_escaped_size(argument);
 }
 
 char *argv_join(const char *const *argv)
 {
   assert(argv);
 
-  // Determine the length of the concatenated string first.
-  size_t joined_length = 1; // Count the null terminator.
+  // Determine the size of the concatenated string first.
+  size_t joined_size = 1; // Count the null terminator.
   for (int i = 0; argv[i] != NULL; i++) {
-    joined_length += argument_escaped_length(argv[i]);
+    joined_size += argument_escaped_size(argv[i]);
 
     if (argv[i + 1] != NULL) {
-      joined_length++; // Count whitespace.
+      joined_size++; // Count whitespace.
     }
   }
 
-  char *joined = malloc(sizeof(char) * joined_length);
+  char *joined = malloc(sizeof(char) * joined_size);
   if (joined == NULL) {
     return NULL;
   }
@@ -164,8 +164,8 @@ wchar_t *string_to_wstring(const char *string, size_t size)
   // makes the following casts to `int` safe.
   assert(size <= INT_MAX);
 
-  // Determine wstring length (`MultiByteToWideChar` returns the required size
-  // if its last two arguments are `NULL` and 0).
+  // Determine wstring size (`MultiByteToWideChar` returns the required size if
+  // its last two arguments are `NULL` and 0).
   int rv = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string,
                                (int) size, NULL, 0);
   if (rv == 0) {
@@ -179,7 +179,7 @@ wchar_t *string_to_wstring(const char *string, size_t size)
     return NULL;
   }
 
-  // Now we pass our allocated string and its length as the last two arguments
+  // Now we pass our allocated string and its size as the last two arguments
   // instead of `NULL` and 0 which makes `MultiByteToWideChar` actually perform
   // the conversion.
   rv = MultiByteToWideChar(CP_UTF8, 0, string, (int) size, wstring, rv);
