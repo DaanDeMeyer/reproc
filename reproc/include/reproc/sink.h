@@ -24,6 +24,11 @@ value of the given context will either point to valid memory or will be set to
 `NULL`. This means it is always safe to call `free` on the context value after
 `reproc_drain` finishes.
 
+Because the context this function expects does not store the output size,
+`strlen` is called each time data is read to calculate the current size of the
+output. This might cause performance problems when draining processes that
+produce a lot of output.
+
 Example:
 
 ```c
