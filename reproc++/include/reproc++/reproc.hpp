@@ -324,17 +324,17 @@ template <typename Arguments>
 process::arguments::arguments(const Arguments &arguments)
     : data_(new char *[arguments.size() + 1])
 {
-  using value_size_type = typename Arguments::value_type::size_type;
+  using size_type = typename Arguments::value_type::size_type;
 
   size_t current = 0;
 
-  for (const auto &entry : arguments) {
-    char *string = new char[entry.size() + 1];
+  for (const auto &argument : arguments) {
+    char *string = new char[argument.size() + 1];
 
     data_[current++] = string;
 
-    for (value_size_type i = 0; i < entry.size(); i++) {
-      *string++ = entry[i];
+    for (size_type i = 0; i < argument.size(); i++) {
+      *string++ = argument[i];
     }
 
     *string = '\0';
@@ -347,28 +347,32 @@ template <typename Environment>
 process::environment::environment(const Environment &environment)
     : data_(new char *[environment.size() + 1])
 {
-  using key_size_type = typename Environment::value_type::first_type::size_type;
+  using name_size_type =
+      typename Environment::value_type::first_type::size_type;
   using value_size_type =
       typename Environment::value_type::second_type::size_type;
 
   size_t current = 0;
 
   for (const auto &entry : environment) {
+    const auto &name = entry.first;
+    const auto &value = entry.second;
+
     // We add 2 to the size to reserve space for the '=' sign and the null
     // terminator at the end of the string.
-    size_t size = entry.first.size() + entry.second.size() + 2;
+    size_t size = name.size() + value.size() + 2;
     char *string = new char[size];
 
     data_[current++] = string;
 
-    for (key_size_type i = 0; i < entry.first.size(); i++) {
-      *string++ = entry.first[i];
+    for (name_size_type i = 0; i < name.size(); i++) {
+      *string++ = name[i];
     }
 
     *string++ = '=';
 
-    for (value_size_type i = 0; i < entry.second.size(); i++) {
-      *string++ = entry.second[i];
+    for (value_size_type i = 0; i < value.size(); i++) {
+      *string++ = value[i];
     }
 
     *string = '\0';
