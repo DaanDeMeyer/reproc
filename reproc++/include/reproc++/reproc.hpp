@@ -360,7 +360,7 @@ process::environment::environment(const Environment &environment)
 
     // We add 2 to the size to reserve space for the '=' sign and the null
     // terminator at the end of the string.
-    size_t size = name.size() + value.size() + 2;
+    name_size_type size = name.size() + value.size() + 2;
     char *string = new char[size];
 
     data_[current++] = string;
