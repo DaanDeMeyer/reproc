@@ -32,31 +32,7 @@ produce a lot of output.
 Similarly, this sink will not work on processes that have null terminators in
 their output because `strlen` is used to calculate the current output size.
 
-Example:
-
-```c
-char *output = NULL;
-REPROC_ERROR error = reproc_drain(&process, REPROC_STREAM_OUT,
-                                  reproc_sink_string, &output);
-if (error) {
-  // An error occurred in reproc.
-  ...
-
-  goto cleanup;
-}
-
-if (output == NULL) {
-  // A memory allocation in `reproc_sink_string` failed.
-  ...
-
-  goto cleanup;
-}
-
-// `output` contains all the output of `process`.
-...
-
-cleanup:
-free(output);
+The `drain` example shows how to use `reproc_string_sink`.
 ```
 */
 REPROC_EXPORT bool
