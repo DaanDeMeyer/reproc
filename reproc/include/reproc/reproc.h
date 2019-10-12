@@ -101,36 +101,12 @@ Reads up to `size` bytes from the child process stream indicated by `stream`
 (cannot be `REPROC_STREAM_IN`) and stores them them in `buffer`. The amount of
 bytes read is stored in `bytes_read`.
 
+Assuming no other errors occur this function will return `REPROC_SUCCESS` until
+the stream is closed and all remaining data has been read.
+
 Possible errors:
 - `REPROC_ERROR_STREAM_CLOSED`
 - `REPROC_ERROR_SYSTEM`
-
-Assuming no other errors occur this function will return `REPROC_SUCCESS` until
-the stream is closed and all remaining data has been read. This allows the
-function to be used as follows to read all data from a child process' stdout
-stream (C++ is used for brevity):
-
-```c++
-static constexpr size_t BUFFER_SIZE = 1024;
-
-...
-
-std::array<uint8_t, BUFFER_SIZE> buffer = {};
-std::string output;
-
-while (true) {
-  unsigned int bytes_read = 0;
-  error = reproc_read(process, REPROC_STREAM_OUT, buffer.data(), buffer.size(),
-                      &bytes_read);
-  if (error) { break; }
-
-  output.append(reinterpret_cast<const char *>(buffer), bytes_read);
-}
-
-if (error != REPROC_ERROR_STREAM_CLOSED) { return error; }
-
-// Do something with the output
-```
 */
 REPROC_EXPORT REPROC_ERROR reproc_read(reproc_t *process,
                                        REPROC_STREAM stream,
