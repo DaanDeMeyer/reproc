@@ -17,7 +17,7 @@ static void io(const char *program, REPROC_STREAM stream)
   REQUIRE(!error);
 
   std::string message = "reproc stands for REdirected PROCess";
-  auto size = static_cast<unsigned int>(message.size());
+  unsigned int size = static_cast<unsigned int>(message.size());
 
   unsigned int bytes_written = 0;
   error = reproc_write(&io, reinterpret_cast<const uint8_t *>(message.data()),

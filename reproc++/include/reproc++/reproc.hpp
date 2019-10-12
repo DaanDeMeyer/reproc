@@ -329,7 +329,7 @@ process::arguments::arguments(const Arguments &arguments)
   size_t current = 0;
 
   for (const auto &entry : arguments) {
-    auto string = new char[entry.size() + 1];
+    char *string = new char[entry.size() + 1];
 
     data_[current++] = string;
 
@@ -357,7 +357,7 @@ process::environment::environment(const Environment &environment)
     // We add 2 to the size to reserve space for the '=' sign and the null
     // terminator at the end of the string.
     size_t size = entry.first.size() + entry.second.size() + 2;
-    auto string = new char[size];
+    char *string = new char[size];
 
     data_[current++] = string;
 
