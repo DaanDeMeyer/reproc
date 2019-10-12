@@ -52,21 +52,17 @@ int main(void)
 
   // Start with an empty string (only space for the null terminator is
   // allocated).
-  size_t output_length = 0;
-  char *output = malloc(1);
-  if (!output) {
-    goto cleanup;
-  }
-  output[0] = '\0';
-
-  uint8_t buffer[BUFFER_SIZE];
+  char *output = NULL;
+  size_t output_size = 0;
 
   // Read the entire output of the child process. I've found this pattern to be
   // the most readable when reading the entire output of a child process. The
   // while loop keeps running until an error occurs in `reproc_read` (the child
   // process closing its output stream is also reported as an error).
   while (true) {
+    uint8_t buffer[BUFFER_SIZE];
     unsigned int bytes_read = 0;
+
     error = reproc_read(&git_status, REPROC_STREAM_OUT, buffer, BUFFER_SIZE,
                         &bytes_read);
     if (error) {
@@ -76,8 +72,8 @@ int main(void)
     // Increase size of `output` to make sure it can hold the new output. This
     // is definitely not the most performant way to grow a buffer so keep that
     // in mind. Add 1 to size to leave space for the null terminator which isn't
-    // included in `output_length`.
-    char *realloc_result = realloc(output, output_length + bytes_read + 1);
+    // included in `output_size`.
+    char *realloc_result = realloc(output, output_size + bytes_read + 1);
     if (!realloc_result) {
       goto cleanup;
     } else {
@@ -85,8 +81,9 @@ int main(void)
     }
 
     // Copy new data into `output`.
-    memcpy(output + output_length, buffer, bytes_read);
-    output_length += bytes_read;
+    memcpy(output + output_size, buffer, bytes_read);
+    output[output_size + bytes_read] = '\0';
+    output_size += bytes_read;
   }
 
   // Check that the while loop stopped because the output stream of the child
@@ -95,7 +92,6 @@ int main(void)
     goto cleanup;
   }
 
-  output[output_length] = '\0';
   printf("%s", output);
 
 cleanup:
