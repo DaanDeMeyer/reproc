@@ -29,6 +29,9 @@ Because the context this function expects does not store the output size,
 output. This might cause performance problems when draining processes that
 produce a lot of output.
 
+Similarly, this sink will not work on processes that have null terminators in
+their output because `strlen` is used to calculate the current output size.
+
 Example:
 
 ```c
