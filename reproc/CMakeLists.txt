@@ -28,24 +28,28 @@ endif()
 
 include(CheckSymbolExists)
 
-if(WIN32)
+if(MINGW)
   target_compile_definitions(reproc PRIVATE
-    _CRT_SECURE_NO_WARNINGS
-
-    $<$<BOOL:${MINGW}>:
-      WINVER=0x0600 # `WC_ERR_INVALID_CHARS`
-      _WIN32_WINNT=0x0600 # `InitializeProcThreadAttributeList`
-    >
+    WINVER=0x0600 # `WC_ERR_INVALID_CHARS`
+    _WIN32_WINNT=0x0600 # `InitializeProcThreadAttributeList`
   )
-else()
+elseif(UNIX)
   # Check if `pipe2` is available.
-  list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+  # Access to `pipe2` on Linux requires `_GNU_SOURCE` to be defined.
+
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+  endif()
+
   check_symbol_exists(pipe2 unistd.h REPROC_PIPE2_FOUND)
-  list(REMOVE_AT CMAKE_REQUIRED_DEFINITIONS -1)
+
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(REMOVE_AT CMAKE_REQUIRED_DEFINITIONS -1)
+  endif()
 
   target_compile_definitions(reproc PRIVATE
-    _GNU_SOURCE # Needed for `pipe2` and `kill`.
-    $<$<BOOL:${REPROC_PIPE2_FOUND}>:PIPE2_FOUND>
+    $<$<PLATFORM_ID:Linux>:_GNU_SOURCE> # Needed for `pipe2` and `execvpe`.
+    $<$<BOOL:${REPROC_PIPE2_FOUND}>:REPROC_PIPE2_FOUND> # Needed for `pipe2`.
   )
 endif()
 

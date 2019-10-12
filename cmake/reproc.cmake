@@ -122,6 +122,10 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       $<$<BOOL:${REPROC_${LANGUAGE}_HAVE_PERMISSIVE}>:/permissive->
     )
 
+    target_compile_definitions(${TARGET} PRIVATE
+      _CRT_SECURE_NO_WARNINGS
+    )
+
     if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.15.0")
       # CMake 3.15 does not add /W3 to the compiler flags by default anymore
       # so we add /W4 instead.

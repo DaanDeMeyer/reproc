@@ -28,7 +28,7 @@ REPROC_ERROR pipe_init(int *read, int *write)
   // If `pipe2` is not available we fall back to calling `fcntl` to set
   // `FD_CLOEXEC` immediately after creating a pipe.
 
-#if defined(PIPE2_FOUND)
+#if defined(REPROC_PIPE2_FOUND)
   int result = pipe2(pipefd, O_CLOEXEC);
 #else
   int result = pipe(pipefd);
