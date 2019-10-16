@@ -8,7 +8,7 @@
 static void io(const char *program, REPROC_STREAM stream)
 {
   REPROC_ERROR error = REPROC_SUCCESS;
-  INFO(reproc_strerror(error));
+  INFO(reproc_error_string(error));
 
   reproc_t io;
   std::array<const char *, 2> argv = { program, nullptr };

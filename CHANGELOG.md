@@ -1,5 +1,19 @@
 # Changelog
 
+## 10.0.0
+
+### reproc
+
+- Rename `reproc_system_error` to `reproc_error_system`.
+- Rename `reproc_strerror` to `reproc_error_string`.
+
+  The new names are more consistent with the rest of reproc's naming style. For
+  example, each sink function is prefixed with `reproc_sink` so it makes sense
+  to prefix each error function with `reproc_error`. Furthermore, the enum value
+  indicating a system error is named `REPROC_ERROR_SYSTEM` so it's more
+  consistent to have a lowercase function of the same name to retrieve the
+  actual system error than a function named `reproc_system_error`.
+
 ## 9.0.0
 
 ### General

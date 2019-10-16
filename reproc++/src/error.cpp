@@ -20,7 +20,7 @@ const char *error_category_impl::name() const noexcept
 
 std::string error_category_impl::message(int code) const noexcept
 {
-  return reproc_strerror(static_cast<REPROC_ERROR>(code));
+  return reproc_error_string(static_cast<REPROC_ERROR>(code));
 }
 
 const std::error_category &error_category() noexcept

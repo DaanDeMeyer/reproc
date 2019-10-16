@@ -3,14 +3,14 @@
 #include <assert.h>
 #include <windows.h>
 
-unsigned int reproc_system_error(void)
+unsigned int reproc_error_system(void)
 {
   return GetLastError();
 }
 
 #define ERROR_STRING_MAX_SIZE 512
 
-const char *reproc_strerror(REPROC_ERROR error)
+const char *reproc_error_string(REPROC_ERROR error)
 {
   switch (error) {
     case REPROC_SUCCESS:
@@ -27,7 +27,7 @@ const char *reproc_strerror(REPROC_ERROR error)
       // We don't expect message sizes larger than the maximum possible int.
       int rv = (int) FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM |
                                         FORMAT_MESSAGE_IGNORE_INSERTS,
-                                    NULL, reproc_system_error(),
+                                    NULL, reproc_error_system(),
                                     MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                                     wstring, ERROR_STRING_MAX_SIZE, NULL);
       if (rv == 0) {

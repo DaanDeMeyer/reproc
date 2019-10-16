@@ -17,7 +17,7 @@ static std::error_code error_to_error_code(REPROC_ERROR error)
       // Convert operating system errors back to platform-specific error codes
       // to preserve the original error value and message. These can then be
       // matched against using the `std::errc` error condition.
-      return { static_cast<int>(reproc_system_error()),
+      return { static_cast<int>(reproc_error_system()),
                std::system_category() };
   }
 

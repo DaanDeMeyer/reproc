@@ -9,7 +9,7 @@ TEST_CASE("stop")
   reproc_t infinite;
 
   REPROC_ERROR error = REPROC_SUCCESS;
-  INFO(reproc_strerror(error));
+  INFO(reproc_error_string(error));
 
   std::array<const char *, 2> argv{ RESOURCE_DIRECTORY "/infinite", nullptr };
 

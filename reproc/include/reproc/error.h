@@ -51,7 +51,7 @@ communicated to the parent process which sets its own `errno` value to the
 `errno` value of the child process. This makes it possible to retrieve errors
 that happen after forking with this function (for example in `chdir` or `exec`).
 */
-REPROC_EXPORT unsigned int reproc_system_error(void);
+REPROC_EXPORT unsigned int reproc_error_system(void);
 
 /*!
 Returns a string describing `error`. This string must not be modified by the
@@ -59,7 +59,7 @@ caller.
 
 This function is not thread-safe.
 */
-REPROC_EXPORT const char *reproc_strerror(REPROC_ERROR error);
+REPROC_EXPORT const char *reproc_error_string(REPROC_ERROR error);
 
 #ifdef __cplusplus
 }

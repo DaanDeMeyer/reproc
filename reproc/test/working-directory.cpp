@@ -9,7 +9,7 @@ TEST_CASE("working-directory")
   reproc_t noop;
 
   REPROC_ERROR error = REPROC_SUCCESS;
-  INFO(reproc_strerror(error));
+  INFO(reproc_error_string(error));
 
   const char *working_directory = RESOURCE_DIRECTORY;
   std::array<const char *, 2> argv{ RESOURCE_DIRECTORY "/noop", nullptr };

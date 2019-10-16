@@ -9,7 +9,7 @@
 
 static int fail(REPROC_ERROR error)
 {
-  fprintf(stderr, "%s\n", reproc_strerror(error));
+  fprintf(stderr, "%s\n", reproc_error_string(error));
   return (int) error;
 }
 
@@ -38,7 +38,7 @@ int main(void)
   // reproc exposes a single error enum `REPROC_ERROR` which contains errors
   // specific to reproc and `REPROC_ERROR_SYSTEM` to indicate a system error
   // occurred. You can get the actual system error using the
-  // `reproc_system_error` function.
+  // `reproc_error_system` function.
 
   // Shorthand for `if (error != REPROC_SUCCESS)`.
   if (error) {

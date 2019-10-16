@@ -8,7 +8,7 @@
 
 static int fail(REPROC_ERROR error)
 {
-  fprintf(stderr, "%s\n", reproc_strerror(error));
+  fprintf(stderr, "%s\n", reproc_error_string(error));
   return (int) error;
 }
 

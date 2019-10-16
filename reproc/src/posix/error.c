@@ -3,14 +3,14 @@
 #include <errno.h>
 #include <string.h>
 
-unsigned int reproc_system_error(void)
+unsigned int reproc_error_system(void)
 {
   // Only positive numbers are valid `errno` values so casting to unsigned int
   // is safe.
   return (unsigned int) errno;
 }
 
-const char *reproc_strerror(REPROC_ERROR error)
+const char *reproc_error_string(REPROC_ERROR error)
 {
   switch (error) {
     case REPROC_SUCCESS:
@@ -22,8 +22,8 @@ const char *reproc_strerror(REPROC_ERROR error)
     case REPROC_ERROR_PARTIAL_WRITE:
       return "partial write";
     case REPROC_ERROR_SYSTEM:
-      // `reproc_system_error` returns `errno` which is always in `int` range.
-      return strerror((int) reproc_system_error());
+      // `reproc_error_system` returns `errno` which is always in `int` range.
+      return strerror((int) reproc_error_system());
   }
 
   return "unknown error";

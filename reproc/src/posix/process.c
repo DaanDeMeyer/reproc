@@ -201,7 +201,7 @@ process_create(const char *const *argv,
   // If `read` does not return 0 an error will have occurred in the child
   // process (or with `read` itself but this is less likely).
   if (child_error != 0) {
-    // Allow retrieving child process errors with `reproc_system_error`.
+    // Allow retrieving child process errors with `reproc_error_system`.
     errno = child_error;
     error = REPROC_ERROR_SYSTEM;
     goto cleanup;

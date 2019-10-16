@@ -175,16 +175,16 @@ Most functions in reproc's API return `REPROC_ERROR`. The `REPROC_ERROR` enum
 represents all possible errors that can occur when calling reproc API functions.
 Not all errors apply to each function so the documentation of each function
 includes a section detailing which errors can occur. System errors are
-represented by `REPROC_ERROR_SYSTEM`. The `reproc_system_error` error can be
+represented by `REPROC_ERROR_SYSTEM`. The `reproc_error_system` function can be
 used to retrieve the actual system error. To get a string representation of the
-error, pass the error code to `reproc_strerror`. If the error code passed to
-`reproc_strerror` is `REPROC_ERROR_SYSTEM`, `reproc_strerror` returns a string
-representation of the error returned by `reproc_system_error`.
+error, pass the error code to `reproc_error_string`. If the error code passed to
+`reproc_error_string` is `REPROC_ERROR_SYSTEM`, `reproc_error_string` returns a
+string representation of the error returned by `reproc_error_system`.
 
 reproc++'s API integrates with the C++ standard library error codes mechanism
 (`std::error_code` and `std::error_condition`). All functions in reproc++'s API
 return `std::error_code` values that contain the actual system error that
-occurred. This means `reproc_system_error` is not necessary in reproc++ since
+occurred. This means `reproc_error_system` is not necessary in reproc++ since
 the returned error codes store the actual system error instead of the value of
 `REPROC_ERROR_SYSTEM`. You can test against these error codes using the
 `std::errc` error condition enum:
