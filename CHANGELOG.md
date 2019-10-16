@@ -2,6 +2,10 @@
 
 ## 10.0.0
 
+### General
+
+- Only define `_GNU_SOURCE` on Linux.
+
 ### reproc
 
 - Rename `reproc_system_error` to `reproc_error_system`.
