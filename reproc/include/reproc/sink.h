@@ -19,7 +19,7 @@ Expects a `char **` with its value set to `NULL` as its initial context.
 value of the given context. If allocating more memory fails, the already
 allocated memory is freed and the value of the given context is set to `NULL`.
 
-When `reproc_drain` finished after being called with `reproc_string_sink`, the
+When `reproc_drain` finished after being called with `reproc_sink_string`, the
 value of the given context will either point to valid memory or will be set to
 `NULL`. This means it is always safe to call `free` on the context value after
 `reproc_drain` finishes.
@@ -32,7 +32,7 @@ produce a lot of output.
 Similarly, this sink will not work on processes that have null terminators in
 their output because `strlen` is used to calculate the current output size.
 
-The `drain` example shows how to use `reproc_string_sink`.
+The `drain` example shows how to use `reproc_sink_string`.
 ```
 */
 REPROC_EXPORT bool
