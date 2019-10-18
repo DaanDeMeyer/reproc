@@ -11,7 +11,6 @@ Checks:
 -cppcoreguidelines-macro-usage,
 -cppcoreguidelines-owning-memory,
 -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
--cppcoreguidelines-pro-bounds-constant-array-index,
 -cppcoreguidelines-pro-bounds-pointer-arithmetic,
 -cppcoreguidelines-pro-type-reinterpret-cast,
 -cppcoreguidelines-special-member-functions,
@@ -30,8 +29,7 @@ Checks:
 -modernize-use-auto,
 -modernize-use-trailing-return-type,
 -readability-else-after-return,
--readability-magic-numbers,
--readability-named-parameter
+-readability-magic-numbers
 '
 HeaderFilterRegex: '.*reproc\+\+.*$'
 ...

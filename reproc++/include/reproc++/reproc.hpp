@@ -95,8 +95,8 @@ public:
   REPROCXX_EXPORT ~process() noexcept;
 
   // Enforce unique ownership of child processes.
-  REPROCXX_EXPORT process(process &&) noexcept;
-  REPROCXX_EXPORT process &operator=(process &&) noexcept;
+  REPROCXX_EXPORT process(process &&other) noexcept;
+  REPROCXX_EXPORT process &operator=(process &&other) noexcept;
 
   /*! `reproc_start` */
   REPROCXX_EXPORT std::error_code
