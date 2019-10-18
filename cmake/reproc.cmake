@@ -118,7 +118,7 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       _CRT_SECURE_NO_WARNINGS
     )
 
-    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.15.0)
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.15.0)
       # CMake 3.15 does not add /W3 to the compiler flags by default anymore
       # so we add /W4 instead.
       target_compile_options(${TARGET} PRIVATE /W4)
@@ -151,15 +151,21 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   endif()
 
   if(REPROC_SANITIZERS)
-    set_property(
-      TARGET ${TARGET}
-      PROPERTY MSVC_RUNTIME_LIBRARY MultiThreaded
-    )
-    target_compile_options(${TARGET} PRIVATE
-      -fsanitize=address,undefined
-      -fno-omit-frame-pointer
-    )
-    target_link_options(${TARGET} PRIVATE -fsanitize=address,undefined)
+    if(MSVC AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.15.0)
+      set_property(
+        TARGET ${TARGET}
+        PROPERTY MSVC_RUNTIME_LIBRARY MultiThreaded
+      )
+    endif()
+
+    if(NOT MSVC)
+      target_compile_options(${TARGET} PRIVATE
+        -fsanitize=address,undefined
+        -fno-omit-frame-pointer
+      )
+
+      target_link_options(${TARGET} PRIVATE -fsanitize=address,undefined)
+    endif()
   endif()
 
   target_compile_options(${TARGET} PRIVATE
