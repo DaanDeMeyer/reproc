@@ -49,7 +49,7 @@ elseif(UNIX)
 
   target_compile_definitions(reproc PRIVATE
     $<$<PLATFORM_ID:Linux>:_GNU_SOURCE> # Needed for `pipe2` and `execvpe`.
-    $<$<BOOL:${REPROC_PIPE2_FOUND}>:REPROC_PIPE2_FOUND> # Needed for `pipe2`.
+    $<$<BOOL:${REPROC_PIPE2_FOUND}>:REPROC_PIPE2_FOUND>
   )
 endif()
 
