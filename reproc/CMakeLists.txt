@@ -78,10 +78,10 @@ if(REPROC_TEST)
   # Helper binaries required by reproc's tests.
   reproc_add_test_helper(argv)
   reproc_add_test_helper(environment)
-  reproc_add_test_helper(stdout)
-  reproc_add_test_helper(stderr)
   reproc_add_test_helper(infinite)
   reproc_add_test_helper(noop)
+  reproc_add_test_helper(stderr)
+  reproc_add_test_helper(stdout)
 
   target_compile_definitions(reproc-test PRIVATE
     RESOURCE_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/resources"
@@ -89,6 +89,6 @@ if(REPROC_TEST)
 endif()
 
 if(REPROC_EXAMPLES)
-  reproc_add_example(git-status C 99 reproc)
   reproc_add_example(drain C 99 reproc)
+  reproc_add_example(git-status C 99 reproc)
 endif()
