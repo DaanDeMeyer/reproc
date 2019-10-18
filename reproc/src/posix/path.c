@@ -61,13 +61,9 @@ char *path_prepend_cwd(const char *path)
     cwd_size++;
   }
 
-  // Manual copy to avoid Clang Analyzer `strcpy` warning. We've made sure `cwd`
-  // has sufficient space left to append `path` and a null terminator so this is
-  // safe.
-  for (size_t i = 0; i < path_size; i++) {
-    cwd[cwd_size + i] = path[i];
-  }
-
+  // We've made sure there's sufficient space left in `cwd` to add `path` and a
+  // null terminator.
+  memcpy(cwd + cwd_size, path, path_size);
   cwd[cwd_size + path_size] = '\0';
 
   return cwd;
