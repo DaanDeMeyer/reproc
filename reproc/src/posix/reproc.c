@@ -93,7 +93,7 @@ REPROC_ERROR reproc_read(reproc_t *process,
       return pipe_read(process->err, buffer, size, bytes_read);
   }
 
-  assert(0);
+  assert(false);
   return REPROC_ERROR_SYSTEM;
 }
 
@@ -126,7 +126,7 @@ void reproc_close(reproc_t *process, REPROC_STREAM stream)
       return;
   }
 
-  assert(0);
+  assert(false);
 }
 
 REPROC_ERROR reproc_wait(reproc_t *process, unsigned int timeout)

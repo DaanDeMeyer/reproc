@@ -21,7 +21,7 @@ static std::error_code error_to_error_code(REPROC_ERROR error)
                std::system_category() };
   }
 
-  assert(0);
+  assert(false);
   return {};
 }
 
