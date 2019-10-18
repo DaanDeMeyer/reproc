@@ -238,71 +238,54 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
 
   if(REPROC_INSTALL)
 
-    ## Config files
+    # Headers
 
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}-config.cmake.in)
+    install(
+      DIRECTORY
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/${TARGET}
+        ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
 
-      # CMake
+    # Library
 
-      ## Headers
+    install(
+      TARGETS ${TARGET}
+      EXPORT ${TARGET}-targets
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
 
-      install(
-        DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/${TARGET}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        FILES_MATCHING PATTERN "*.${HEADER_EXT}"
-      )
+    # CMake config
 
-      install(
-        DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-      )
+    configure_package_config_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}-config.cmake.in
+      ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
+      INSTALL_DESTINATION ${REPROC_INSTALL_CMAKECONFIGDIR}/${TARGET}
+    )
 
-      target_include_directories(${TARGET} PUBLIC
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-      )
+    write_basic_package_version_file(
+      ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
+      COMPATIBILITY SameMajorVersion
+    )
 
-      ## Libraries
-
-      install(
-        TARGETS ${TARGET}
-        EXPORT ${TARGET}-targets
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      )
-
-      install(
-        EXPORT ${TARGET}-targets
-        FILE ${TARGET}-targets.cmake
-        DESTINATION ${REPROC_INSTALL_CMAKECONFIGDIR}/${TARGET}
-      )
-
-      write_basic_package_version_file(
+    install(
+      FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
-        VERSION ${PROJECT_VERSION}
-        COMPATIBILITY SameMajorVersion
-      )
+      DESTINATION ${REPROC_INSTALL_CMAKECONFIGDIR}/${TARGET}
+    )
 
-      configure_package_config_file(
-          ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}-config.cmake.in
-          ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
-        INSTALL_DESTINATION
-          ${REPROC_INSTALL_CMAKECONFIGDIR}/${TARGET}
-      )
-
-      install(
-        FILES
-          ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
-          ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
-        DESTINATION
-          ${REPROC_INSTALL_CMAKECONFIGDIR}/${TARGET}
-      )
-    endif()
+    install(
+      EXPORT ${TARGET}-targets
+      DESTINATION ${REPROC_INSTALL_CMAKECONFIGDIR}/${TARGET}
+    )
 
     # pkg-config
 
-    if(REPROC_INSTALL_PKGCONFIG AND
-       EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}.pc.in)
+    if(REPROC_INSTALL_PKGCONFIG)
       configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}.pc.in
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc
