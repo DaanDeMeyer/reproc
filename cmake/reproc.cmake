@@ -65,7 +65,7 @@ foreach(LANGUAGE IN ITEMS C CXX)
   endif()
 
   if(MSVC)
-    if(LANGUAGE STREQUAL "C")
+    if(LANGUAGE STREQUAL C)
       include(CheckCCompilerFlag)
       check_c_compiler_flag(/permissive- REPROC_${LANGUAGE}_HAVE_PERMISSIVE)
     else()
@@ -93,13 +93,15 @@ include(CMakePackageConfigHelpers)
 ### Functions ###
 
 function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
-  if(LANGUAGE STREQUAL "C")
+  if(LANGUAGE STREQUAL C)
     target_compile_features(${TARGET} PUBLIC c_std_${STANDARD})
   else()
     target_compile_features(${TARGET} PUBLIC cxx_std_${STANDARD})
   endif()
 
   set_target_properties(${TARGET} PROPERTIES
+    # `OUTPUT_DIRECTORY` can be empty so we quote it to always have a valid
+    # directory.
     RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
     ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
     LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
@@ -126,13 +128,13 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       _CRT_SECURE_NO_WARNINGS
     )
 
-    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.15.0")
+    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.15.0)
       # CMake 3.15 does not add /W3 to the compiler flags by default anymore
       # so we add /W4 instead.
       target_compile_options(${TARGET} PRIVATE /W4)
     endif()
 
-    if(NOT STANDARD STREQUAL "90")
+    if(NOT STANDARD STREQUAL 90)
       # MSVC reports non-constant initializers as a nonstandard extension but
       # they've been standardized in C99 so we disable it if we're targeting at
       # least C99.
@@ -153,7 +155,7 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-pedantic-errors>
     )
 
-    if(LANGUAGE STREQUAL "C" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    if(LANGUAGE STREQUAL C OR CMAKE_CXX_COMPILER_ID MATCHES Clang)
       target_compile_options(${TARGET} PRIVATE -Wmissing-prototypes)
     endif()
   endif()
@@ -199,7 +201,7 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
   string(REPLACE + x EXPORT_MACRO ${TARGET})
   string(TOUPPER ${EXPORT_MACRO} EXPORT_MACRO_UPPER)
 
-  if(LANGUAGE STREQUAL "C")
+  if(LANGUAGE STREQUAL C)
     set(HEADER_EXT h)
   else()
     set(HEADER_EXT hpp)
@@ -301,7 +303,7 @@ endfunction()
 function(reproc_add_example TARGET LANGUAGE STANDARD)
   add_executable(reproc-${TARGET})
 
-  if(LANGUAGE STREQUAL "C")
+  if(LANGUAGE STREQUAL C)
     set(SOURCE_EXT c)
   else()
     set(SOURCE_EXT cpp)
@@ -312,7 +314,7 @@ function(reproc_add_example TARGET LANGUAGE STANDARD)
   target_link_libraries(reproc-${TARGET} PRIVATE ${ARGN})
   set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
 
-  if(LANGUAGE STREQUAL "C" AND REPROC_SANITIZERS)
+  if(LANGUAGE STREQUAL C AND REPROC_SANITIZERS)
     set_target_properties(reproc-${TARGET} PROPERTIES
       # Hack to avoid UBSan undefined reference errors.
       LINKER_LANGUAGE CXX

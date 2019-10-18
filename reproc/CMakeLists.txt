@@ -37,13 +37,13 @@ elseif(UNIX)
   # Check if `pipe2` is available.
   # Access to `pipe2` on Linux requires `_GNU_SOURCE` to be defined.
 
-  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
   endif()
 
   check_symbol_exists(pipe2 unistd.h REPROC_PIPE2_FOUND)
 
-  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  if(CMAKE_SYSTEM_NAME STREQUAL Linux)
     list(REMOVE_AT CMAKE_REQUIRED_DEFINITIONS -1)
   endif()
 
