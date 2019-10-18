@@ -31,7 +31,7 @@ mark_as_advanced(
 ### Developer options ###
 
 option(REPROC_TIDY "Run clang-tidy when building.")
-option(REPROC_SANITIZERS "Build with sanitizers.")
+option(REPROC_SANITIZERS "Build with sanitizers on configurations that support it.")
 option(REPROC_WARNINGS_AS_ERRORS "Add -Werror or equivalent to the compile flags and clang-tidy.")
 
 mark_as_advanced(
@@ -71,16 +71,6 @@ foreach(LANGUAGE IN ITEMS C CXX)
     else()
       include(CheckCXXCompilerFlag)
       check_cxx_compiler_flag(/permissive- REPROC_${LANGUAGE}_HAVE_PERMISSIVE)
-    endif()
-  endif()
-
-  if(REPROC_SANITIZERS)
-    if(MSVC)
-      message(FATAL_ERROR "Building with sanitizers is not supported when using the Visual C++ toolchain.")
-    endif()
-
-    if(NOT ${CMAKE_${LANGUAGE}_COMPILER_ID} MATCHES GNU|Clang)
-      message(FATAL_ERROR "Building with sanitizers is not supported when using the ${CMAKE_${LANGUAGE}_COMPILER_ID} compiler.")
     endif()
   endif()
 endforeach()
