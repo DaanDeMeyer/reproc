@@ -163,11 +163,9 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       TARGET ${TARGET}
       PROPERTY MSVC_RUNTIME_LIBRARY MultiThreaded
     )
-    target_compile_options(
-      ${TARGET}
-      PRIVATE
-        -fsanitize=address,undefined
-        -fno-omit-frame-pointer
+    target_compile_options(${TARGET} PRIVATE
+      -fsanitize=address,undefined
+      -fno-omit-frame-pointer
     )
     target_link_options(${TARGET} PRIVATE -fsanitize=address,undefined)
   endif()
