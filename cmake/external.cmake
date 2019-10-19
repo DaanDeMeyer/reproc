@@ -2,7 +2,7 @@ if(REPROC_TEST)
   if(NOT EXISTS ${PROJECT_BINARY_DIR}/doctest)
     file(
       DOWNLOAD
-      https://raw.githubusercontent.com/onqtam/doctest/2.3.4/doctest/doctest.h
+      https://raw.githubusercontent.com/onqtam/doctest/2.3.5/doctest/doctest.h
       ${PROJECT_BINARY_DIR}/doctest/doctest.h
     )
   endif()
