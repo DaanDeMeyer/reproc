@@ -44,7 +44,7 @@ static size_t argument_escaped_size(const char *argument)
     if (i == strlen(argument)) {
       size += num_backslashes * 2;
     } else if (argument[i] == '"') {
-      size += num_backslashes * 2 + 1;
+      size += num_backslashes * 2 + 2;
     } else {
       size += num_backslashes + 1;
     }
