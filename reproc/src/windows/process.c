@@ -63,6 +63,8 @@ static size_t argument_escape(char *dest, const char *argument)
     return strlen(argument);
   }
 
+  const char *begin = dest;
+
   *dest++ = '"';
 
   for (size_t i = 0; i < strlen(argument); i++) {
@@ -89,7 +91,7 @@ static size_t argument_escape(char *dest, const char *argument)
 
   *dest++ = '"';
 
-  return argument_escaped_size(argument);
+  return (size_t)(dest - begin);
 }
 
 char *argv_join(const char *const *argv)
