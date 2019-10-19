@@ -27,21 +27,23 @@ static size_t argument_escaped_size(const char *argument)
 {
   assert(argument);
 
+  size_t argument_size = strlen(argument);
+
   if (!argument_should_escape(argument)) {
-    return strlen(argument);
+    return argument_size;
   }
 
   size_t size = 2; // double quotes
 
-  for (size_t i = 0; i < strlen(argument); i++) {
+  for (size_t i = 0; i < argument_size; i++) {
     size_t num_backslashes = 0;
 
-    while (i < strlen(argument) && argument[i] == '\\') {
+    while (i < argument_size && argument[i] == '\\') {
       i++;
       num_backslashes++;
     }
 
-    if (i == strlen(argument)) {
+    if (i == argument_size) {
       size += num_backslashes * 2;
     } else if (argument[i] == '"') {
       size += num_backslashes * 2 + 2;
@@ -58,24 +60,26 @@ static size_t argument_escape(char *dest, const char *argument)
   assert(dest);
   assert(argument);
 
+  size_t argument_size = strlen(argument);
+
   if (!argument_should_escape(argument)) {
-    memcpy(dest, argument, strlen(argument));
-    return strlen(argument);
+    memcpy(dest, argument, argument_size);
+    return argument_size;
   }
 
   const char *begin = dest;
 
   *dest++ = '"';
 
-  for (size_t i = 0; i < strlen(argument); i++) {
+  for (size_t i = 0; i < argument_size; i++) {
     size_t num_backslashes = 0;
 
-    while (i < strlen(argument) && argument[i] == '\\') {
+    while (i < argument_size && argument[i] == '\\') {
       i++;
       num_backslashes++;
     }
 
-    if (i == strlen(argument)) {
+    if (i == argument_size) {
       memset(dest, '\\', num_backslashes * 2);
       dest += num_backslashes * 2;
     } else if (argument[i] == '"') {
