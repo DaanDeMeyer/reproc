@@ -121,7 +121,8 @@ char *argv_join(const char *const *argv)
   for (int i = 0; argv[i] != NULL; i++) {
     current += argument_escape(current, argv[i]);
 
-    // We add a space after every part of the joined except for the last one.
+    // We add a space after each argument in the joined arguments string except
+    // for the final argument.
     if (argv[i + 1] != NULL) {
       *current++ = ' ';
     }
