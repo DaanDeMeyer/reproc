@@ -36,8 +36,7 @@ int main(void)
   // function needs more than one parameter, simply store the parameters in a
   // struct and pass the address of the struct as the `context` parameter.
   char *output = NULL;
-  error = reproc_drain(&git_help, REPROC_STREAM_OUT, reproc_sink_string,
-                       &output);
+  error = reproc_drain(&git_help, reproc_sink_string, &output);
   if (error) {
     goto cleanup;
   }

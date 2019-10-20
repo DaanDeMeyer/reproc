@@ -63,16 +63,19 @@ int main(void)
     uint8_t buffer[BUFFER_SIZE];
     unsigned int bytes_read = 0;
 
-    error = reproc_read(&git_status, REPROC_STREAM_OUT, buffer, BUFFER_SIZE,
-                        &bytes_read);
+    // `reproc_read` takes an optional pointer to a `REPROC_STREAM` and sets its
+    // value to the stream that it read from. As we're going to put both the
+    // stdout and stderr output in the same string, we pass `NULL` since we
+    // don't need to know which stream was read from.
+    error = reproc_read(&git_status, NULL, buffer, BUFFER_SIZE, &bytes_read);
     if (error) {
       break;
     }
 
-    // Increase size of `output` to make sure it can hold the new output. This
-    // is definitely not the most performant way to grow a buffer so keep that
-    // in mind. Add 1 to size to leave space for the null terminator which isn't
-    // included in `output_size`.
+    // Increase the size of `output` to make sure it can hold the new output.
+    // This is definitely not the most performant way to grow a buffer so keep
+    // that in mind. Add 1 to size to leave space for the null terminator which
+    // isn't included in `output_size`.
     char *realloc_result = realloc(output, output_size + bytes_read + 1);
     if (!realloc_result) {
       goto cleanup;

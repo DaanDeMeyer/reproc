@@ -5,10 +5,9 @@
 #include "process.h"
 
 #include <assert.h>
-#include <errno.h>
-#include <signal.h>
-#include <string.h>
-#include <unistd.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <stddef.h>
 
 REPROC_ERROR reproc_start(reproc_t *process,
                           const char *const *argv,
@@ -42,9 +41,20 @@ REPROC_ERROR reproc_start(reproc_t *process,
     goto cleanup;
   }
 
+  // We poll the output pipes so we put the parent ends of the output pipes in
+  // non-blocking mode.
+
+  if (fcntl(process->out, F_SETFL, O_NONBLOCK) == -1) {
+    return REPROC_ERROR_SYSTEM;
+  }
+
   error = pipe_init(&process->err, &child_stderr);
   if (error) {
     goto cleanup;
+  }
+
+  if (fcntl(process->err, F_SETFL, O_NONBLOCK) == -1) {
+    return REPROC_ERROR_SYSTEM;
   }
 
   struct process_options options = { .environment = environment,
@@ -74,27 +84,42 @@ cleanup:
 }
 
 REPROC_ERROR reproc_read(reproc_t *process,
-                         REPROC_STREAM stream,
+                         REPROC_STREAM *stream,
                          uint8_t *buffer,
                          unsigned int size,
                          unsigned int *bytes_read)
 {
   assert(process);
-  assert(stream != REPROC_STREAM_IN);
   assert(buffer);
   assert(bytes_read);
 
-  switch (stream) {
-    case REPROC_STREAM_IN:
-      break;
-    case REPROC_STREAM_OUT:
-      return pipe_read(process->out, buffer, size, bytes_read);
-    case REPROC_STREAM_ERR:
-      return pipe_read(process->err, buffer, size, bytes_read);
+  // See 10.0.0 changelog for why we use `poll`.
+
+  struct pollfd fds[2] = { { .fd = process->out, .events = POLLIN },
+                           { .fd = process->err, .events = POLLIN } };
+  // -1 tells `poll` we want to wait indefinitely for events.
+  if (poll(&fds[0], 2, -1) == -1) {
+    return REPROC_ERROR_SYSTEM;
   }
 
-  assert(false);
-  return REPROC_ERROR_SYSTEM;
+  for (size_t i = 0; i < 2; i++) {
+    struct pollfd pollfd = fds[i];
+
+    // Indicate which stream was read from if requested by the user.
+    if (stream != NULL) {
+      *stream = pollfd.fd == process->out ? REPROC_STREAM_OUT
+                                          : REPROC_STREAM_ERR;
+    }
+
+    if (pollfd.revents & POLLIN || pollfd.revents & POLLERR) {
+      return pipe_read(pollfd.fd, buffer, size, bytes_read);
+    }
+  }
+
+  // Both streams should have been closed by the child process if we get here.
+  assert(fds[0].revents & POLLHUP && fds[1].revents & POLLHUP);
+
+  return REPROC_ERROR_STREAM_CLOSED;
 }
 
 REPROC_ERROR reproc_write(reproc_t *process,

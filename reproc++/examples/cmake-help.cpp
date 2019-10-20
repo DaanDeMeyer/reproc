@@ -53,25 +53,21 @@ int main()
 
   std::string output;
 
-  // `process::drain` reads from a stream until it is closed or an error occurs.
-  // Providing it with a `string_sink` makes it store all output is stored in
-  // the string passed to the string sink.
-  ec = cmake_help.drain(reproc::stream::out, reproc::sink::string(output));
+  // `process::drain` reads from the child process stdout and stderr streams
+  // until both are closed or an error occurs. Providing it with a `string_sink`
+  // makes it store all output in the string(s) passed to the string sink.
+  // Passing the same string to both the `out` and `err` arguments of
+  // `reproc::sink::string` causes the stdout and stderr output to get stored in
+  // the same string.
+  ec = cmake_help.drain(reproc::sink::string(output, output));
   if (ec) {
     return fail(ec);
   }
 
   std::cout << output << std::flush;
 
-  // You can also pass an `ostream_sink` to write the output directly to an
-  // output stream such as `std::cerr`.
-  ec = cmake_help.drain(reproc::stream::err, reproc::sink::ostream(std::cerr));
-  if (ec) {
-    return fail(ec);
-  }
-
-  // It's easy to define your own sinks as well. Take a look at `sink.hpp` in
-  // the repository to see how `string_sink` and `ostream_sink` are declared.
+  // It's easy to define your own sinks as well. Take a look at `sink.cpp` in
+  // the repository to see how `sink::string` and other sinks are implemented.
   // The documentation of `process::drain` also provides more information on the
   // requirements a sink should fulfill.
 

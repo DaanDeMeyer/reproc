@@ -5,26 +5,56 @@
 namespace reproc {
 namespace sink {
 
-string::string(std::string &out) noexcept : out_(out) {}
+string::string(std::string &out, std::string &err) noexcept
+    : out_(out), err_(err)
+{}
 
-bool string::operator()(const uint8_t *buffer, unsigned int size)
+bool string::operator()(stream stream, const uint8_t *buffer, unsigned int size)
 {
-  out_.append(reinterpret_cast<const char *>(buffer), size);
+  switch (stream) {
+    case stream::out:
+      out_.append(reinterpret_cast<const char *>(buffer), size);
+      break;
+    case stream::err:
+      err_.append(reinterpret_cast<const char *>(buffer), size);
+      break;
+    case stream::in:
+      break;
+  }
+
   return true;
 }
 
-ostream::ostream(std::ostream &out) noexcept : out_(out) {}
+ostream::ostream(std::ostream &out, std::ostream &err) noexcept
+    : out_(out), err_(err)
+{}
 
-bool ostream::operator()(const uint8_t *buffer, unsigned int size)
+bool ostream::operator()(stream stream,
+                         const uint8_t *buffer,
+                         unsigned int size)
 {
-  out_.write(reinterpret_cast<const char *>(buffer), size);
+  switch (stream) {
+    case stream::out:
+      out_.write(reinterpret_cast<const char *>(buffer), size);
+      break;
+    case stream::err:
+      err_.write(reinterpret_cast<const char *>(buffer), size);
+      break;
+    case stream::in:
+      break;
+  }
+
   return true;
 }
 
-bool discard::operator()(const uint8_t *buffer, unsigned int size) noexcept
+bool discard::operator()(stream stream,
+                         const uint8_t *buffer,
+                         unsigned int size) noexcept
 {
+  (void) stream;
   (void) buffer;
   (void) size;
+
   return true;
 }
 

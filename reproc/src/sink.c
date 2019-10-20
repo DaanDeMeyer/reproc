@@ -3,8 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-bool reproc_sink_string(const uint8_t *buffer, unsigned int size, void *context)
+bool reproc_sink_string(REPROC_STREAM stream,
+                        const uint8_t *buffer,
+                        unsigned int size,
+                        void *context)
 {
+  (void) stream;
+
   char **string = (char **) context;
   size_t string_size = *string == NULL ? 0 : strlen(*string);
 
@@ -24,10 +29,12 @@ bool reproc_sink_string(const uint8_t *buffer, unsigned int size, void *context)
   return true;
 }
 
-bool reproc_sink_discard(const uint8_t *buffer,
+bool reproc_sink_discard(REPROC_STREAM stream,
+                         const uint8_t *buffer,
                          unsigned int size,
                          void *context)
 {
+  (void) stream;
   (void) buffer;
   (void) size;
   (void) context;

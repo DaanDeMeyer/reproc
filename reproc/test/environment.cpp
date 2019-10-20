@@ -27,13 +27,15 @@ TEST_CASE("environment")
   std::array<uint8_t, BUFFER_SIZE> buffer = {};
 
   while (true) {
+    REPROC_STREAM stream = {};
     unsigned int bytes_read = 0;
-    error = reproc_read(&process, REPROC_STREAM_OUT, buffer.data(), BUFFER_SIZE,
+    error = reproc_read(&process, &stream, buffer.data(), BUFFER_SIZE,
                         &bytes_read);
     if (error != REPROC_SUCCESS) {
       break;
     }
 
+    REQUIRE(stream == REPROC_STREAM_OUT);
     output.append(reinterpret_cast<const char *>(buffer.data()), bytes_read);
   }
 

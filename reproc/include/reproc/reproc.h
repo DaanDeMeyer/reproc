@@ -97,9 +97,12 @@ REPROC_EXPORT REPROC_ERROR reproc_start(reproc_t *process,
                                         const char *working_directory);
 
 /*!
-Reads up to `size` bytes from the child process stream indicated by `stream`
-(cannot be `REPROC_STREAM_IN`) and stores them them in `buffer`. The amount of
-bytes read is stored in `bytes_read`.
+Reads up to `size` bytes from either the child process stdout or stderr stream
+and stores them them in `buffer`. The amount of bytes read is stored in
+`bytes_read`.
+
+If `stream` is not `NULL`, it is used to store the stream that was
+read from (`REPROC_STREAM_OUT` or `REPROC_STREAM_ERR`).
 
 Assuming no other errors occur this function will return `REPROC_SUCCESS` until
 the stream is closed and all remaining data has been read.
@@ -109,7 +112,7 @@ Possible errors:
 - `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_read(reproc_t *process,
-                                       REPROC_STREAM stream,
+                                       REPROC_STREAM *stream,
                                        uint8_t *buffer,
                                        unsigned int size,
                                        unsigned int *bytes_read);
@@ -118,17 +121,17 @@ REPROC_EXPORT REPROC_ERROR reproc_read(reproc_t *process,
 Calls `reproc_read` on `stream` until `parser` returns false or an error occurs.
 `parser` receives the output after each read, along with `context`.
 
-`parser` is always called once with an empty buffer to give the parser the
-chance to process all output from the previous call to `reproc_parse` one by
-one.
+`reproc_parse` always starts by calling `parser` once with an empty buffer and
+`stream` set to `REPROC_STREAM_IN` to give the parser the chance to process all
+output from the previous call to `reproc_parse` one by one.
 
 Possible errors:
 - `REPROC_ERROR_STREAM_CLOSED`
 - `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_parse(reproc_t *process,
-                                        REPROC_STREAM stream,
-                                        bool (*parser)(const uint8_t *buffer,
+                                        bool (*parser)(REPROC_STREAM stream,
+                                                       const uint8_t *buffer,
                                                        unsigned int size,
                                                        void *context),
                                         void *context);
@@ -142,8 +145,8 @@ Possible errors:
 - `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_drain(reproc_t *process,
-                                        REPROC_STREAM stream,
-                                        bool (*sink)(const uint8_t *buffer,
+                                        bool (*sink)(REPROC_STREAM stream,
+                                                     const uint8_t *buffer,
                                                      unsigned int size,
                                                      void *context),
                                         void *context);

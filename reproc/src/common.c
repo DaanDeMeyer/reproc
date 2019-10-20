@@ -59,8 +59,8 @@ REPROC_ERROR reproc_stop(reproc_t *process,
 #define BUFFER_SIZE 1024
 
 REPROC_ERROR reproc_parse(reproc_t *process,
-                          REPROC_STREAM stream,
-                          bool (*parser)(const uint8_t *buffer,
+                          bool (*parser)(REPROC_STREAM stream,
+                                         const uint8_t *buffer,
                                          unsigned int size,
                                          void *context),
                           void *context)
@@ -71,7 +71,7 @@ REPROC_ERROR reproc_parse(reproc_t *process,
   // A single call to `read` might contain multiple messages. By always calling
   // `parser` once with no data before reading, we give it the chance to process
   // all previous output one by one before reading from the child process again.
-  if (!parser((uint8_t[]){ 0 }, 0, context)) {
+  if (!parser(REPROC_STREAM_IN, (uint8_t[]){ 0 }, 0, context)) {
     return REPROC_SUCCESS;
   }
 
@@ -79,14 +79,15 @@ REPROC_ERROR reproc_parse(reproc_t *process,
   REPROC_ERROR error = REPROC_SUCCESS;
 
   while (true) {
+    REPROC_STREAM stream = { 0 };
     unsigned int bytes_read = 0;
-    error = reproc_read(process, stream, buffer, BUFFER_SIZE, &bytes_read);
+    error = reproc_read(process, &stream, buffer, BUFFER_SIZE, &bytes_read);
     if (error) {
       break;
     }
 
     // `parser` returns false to tell us to stop reading.
-    if (!parser(buffer, bytes_read, context)) {
+    if (!parser(stream, buffer, bytes_read, context)) {
       break;
     }
   }
@@ -96,8 +97,8 @@ REPROC_ERROR reproc_parse(reproc_t *process,
 
 REPROC_ERROR
 reproc_drain(reproc_t *process,
-             REPROC_STREAM stream,
-             bool (*sink)(const uint8_t *buffer,
+             bool (*sink)(REPROC_STREAM stream,
+                          const uint8_t *buffer,
                           unsigned int size,
                           void *context),
              void *context)
@@ -105,7 +106,7 @@ reproc_drain(reproc_t *process,
   assert(process);
   assert(sink);
 
-  REPROC_ERROR error = reproc_parse(process, stream, sink, context);
+  REPROC_ERROR error = reproc_parse(process, sink, context);
 
   return error == REPROC_ERROR_STREAM_CLOSED ? REPROC_SUCCESS : error;
 }

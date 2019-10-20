@@ -68,14 +68,19 @@ std::error_code process::start(const char *const *argv,
   return error_to_error_code(error);
 }
 
-std::error_code process::read(stream stream,
+std::error_code process::read(stream *stream,
                               uint8_t *buffer,
                               unsigned int size,
                               unsigned int *bytes_read) noexcept
 {
-  REPROC_ERROR error = reproc_read(process_.get(),
-                                   static_cast<REPROC_STREAM>(stream), buffer,
-                                   size, bytes_read);
+  REPROC_STREAM tmp = {};
+  REPROC_ERROR error = reproc_read(process_.get(), &tmp, buffer, size,
+                                   bytes_read);
+
+  if (stream != nullptr) {
+    *stream = static_cast<reproc::stream>(tmp);
+  }
+
   return error_to_error_code(error);
 }
 

@@ -154,7 +154,7 @@ public:
                         const char *working_directory = nullptr);
 
   /*! `reproc_read` */
-  REPROCXX_EXPORT std::error_code read(stream stream,
+  REPROCXX_EXPORT std::error_code read(stream *stream,
                                        uint8_t *buffer,
                                        unsigned int size,
                                        unsigned int *bytes_read) noexcept;
@@ -169,11 +169,11 @@ public:
   `Parser` expects the following signature:
 
   ```c++
-  bool parser(const uint8_t *buffer, unsigned int size);
+  bool parser(reproc::stream stream, const uint8_t *buffer, unsigned int size);
   ```
   */
   template <typename Parser>
-  std::error_code parse(stream stream, Parser &&parser);
+  std::error_code parse(Parser &&parser);
 
   /*!
   `parse` but `stream_closed` is not treated as an error. `Sink` expects the
@@ -182,7 +182,7 @@ public:
   For examples of sinks, see `sink.hpp`.
   */
   template <typename Sink>
-  std::error_code drain(stream stream, Sink &&sink);
+  std::error_code drain(Sink &&sink);
 
   /*! `reproc_write` */
   REPROCXX_EXPORT std::error_code write(const uint8_t *buffer,
@@ -280,7 +280,7 @@ std::error_code process::start(const Arguments &arguments,
 }
 
 template <typename Parser>
-std::error_code process::parse(stream stream, Parser &&parser)
+std::error_code process::parse(Parser &&parser)
 {
   // We can't use compound literals in C++ to pass the initial value to `parser`
   // so we use a constexpr value instead.
@@ -289,7 +289,7 @@ std::error_code process::parse(stream stream, Parser &&parser)
   // A single call to `read` might contain multiple messages. By always calling
   // `parser` once with no data before reading, we give it the chance to process
   // all previous output one by one before reading from the child process again.
-  if (!parser(&initial, 0)) {
+  if (!parser(stream::in, &initial, 0)) {
     return {};
   }
 
@@ -297,14 +297,15 @@ std::error_code process::parse(stream stream, Parser &&parser)
   std::error_code ec;
 
   while (true) {
+    reproc::stream stream = {};
     unsigned int bytes_read = 0;
-    ec = read(stream, buffer, BUFFER_SIZE, &bytes_read);
+    ec = read(&stream, buffer, BUFFER_SIZE, &bytes_read);
     if (ec) {
       break;
     }
 
     // `parser` returns false to tell us to stop reading.
-    if (!parser(buffer, bytes_read)) {
+    if (!parser(stream, buffer, bytes_read)) {
       break;
     }
   }
@@ -313,9 +314,9 @@ std::error_code process::parse(stream stream, Parser &&parser)
 }
 
 template <typename Sink>
-std::error_code process::drain(stream stream, Sink &&sink)
+std::error_code process::drain(Sink &&sink)
 {
-  std::error_code ec = parse(stream, std::forward<Sink>(sink));
+  std::error_code ec = parse(std::forward<Sink>(sink));
 
   return ec == error::stream_closed ? error::success : ec;
 }

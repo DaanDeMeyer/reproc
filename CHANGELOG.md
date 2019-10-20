@@ -18,6 +18,46 @@
   consistent to have a lowercase function of the same name to retrieve the
   actual system error than a function named `reproc_system_error`.
 
+- Always try to read from both stdout and stderr in `reproc_read` to avoid
+  deadlocks and indicate which stream `reproc_read` actually read from.
+
+  Previously, users would indicate the stream they wanted to read from when
+  calling `reproc_read`. However, this lead to issues with programs that write
+  to both stdout and stderr as a user wouldn't know whether stdout or stderr
+  would have output available to read. Reading from only the stdout stream
+  didn't work as the parent could be blocked on reading from stdout while the
+  child was simultaneously blocked on writing to stderr leading to a deadlock.
+  To get around this, users had to start up a separate thread to read from both
+  stdout and stderr at the same time which was a lot of extra work just to get
+  the output of external programs that write to both stdout and stderr. Now,
+  reproc takes care of avoiding the deadlock by checking which of stdout/stderr
+  can be read from, doing the actual read and indicating to the user which
+  stream was read from.
+
+  Practically, instead of passing `REPROC_STREAM_OUT` or `REPROC_STREAM_ERR` to
+  `reproc_read`, you now pass a pointer to a `REPROC_STREAM` variable instead
+  which `reproc_read` will set to `REPROC_STREAM_OUT` or `REPROC_STREAM_ERR`
+  depending on which stream it read from.
+
+  If both streams have been closed by the child process, `reproc_read` returns
+  `REPROC_STREAM_CLOSED`.
+
+- Because of the changes to `reproc_read`, `reproc_parse` and `reproc_drain` now
+  read from both stdout and stderr and indicate the stream that was read from to
+  the given sink/parse function.
+
+### reproc++
+
+- The same changes applied to `reproc_read`, `reproc_parse` and `reproc_drain`
+  were applied to `process::read`, `process::parse` and `process::drain`.
+
+- The `string` and `ostream` sinks now take separate `out` and `err` arguments
+  in their constructors that receive output from the stdout and stderr streams
+  of the child process respectively.
+
+  To combine the output from the stdout and stderr streams, simply pass the same
+  `string` or `ostream` to both the `out` and `err` arguments.
+
 ## 9.0.0
 
 ### General

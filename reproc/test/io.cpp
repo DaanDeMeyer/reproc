@@ -31,12 +31,14 @@ static void io(const char *program, REPROC_STREAM stream)
   std::array<uint8_t, BUFFER_SIZE> buffer = {};
 
   while (true) {
+    REPROC_STREAM actual = {};
     unsigned int bytes_read = 0;
-    error = reproc_read(&io, stream, buffer.data(), BUFFER_SIZE, &bytes_read);
+    error = reproc_read(&io, &actual, buffer.data(), BUFFER_SIZE, &bytes_read);
     if (error != REPROC_SUCCESS) {
       break;
     }
 
+    REQUIRE(actual == stream);
     output.append(reinterpret_cast<const char *>(buffer.data()), bytes_read);
   }
 

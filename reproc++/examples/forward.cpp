@@ -1,7 +1,6 @@
 #include <reproc++/reproc.hpp>
 #include <reproc++/sink.hpp>
 
-#include <future>
 #include <iostream>
 
 static int fail(std::error_code ec)
@@ -61,19 +60,12 @@ int main(int argc, char *argv[])
   // we close it explicitly.
   forward.close(reproc::stream::in);
 
-  // To avoid the child process hanging because the error stream is full while
-  // we're waiting for output from the output stream or vice-versa we spawn two
-  // separate threads to read from both streams at the same time.
-
-  // Pipe child process stdout output to stdout of the parent process.
-  auto drain_stdout = std::async(std::launch::async, [&forward]() {
-    return forward.drain(reproc::stream::out, reproc::sink::ostream(std::cout));
-  });
-
-  // Pipe child process stderr output to stderr of the parent process.
-  auto drain_stderr = std::async(std::launch::async, [&forward]() {
-    return forward.drain(reproc::stream::err, reproc::sink::ostream(std::cerr));
-  });
+  // We forward the output from the stdout and stderr streams of the child
+  // process to the stdout and stderr streams of the current process.
+  ec = forward.drain(reproc::sink::ostream(std::cout, std::cerr));
+  if (ec) {
+    return fail(ec);
+  }
 
   // Call `process::stop` ourselves to get the exit status. We add
   // `reproc::wait` with a timeout of ten seconds to give the process time to
@@ -81,16 +73,6 @@ int main(int argc, char *argv[])
   ec = forward.stop(reproc::cleanup::wait, reproc::milliseconds(10000),
                     reproc::cleanup::terminate, reproc::milliseconds(5000),
                     reproc::cleanup::kill, reproc::milliseconds(2000));
-  if (ec) {
-    return fail(ec);
-  }
-
-  ec = drain_stdout.get();
-  if (ec) {
-    return fail(ec);
-  }
-
-  ec = drain_stderr.get();
   if (ec) {
     return fail(ec);
   }

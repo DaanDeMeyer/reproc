@@ -11,24 +11,28 @@ static int fail(std::error_code ec)
   return 1;
 }
 
-// Expands upon `reproc::string_sink` by locking `mutex` before appending new
-// output to `out`.
+// Locks a given mutex before appending to the given string, allowing working
+// with the string across multiple threads if the mutex is locked in the other
+// threads as well.
 class thread_safe_string_sink {
+  std::string &out_;
+  std::mutex &mutex_;
+
 public:
   thread_safe_string_sink(std::string &out, std::mutex &mutex)
       : out_(out), mutex_(mutex)
   {}
 
-  bool operator()(const uint8_t *buffer, unsigned int size)
+  bool
+  operator()(reproc::stream stream, const uint8_t *buffer, unsigned int size)
   {
+    (void) stream;
+
     std::lock_guard<std::mutex> lock(mutex_);
     out_.append(reinterpret_cast<const char *>(buffer), size);
+
     return true;
   }
-
-private:
-  std::string &out_;
-  std::mutex &mutex_;
 };
 
 // The background example reads the output of a child process in a background
@@ -64,11 +68,11 @@ int main(int argc, char *argv[])
   std::string output;
   std::mutex mutex;
 
-  auto drain_async = std::async(std::launch::async, [&background, &output,
-                                                     &mutex]() {
-    thread_safe_string_sink sink(output, mutex);
-    return background.drain(reproc::stream::out, sink);
-  });
+  auto drain_async = std::async(std::launch::async,
+                                [&background, &output, &mutex]() {
+                                  thread_safe_string_sink sink(output, mutex);
+                                  return background.drain(sink);
+                                });
 
   // Show new output every 2 seconds.
   while (drain_async.wait_for(std::chrono::seconds(2)) !=
