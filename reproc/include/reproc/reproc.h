@@ -77,7 +77,7 @@ Example: ["cmake", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", `NULL`]
 `environment` is an array of UTF-8 encoded, null terminated strings that
 specifies the environment for the child process. It has the following layout:
 
-- All elements except the last must be of the format `NAME=VALUE`.
+- All elements except the final element must be of the format `NAME=VALUE`.
 - The final element must be `NULL`.
 
 Example: ["IP=127.0.0.1", "PORT=8080", `NULL`]
