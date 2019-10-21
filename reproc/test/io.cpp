@@ -1,54 +1,49 @@
 #include <doctest.h>
 
 #include <reproc/reproc.h>
+#include <reproc/sink.h>
 
 #include <array>
 #include <string>
 
-static void io(const char *mode,
-               const std::string &input,
-               const std::string &expected)
+static void
+io(const char *mode, const std::string &input, const std::string &expected)
 {
+  reproc_t process;
+
   REPROC_ERROR error = REPROC_SUCCESS;
   INFO(reproc_error_string(error));
 
-  reproc_t io;
   std::array<const char *, 3> argv = { RESOURCE_DIRECTORY "/io", mode,
                                        nullptr };
 
-  error = reproc_start(&io, argv.data(), nullptr, nullptr);
+  error = reproc_start(&process, argv.data(), nullptr, nullptr);
   REQUIRE(!error);
 
   unsigned int size = static_cast<unsigned int>(input.size());
 
   unsigned int bytes_written = 0;
-  error = reproc_write(&io, reinterpret_cast<const uint8_t *>(input.data()),
-                       size, &bytes_written);
+  error = reproc_write(&process,
+                       reinterpret_cast<const uint8_t *>(input.data()), size,
+                       &bytes_written);
   REQUIRE(!error);
 
-  reproc_close(&io, REPROC_STREAM_IN);
+  reproc_close(&process, REPROC_STREAM_IN);
 
-  std::string output;
-  static constexpr unsigned int BUFFER_SIZE = 1024;
-  std::array<uint8_t, BUFFER_SIZE> buffer = {};
-
-  while (true) {
-    unsigned int bytes_read = 0;
-    error = reproc_read(&io, nullptr, buffer.data(), BUFFER_SIZE, &bytes_read);
-    if (error != REPROC_SUCCESS) {
-      break;
-    }
-
-    output.append(reinterpret_cast<const char *>(buffer.data()), bytes_read);
-  }
+  char *output = nullptr;
+  error = reproc_drain(&process, reproc_sink_string, &output);
+  REQUIRE(!error);
+  REQUIRE(output != nullptr);
 
   REQUIRE_EQ(output, expected);
 
-  error = reproc_wait(&io, REPROC_INFINITE);
+  error = reproc_wait(&process, REPROC_INFINITE);
   REQUIRE(!error);
-  REQUIRE((reproc_exit_status(&io) == 0));
+  REQUIRE(reproc_exit_status(&process) == 0);
 
-  reproc_destroy(&io);
+  reproc_destroy(&process);
+
+  free(output);
 }
 
 TEST_CASE("io")

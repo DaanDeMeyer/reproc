@@ -1,6 +1,7 @@
 #include <doctest.h>
 
 #include <reproc/reproc.h>
+#include <reproc/sink.h>
 
 #include <array>
 #include <iterator>
@@ -20,29 +21,22 @@ TEST_CASE("argv")
   error = reproc_start(&process, argv.data(), nullptr, nullptr);
   REQUIRE(!error);
 
-  std::string output;
+  char *output = nullptr;
+  error = reproc_drain(&process, reproc_sink_string, &output);
+  REQUIRE(!error);
+  REQUIRE(output != nullptr);
 
-  static constexpr unsigned int BUFFER_SIZE = 1024;
-  std::array<uint8_t, BUFFER_SIZE> buffer = {};
+  error = reproc_wait(&process, REPROC_INFINITE);
+  REQUIRE(!error);
+  REQUIRE(reproc_exit_status(&process) == 0);
 
-  while (true) {
-    REPROC_STREAM stream = {};
-    unsigned int bytes_read = 0;
-    error = reproc_read(&process, &stream, buffer.data(), BUFFER_SIZE,
-                        &bytes_read);
-    if (error != REPROC_SUCCESS) {
-      break;
-    }
-
-    REQUIRE(stream == REPROC_STREAM_OUT);
-    output.append(reinterpret_cast<const char *>(buffer.data()), bytes_read);
-  }
-
-  REQUIRE(error == REPROC_ERROR_STREAM_CLOSED);
+  reproc_destroy(&process);
 
   std::ostringstream concatenated;
   std::copy(argv.begin(), argv.end() - 1,
             std::ostream_iterator<std::string>(concatenated, "$"));
 
   REQUIRE(output == concatenated.str());
+
+  free(output);
 }

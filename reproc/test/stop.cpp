@@ -6,33 +6,33 @@
 
 TEST_CASE("stop")
 {
-  reproc_t infinite;
+  reproc_t process;
 
   REPROC_ERROR error = REPROC_SUCCESS;
   INFO(reproc_error_string(error));
 
   std::array<const char *, 2> argv{ RESOURCE_DIRECTORY "/infinite", nullptr };
 
-  error = reproc_start(&infinite, argv.data(), nullptr, nullptr);
+  error = reproc_start(&process, argv.data(), nullptr, nullptr);
   REQUIRE(!error);
 
-  error = reproc_wait(&infinite, 50);
+  error = reproc_wait(&process, 50);
   REQUIRE(error == REPROC_ERROR_WAIT_TIMEOUT);
 
   SUBCASE("terminate")
   {
-    error = reproc_terminate(&infinite);
+    error = reproc_terminate(&process);
     REQUIRE(!error);
   }
 
   SUBCASE("kill")
   {
-    error = reproc_kill(&infinite);
+    error = reproc_kill(&process);
     REQUIRE(!error);
   }
 
-  error = reproc_wait(&infinite, 50);
+  error = reproc_wait(&process, 50);
   REQUIRE(!error);
 
-  reproc_destroy(&infinite);
+  reproc_destroy(&process);
 }

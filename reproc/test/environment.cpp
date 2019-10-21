@@ -1,6 +1,7 @@
 #include <doctest.h>
 
 #include <reproc/reproc.h>
+#include <reproc/sink.h>
 
 #include <array>
 #include <iterator>
@@ -15,35 +16,27 @@ TEST_CASE("environment")
 
   std::array<const char *, 2> argv = { RESOURCE_DIRECTORY "/environment",
                                        nullptr };
-  std::array<const char *, 3> environment = { "IP=127.0.0.1", "PORT=8080",
-                                              nullptr };
+  std::array<const char *, 3> envp = { "IP=127.0.0.1", "PORT=8080", nullptr };
 
-  error = reproc_start(&process, argv.data(), environment.data(), nullptr);
+  error = reproc_start(&process, argv.data(), envp.data(), nullptr);
   REQUIRE(!error);
 
-  std::string output;
+  char *output = nullptr;
+  error = reproc_drain(&process, reproc_sink_string, &output);
+  REQUIRE(!error);
+  REQUIRE(output != nullptr);
 
-  static constexpr unsigned int BUFFER_SIZE = 1024;
-  std::array<uint8_t, BUFFER_SIZE> buffer = {};
+  error = reproc_wait(&process, REPROC_INFINITE);
+  REQUIRE(!error);
+  REQUIRE(reproc_exit_status(&process) == 0);
 
-  while (true) {
-    REPROC_STREAM stream = {};
-    unsigned int bytes_read = 0;
-    error = reproc_read(&process, &stream, buffer.data(), BUFFER_SIZE,
-                        &bytes_read);
-    if (error != REPROC_SUCCESS) {
-      break;
-    }
-
-    REQUIRE(stream == REPROC_STREAM_OUT);
-    output.append(reinterpret_cast<const char *>(buffer.data()), bytes_read);
-  }
-
-  REQUIRE(error == REPROC_ERROR_STREAM_CLOSED);
+  reproc_destroy(&process);
 
   std::ostringstream concatenated;
-  std::copy(environment.begin(), environment.end() - 1,
+  std::copy(envp.begin(), envp.end() - 1,
             std::ostream_iterator<const char *>(concatenated, ""));
 
   REQUIRE(output == concatenated.str());
+
+  free(output);
 }
