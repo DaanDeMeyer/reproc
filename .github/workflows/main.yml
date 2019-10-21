@@ -160,6 +160,7 @@ jobs:
           scoop install ninja llvm --global
 
           if ("${{ matrix.compiler }}" -eq "gcc") {
+            scoop install gcc --global
             echo "::set-env name=CC::gcc"
             echo "::set-env name=CXX::g++"
           } elseif ("${{ matrix.compiler }}" -eq "clang") {
@@ -174,6 +175,9 @@ jobs:
           # examples can find the reproc and reproc++ DLL's.
           $env:PATH += ";$pwd\build\reproc\lib"
           $env:PATH += ";$pwd\build\reproc++\lib"
+
+          # Make all PATH additions made by scoop and ourselves global.
+          echo "::set-env name=PATH::$env:PATH"
 
           & .github\workflows\vsenv.bat -arch=x64 -host_arch=x64
 
