@@ -28,12 +28,18 @@ endif()
 
 include(CheckSymbolExists)
 
+if(WIN32)
+  target_compile_definitions(reproc PRIVATE WIN32_LEAN_AND_MEAN)
+endif()
+
 if(MINGW)
   target_compile_definitions(reproc PRIVATE
     WINVER=0x0600 # `WC_ERR_INVALID_CHARS`
     _WIN32_WINNT=0x0600 # `InitializeProcThreadAttributeList`
   )
-elseif(UNIX)
+endif()
+
+if(UNIX)
   # Check if `pipe2` is available.
   # Access to `pipe2` on Linux requires `_GNU_SOURCE` to be defined.
 
