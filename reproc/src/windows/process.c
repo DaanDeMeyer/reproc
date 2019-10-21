@@ -1,5 +1,6 @@
 #include <windows/process.h>
 
+#include <macro.h>
 #include <windows/handle.h>
 
 #include <assert.h>
@@ -248,6 +249,10 @@ REPROC_ERROR process_create(wchar_t *command_line,
   assert(pid);
   assert(handle);
 
+  assert(options->stdin_handle);
+  assert(options->stdout_handle);
+  assert(options->stderr_handle);
+
   // Create each child process in a new process group so we don't send
   // `CTRL-BREAK` signals to more than one child process in `process_terminate`.
   // Create each child process with a Unicode environment as we accept any
@@ -264,23 +269,12 @@ REPROC_ERROR process_create(wchar_t *command_line,
   // for a reproc child process. See https://stackoverflow.com/a/2345126 for
   // more information.
 
-  HANDLE to_inherit[3];
-  size_t i = 0; // to_inherit_size
-
-  if (options->stdin_handle) {
-    to_inherit[i++] = options->stdin_handle;
-  }
-
-  if (options->stdout_handle) {
-    to_inherit[i++] = options->stdout_handle;
-  }
-
-  if (options->stderr_handle) {
-    to_inherit[i++] = options->stderr_handle;
-  }
+  HANDLE to_inherit[3] = { options->stdin_handle, options->stdout_handle,
+                           options->stderr_handle };
 
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
-  error = handle_inherit_list_create(to_inherit, i, &attribute_list);
+  error = handle_inherit_list_create(to_inherit, ARRAY_SIZE(to_inherit),
+                                     &attribute_list);
   if (error) {
     return error;
   }
