@@ -40,4 +40,9 @@ REPROC_ERROR pipe_write(int pipe,
                         unsigned int size,
                         unsigned int *bytes_written);
 
+// Block until `out` or `err` has data available to read. The first file
+// descriptor that has data available to read is stored in `ready`.
+//
+// `REPROC_ERROR_STREAM_CLOSED` is returned if both `out` and `err` have been
+// closed.
 REPROC_ERROR pipe_wait(int *ready, int out, int err);
