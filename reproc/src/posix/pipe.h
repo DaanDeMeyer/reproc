@@ -31,3 +31,5 @@ REPROC_ERROR pipe_write(int pipe,
                         const uint8_t *buffer,
                         unsigned int size,
                         unsigned int *bytes_written);
+
+REPROC_ERROR pipe_wait(int *ready, int out, int err);

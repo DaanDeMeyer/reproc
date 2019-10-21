@@ -1,8 +1,11 @@
 #include <posix/pipe.h>
 
+#include <macro.h>
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <unistd.h>
 
 REPROC_ERROR pipe_init(int *read, int *write)
@@ -106,4 +109,32 @@ REPROC_ERROR pipe_write(int pipe,
   }
 
   return REPROC_SUCCESS;
+}
+
+REPROC_ERROR pipe_wait(int *ready, int out, int err)
+{
+  assert(ready);
+
+  // See 10.0.0 changelog for why we use `poll`.
+
+  struct pollfd fds[2] = { { .fd = out, .events = POLLIN },
+                           { .fd = err, .events = POLLIN } };
+  // -1 tells `poll` we want to wait indefinitely for events.
+  if (poll(&fds[0], 2, -1) == -1) {
+    return REPROC_ERROR_SYSTEM;
+  }
+
+  for (size_t i = 0; i < ARRAY_SIZE(fds); i++) {
+    struct pollfd pollfd = fds[i];
+
+    if (pollfd.revents & POLLIN || pollfd.revents & POLLERR) {
+      *ready = pollfd.fd;
+      return REPROC_SUCCESS;
+    }
+  }
+
+  // Both streams should have been closed by the child process if we get here.
+  assert(fds[0].revents & POLLHUP && fds[1].revents & POLLHUP);
+
+  return REPROC_ERROR_STREAM_CLOSED;
 }
