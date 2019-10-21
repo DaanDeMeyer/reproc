@@ -240,6 +240,11 @@ static REPROC_ERROR handle_inherit_list_create(
   return REPROC_SUCCESS;
 }
 
+static SECURITY_ATTRIBUTES DO_NOT_INHERIT = { .nLength = sizeof(
+                                                  SECURITY_ATTRIBUTES),
+                                              .bInheritHandle = false,
+                                              .lpSecurityDescriptor = NULL };
+
 REPROC_ERROR process_create(wchar_t *command_line,
                             struct process_options *options,
                             unsigned long *pid,
@@ -306,10 +311,10 @@ REPROC_ERROR process_create(wchar_t *command_line,
   // dialogs temporarily which is inherited by the child process.
   DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
 
-  BOOL result = CreateProcessW(NULL, command_line, NULL, NULL, TRUE,
-                               creation_flags, options->environment,
-                               options->working_directory, startup_info_address,
-                               &info);
+  BOOL result = CreateProcessW(NULL, command_line, &DO_NOT_INHERIT,
+                               &DO_NOT_INHERIT, TRUE, creation_flags,
+                               options->environment, options->working_directory,
+                               startup_info_address, &info);
 
   SetErrorMode(previous_error_mode);
 
