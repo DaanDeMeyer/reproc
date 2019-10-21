@@ -147,8 +147,8 @@ REPROC_ERROR pipe_wait(int *ready, int out, int err)
 
   // See 10.0.0 changelog for why we use `poll`.
 
-  struct pollfd fds[2] = { { .fd = out, .events = POLLIN },
-                           { .fd = err, .events = POLLIN } };
+  struct pollfd fds[2] = { { .fd = err, .events = POLLIN },
+                           { .fd = out, .events = POLLIN } };
   // -1 tells `poll` we want to wait indefinitely for events.
   if (poll(&fds[0], 2, -1) == -1) {
     return REPROC_ERROR_SYSTEM;
