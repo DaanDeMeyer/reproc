@@ -232,9 +232,8 @@ Different threads can read from or write to different streams at the same time.
 This is a valid approach when you want to write to stdin and read from stdout in
 parallel.
 
-Look at the [forward](reproc++/examples/forward.cpp) and
-[background](reproc++/examples/background.cpp) examples to see examples of how
-to work with reproc from multiple threads.
+Look at the [background](reproc++/examples/background.cpp) examples to see an
+example of how to work with reproc from multiple threads.
 
 ## Gotchas
 
