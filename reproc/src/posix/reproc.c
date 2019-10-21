@@ -6,7 +6,6 @@
 #include <posix/process.h>
 
 #include <assert.h>
-#include <fcntl.h>
 #include <stddef.h>
 
 REPROC_ERROR reproc_start(reproc_t *process,
@@ -26,17 +25,20 @@ REPROC_ERROR reproc_start(reproc_t *process,
   int child_stdout = 0;
   int child_stderr = 0;
 
-  REPROC_ERROR error = REPROC_SUCCESS;
+  REPROC_ERROR error = REPROC_ERROR_SYSTEM;
+
+  const struct pipe_options blocking = { .nonblocking = false };
+  const struct pipe_options nonblocking = { .nonblocking = true };
 
   // Create the pipes used to redirect the child process' stdin/stdout/stderr to
   // the parent process.
 
-  error = pipe_init(&child_stdin, &process->in);
+  error = pipe_init(&child_stdin, blocking, &process->in, blocking);
   if (error) {
     goto cleanup;
   }
 
-  error = pipe_init(&process->out, &child_stdout);
+  error = pipe_init(&process->out, nonblocking, &child_stdout, blocking);
   if (error) {
     goto cleanup;
   }
@@ -44,17 +46,9 @@ REPROC_ERROR reproc_start(reproc_t *process,
   // We poll the output pipes so we put the parent ends of the output pipes in
   // non-blocking mode.
 
-  if (fcntl(process->out, F_SETFL, O_NONBLOCK) == -1) {
-    return REPROC_ERROR_SYSTEM;
-  }
-
-  error = pipe_init(&process->err, &child_stderr);
+  error = pipe_init(&process->err, nonblocking, &child_stderr, blocking);
   if (error) {
     goto cleanup;
-  }
-
-  if (fcntl(process->err, F_SETFL, O_NONBLOCK) == -1) {
-    return REPROC_ERROR_SYSTEM;
   }
 
   struct process_options options = { .environment = environment,

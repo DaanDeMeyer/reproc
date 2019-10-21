@@ -2,11 +2,19 @@
 
 #include <reproc/error.h>
 
+#include <stdbool.h>
 #include <stdint.h>
+
+struct pipe_options {
+  bool nonblocking;
+};
 
 // Creates a new anonymous pipe. `read` and `write` are set to the read and
 // write end of the pipe respectively.
-REPROC_ERROR pipe_init(int *read, int *write);
+REPROC_ERROR pipe_init(int *read,
+                       struct pipe_options read_options,
+                       int *write,
+                       struct pipe_options write_options);
 
 // Reads up to `size` bytes from the pipe indicated by `pipe` and stores them
 // them in `buffer`. The amount of bytes read is stored in `bytes_read`.

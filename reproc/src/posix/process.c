@@ -55,11 +55,13 @@ process_create(const char *const *argv,
   int child_error = 0;
   unsigned int bytes_read = 0;
 
+  const struct pipe_options blocking = { .nonblocking = false };
+
   // We create an error pipe to receive errors from the child process. See this
   // answer https://stackoverflow.com/a/1586277 for more information.
   int error_pipe_read = 0;
   int error_pipe_write = 0;
-  error = pipe_init(&error_pipe_read, &error_pipe_write);
+  error = pipe_init(&error_pipe_read, blocking, &error_pipe_write, blocking);
   if (error) {
     goto cleanup;
   }

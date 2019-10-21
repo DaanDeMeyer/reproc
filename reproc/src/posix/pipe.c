@@ -1,6 +1,7 @@
 #include <posix/pipe.h>
 
 #include <macro.h>
+#include <posix/fd.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -8,12 +9,20 @@
 #include <poll.h>
 #include <unistd.h>
 
-REPROC_ERROR pipe_init(int *read, int *write)
+REPROC_ERROR pipe_init(int *read,
+                       struct pipe_options read_options,
+                       int *write,
+                       struct pipe_options write_options)
 {
   assert(read);
   assert(write);
 
   int pipefd[2];
+
+  int read_mode = read_options.nonblocking ? O_NONBLOCK : 0;
+  int write_mode = write_options.nonblocking ? O_NONBLOCK : 0;
+
+  REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
   // On POSIX systems, by default file descriptors are inherited by child
   // processes when calling `exec`. To prevent unintended leaking of file
@@ -32,22 +41,43 @@ REPROC_ERROR pipe_init(int *read, int *write)
   // `FD_CLOEXEC` immediately after creating a pipe.
 
 #if defined(REPROC_PIPE2_FOUND)
-  int result = pipe2(pipefd, O_CLOEXEC);
+  if (pipe2(pipefd, O_CLOEXEC) == -1) {
+    goto cleanup;
+  }
 #else
-  int result = pipe(pipefd);
-  fcntl(pipefd[0], F_SETFD, FD_CLOEXEC);
-  fcntl(pipefd[1], F_SETFD, FD_CLOEXEC);
-#endif
-
-  if (result == -1) {
-    return REPROC_ERROR_SYSTEM;
+  if (pipe(pipefd) == -1) {
+    goto cleanup;
   }
 
-  // Assign file descriptors if `pipe` call was succesfull.
+  if (fcntl(pipefd[0], F_SETFD, FD_CLOEXEC) == -1) {
+    goto cleanup;
+  }
+
+  if (fcntl(pipefd[1], F_SETFD, FD_CLOEXEC) == -1) {
+    goto cleanup;
+  }
+#endif
+
+  if (fcntl(pipefd[0], F_SETFL, read_mode) == -1) {
+    goto cleanup;
+  }
+
+  if (fcntl(pipefd[1], F_SETFL, write_mode) == -1) {
+    goto cleanup;
+  }
+
   *read = pipefd[0];
   *write = pipefd[1];
 
-  return REPROC_SUCCESS;
+  error = REPROC_SUCCESS;
+
+cleanup:
+  if (error) {
+    fd_close(read);
+    fd_close(write);
+  }
+
+  return error;
 }
 
 REPROC_ERROR
