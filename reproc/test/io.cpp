@@ -5,22 +5,24 @@
 #include <array>
 #include <string>
 
-static void io(const char *program, REPROC_STREAM stream)
+static void io(const char *mode,
+               const std::string &input,
+               const std::string &expected)
 {
   REPROC_ERROR error = REPROC_SUCCESS;
   INFO(reproc_error_string(error));
 
   reproc_t io;
-  std::array<const char *, 2> argv = { program, nullptr };
+  std::array<const char *, 3> argv = { RESOURCE_DIRECTORY "/io", mode,
+                                       nullptr };
 
   error = reproc_start(&io, argv.data(), nullptr, nullptr);
   REQUIRE(!error);
 
-  std::string message = "reproc stands for REdirected PROCess";
-  unsigned int size = static_cast<unsigned int>(message.size());
+  unsigned int size = static_cast<unsigned int>(input.size());
 
   unsigned int bytes_written = 0;
-  error = reproc_write(&io, reinterpret_cast<const uint8_t *>(message.data()),
+  error = reproc_write(&io, reinterpret_cast<const uint8_t *>(input.data()),
                        size, &bytes_written);
   REQUIRE(!error);
 
@@ -31,18 +33,16 @@ static void io(const char *program, REPROC_STREAM stream)
   std::array<uint8_t, BUFFER_SIZE> buffer = {};
 
   while (true) {
-    REPROC_STREAM actual = {};
     unsigned int bytes_read = 0;
-    error = reproc_read(&io, &actual, buffer.data(), BUFFER_SIZE, &bytes_read);
+    error = reproc_read(&io, nullptr, buffer.data(), BUFFER_SIZE, &bytes_read);
     if (error != REPROC_SUCCESS) {
       break;
     }
 
-    REQUIRE(actual == stream);
     output.append(reinterpret_cast<const char *>(buffer.data()), bytes_read);
   }
 
-  REQUIRE_EQ(output, message);
+  REQUIRE_EQ(output, expected);
 
   error = reproc_wait(&io, REPROC_INFINITE);
   REQUIRE(!error);
@@ -53,6 +53,9 @@ static void io(const char *program, REPROC_STREAM stream)
 
 TEST_CASE("io")
 {
-  io(RESOURCE_DIRECTORY "/stdout", REPROC_STREAM_OUT);
-  io(RESOURCE_DIRECTORY "/stderr", REPROC_STREAM_ERR);
+  std::string message = "reproc stands for REdirected PROCess";
+
+  io("stdout", message, message);
+  io("stderr", message, message);
+  io("both", message, message + message);
 }
