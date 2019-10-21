@@ -2,7 +2,7 @@
 
 #include <reproc/error.h>
 
-#include <windows.h>
+typedef void *HANDLE;
 
 REPROC_ERROR handle_disable_inherit(HANDLE pipe);
 

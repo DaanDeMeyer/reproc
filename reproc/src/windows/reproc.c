@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <windows.h>
+#include <string.h>
 
 REPROC_ERROR reproc_start(reproc_t *process,
                           const char *const *argv,

@@ -3,7 +3,8 @@
 #include <reproc/error.h>
 
 #include <wchar.h>
-#include <windows.h>
+
+typedef void *HANDLE;
 
 struct process_options {
   // Environment for the child process in the format required by the
@@ -47,7 +48,7 @@ wchar_t *string_to_wstring(const char *string, size_t size);
 // possible options.
 REPROC_ERROR process_create(wchar_t *command_line,
                             struct process_options *options,
-                            DWORD *pid,
+                            unsigned long *pid,
                             HANDLE *handle);
 
 // Waits `timeout` milliseconds for the process indicated by `pid` to exit and

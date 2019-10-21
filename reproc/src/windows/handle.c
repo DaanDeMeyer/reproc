@@ -1,6 +1,7 @@
 #include <windows/handle.h>
 
 #include <assert.h>
+#include <windows.h>
 
 REPROC_ERROR handle_disable_inherit(HANDLE pipe)
 {

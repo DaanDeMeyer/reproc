@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <windows.h>
 
 // Argument escaping implementation is based on the following blog post:
 // https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
@@ -241,7 +242,7 @@ static REPROC_ERROR handle_inherit_list_create(
 
 REPROC_ERROR process_create(wchar_t *command_line,
                             struct process_options *options,
-                            DWORD *pid,
+                            unsigned long *pid,
                             HANDLE *handle)
 {
   assert(command_line);

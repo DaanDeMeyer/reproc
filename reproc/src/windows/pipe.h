@@ -4,7 +4,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <windows.h>
+
+typedef void *HANDLE;
 
 // Creates a new anonymous pipe. `read` and `write` are set to the read and
 // write handle of the pipe respectively. `inherit_read` and `inherit_write`
