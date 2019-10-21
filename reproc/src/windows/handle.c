@@ -1,6 +1,17 @@
-#include "handle.h"
+#include <windows/handle.h>
 
 #include <assert.h>
+
+REPROC_ERROR handle_disable_inherit(HANDLE pipe)
+{
+  assert(pipe);
+
+  if (!SetHandleInformation(pipe, HANDLE_FLAG_INHERIT, 0)) {
+    return REPROC_ERROR_SYSTEM;
+  }
+
+  return REPROC_SUCCESS;
+}
 
 void handle_close(HANDLE *handle)
 {

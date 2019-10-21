@@ -1,8 +1,9 @@
 #include <reproc/reproc.h>
 
-#include "fd.h"
-#include "pipe.h"
-#include "process.h"
+#include <macro.h>
+#include <posix/fd.h>
+#include <posix/pipe.h>
+#include <posix/process.h>
 
 #include <assert.h>
 #include <fcntl.h>
@@ -102,7 +103,7 @@ REPROC_ERROR reproc_read(reproc_t *process,
     return REPROC_ERROR_SYSTEM;
   }
 
-  for (size_t i = 0; i < 2; i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(fds); i++) {
     struct pollfd pollfd = fds[i];
 
     // Indicate which stream was read from if requested by the user.

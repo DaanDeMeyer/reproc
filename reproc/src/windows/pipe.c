@@ -1,5 +1,7 @@
-#include "pipe.h"
-#include "handle.h"
+#include <windows/pipe.h>
+
+#include <macro.h>
+#include <windows/handle.h>
 
 #include <assert.h>
 

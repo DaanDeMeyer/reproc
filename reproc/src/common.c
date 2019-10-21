@@ -1,5 +1,7 @@
 #include <reproc/reproc.h>
 
+#include <macro.h>
+
 #include <assert.h>
 #include <stddef.h>
 
@@ -24,7 +26,7 @@ REPROC_ERROR reproc_stop(reproc_t *process,
   // to `REPROC_SUCCESS`).
   REPROC_ERROR error = REPROC_ERROR_WAIT_TIMEOUT;
 
-  for (int i = 0; i < 3; i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(operations); i++) {
     REPROC_CLEANUP operation = operations[i];
     unsigned int timeout = timeouts[i];
 

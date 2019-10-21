@@ -1,8 +1,8 @@
 #include <reproc/reproc.h>
 
-#include "handle.h"
-#include "pipe.h"
-#include "process.h"
+#include <windows/handle.h>
+#include <windows/pipe.h>
+#include <windows/process.h>
 
 #include <assert.h>
 #include <stdlib.h>

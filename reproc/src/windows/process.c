@@ -1,5 +1,6 @@
-#include "process.h"
-#include "handle.h"
+#include <windows/process.h>
+
+#include <windows/handle.h>
 
 #include <assert.h>
 #include <stdbool.h>

@@ -1,8 +1,8 @@
-#include "process.h"
+#include <posix/process.h>
 
-#include "fd.h"
-#include "path.h"
-#include "pipe.h"
+#include <posix/fd.h>
+#include <posix/path.h>
+#include <posix/pipe.h>
 
 #include <reproc/reproc.h>
 
@@ -31,9 +31,9 @@
 
 // https://github.com/neovim/neovim/pull/5243
 #if defined(__APPLE__) && defined(__GNUC__) && !defined(__clang__)
-  #define SIGADDSET(set, signum) sigaddset((int *) (set), (signum))
+#define SIGADDSET(set, signum) sigaddset((int *) (set), (signum))
 #else
-  #define SIGADDSET(set, signum) sigaddset((set), (signum))
+#define SIGADDSET(set, signum) sigaddset((set), (signum))
 #endif
 
 REPROC_ERROR

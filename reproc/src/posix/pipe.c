@@ -1,4 +1,4 @@
-#include "pipe.h"
+#include <posix/pipe.h>
 
 #include <assert.h>
 #include <errno.h>
