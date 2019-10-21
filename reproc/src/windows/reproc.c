@@ -35,21 +35,32 @@ REPROC_ERROR reproc_start(reproc_t *process,
   // `REPROC_SUCCESS`.
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
+  const struct pipe_options child_blocking = { .inherit = true,
+                                               .overlapped = false };
+  const struct pipe_options parent_blocking = { .inherit = false,
+                                                .overlapped = false };
+  const struct pipe_options parent_overlapped = { .inherit = false,
+                                                  .overlapped = true };
+
   // While we already make sure the child process only inherits the child pipe
   // handles using `STARTUPINFOEXW` (see `process.c`) we still disable
   // inheritance of the parent pipe handles to lower the chance of child
   // processes not created by reproc unintentionally inheriting these handles.
-  error = pipe_init(&child_stdin, true, &process->in, false);
+
+  error = pipe_init(&child_stdin, child_blocking, &process->in,
+                    parent_blocking);
   if (error) {
     goto cleanup;
   }
 
-  error = pipe_init(&process->out, false, &child_stdout, true);
+  error = pipe_init(&process->out, parent_overlapped, &child_stdout,
+                    child_blocking);
   if (error) {
     goto cleanup;
   }
 
-  error = pipe_init(&process->err, false, &child_stderr, true);
+  error = pipe_init(&process->err, parent_overlapped, &child_stderr,
+                    child_blocking);
   if (error) {
     goto cleanup;
   }
@@ -132,27 +143,32 @@ cleanup:
 }
 
 REPROC_ERROR reproc_read(reproc_t *process,
-                         REPROC_STREAM stream,
+                         REPROC_STREAM *stream,
                          uint8_t *buffer,
                          unsigned int size,
                          unsigned int *bytes_read)
 {
   assert(process);
-  assert(stream != REPROC_STREAM_IN);
   assert(buffer);
   assert(bytes_read);
 
-  switch (stream) {
-    case REPROC_STREAM_IN:
-      break;
-    case REPROC_STREAM_OUT:
-      return pipe_read(process->out, buffer, size, bytes_read);
-    case REPROC_STREAM_ERR:
-      return pipe_read(process->err, buffer, size, bytes_read);
+  HANDLE ready = NULL;
+
+  REPROC_ERROR error = pipe_wait(&ready, process->out, process->err);
+  if (error) {
+    return error;
   }
 
-  assert(false);
-  return REPROC_ERROR_SYSTEM;
+  error = pipe_read(ready, buffer, size, bytes_read);
+  if (error) {
+    return error;
+  }
+
+  if (stream) {
+    *stream = ready == process->out ? REPROC_STREAM_OUT : REPROC_STREAM_ERR;
+  }
+
+  return REPROC_SUCCESS;
 }
 
 REPROC_ERROR reproc_write(reproc_t *process,

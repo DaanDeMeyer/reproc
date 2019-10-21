@@ -3,24 +3,13 @@
 #include <assert.h>
 #include <windows.h>
 
-REPROC_ERROR handle_disable_inherit(HANDLE pipe)
-{
-  assert(pipe);
-
-  if (!SetHandleInformation(pipe, HANDLE_FLAG_INHERIT, 0)) {
-    return REPROC_ERROR_SYSTEM;
-  }
-
-  return REPROC_SUCCESS;
-}
-
 void handle_close(HANDLE *handle)
 {
   assert(handle);
 
   // Do nothing if `handle` is `NULL` so callers don't have to check if `handle`
   // has already been closed.
-  if (!*handle) {
+  if (*handle == NULL || *handle == INVALID_HANDLE_VALUE) {
     return;
   }
 
