@@ -18,9 +18,9 @@
 #endif
 
 #if defined(REPROC_MULTITHREADED)
-#define SIGMASK_SAFE pthread_sigmask
+#define SIGMASK pthread_sigmask
 #else
-#define SIGMASK_SAFE sigprocmask
+#define SIGMASK sigprocmask
 #endif
 
 #if defined(__APPLE__)
@@ -320,7 +320,7 @@ wait_timeout(pid_t pid, unsigned int timeout, unsigned int *exit_status)
   // returns but exits before we call `sigtimedwait`. By blocking the signal, it
   // stays pending when we receive the signal and since `sigtimedwait` watches
   // for pending signals the race condition is solved.
-  if (SIGMASK_SAFE(SIG_BLOCK, &chld_mask, &old_mask) == -1) {
+  if (SIGMASK(SIG_BLOCK, &chld_mask, &old_mask) == -1) {
     return REPROC_ERROR_SYSTEM;
   }
 
@@ -405,7 +405,7 @@ cleanup:
   close(queue);
 #endif
 
-  if (SIGMASK_SAFE(SIG_SETMASK, &old_mask, NULL) == -1) {
+  if (SIGMASK(SIG_SETMASK, &old_mask, NULL) == -1) {
     return REPROC_ERROR_SYSTEM;
   }
 
