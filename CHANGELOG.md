@@ -6,18 +6,6 @@
 
 - Only define `_GNU_SOURCE` on Linux.
 
-### reproc
-
-- Rename `reproc_system_error` to `reproc_error_system`.
-- Rename `reproc_strerror` to `reproc_error_string`.
-
-  The new names are more consistent with the rest of reproc's naming style. For
-  example, each sink function is prefixed with `reproc_sink` so it makes sense
-  to prefix each error function with `reproc_error`. Furthermore, the enum value
-  indicating a system error is named `REPROC_ERROR_SYSTEM` so it's more
-  consistent to have a lowercase function of the same name to retrieve the
-  actual system error than a function named `reproc_system_error`.
-
 - Always try to read from both stdout and stderr in `reproc_read` to avoid
   deadlocks and indicate which stream `reproc_read` actually read from.
 
@@ -42,14 +30,29 @@
   If both streams have been closed by the child process, `reproc_read` returns
   `REPROC_STREAM_CLOSED`.
 
-- Because of the changes to `reproc_read`, `reproc_parse` and `reproc_drain` now
+  Because of the changes to `reproc_read`, `reproc_parse` and `reproc_drain` now
   read from both stdout and stderr and indicate the stream that was read from to
   the given sink/parse function.
 
-### reproc++
-
-- The same changes applied to `reproc_read`, `reproc_parse` and `reproc_drain`
+  The same changes applied to `reproc_read`, `reproc_parse` and `reproc_drain`
   were applied to `process::read`, `process::parse` and `process::drain`.
+
+### reproc
+
+- `reproc_sink_string` now reads the output of both stdout and stderr into a
+  single contiguous null-terminated string.
+
+- Rename `reproc_system_error` to `reproc_error_system`.
+- Rename `reproc_strerror` to `reproc_error_string`.
+
+  The new names are more consistent with the rest of reproc's naming style. For
+  example, each sink function is prefixed with `reproc_sink` so it makes sense
+  to prefix each error function with `reproc_error`. Furthermore, the enum value
+  indicating a system error is named `REPROC_ERROR_SYSTEM` so it's more
+  consistent to have a lowercase function of the same name to retrieve the
+  actual system error than a function named `reproc_system_error`.
+
+### reproc++
 
 - The `string` and `ostream` sinks now take separate `out` and `err` arguments
   in their constructors that receive output from the stdout and stderr streams
