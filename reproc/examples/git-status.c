@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 4096
 
 static int fail(REPROC_ERROR error)
 {

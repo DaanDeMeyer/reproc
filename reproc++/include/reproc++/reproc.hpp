@@ -225,7 +225,7 @@ private:
   cleanup c3_;
   milliseconds t3_;
 
-  static constexpr unsigned int BUFFER_SIZE = 1024;
+  static constexpr unsigned int BUFFER_SIZE = 4096;
 
   class REPROCXX_EXPORT arguments {
     char **data_;

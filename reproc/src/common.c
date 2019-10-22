@@ -58,7 +58,7 @@ REPROC_ERROR reproc_stop(reproc_t *process,
   return error;
 }
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 4096
 
 REPROC_ERROR reproc_parse(reproc_t *process,
                           bool (*parser)(REPROC_STREAM stream,
