@@ -37,8 +37,6 @@ REPROC_ERROR reproc_start(reproc_t *process,
 
   const struct pipe_options child_blocking = { .inherit = true,
                                                .overlapped = false };
-  const struct pipe_options parent_blocking = { .inherit = false,
-                                                .overlapped = false };
   const struct pipe_options parent_overlapped = { .inherit = false,
                                                   .overlapped = true };
 
@@ -48,7 +46,7 @@ REPROC_ERROR reproc_start(reproc_t *process,
   // processes not created by reproc unintentionally inheriting these handles.
 
   error = pipe_init(&child_stdin, child_blocking, &process->in,
-                    parent_blocking);
+                    parent_overlapped);
   if (error) {
     goto cleanup;
   }

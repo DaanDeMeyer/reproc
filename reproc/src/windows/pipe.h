@@ -35,10 +35,8 @@ REPROC_ERROR pipe_read(HANDLE pipe,
 // Writes up to `size` bytes from `buffer` to the pipe indicated by `handle`
 // and stores the amount of bytes written in `bytes_written`.
 //
-// For pipes, the `write` system call on Windows platforms will block until the
-// requested amount of bytes have been written to the pipe so this function
-// should only rarely succeed without writing the full amount of bytes
-// requested.
+// This function only works on pipe handles opened with the
+// `FILE_FLAG_OVERLAPPED` flag.
 REPROC_ERROR pipe_write(HANDLE pipe,
                         const uint8_t *buffer,
                         unsigned int size,

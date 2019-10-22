@@ -135,21 +135,43 @@ REPROC_ERROR pipe_write(HANDLE pipe,
   assert(buffer);
   assert(bytes_written);
 
-  // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
-  if (!WriteFile(pipe, buffer, size, (LPDWORD) bytes_written, NULL)) {
+  REPROC_ERROR error = REPROC_ERROR_SYSTEM;
+
+  OVERLAPPED overlapped = { 0 };
+  overlapped.hEvent = CreateEvent(&DO_NOT_INHERIT, true, false, NULL);
+  if (overlapped.hEvent == NULL) {
+    goto cleanup;
+  }
+
+  BOOL rv = WriteFile(pipe, buffer, size, NULL, &overlapped);
+  if (rv == 0) {
     switch (GetLastError()) {
       case ERROR_BROKEN_PIPE:
-        return REPROC_ERROR_STREAM_CLOSED;
+        error = REPROC_ERROR_STREAM_CLOSED;
+        goto cleanup;
+      case ERROR_IO_PENDING:
+        break;
       default:
-        return REPROC_ERROR_SYSTEM;
+        goto cleanup;
     }
+  }
+
+  // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
+  rv = GetOverlappedResult(pipe, &overlapped, (LPDWORD) bytes_written, TRUE);
+  if (rv == 0) {
+    goto cleanup;
   }
 
   if (*bytes_written != size) {
     return REPROC_ERROR_PARTIAL_WRITE;
   }
 
-  return REPROC_SUCCESS;
+  error = REPROC_SUCCESS;
+
+cleanup:
+  handle_close(&overlapped.hEvent);
+
+  return error;
 }
 
 REPROC_ERROR pipe_wait(HANDLE *ready, HANDLE out, HANDLE err)
