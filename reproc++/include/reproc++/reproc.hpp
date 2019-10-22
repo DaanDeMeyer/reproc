@@ -186,8 +186,7 @@ public:
 
   /*! `reproc_write` */
   REPROCXX_EXPORT std::error_code write(const uint8_t *buffer,
-                                        unsigned int size,
-                                        unsigned int *bytes_written) noexcept;
+                                        unsigned int size) noexcept;
 
   /*! `reproc_close` */
   REPROCXX_EXPORT void close(stream stream) noexcept;

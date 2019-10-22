@@ -37,6 +37,16 @@
   The same changes applied to `reproc_read`, `reproc_parse` and `reproc_drain`
   were applied to `process::read`, `process::parse` and `process::drain`.
 
+- Remove `REPROC_ERROR_PARTIAL_WRITE` error and the `bytes_written` parameter of
+  `reproc_write`.
+
+  `reproc_write` now writes to stdin until `size` bytes have been written to the
+  standard input of the child process. Partial writes do not have to be handled
+  by users anymore and are instead handled by reproc internally.
+
+  The same changes applied to `reproc_write` and `REPROC_ERROR` were applied to
+  `process::write` and `reproc::error` in reproc++.
+
 ### reproc
 
 - `reproc_sink_string` now reads the output of both stdout and stderr into a

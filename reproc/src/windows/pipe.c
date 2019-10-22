@@ -162,10 +162,6 @@ REPROC_ERROR pipe_write(HANDLE pipe,
     goto cleanup;
   }
 
-  if (*bytes_written != size) {
-    return REPROC_ERROR_PARTIAL_WRITE;
-  }
-
   error = REPROC_SUCCESS;
 
 cleanup:

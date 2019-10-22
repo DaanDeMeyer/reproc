@@ -152,13 +152,8 @@ REPROC_EXPORT REPROC_ERROR reproc_drain(reproc_t *process,
                                         void *context);
 
 /*!
-Writes up to `size` bytes from `buffer` to the standard input (stdin) of the
-child process and stores the amount of bytes written in `bytes_written`.
-
-For pipes, the `write` system call on both Windows and POSIX platforms will
-block until the requested amount of bytes have been written to the pipe so this
-function should only rarely succeed without writing the full amount of bytes
-requested.
+Writes `size` bytes from `buffer` to the standard input (stdin) of the child
+process.
 
 (POSIX) By default, writing to a closed stdin pipe terminates the parent process
 with the `SIGPIPE` signal. `reproc_write` will only return
@@ -166,13 +161,11 @@ with the `SIGPIPE` signal. `reproc_write` will only return
 
 Possible errors:
 - `REPROC_ERROR_STREAM_CLOSED`
-- `REPROC_ERROR_PARTIAL_WRITE`
 - `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_write(reproc_t *process,
                                         const uint8_t *buffer,
-                                        unsigned int size,
-                                        unsigned int *bytes_written);
+                                        unsigned int size);
 
 /*!
 Closes the stream endpoint of the parent process indicated by `stream`.

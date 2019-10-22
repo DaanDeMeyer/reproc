@@ -26,8 +26,6 @@ typedef enum {
   /*! The child process closed one of its streams (and in the case of
   stdout/stderr all of the data from that stream has been read). */
   REPROC_ERROR_STREAM_CLOSED,
-  /*! Only part of the buffer was written to the stdin of the child process. */
-  REPROC_ERROR_PARTIAL_WRITE,
 
   // A system error occurred. This is usually a fatal error.
   REPROC_ERROR_SYSTEM

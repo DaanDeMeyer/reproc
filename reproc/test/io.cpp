@@ -22,10 +22,8 @@ io(const char *mode, const std::string &input, const std::string &expected)
 
   unsigned int size = static_cast<unsigned int>(input.size());
 
-  unsigned int bytes_written = 0;
   error = reproc_write(&process,
-                       reinterpret_cast<const uint8_t *>(input.data()), size,
-                       &bytes_written);
+                       reinterpret_cast<const uint8_t *>(input.data()), size);
   REQUIRE(!error);
 
   reproc_close(&process, REPROC_STREAM_IN);

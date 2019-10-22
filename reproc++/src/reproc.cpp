@@ -11,7 +11,6 @@ static std::error_code error_to_error_code(REPROC_ERROR error)
     case REPROC_SUCCESS:
     case REPROC_ERROR_WAIT_TIMEOUT:
     case REPROC_ERROR_STREAM_CLOSED:
-    case REPROC_ERROR_PARTIAL_WRITE:
       return static_cast<reproc::error>(error);
     case REPROC_ERROR_SYSTEM:
       // Convert operating system errors back to platform-specific error codes
@@ -85,11 +84,9 @@ std::error_code process::read(stream *stream,
 }
 
 std::error_code process::write(const uint8_t *buffer,
-                               unsigned int size,
-                               unsigned int *bytes_written) noexcept
+                               unsigned int size) noexcept
 {
-  REPROC_ERROR error = reproc_write(process_.get(), buffer, size,
-                                    bytes_written);
+  REPROC_ERROR error = reproc_write(process_.get(), buffer, size);
   return error_to_error_code(error);
 }
 

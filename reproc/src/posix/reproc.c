@@ -109,15 +109,26 @@ REPROC_ERROR reproc_read(reproc_t *process,
 
 REPROC_ERROR reproc_write(reproc_t *process,
                           const uint8_t *buffer,
-                          unsigned int size,
-                          unsigned int *bytes_written)
+                          unsigned int size)
 {
   assert(process);
   assert(process->in != 0);
   assert(buffer);
-  assert(bytes_written);
 
-  return pipe_write(process->in, buffer, size, bytes_written);
+  do {
+    unsigned int bytes_written = 0;
+
+    REPROC_ERROR error = pipe_write(process->in, buffer, size, &bytes_written);
+    if (error) {
+      return error;
+    }
+
+    assert(bytes_written <= size);
+    buffer += bytes_written;
+    size -= bytes_written;
+  } while (size != 0);
+
+  return REPROC_SUCCESS;
 }
 
 void reproc_close(reproc_t *process, REPROC_STREAM stream)

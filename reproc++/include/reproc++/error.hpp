@@ -15,9 +15,7 @@ enum class error {
   /*! `REPROC_ERROR_WAIT_TIMEOUT` */
   wait_timeout,
   /*! `REPROC_ERROR_STREAM_CLOSED` */
-  stream_closed,
-  /*! `REPROC_ERROR_PARTIAL_WRITE` */
-  partial_write
+  stream_closed
 };
 
 REPROCXX_EXPORT const std::error_category &error_category() noexcept;

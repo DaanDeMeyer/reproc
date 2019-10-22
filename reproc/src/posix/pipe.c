@@ -142,10 +142,6 @@ REPROC_ERROR pipe_write(int pipe,
   // which is an unsigned int.
   *bytes_written = (unsigned int) error;
 
-  if (*bytes_written != size) {
-    return REPROC_ERROR_PARTIAL_WRITE;
-  }
-
   return REPROC_SUCCESS;
 }
 

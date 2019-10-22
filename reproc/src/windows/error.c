@@ -19,8 +19,6 @@ const char *reproc_error_string(REPROC_ERROR error)
       return "wait timeout";
     case REPROC_ERROR_STREAM_CLOSED:
       return "stream closed";
-    case REPROC_ERROR_PARTIAL_WRITE:
-      return "partial write";
     case REPROC_ERROR_SYSTEM: {
       static wchar_t wstring[ERROR_STRING_MAX_SIZE];
 
