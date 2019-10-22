@@ -130,10 +130,6 @@ jobs:
             echo "::set-env name=CXX::clang++-${{ matrix.version }}"
           fi
 
-          # Allows us to use `> NUL` as a cross platform way to discard output
-          # from examples.
-          sudo ln -s /dev/null NUL
-
       - name: Install (macOS)
         if: runner.os == 'macOS'
         run: |
@@ -149,8 +145,6 @@ jobs:
             echo "::set-env name=CC::clang"
             echo "::set-env name=CXX::clang++"
           fi
-
-          sudo ln -s /dev/null NUL
 
       - name: Install (Windows)
         if: runner.os == 'Windows'
@@ -211,15 +205,13 @@ jobs:
       # Aside from running the tests we also make sure the examples don't
       # crash or return a non-zero exit code.
 
-      # When surrounding an executable path with quotes, we can use forward
-      # slashes in cmd.exe.
-
       - name: Test
+        shell: bash
         run: |
-          "build/test"
+          build/test
 
-          "build/reproc/examples/drain" > NUL
-          "build/reproc/examples/git-status" > NUL
-          "build/reproc++/examples/background" cmake --help > NUL
-          "build/reproc++/examples/cmake-help" > NUL
-          "build/reproc++/examples/forward" cmake --help > NUL
+          build/reproc/examples/drain > /dev/null
+          build/reproc/examples/git-status > /dev/null
+          build/reproc++/examples/background cmake --help > /dev/null
+          build/reproc++/examples/cmake-help > /dev/null
+          build/reproc++/examples/forward cmake --help > /dev/null
