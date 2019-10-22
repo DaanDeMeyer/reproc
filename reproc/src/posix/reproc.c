@@ -33,7 +33,7 @@ REPROC_ERROR reproc_start(reproc_t *process,
   // Create the pipes used to redirect the child process' stdin/stdout/stderr to
   // the parent process.
 
-  error = pipe_init(&child_stdin, blocking, &process->in, blocking);
+  error = pipe_init(&child_stdin, blocking, &process->in, nonblocking);
   if (error) {
     goto cleanup;
   }

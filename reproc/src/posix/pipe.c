@@ -117,6 +117,14 @@ REPROC_ERROR pipe_write(int pipe,
 
   *bytes_written = 0;
 
+  struct pollfd pollfd = { .fd = pipe, .events = POLLOUT };
+  // -1 tells `poll` we want to wait indefinitely for events.
+  if (poll(&pollfd, 1, -1) == -1) {
+    return REPROC_ERROR_SYSTEM;
+  }
+
+  assert(pollfd.revents & POLLOUT || pollfd.revents & POLLERR);
+
   ssize_t error = write(pipe, buffer, size);
   if (error == -1) {
     switch (errno) {
@@ -149,7 +157,6 @@ REPROC_ERROR pipe_wait(int *ready, int out, int err)
 
   struct pollfd fds[2] = { { .fd = err, .events = POLLIN },
                            { .fd = out, .events = POLLIN } };
-  // -1 tells `poll` we want to wait indefinitely for events.
   if (poll(&fds[0], 2, -1) == -1) {
     return REPROC_ERROR_SYSTEM;
   }
