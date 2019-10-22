@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <windows.h>
 
-#define PIPE_BUFFER_SIZE 4096
+#define PIPE_BUFFER_SIZE 65536
 #define PIPE_SINGLE_INSTANCE 1
 #define PIPE_NO_TIMEOUT 0
 
