@@ -9,7 +9,9 @@ follows:
 
 ```c
 REPROC_ERROR error = reproc_read(...);
-if (error) { return error; } // Only executes if reproc_read returns an error.
+if (error) { // Only passes if `reproc_read` returns an error.
+  return error;
+}
 ```
 */
 // When editing make sure to change the corresponding enum in error.hpp as well.
