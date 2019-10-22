@@ -242,6 +242,7 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
         ${CMAKE_CURRENT_SOURCE_DIR}/include/${TARGET}
         ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}
       DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+      COMPONENT ${TARGET}-development
     )
 
     # Library
@@ -249,11 +250,26 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
     install(
       TARGETS ${TARGET}
       EXPORT ${TARGET}-targets
-      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+      RUNTIME
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        COMPONENT ${TARGET}-runtime
+      LIBRARY
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT ${TARGET}-runtime
+        NAMELINK_COMPONENT ${TARGET}-development
+      ARCHIVE
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT ${TARGET}-development
+      INCLUDES
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
+
+    if(NOT APPLE)
+      set_property(
+        TARGET ${TARGET}
+        PROPERTY INSTALL_RPATH $ORIGIN
+      )
+    endif()
 
     # CMake config
 
@@ -273,11 +289,13 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}-config-version.cmake
       DESTINATION ${REPROC_INSTALL_CMAKECONFIGDIR}/${TARGET}
+      COMPONENT ${TARGET}-development
     )
 
     install(
       EXPORT ${TARGET}-targets
       DESTINATION ${REPROC_INSTALL_CMAKECONFIGDIR}/${TARGET}
+      COMPONENT ${TARGET}-development
     )
 
     # pkg-config
@@ -292,6 +310,7 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
       install(
         FILES ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.pc
         DESTINATION ${REPROC_INSTALL_PKGCONFIGDIR}
+        COMPONENT ${TARGET}-development
       )
     endif()
   endif()
