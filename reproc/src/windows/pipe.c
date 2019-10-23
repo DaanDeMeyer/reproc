@@ -228,7 +228,13 @@ REPROC_ERROR pipe_wait(HANDLE *ready, HANDLE out, HANDLE err)
 
   error = REPROC_SUCCESS;
 
-cleanup:
+cleanup:;
+  // Because we continue cleaning up even when an error occurs during cleanup,
+  // we have to save the first error that occurs because `GetLastError()` might
+  // get overridden with another error during further cleanup. When we're done,
+  // we reset `GetLastError()` to the first error that occurred that we couldn't
+  // handle.
+  DWORD first_system_error = 0;
 
   for (DWORD i = 0; i < ARRAY_SIZE(handles); i++) {
 
@@ -239,6 +245,10 @@ cleanup:
     if (rv == 0) {
       if (GetLastError() != ERROR_NOT_FOUND) {
         error = REPROC_ERROR_SYSTEM;
+
+        if (!first_system_error) {
+          first_system_error = GetLastError();
+        }
       }
 
       continue;
@@ -250,13 +260,22 @@ cleanup:
     DWORD bytes_transferred = 0;
     rv = (DWORD) GetOverlappedResult(handles[i], &overlapped[i],
                                      &bytes_transferred, TRUE);
-    if (rv == 0 && GetLastError() != ERROR_OPERATION_ABORTED) {
+    if (rv == 0 && GetLastError() != ERROR_OPERATION_ABORTED &&
+        GetLastError() != ERROR_BROKEN_PIPE) {
       error = REPROC_ERROR_SYSTEM;
+
+      if (!first_system_error) {
+        first_system_error = GetLastError();
+      }
     }
   }
 
   for (DWORD i = 0; i < ARRAY_SIZE(handles); i++) {
     handle_close(&overlapped[i].hEvent);
+  }
+
+  if (first_system_error) {
+    SetLastError(first_system_error);
   }
 
   return error;
