@@ -12,6 +12,7 @@ TEST_CASE("argv")
   reproc_t process;
 
   REPROC_ERROR error = REPROC_SUCCESS;
+  INFO(reproc_error_system());
   INFO(reproc_error_string(error));
 
   std::array<const char *, 4> argv = { RESOURCE_DIRECTORY "/argv",

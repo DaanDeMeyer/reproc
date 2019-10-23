@@ -12,6 +12,7 @@ io(const char *mode, const std::string &input, const std::string &expected)
   reproc_t process;
 
   REPROC_ERROR error = REPROC_SUCCESS;
+  INFO(reproc_error_system());
   INFO(reproc_error_string(error));
 
   std::array<const char *, 3> argv = { RESOURCE_DIRECTORY "/io", mode,

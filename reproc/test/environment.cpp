@@ -12,6 +12,7 @@ TEST_CASE("environment")
   reproc_t process;
 
   REPROC_ERROR error = REPROC_SUCCESS;
+  INFO(reproc_error_system());
   INFO(reproc_error_string(error));
 
   std::array<const char *, 2> argv = { RESOURCE_DIRECTORY "/environment",

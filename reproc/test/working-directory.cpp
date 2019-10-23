@@ -9,6 +9,7 @@ TEST_CASE("working-directory")
   reproc_t process;
 
   REPROC_ERROR error = REPROC_SUCCESS;
+  INFO(reproc_error_system());
   INFO(reproc_error_string(error));
 
   const char *working_directory = RESOURCE_DIRECTORY;
