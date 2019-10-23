@@ -154,9 +154,14 @@ jobs:
           scoop install ninja llvm --global
 
           if ("${{ matrix.compiler }}" -eq "gcc") {
-            scoop install gcc --global
             echo "::set-env name=CC::gcc"
             echo "::set-env name=CXX::g++"
+            # Git Bash adds its own version of libstdc++-6.dll to the PATH which
+            # differs from the version which MinGW links against. Because this
+            # version is found before MinGW's version, the tests and examples
+            # fail to execute. We fix the issue by linking statically against
+            # libstdc++.
+            echo "::set-env name=CXXFLAGS::-static-libstdc++"
           } elseif ("${{ matrix.compiler }}" -eq "clang") {
             echo "::set-env name=CC::clang"
             echo "::set-env name=CXX::clang++"
