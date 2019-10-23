@@ -86,7 +86,8 @@ If `environment` is `NULL`, the child process inherits the environment of the
 current process.
 
 `working_directory` specifies the working directory for the child process. If it
-is `NULL`, the child process runs in the same directory as the parent process.
+is `NULL`, the child process runs in the working directory of the parent
+process.
 
 Possible errors:
 - `REPROC_ERROR_SYSTEM`
