@@ -208,7 +208,8 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
   # or static and we can't determine whether a library is shared or static from
   # the export header without requiring the user to add a #define which we want
   # to avoid.
-  generate_export_header(${TARGET}
+  generate_export_header(
+    ${TARGET}
     BASE_NAME ${EXPORT_MACRO_UPPER}
     EXPORT_FILE_NAME
       ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}/export.${HEADER_EXT}

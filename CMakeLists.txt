@@ -1,7 +1,8 @@
 # 3.13 is needed for `target_link_options`.
 cmake_minimum_required(VERSION 3.13...3.15)
 
-project(reproc
+project(
+  reproc
   VERSION 10.0.0
   DESCRIPTION "Cross-platform C99/C++11 process library"
   HOMEPAGE_URL "https://github.com/DaanDeMeyer/reproc"
