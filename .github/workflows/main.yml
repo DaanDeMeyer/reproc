@@ -177,7 +177,7 @@ jobs:
           # Make all PATH additions made by scoop and ourselves global.
           echo "::set-env name=PATH::$env:PATH"
 
-          & .github\workflows\vsenv.bat -arch=x64 -host_arch=x64
+          & .github\workflows\vsenv.ps1 -arch x64 -hostArch x64
 
       # We build reproc as a shared library to verify all the necessary symbols
       # are exported.
