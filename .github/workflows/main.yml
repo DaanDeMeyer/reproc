@@ -148,7 +148,6 @@ jobs:
 
       - name: Install (Windows)
         if: runner.os == 'Windows'
-        shell: powershell
         run: |
           Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
           scoop install ninja llvm --global
