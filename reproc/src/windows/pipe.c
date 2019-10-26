@@ -195,7 +195,8 @@ REPROC_ERROR pipe_wait(HANDLE *ready, HANDLE out, HANDLE err)
       goto cleanup;
     }
 
-    rv = (DWORD) ReadFile(handles[i], NULL, 0, NULL, &overlapped[i]);
+    rv = (DWORD) ReadFile(handles[i], (uint8_t[]){ 0 }, 0, NULL,
+                          &overlapped[i]);
     if (rv == 0 && GetLastError() != ERROR_IO_PENDING &&
         GetLastError() != ERROR_BROKEN_PIPE) {
       goto cleanup;
