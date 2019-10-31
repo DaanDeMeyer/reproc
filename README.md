@@ -43,13 +43,15 @@ either make an issue or ask questions directly in the reproc
 
 ## Installation
 
+**Note: Building reproc requires CMake 3.13 or higher.**
+
 There are multiple ways to get reproc into your project. One way is to build
 reproc as part of your project using CMake. To do this, we first have to get the
 reproc source code into the project. This can be done using any of the following
 options:
 
-- If you're using CMake 3.11 or later you can use the CMake `FetchContent` API
-  to download reproc when running CMake. See
+- When using CMake 3.11 or later, you can use the CMake `FetchContent` API to
+  download reproc when running CMake. See
   <https://cliutils.gitlab.io/modern-cmake/chapters/projects/fetch.html> for an
   example.
 - Another option is to include reproc's repository as a git submodule.
@@ -57,8 +59,7 @@ options:
   provides more information.
 - A very simple solution is to just include reproc's source code in your
   repository. You can download a zip of the source code without the git history
-  and add it to your repository in a separate directory (reproc itself uses the
-  `external` directory).
+  and add it to your repository in a separate directory.
 
 After including reproc's source code in your project, it can be built from the
 root CMakeLists.txt file as follows:
@@ -67,35 +68,49 @@ root CMakeLists.txt file as follows:
 add_subdirectory(<path-to-reproc>) # For example: add_subdirectory(external/reproc)
 ```
 
-Options can be specified before calling `add_subdirectory` (omit `FORCE` if you
-don't want to override an existing value in the cache):
+CMake options can be specified before calling `add_subdirectory`:
 
 ```cmake
-set(REPROC++ ON CACHE BOOL "" FORCE)
+option(REPROC++ ON)
 add_subdirectory(<path-to-reproc>)
 ```
 
-You can also depend on a system installed version of reproc. You can either
-build and install reproc to your system yourself or install reproc via a package
-manager. reproc is available in the following package repositories:
+**Note: If the option has already been cached in a previous CMake run, you'll
+have to clear CMake's cache to apply the new default value.**
+
+For more information on configuring reproc's build, see
+[CMake options](#cmake-options).
+
+You can also depend on an installed version of reproc. You can either build and
+install reproc yourself or install reproc via a package manager. reproc is
+available in the following package repositories:
 
 - Arch User Repository (<https://aur.archlinux.org/packages/reproc>)
 - vcpkg (https://github.com/microsoft/vcpkg/tree/master/ports/reproc)
 
-After installing reproc to the system your build system will have to find it.
-reproc provides both CMake config files and pkg-config files to simplify finding
-a system installed version of reproc using CMake and pkg-config respectively.
-Note that reproc and reproc++ are separate libraries and as a result have
-separate config files as well. Make sure to search for the one you need.
+If using a package manager is not an option, you can build and install reproc
+from source:
 
-To find a system installation of reproc using CMake:
+```sh
+cmake -B build -S .
+cmake --build build
+cmake --install build
+```
+
+After installing reproc your build system will have to find it. reproc provides
+both CMake config files and pkg-config files to simplify finding a reproc
+installation using CMake and pkg-config respectively. Note that reproc and
+reproc++ are separate libraries and as a result have separate config files as
+well. Make sure to search for the one you want to use.
+
+To find an installed version of reproc using CMake:
 
 ```cmake
 find_package(reproc) # Find reproc.
 find_package(reproc++) # Find reproc++.
 ```
 
-After building reproc as part of your project or finding a system installed
+After building reproc as part of your project or finding a installed version of
 reproc, you can link against it from within your CMakeLists.txt file as follows:
 
 ```cmake
@@ -104,8 +119,6 @@ target_link_libraries(myapp reproc++) # Link against reproc++.
 ```
 
 ## Dependencies
-
-Building reproc requires CMake 3.13 or higher.
 
 By default, reproc has a single dependency on pthreads on POSIX systems.
 However, the dependency is included in both reproc's CMake config and pkg-config
@@ -120,18 +133,19 @@ reproc's build can be configured using the following CMake options:
 - `REPROC++`: Build reproc++ (default: `OFF`).
 - `REPROC_TEST`: Build tests (default: `OFF`).
 
-  Run the tests by building the `test` target or running the `tests` executable
-  from within the build directory.
+  Run the tests by running the `test` binary which can be found in the build
+  directory after building reproc.
 
 - `REPROC_EXAMPLES`: Build examples (default: `OFF`).
 
-  The built executables will be located in the examples folder of each project
-  subdirectory in the build directory.
+  The resulting binaries will be located in the examples folder of each project
+  subdirectory in the build directory after building reproc.
 
 ### Advanced
 
 - `REPROC_INSTALL`: Generate installation rules (default: `ON` unless
-  `BUILD_SHARED_LIBS` is false and reproc is built via `add_subdirectory`).
+  `BUILD_SHARED_LIBS` is disabled and reproc is built via CMake's
+  `add_subdirectory` command).
 - `REPROC_INSTALL_CMAKECONFIGDIR`: CMake config files installation directory
   (default: `${CMAKE_INSTALL_LIBDIR}/cmake`).
 - `REPROC_INSTALL_PKGCONFIG`: Install pkg-config files (default: `ON`)
@@ -143,18 +157,19 @@ POSIX only:
 - `REPROC_MULTITHREADED`: Use `pthread_sigmask` instead of `sigprocmask`
   (default: `ON`).
 
-  `sigprocmask`'s behaviour is only defined for single-threaded programs. When
+  `sigprocmask`'s behaviour is only defined for singlethreaded programs. When
   using multiple threads, `pthread_sigmask` should be used instead. Because we
-  cannot determine whether reproc will be used in a multi-threaded program when
+  cannot determine whether reproc will be used in a multithreaded program when
   building reproc, `REPROC_MULTITHREADED` is enabled by default to guarantee
   defined behaviour. Users that know for certain their program will only use a
-  single thread can opt to disable `REPROC_MULTITHREADED`.
+  single thread can opt to disable `REPROC_MULTITHREADED` when building reproc.
 
-  When using reproc via CMake `add_subdirectory` and `REPROC_MULTITHREADED` is
-  enabled, reproc will only call `find_package(Threads)` if the user has not
-  called `find_package(Threads)` himself. The `THREADS_PREFER_PTHREAD_FLAG`
-  variable influences the behaviour of `find_package(Threads)`. if it is not
-  defined, reproc's build enables it before calling `find_package(Threads)`.
+  When using reproc via CMake's `add_subdirectory` command and
+  `REPROC_MULTITHREADED` is enabled, reproc will only call
+  `find_package(Threads)` if the user has not called `find_package(Threads)`
+  already. The `THREADS_PREFER_PTHREAD_FLAG` variable influences the behaviour
+  of `find_package(Threads)`. if it is not defined already, reproc's build
+  enables it before calling `find_package(Threads)`.
 
 ### Developer
 
@@ -171,15 +186,16 @@ can be found in the examples subdirectory of [reproc](reproc/examples) and
 
 ## Error handling
 
-Most functions in reproc's API return `REPROC_ERROR`. The `REPROC_ERROR` enum
-represents all possible errors that can occur when calling reproc API functions.
-Not all errors apply to each function so the documentation of each function
-includes a section detailing which errors can occur. System errors are
-represented by `REPROC_ERROR_SYSTEM`. The `reproc_error_system` function can be
-used to retrieve the actual system error. To get a string representation of the
-error, pass the error code to `reproc_error_string`. If the error code passed to
-`reproc_error_string` is `REPROC_ERROR_SYSTEM`, `reproc_error_string` returns a
-string representation of the error returned by `reproc_error_system`.
+Most functions in reproc's API return a value from the `REPROC_ERROR` enum.
+`REPROC_ERROR` represents all possible errors that can occur when calling reproc
+API functions. Not all errors apply to each function so the documentation of
+each function includes a section detailing which errors can occur when calling
+that function. System errors are represented by `REPROC_ERROR_SYSTEM`. The
+`reproc_error_system` function can be used to retrieve the actual system error.
+To get a string representation of an error, pass the error code to
+`reproc_error_string`. If the error code passed to `reproc_error_string` is
+`REPROC_ERROR_SYSTEM`, `reproc_error_string` returns a string representation of
+the error returned by `reproc_error_system`.
 
 reproc++'s API integrates with the C++ standard library error codes mechanism
 (`std::error_code` and `std::error_condition`). All functions in reproc++'s API
@@ -232,8 +248,8 @@ Different threads can read from or write to different streams at the same time.
 This is a valid approach when you want to write to stdin and read from stdout in
 parallel.
 
-Look at the [background](reproc++/examples/background.cpp) examples to see an
-example of how to work with reproc from multiple threads.
+Look at the [background](reproc++/examples/background.cpp) example for more
+information on how to work with reproc from multiple threads.
 
 ## Gotchas
 
