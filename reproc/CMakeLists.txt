@@ -7,15 +7,7 @@ endif()
 
 target_sources(reproc PRIVATE src/common.c src/sink.c)
 
-if(WIN32)
-  target_sources(reproc PRIVATE
-    src/windows/error.c
-    src/windows/handle.c
-    src/windows/pipe.c
-    src/windows/process.c
-    src/windows/reproc.c
-  )
-elseif(UNIX)
+if(UNIX)
   target_sources(reproc PRIVATE
     src/posix/error.c
     src/posix/fd.c
@@ -23,6 +15,14 @@ elseif(UNIX)
     src/posix/pipe.c
     src/posix/process.c
     src/posix/reproc.c
+  )
+elseif(WIN32)
+  target_sources(reproc PRIVATE
+    src/windows/error.c
+    src/windows/handle.c
+    src/windows/pipe.c
+    src/windows/process.c
+    src/windows/reproc.c
   )
 endif()
 
