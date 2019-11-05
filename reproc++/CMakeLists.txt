@@ -1,6 +1,10 @@
 reproc_add_library(reproc++ CXX 11)
 
-target_link_libraries(reproc++ PRIVATE reproc)
+target_link_libraries(reproc++ PRIVATE
+  reproc
+  $<$<BOOL:${REPROC_MULTITHREADED}>:Threads::Threads>
+)
+
 target_sources(reproc++ PRIVATE
   src/error.cpp
   src/reproc.cpp

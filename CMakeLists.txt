@@ -12,10 +12,7 @@ project(
 option(REPROC++ "Build reproc++.")
 option(REPROC_TEST "Build tests.")
 option(REPROC_EXAMPLES "Build examples.")
-
-if(UNIX)
-  option(REPROC_MULTITHREADED "Use `pthread_sigmask` instead of `sigprocmask`." ON)
-endif()
+option(REPROC_MULTITHREADED "Use `pthread_sigmask` and link against the system's thread library" ON)
 
 # Enable languages before configuring all enabled languages in reproc.cmake.
 if(REPROC++ OR REPROC_TEST)
