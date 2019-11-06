@@ -37,17 +37,13 @@
 #endif
 
 REPROC_ERROR
-process_create(const char *const *argv,
-               struct process_options *options,
-               pid_t *pid)
+process_create(pid_t *pid,
+               const char *const *argv,
+               struct process_options options)
 {
   assert(argv);
   assert(argv[0] != NULL);
   assert(pid);
-
-  assert(options->stdin_fd);
-  assert(options->stdout_fd);
-  assert(options->stderr_fd);
 
   // Predeclare variables so we can use `goto`.
   REPROC_ERROR error = REPROC_SUCCESS;
@@ -75,7 +71,7 @@ process_create(const char *const *argv,
 
     const char *program = argv[0];
 
-    if (options->working_directory) {
+    if (options.working_directory) {
       // We prepend the parent working directory to `program` if it is relative
       // so that it will always be searched for relative to the parent working
       // directory even after executing `chdir`.
@@ -89,24 +85,31 @@ process_create(const char *const *argv,
         }
       }
 
-      if (chdir(options->working_directory) == -1) {
+      if (chdir(options.working_directory) == -1) {
         (void) !write(error_pipe_write, &errno, sizeof(errno));
         _exit(errno);
       }
     }
 
-    // Redirect stdin, stdout and stderr if required.
+    int rv = -1;
+
+    // Redirect stdin, stdout and stderr.
     // `_exit` ensures open file descriptors (pipes) are closed.
 
-    if (dup2(options->stdin_fd, STDIN_FILENO) == -1) {
+    rv = dup2(options.redirect.in, STDIN_FILENO);
+    if (rv == -1) {
       (void) !write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
-    if (dup2(options->stdout_fd, STDOUT_FILENO) == -1) {
+
+    rv = dup2(options.redirect.out, STDOUT_FILENO);
+    if (rv == -1) {
       (void) !write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
-    if (dup2(options->stderr_fd, STDERR_FILENO) == -1) {
+
+    rv = dup2(options.redirect.err, STDERR_FILENO);
+    if (rv == -1) {
       (void) !write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
@@ -157,9 +160,9 @@ process_create(const char *const *argv,
 
     int err = 0;
 
-    if (options->environment != NULL) {
+    if (options.environment != NULL) {
       err = EXECVPE(program, (char *const *) argv,
-                    (char *const *) options->environment);
+                    (char *const *) options.environment);
     } else {
       err = execvp(program, (char *const *) argv);
     }

@@ -10,19 +10,22 @@ struct process_options {
   // If not `NULL`, the working directory of the child process is set to
   // `working_directory`.
   const char *working_directory;
-  // if not 0, the stdin, stdout and stderr of the child process are redirected
-  // to `stdin_fd`, `stdout_fd` and `stderr_fd` respectively.
-  int stdin_fd;
-  int stdout_fd;
-  int stderr_fd;
+
+  // The stdin, stdout and stderr of the child process are redirected to `in`,
+  // `out` and `err` respectively.
+  struct {
+    int in;
+    int out;
+    int err;
+  } redirect;
 };
 
 // Creates a child process and calls `execvp` with the arguments in `argv`. The
 // process id of the new child process is assigned to `pid`.
 REPROC_ERROR
-process_create(const char *const *argv,
-               struct process_options *options,
-               pid_t *pid);
+process_create(pid_t *pid,
+               const char *const *argv,
+               struct process_options options);
 
 // Waits `timeout` milliseconds for the process indicated by `pid` to exit and
 // stores the exit code in `exit_status`.
