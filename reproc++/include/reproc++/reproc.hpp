@@ -21,11 +21,11 @@ namespace reproc {
 /*! See `REPROC_STREAM` */
 enum class stream {
   /*! `REPROC_STREAM_IN` */
-  in = 0,
+  in,
   /*! `REPROC_STREAM_OUT` */
-  out = 1,
+  out,
   /*! `REPROC_STREAM_ERR` */
-  err = 2
+  err
 };
 
 using milliseconds = std::chrono::duration<unsigned int, std::milli>;
@@ -35,13 +35,13 @@ REPROCXX_EXPORT extern const milliseconds infinite;
 /*! See `process::stop` */
 enum class cleanup {
   /*! Do nothing (no operation). */
-  noop = 0,
+  noop,
   /*! `process::wait` */
-  wait = 1,
+  wait,
   /*! `process::terminate` */
-  terminate = 2,
+  terminate,
   /*! `process::kill` */
-  kill = 3
+  kill
 };
 
 namespace detail {

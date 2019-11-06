@@ -39,11 +39,11 @@ typedef struct reproc_t reproc_t;
 /*! Stream identifiers used to indicate which stream to act on. */
 typedef enum {
   /*! stdin */
-  REPROC_STREAM_IN = 0,
+  REPROC_STREAM_IN,
   /*! stdout */
-  REPROC_STREAM_OUT = 1,
+  REPROC_STREAM_OUT,
   /*! stderr */
-  REPROC_STREAM_ERR = 2
+  REPROC_STREAM_ERR
 } REPROC_STREAM;
 
 /*! Tells a function that takes a timeout value to wait indefinitely. */
@@ -221,13 +221,13 @@ REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_t *process);
 /*! Used to tell `reproc_stop` how to stop a child process. */
 typedef enum {
   /*! noop (no operation) */
-  REPROC_CLEANUP_NOOP = 0,
+  REPROC_CLEANUP_NOOP,
   /*! `reproc_wait` */
-  REPROC_CLEANUP_WAIT = 1,
+  REPROC_CLEANUP_WAIT,
   /*! `reproc_terminate` */
-  REPROC_CLEANUP_TERMINATE = 2,
+  REPROC_CLEANUP_TERMINATE,
   /*! `reproc_kill` */
-  REPROC_CLEANUP_KILL = 3
+  REPROC_CLEANUP_KILL
 } REPROC_CLEANUP;
 
 /*!
