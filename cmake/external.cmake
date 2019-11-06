@@ -12,16 +12,18 @@ if(REPROC_TEST)
   target_include_directories(doctest INTERFACE ${PROJECT_BINARY_DIR}/doctest)
 endif()
 
-# Search for `Threads` module ourselves if the user has not already done so.
-if(NOT DEFINED Threads_FOUND)
-  # See https://cmake.org/cmake/help/v3.15/module/FindThreads.html
-  if(NOT DEFINED THREADS_PREFER_PTHREAD_FLAG)
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
+if(REPROC_MULTITHREADED)
+  # Search for `Threads` module ourselves if the user has not already done so.
+  if(NOT DEFINED Threads_FOUND)
+    # See https://cmake.org/cmake/help/v3.15/module/FindThreads.html
+    if(NOT DEFINED THREADS_PREFER_PTHREAD_FLAG)
+      set(THREADS_PREFER_PTHREAD_FLAG ON)
+    endif()
+
+    find_package(Threads)
   endif()
 
-  find_package(Threads)
-endif()
-
-if(REPROC_MULTITHREADED AND NOT Threads_FOUND)
-  message(FATAL_ERROR "`REPROC_MULTITHREADED` is enabled but the CMake `Threads` module was not found.")
+  if(NOT Threads_FOUND)
+    message(FATAL_ERROR "REPROC_MULTITHREADED is enabled but the system's thread library was not found.")
+  endif()
 endif()
