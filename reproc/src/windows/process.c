@@ -245,19 +245,13 @@ static SECURITY_ATTRIBUTES DO_NOT_INHERIT = { .nLength = sizeof(
                                               .bInheritHandle = false,
                                               .lpSecurityDescriptor = NULL };
 
-REPROC_ERROR process_create(wchar_t *command_line,
-                            struct process_options *options,
-                            unsigned long *pid,
-                            HANDLE *handle)
+REPROC_ERROR process_create(HANDLE *handle,
+                            wchar_t *command_line,
+                            struct process_options options)
 {
+  assert(handle);
   assert(command_line);
   assert(options);
-  assert(pid);
-  assert(handle);
-
-  assert(options->stdin_handle);
-  assert(options->stdout_handle);
-  assert(options->stderr_handle);
 
   // Create each child process in a new process group so we don't send
   // `CTRL-BREAK` signals to more than one child process in `process_terminate`.
@@ -275,11 +269,10 @@ REPROC_ERROR process_create(wchar_t *command_line,
   // for a reproc child process. See https://stackoverflow.com/a/2345126 for
   // more information.
 
-  HANDLE to_inherit[3] = { options->stdin_handle, options->stdout_handle,
-                           options->stderr_handle };
+  HANDLE inherit[3] = { options.pipe.in, options.pipe.out, options.pipe.err }
 
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
-  error = handle_inherit_list_create(to_inherit, ARRAY_SIZE(to_inherit),
+  error = handle_inherit_list_create(inherit, ARRAY_SIZE(inherit),
                                      &attribute_list);
   if (error) {
     return error;
@@ -290,9 +283,9 @@ REPROC_ERROR process_create(wchar_t *command_line,
   STARTUPINFOEXW extended_startup_info = {
     .StartupInfo = { .cb = sizeof(extended_startup_info),
                      .dwFlags = STARTF_USESTDHANDLES,
-                     .hStdInput = options->stdin_handle,
-                     .hStdOutput = options->stdout_handle,
-                     .hStdError = options->stderr_handle },
+                     .hStdInput = options.pipe.in,
+                     .hStdOutput = options.pipe.out,
+                     .hStdError = options.pipe.err },
     .lpAttributeList = attribute_list
   };
 
@@ -313,7 +306,7 @@ REPROC_ERROR process_create(wchar_t *command_line,
 
   BOOL result = CreateProcessW(NULL, command_line, &DO_NOT_INHERIT,
                                &DO_NOT_INHERIT, TRUE, creation_flags,
-                               options->environment, options->working_directory,
+                               options.environment, options.working_directory,
                                startup_info_address, &info);
 
   SetErrorMode(previous_error_mode);
@@ -327,7 +320,6 @@ REPROC_ERROR process_create(wchar_t *command_line,
     return REPROC_ERROR_SYSTEM;
   }
 
-  *pid = info.dwProcessId;
   *handle = info.hProcess;
 
   return REPROC_SUCCESS;
@@ -354,12 +346,14 @@ process_wait(HANDLE process, unsigned int timeout, unsigned int *exit_status)
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR process_terminate(unsigned long pid)
+REPROC_ERROR process_terminate(HANDLE process)
 {
+  assert(process);
+
   // `GenerateConsoleCtrlEvent` can only be called on a process group. To call
   // `GenerateConsoleCtrlEvent` on a single child process it has to be put in
   // its own process group (which we did when starting the child process).
-  if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pid)) {
+  if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, GetProcessId(process))) {
     return REPROC_ERROR_SYSTEM;
   }
 

@@ -17,9 +17,12 @@ struct process_options {
   // if not `NULL`, the stdin, stdout and stderr of the child process are
   // redirected to `stdin_handle`, `stdout_handle` and `stderr_handle`
   // respectively.
-  HANDLE stdin_handle;
-  HANDLE stdout_handle;
-  HANDLE stderr_handle;
+
+  struct {
+    HANDLE in;
+    HANDLE out;
+    HANDLE err;
+  } redirect;
 };
 
 // Escapes and joins the arguments in `argv` into an UTF-8 string in the format
@@ -46,10 +49,9 @@ wchar_t *string_to_wstring(const char *string, size_t size);
 // `handle` respectively. `options` contains options that modify how the child
 // process is spawned. See `process_options` for more information on the
 // possible options.
-REPROC_ERROR process_create(wchar_t *command_line,
-                            struct process_options *options,
-                            unsigned long *pid,
-                            HANDLE *handle);
+REPROC_ERROR process_create(HANDLE *process,
+                            wchar_t *command_line,
+                            struct process_options options);
 
 // Waits `timeout` milliseconds for the process indicated by `pid` to exit and
 // stores the exit code in `exit_status`.
@@ -57,7 +59,7 @@ REPROC_ERROR
 process_wait(HANDLE process, unsigned int timeout, unsigned int *exit_status);
 
 // Sends the `CTRL-BREAK` signal to the process indicated by `pid`.
-REPROC_ERROR process_terminate(unsigned long pid);
+REPROC_ERROR process_terminate(HANDLE process);
 
 // Calls `TerminateProcess` on the process indicated by `handle`.
 REPROC_ERROR process_kill(HANDLE process);
