@@ -33,7 +33,7 @@ int main(void)
   // If the working directory is `NULL` the working directory of the parent
   // process is used. If the environment is `NULL`, the environment of the
   // parent process is used.
-  error = reproc_start(&git_status, argv, NULL, NULL);
+  error = reproc_start(&git_status, argv, (reproc_options){ 0 });
 
   // reproc exposes a single error enum `REPROC_ERROR` which contains errors
   // specific to reproc and `REPROC_ERROR_SYSTEM` to indicate a system error

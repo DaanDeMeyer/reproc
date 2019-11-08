@@ -138,12 +138,20 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
     target_compile_options(${TARGET} PRIVATE
       -Wall
       -Wextra
-      -pedantic
+      -Wno-missing-field-initializers
       -Wconversion
       -Wsign-conversion
       $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-Werror>
-      $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-pedantic-errors>
     )
+
+    # No `-pedantic` for C++ because we want to use designated initializers in
+    # C++ and MSVC/GCC/Clang support them.
+    if(LANGUAGE STREQUAL C)
+      target_compile_options(${TARGET} PRIVATE
+        -pedantic
+        $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-pedantic-errors>
+      )
+    endif()
 
     if(LANGUAGE STREQUAL C OR CMAKE_CXX_COMPILER_ID MATCHES Clang)
       target_compile_options(${TARGET} PRIVATE -Wmissing-prototypes)

@@ -18,7 +18,7 @@ io(const char *mode, const std::string &input, const std::string &expected)
   std::array<const char *, 3> argv = { RESOURCE_DIRECTORY "/io", mode,
                                        nullptr };
 
-  error = reproc_start(&process, argv.data(), nullptr, nullptr);
+  error = reproc_start(&process, argv.data(), {});
   REQUIRE(!error);
 
   unsigned int size = static_cast<unsigned int>(input.size());

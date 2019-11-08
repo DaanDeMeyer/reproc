@@ -3,15 +3,14 @@
 #include <windows/handle.h>
 #include <windows/pipe.h>
 #include <windows/process.h>
+#include <windows/redirect.h>
 
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
-REPROC_ERROR reproc_start(reproc_t *process,
-                          const char *const *argv,
-                          const char *const *environment,
-                          const char *working_directory)
+REPROC_ERROR
+reproc_start(reproc_t *process, const char *const *argv, reproc_options options)
 {
   assert(process);
   assert(argv);
@@ -21,9 +20,9 @@ REPROC_ERROR reproc_start(reproc_t *process,
 
   // Predeclare every variable so we can use `goto`.
 
-  HANDLE child_stdin = NULL;
-  HANDLE child_stdout = NULL;
-  HANDLE child_stderr = NULL;
+  HANDLE child_in = NULL;
+  HANDLE child_out = NULL;
+  HANDLE child_err = NULL;
 
   char *command_line = NULL;
   wchar_t *command_line_wstring = NULL;
@@ -35,30 +34,25 @@ REPROC_ERROR reproc_start(reproc_t *process,
   // `REPROC_SUCCESS`.
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
-  const struct pipe_options child_blocking = { .inherit = true,
-                                               .overlapped = false };
-  const struct pipe_options parent_overlapped = { .inherit = false,
-                                                  .overlapped = true };
-
   // While we already make sure the child process only inherits the child pipe
   // handles using `STARTUPINFOEXW` (see `process.c`) we still disable
   // inheritance of the parent pipe handles to lower the chance of child
   // processes not created by reproc unintentionally inheriting these handles.
 
-  error = pipe_init(&child_stdin, child_blocking, &process->in,
-                    parent_overlapped);
+  error = redirect(&process->in, &child_in, REPROC_STREAM_IN,
+                   options.redirect.in);
   if (error) {
     goto cleanup;
   }
 
-  error = pipe_init(&process->out, parent_overlapped, &child_stdout,
-                    child_blocking);
+  error = redirect(&process->out, &child_out, REPROC_STREAM_OUT,
+                   options.redirect.out);
   if (error) {
     goto cleanup;
   }
 
-  error = pipe_init(&process->err, parent_overlapped, &child_stderr,
-                    child_blocking);
+  error = redirect(&process->err, &child_err, REPROC_STREAM_ERR,
+                   options.redirect.err);
   if (error) {
     goto cleanup;
   }
@@ -78,39 +72,37 @@ REPROC_ERROR reproc_start(reproc_t *process,
   }
 
   // Idem for `environment` if it isn't `NULL`.
-  if (environment != NULL) {
-    environment_line = environment_join(environment);
+  if (options.environment != NULL) {
+    environment_line = environment_join(options.environment);
     if (environment_line == NULL) {
       goto cleanup;
     }
 
-    environment_line_wstring =
-        string_to_wstring(environment_line, environment_join_size(environment));
+    size_t joined_size = environment_join_size(options.environment);
+    environment_line_wstring = string_to_wstring(environment_line, joined_size);
     if (environment_line_wstring == NULL) {
       goto cleanup;
     }
   }
 
   // Convert `working_directory` to UTF-16 if it isn't `NULL`.
-  if (working_directory != NULL) {
-    size_t working_directory_size = strlen(working_directory) + 1;
-    working_directory_wstring = string_to_wstring(working_directory,
+  if (options.working_directory != NULL) {
+    size_t working_directory_size = strlen(options.working_directory) + 1;
+    working_directory_wstring = string_to_wstring(options.working_directory,
                                                   working_directory_size);
     if (working_directory_wstring == NULL) {
       goto cleanup;
     }
   }
 
-  struct process_options options = {
+  struct process_options process_options = {
     .environment = environment_line_wstring,
     .working_directory = working_directory_wstring,
-    .stdin_handle = child_stdin,
-    .stdout_handle = child_stdout,
-    .stderr_handle = child_stderr
+    .redirect = { .in = child_in, .out = child_out, .err = child_err }
   };
 
-  error = process_create(command_line_wstring, &options, &process->id,
-                         &process->handle);
+  error = process_create(&process->handle, command_line_wstring,
+                         process_options);
   if (error) {
     goto cleanup;
   }
@@ -121,9 +113,9 @@ cleanup:
   // Either an error has ocurred or the child pipe endpoints have been copied to
   // the stdin/stdout/stderr streams of the child process. Either way they can
   // be safely closed in the parent process.
-  handle_close(&child_stdin);
-  handle_close(&child_stdout);
-  handle_close(&child_stderr);
+  handle_close(&child_in);
+  handle_close(&child_out);
+  handle_close(&child_err);
 
   free(command_line);
   free(command_line_wstring);
@@ -237,7 +229,7 @@ REPROC_ERROR reproc_terminate(reproc_t *process)
     return REPROC_SUCCESS;
   }
 
-  return process_terminate(process->id);
+  return process_terminate(process->handle);
 }
 
 REPROC_ERROR reproc_kill(reproc_t *process)

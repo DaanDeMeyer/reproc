@@ -23,7 +23,7 @@ int main(void)
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
-  error = reproc_start(&git_help, argv, NULL, NULL);
+  error = reproc_start(&git_help, argv, (reproc_options) { 0 });
   if (error) {
     return fail(error);
   }

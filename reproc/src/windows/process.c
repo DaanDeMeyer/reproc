@@ -245,13 +245,12 @@ static SECURITY_ATTRIBUTES DO_NOT_INHERIT = { .nLength = sizeof(
                                               .bInheritHandle = false,
                                               .lpSecurityDescriptor = NULL };
 
-REPROC_ERROR process_create(HANDLE *handle,
+REPROC_ERROR process_create(HANDLE *process,
                             wchar_t *command_line,
                             struct process_options options)
 {
-  assert(handle);
+  assert(process);
   assert(command_line);
-  assert(options);
 
   // Create each child process in a new process group so we don't send
   // `CTRL-BREAK` signals to more than one child process in `process_terminate`.
@@ -269,7 +268,8 @@ REPROC_ERROR process_create(HANDLE *handle,
   // for a reproc child process. See https://stackoverflow.com/a/2345126 for
   // more information.
 
-  HANDLE inherit[3] = { options.pipe.in, options.pipe.out, options.pipe.err }
+  HANDLE inherit[3] = { options.redirect.in, options.redirect.out,
+                        options.redirect.err };
 
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
   error = handle_inherit_list_create(inherit, ARRAY_SIZE(inherit),
@@ -283,9 +283,9 @@ REPROC_ERROR process_create(HANDLE *handle,
   STARTUPINFOEXW extended_startup_info = {
     .StartupInfo = { .cb = sizeof(extended_startup_info),
                      .dwFlags = STARTF_USESTDHANDLES,
-                     .hStdInput = options.pipe.in,
-                     .hStdOutput = options.pipe.out,
-                     .hStdError = options.pipe.err },
+                     .hStdInput = options.redirect.in,
+                     .hStdOutput = options.redirect.out,
+                     .hStdError = options.redirect.err },
     .lpAttributeList = attribute_list
   };
 
@@ -320,7 +320,7 @@ REPROC_ERROR process_create(HANDLE *handle,
     return REPROC_ERROR_SYSTEM;
   }
 
-  *handle = info.hProcess;
+  *process = info.hProcess;
 
   return REPROC_SUCCESS;
 }

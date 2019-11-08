@@ -4,69 +4,64 @@
 #include <posix/fd.h>
 #include <posix/pipe.h>
 #include <posix/process.h>
+#include <posix/redirect.h>
 
 #include <assert.h>
-#include <stddef.h>
 
-REPROC_ERROR reproc_start(reproc_t *process,
-                          const char *const *argv,
-                          const char *const *environment,
-                          const char *working_directory)
+REPROC_ERROR
+reproc_start(reproc_t *process, const char *const *argv, reproc_options options)
 {
   assert(process);
   assert(argv);
-  assert(argv[0] != NULL);
+  assert(argv[0]);
 
-  process->running = false;
+  *process = (reproc_t){ 0 };
 
   // Predeclare every variable so we can use `goto`.
 
-  int child_stdin = 0;
-  int child_stdout = 0;
-  int child_stderr = 0;
+  int child_in = 0;
+  int child_out = 0;
+  int child_err = 0;
 
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
-
-  const struct pipe_options blocking = { .nonblocking = false };
-  const struct pipe_options nonblocking = { .nonblocking = true };
 
   // Create the pipes used to redirect the child process' stdin/stdout/stderr to
   // the parent process.
 
-  error = pipe_init(&child_stdin, blocking, &process->in, nonblocking);
+  error = redirect(&process->in, &child_in, REPROC_STREAM_IN,
+                   options.redirect.in);
   if (error) {
     goto cleanup;
   }
 
-  error = pipe_init(&process->out, nonblocking, &child_stdout, blocking);
+  error = redirect(&process->out, &child_out, REPROC_STREAM_OUT,
+                   options.redirect.out);
   if (error) {
     goto cleanup;
   }
 
-  // We poll the output pipes so we put the parent ends of the output pipes in
-  // non-blocking mode.
-
-  error = pipe_init(&process->err, nonblocking, &child_stderr, blocking);
+  error = redirect(&process->err, &child_err, REPROC_STREAM_ERR,
+                   options.redirect.err);
   if (error) {
     goto cleanup;
   }
 
-  struct process_options options = { .environment = environment,
-                                     .working_directory = working_directory,
-                                     .stdin_fd = child_stdin,
-                                     .stdout_fd = child_stdout,
-                                     .stderr_fd = child_stderr };
+  struct process_options process_options = {
+    .environment = options.environment,
+    .working_directory = options.working_directory,
+    .redirect = { .in = child_in, .out = child_out, .err = child_err }
+  };
 
   // Fork a child process and call `execve`.
-  error = process_create(argv, &options, &process->id);
+  error = process_create(&process->id, argv, process_options);
 
 cleanup:
   // Either an error has ocurred or the child pipe endpoints have been copied to
   // the stdin/stdout/stderr streams of the child process. Either way they can
   // be safely closed in the parent process.
-  fd_close(&child_stdin);
-  fd_close(&child_stdout);
-  fd_close(&child_stderr);
+  fd_close(&child_in);
+  fd_close(&child_out);
+  fd_close(&child_err);
 
   if (error) {
     reproc_destroy(process);
@@ -100,16 +95,15 @@ REPROC_ERROR reproc_read(reproc_t *process,
   }
 
   // Indicate which stream was read from if requested by the user.
-  if (stream != NULL) {
+  if (stream) {
     *stream = ready == process->out ? REPROC_STREAM_OUT : REPROC_STREAM_ERR;
   }
 
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR reproc_write(reproc_t *process,
-                          const uint8_t *buffer,
-                          unsigned int size)
+REPROC_ERROR
+reproc_write(reproc_t *process, const uint8_t *buffer, unsigned int size)
 {
   assert(process);
   assert(process->in != 0);

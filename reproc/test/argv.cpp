@@ -19,7 +19,7 @@ TEST_CASE("argv")
                                        "\"argument 1\"", "\"argument 2\"",
                                        nullptr };
 
-  error = reproc_start(&process, argv.data(), nullptr, nullptr);
+  error = reproc_start(&process, argv.data(), {});
   REQUIRE(!error);
 
   char *output = nullptr;

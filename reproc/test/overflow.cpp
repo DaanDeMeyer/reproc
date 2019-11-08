@@ -16,7 +16,7 @@ TEST_CASE("overflow")
   std::array<const char *, 2> argv = { RESOURCE_DIRECTORY "/overflow",
                                        nullptr };
 
-  error = reproc_start(&process, argv.data(), nullptr, nullptr);
+  error = reproc_start(&process, argv.data(), {});
   REQUIRE(!error);
 
   char *output = nullptr;

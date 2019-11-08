@@ -13,14 +13,12 @@ extern "C" {
 /*! Used to store information about a child process. We define `reproc_t` in
 the header file so it can be allocated on the stack but its internals are prone
 to change and should **NOT** be depended on. */
-struct reproc_t {
+typedef struct reproc_t {
   // On POSIX systems, we can't wait again on the same process after
   // successfully waiting once so we store the result.
   bool running;
   unsigned int exit_status;
 #if defined(_WIN32)
-  // `unsigned long` = `DWORD`
-  unsigned long id;
   // `void *` = `HANDLE`
   void *handle;
   void *in;
@@ -32,9 +30,51 @@ struct reproc_t {
   int out;
   int err;
 #endif
-};
+} reproc_t;
 
-typedef struct reproc_t reproc_t;
+/*! Used to tell reproc where to redirect the streams of the child process. */
+typedef enum {
+  /*! Redirect the stream to a pipe. */
+  REPROC_REDIRECT_PIPE,
+  /*! Inherit the corresponding stream from the parent process. */
+  REPROC_REDIRECT_INHERIT,
+  /*! Redirect the stream to /dev/null (or NUL on Windows). */
+  REPROC_REDIRECT_DISCARD
+} REPROC_REDIRECT;
+
+typedef struct reproc_options {
+  /*!
+  `environment` is an array of UTF-8 encoded, null terminated strings that
+  specifies the environment for the child process. It has the following layout:
+
+  - All elements except the final element must be of the format `NAME=VALUE`.
+  - The final element must be `NULL`.
+
+  Example: ["IP=127.0.0.1", "PORT=8080", `NULL`]
+
+  If `environment` is `NULL`, the child process inherits the environment of the
+  current process.
+  */
+  const char *const *environment;
+  /*!
+  `working_directory` specifies the working directory for the child process. If
+  `working_directory` is `NULL`, the child process runs in the working directory
+  of the parent process.
+  */
+  const char *working_directory;
+  /*!
+  `redirect` specifies where to redirect the streams from the child process.
+
+  By default each stream is redirected to a pipe which can be written to (stdin)
+  or read from (stdout/stderr) using `reproc_write` and `reproc_read`
+  respectively.
+  */
+  struct {
+    REPROC_REDIRECT in;
+    REPROC_REDIRECT out;
+    REPROC_REDIRECT err;
+  } redirect;
+} reproc_options;
 
 /*! Stream identifiers used to indicate which stream to act on. */
 typedef enum {
@@ -74,28 +114,12 @@ the executable. None of these elements can be `NULL`.
 
 Example: ["cmake", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", `NULL`]
 
-`environment` is an array of UTF-8 encoded, null terminated strings that
-specifies the environment for the child process. It has the following layout:
-
-- All elements except the final element must be of the format `NAME=VALUE`.
-- The final element must be `NULL`.
-
-Example: ["IP=127.0.0.1", "PORT=8080", `NULL`]
-
-If `environment` is `NULL`, the child process inherits the environment of the
-current process.
-
-`working_directory` specifies the working directory for the child process. If it
-is `NULL`, the child process runs in the working directory of the parent
-process.
-
 Possible errors:
 - `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_start(reproc_t *process,
                                         const char *const *argv,
-                                        const char *const *environment,
-                                        const char *working_directory);
+                                        reproc_options options);
 
 /*!
 Reads up to `size` bytes from either the child process stdout or stderr stream
@@ -107,6 +131,10 @@ read from (`REPROC_STREAM_OUT` or `REPROC_STREAM_ERR`).
 
 Assuming no other errors occur this function will return `REPROC_SUCCESS` until
 the stream is closed and all remaining data has been read.
+
+It is undefined behaviour to call this function on child process streams that
+were not specified as `REPROC_REDIRECT_PIPE` in the options passed to
+`reproc_start`.
 
 Possible errors:
 - `REPROC_ERROR_STREAM_CLOSED`
@@ -159,6 +187,10 @@ process.
 (POSIX) By default, writing to a closed stdin pipe terminates the parent process
 with the `SIGPIPE` signal. `reproc_write` will only return
 `REPROC_ERROR_STREAM_CLOSED` if this signal is ignored by the parent process.
+
+It is undefined behaviour to call this function on a process whose stdin stream
+was not specified as `REPROC_REDIRECT_PIPE` in the options passed to
+`reproc_start`.
 
 Possible errors:
 - `REPROC_ERROR_STREAM_CLOSED`

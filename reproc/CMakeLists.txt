@@ -14,6 +14,7 @@ if(UNIX)
     src/posix/path.c
     src/posix/pipe.c
     src/posix/process.c
+    src/posix/redirect.c
     src/posix/reproc.c
   )
 elseif(WIN32)
@@ -22,6 +23,7 @@ elseif(WIN32)
     src/windows/handle.c
     src/windows/pipe.c
     src/windows/process.c
+    src/windows/redirect.c
     src/windows/reproc.c
   )
 endif()
