@@ -1,5 +1,7 @@
 #pragma once
 
+#include <reproc++/arguments.hpp>
+#include <reproc++/environment.hpp>
 #include <reproc++/error.hpp>
 #include <reproc++/export.hpp>
 
@@ -14,48 +16,34 @@ struct reproc_t;
 /*! The `reproc` namespace wraps all reproc++ declarations. `process` wraps
 reproc's API inside a C++ class. `error` improves on `REPROC_ERROR` by
 integrating with C++'s `std::error_code` error handling mechanism. To avoid
-exposing reproc's API when using reproc++ all the other enums and constants of
-reproc have a replacement in reproc++ as well. */
+exposing reproc's API when using reproc++ all the other structs, enums and
+constants of reproc have a replacement in reproc++ as well. */
 namespace reproc {
 
-/*! See `REPROC_STREAM` */
-enum class stream {
-  /*! `REPROC_STREAM_IN` */
-  in,
-  /*! `REPROC_STREAM_OUT` */
-  out,
-  /*! `REPROC_STREAM_ERR` */
-  err
+/*! `REPROC_REDIRECT` */
+enum class redirect { pipe, inherit, discard };
+
+/*! `reproc_options` */
+struct options {
+  class environment environment;
+  const char *working_directory = nullptr;
+
+  struct {
+    redirect in = redirect::pipe;
+    redirect out = redirect::pipe;
+    redirect err = redirect::pipe;
+  } redirect;
 };
+
+/*! `REPROC_STREAM` */
+enum class stream { in, out, err };
 
 using milliseconds = std::chrono::duration<unsigned int, std::milli>;
-/*! See `REPROC_INFINITE` */
+/*! `REPROC_INFINITE` */
 REPROCXX_EXPORT extern const milliseconds infinite;
 
-/*! See `process::stop` */
-enum class cleanup {
-  /*! Do nothing (no operation). */
-  noop,
-  /*! `process::wait` */
-  wait,
-  /*! `process::terminate` */
-  terminate,
-  /*! `process::kill` */
-  kill
-};
-
-namespace detail {
-
-template <bool B, typename T = void>
-using enable_if = typename std::enable_if<B, T>::type;
-
-template <typename T>
-using is_char_array = std::is_convertible<T, const char *const *>;
-
-template <typename T>
-using enable_if_not_char_array = enable_if<!is_char_array<T>::value>;
-
-} // namespace detail
+/*! `REPROC_CLEANUP` */
+enum class cleanup { noop, wait, terminate, kill };
 
 /*! Improves on reproc's API by wrapping it in a class. Aside from methods that
 mimick reproc's API it also adds configurable RAII and several methods that
@@ -99,59 +87,8 @@ public:
   REPROCXX_EXPORT process &operator=(process &&other) noexcept;
 
   /*! `reproc_start` */
-  REPROCXX_EXPORT std::error_code
-  start(const char *const *argv,
-        const char *const *environment = nullptr,
-        const char *working_directory = nullptr) noexcept;
-
-  /*!
-  Overload of `start` for convenient usage with C++ containers of strings.
-
-  `Arguments` must be a `Container` containing `SequenceContainer` containing
-  characters. Examples of types that satisfy this requirement are
-  `std::vector<std::string>` and `std::array<std::string>`.
-
-  `Environment` must be a `Container` containing `pair` of `SequenceContainer`
-  containing characters. Examples of types that satisfy this requirement are
-  `std::vector<std::pair<std::string, std::string>>` and
-  `std::map<std::string, std::string>`.
-
-  - `Container`: https://en.cppreference.com/w/cpp/named_req/Container
-  - `SequenceContainer`:
-  https://en.cppreference.com/w/cpp/named_req/SequenceContainer
-  - `pair`: Anything that resembles `std::pair`
-  (https://en.cppreference.com/w/cpp/utility/pair).
-
-  `arguments` has the same restrictions as `argv` in `reproc_start` except that
-  it should not end with `NULL` (`start` allocates a new array which includes
-  the missing `NULL` value).
-
-  The pairs in `environment` represent the environment variables of the child
-  process and are converted to the right format before being passed as the
-  environment to `reproc_start`. To have the child process inherit the
-  environment of the parent process, use the `start` overload that does not have
-  an environment parameter.
-
-  `working_directory` specifies the working directory. It is optional and
-  defaults to `nullptr`.
-
-  This method only participates in overload resolution if `Arguments` and
-  `Environment` are not convertible to `const char *const *`.
-  */
-  template <typename Arguments,
-            typename Environment,
-            typename = detail::enable_if_not_char_array<Arguments>,
-            typename = detail::enable_if_not_char_array<Environment>>
-  std::error_code start(const Arguments &arguments,
-                        const Environment &environment,
-                        const char *working_directory = nullptr);
-
-  /*! Same as `start` but instead of passing a custom environment, the child
-  process inherits the environment of the parent process. */
-  template <typename Arguments,
-            typename = detail::enable_if_not_char_array<Arguments>>
-  std::error_code start(const Arguments &arguments,
-                        const char *working_directory = nullptr);
+  REPROCXX_EXPORT std::error_code start(const arguments &arguments,
+                                        const options &options = {}) noexcept;
 
   /*! `reproc_read` */
   REPROCXX_EXPORT std::error_code read(stream *stream,
@@ -169,7 +106,7 @@ public:
   `Parser` expects the following signature:
 
   ```c++
-  bool parser(reproc::stream stream, const uint8_t *buffer, unsigned int size);
+  bool parser(stream stream, const uint8_t *buffer, unsigned int size);
   ```
   */
   template <typename Parser>
@@ -226,57 +163,7 @@ private:
   milliseconds t3_;
 
   static constexpr unsigned int BUFFER_SIZE = 4096;
-
-  class REPROCXX_EXPORT arguments {
-    char **data_;
-
-  public:
-    template <typename Arguments>
-    explicit arguments(const Arguments &arguments);
-
-    arguments(const arguments &) = delete;
-
-    ~arguments();
-
-    const char *const *data() const noexcept;
-  };
-
-  class REPROCXX_EXPORT environment {
-    char **data_;
-
-  public:
-    template <typename Environment>
-    explicit environment(const Environment &environment);
-
-    environment(const environment &) = delete;
-
-    ~environment();
-
-    const char *const *data() const noexcept;
-  };
 };
-
-template <typename Arguments, typename Environment, typename, typename>
-std::error_code process::start(const Arguments &arguments,
-                               const Environment &environment,
-                               const char *working_directory)
-{
-  // Convert `arguments` and `environment` to the formats expected by
-  // `reproc_start`.
-  process::arguments args(arguments);
-  process::environment env(environment);
-
-  return start(args.data(), env.data(), working_directory);
-}
-
-template <typename Arguments, typename>
-std::error_code process::start(const Arguments &arguments,
-                               const char *working_directory)
-{
-  process::arguments args(arguments);
-
-  return start(args.data(), nullptr, working_directory);
-}
 
 template <typename Parser>
 std::error_code process::parse(Parser &&parser)
@@ -296,7 +183,7 @@ std::error_code process::parse(Parser &&parser)
   std::error_code ec;
 
   while (true) {
-    reproc::stream stream = {};
+    stream stream = {};
     unsigned int bytes_read = 0;
     ec = read(&stream, buffer, BUFFER_SIZE, &bytes_read);
     if (ec) {
@@ -318,67 +205,6 @@ std::error_code process::drain(Sink &&sink)
   std::error_code ec = parse(std::forward<Sink>(sink));
 
   return ec == error::stream_closed ? error::success : ec;
-}
-
-template <typename Arguments>
-process::arguments::arguments(const Arguments &arguments)
-    : data_(new char *[arguments.size() + 1])
-{
-  using size_type = typename Arguments::value_type::size_type;
-
-  size_t current = 0;
-
-  for (const auto &argument : arguments) {
-    char *string = new char[argument.size() + 1];
-
-    data_[current++] = string;
-
-    for (size_type i = 0; i < argument.size(); i++) {
-      *string++ = argument[i];
-    }
-
-    *string = '\0';
-  }
-
-  data_[current] = nullptr;
-}
-
-template <typename Environment>
-process::environment::environment(const Environment &environment)
-    : data_(new char *[environment.size() + 1])
-{
-  using name_size_type =
-      typename Environment::value_type::first_type::size_type;
-  using value_size_type =
-      typename Environment::value_type::second_type::size_type;
-
-  size_t current = 0;
-
-  for (const auto &entry : environment) {
-    const auto &name = entry.first;
-    const auto &value = entry.second;
-
-    // We add 2 to the size to reserve space for the '=' sign and the null
-    // terminator at the end of the string.
-    name_size_type size = name.size() + value.size() + 2;
-    char *string = new char[size];
-
-    data_[current++] = string;
-
-    for (name_size_type i = 0; i < name.size(); i++) {
-      *string++ = name[i];
-    }
-
-    *string++ = '=';
-
-    for (value_size_type i = 0; i < value.size(); i++) {
-      *string++ = value[i];
-    }
-
-    *string = '\0';
-  }
-
-  data_[current] = nullptr;
 }
 
 } // namespace reproc

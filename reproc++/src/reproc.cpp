@@ -58,12 +58,19 @@ process::~process() noexcept
 process::process(process &&) noexcept = default; // NOLINT
 process &process::operator=(process &&) noexcept = default;
 
-std::error_code process::start(const char *const *argv,
-                               const char *const *environment,
-                               const char *working_directory) noexcept
+std::error_code process::start(const arguments &arguments,
+                               const options &options) noexcept
 {
-  REPROC_ERROR error = reproc_start(process_.get(), argv, environment,
-                                    working_directory);
+  reproc_options reproc_options = {
+    options.environment.data(),
+    options.working_directory,
+    { static_cast<REPROC_REDIRECT>(options.redirect.in),
+      static_cast<REPROC_REDIRECT>(options.redirect.out),
+      static_cast<REPROC_REDIRECT>(options.redirect.err) }
+  };
+
+  REPROC_ERROR error = reproc_start(process_.get(), arguments.data(),
+                                    reproc_options);
   return error_to_error_code(error);
 }
 
@@ -135,34 +142,6 @@ std::error_code process::stop(cleanup c1,
 unsigned int process::exit_status() noexcept
 {
   return reproc_exit_status(process_.get());
-}
-
-process::arguments::~arguments()
-{
-  for (size_t i = 0; data_[i] != nullptr; i++) {
-    delete[] data_[i];
-  }
-
-  delete[] data_;
-}
-
-const char *const *process::arguments::data() const noexcept
-{
-  return data_;
-}
-
-process::environment::~environment()
-{
-  for (size_t i = 0; data_[i] != nullptr; i++) {
-    delete[] data_[i];
-  }
-
-  delete[] data_;
-}
-
-const char *const *process::environment::data() const noexcept
-{
-  return data_;
 }
 
 } // namespace reproc
