@@ -216,6 +216,7 @@ jobs:
 
           build/reproc/examples/drain > /dev/null
           build/reproc/examples/git-status > /dev/null
+          build/reproc/examples/inherit cmake --help > /dev/null
           build/reproc++/examples/background cmake --help > /dev/null
           build/reproc++/examples/cmake-help > /dev/null
           build/reproc++/examples/forward cmake --help > /dev/null
