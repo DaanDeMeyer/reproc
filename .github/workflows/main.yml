@@ -13,94 +13,67 @@ jobs:
         # Github Actions requires a single row to be added to the build matrix.
         # See https://help.github.com/en/articles/workflow-syntax-for-github-actions.
         name: [
-          ubuntu-18.04-gcc-4.8,
-          ubuntu-18.04-gcc-9,
-          ubuntu-18.04-clang-4.0,
-          ubuntu-18.04-clang-9,
-          windows-2016-cl,
-          windows-2016-clang-cl,
-          windows-2016-clang,
-          windows-2016-gcc,
-          windows-2019-cl,
-          windows-2019-clang-cl,
-          windows-2019-clang,
-          windows-2019-gcc,
-          macOS-10.14-xcode-10.0,
-          macOS-10.14-xcode-11.0,
-          macOS-10.14-gcc-6,
-          macOS-10.14-gcc-9
+          ubuntu-gcc-4.8,
+          ubuntu-gcc-9,
+          ubuntu-clang-4.0,
+          ubuntu-clang-9,
+          windows-cl,
+          windows-clang-cl,
+          windows-clang,
+          windows-gcc,
+          macos-xcode,
+          macos-gcc-6,
+          macos-gcc-9
         ]
 
         include:
-          - name: ubuntu-18.04-gcc-4.8
-            os: ubuntu-18.04
+          - name: ubuntu-gcc-4.8
+            os: ubuntu-latest
             compiler: gcc
             version: "6"
 
-          - name: ubuntu-18.04-gcc-9
-            os: ubuntu-18.04
+          - name: ubuntu-gcc-9
+            os: ubuntu-latest
             compiler: gcc
             version: "9"
 
-          - name: ubuntu-18.04-clang-4.0
-            os: ubuntu-18.04
+          - name: ubuntu-clang-4.0
+            os: ubuntu-latest
             compiler: clang
             version: "6.0"
 
-          - name: ubuntu-18.04-clang-9
-            os: ubuntu-18.04
+          - name: ubuntu-clang-9
+            os: ubuntu-latest
             compiler: clang
             version: "9"
 
-          - name: windows-2016-cl
-            os: windows-2016
+          - name: windows-cl
+            os: windows-latest
             compiler: cl
 
-          - name: windows-2016-clang-cl
-            os: windows-2016
+          - name: windows-clang-cl
+            os: windows-latest
             compiler: clang-cl
 
-          - name: windows-2016-clang
-            os: windows-2016
+          - name: windows-clang
+            os: windows-latest
             compiler: clang
 
-          - name: windows-2016-gcc
-            os: windows-2016
+          - name: windows-gcc
+            os: windows-latest
             compiler: gcc
 
-          - name: windows-2019-cl
-            os: windows-2019
-            compiler: cl
-
-          - name: windows-2019-clang-cl
-            os: windows-2019
-            compiler: clang-cl
-
-          - name: windows-2019-clang
-            os: windows-2019
-            compiler: clang
-
-          - name: windows-2019-gcc
-            os: windows-2019
-            compiler: gcc
-
-          - name: macOS-10.14-xcode-10.0
-            os: macOS-10.14
+          - name: macos-xcode
+            os: macos-latest
             compiler: xcode
-            version: "10"
 
-          - name: macOS-10.14-xcode-11.0
-            os: macOS-10.14
-            compiler: xcode
-            version: "11"
-
-          - name: macOS-10.14-gcc-6
-            os: macOS-10.14
+          - name: macos-gcc-6
+            os: macos-latest
             compiler: gcc
             version: "6"
 
-          - name: macOS-10.14-gcc-9
-            os: macOS-10.14
+          - name: macos-gcc-9
+            os: macos-latest
             compiler: gcc
             version: "9"
 
@@ -141,7 +114,6 @@ jobs:
             echo "::set-env name=CC::gcc-${{ matrix.version }}"
             echo "::set-env name=CXX::g++-${{ matrix.version }}"
           else
-            sudo xcode-select -switch /Applications/Xcode_${{ matrix.version }}.app
             echo "::set-env name=CC::clang"
             echo "::set-env name=CXX::clang++"
           fi
