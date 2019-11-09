@@ -37,17 +37,17 @@
 #endif
 
 REPROC_ERROR
-process_create(pid_t *pid,
+process_create(pid_t *process,
                const char *const *argv,
                struct process_options options)
 {
   assert(argv);
   assert(argv[0] != NULL);
-  assert(pid);
+  assert(process);
 
   // Predeclare variables so we can use `goto`.
   REPROC_ERROR error = REPROC_SUCCESS;
-  pid_t child_pid = 0;
+  pid_t child_process = 0;
   int child_error = 0;
   unsigned int bytes_read = 0;
 
@@ -62,9 +62,9 @@ process_create(pid_t *pid,
     goto cleanup;
   }
 
-  child_pid = fork();
+  child_process = fork();
 
-  if (child_pid == 0) {
+  if (child_process == 0) {
     // Child process code. Since we're in the child process we can exit on
     // error. Why `_exit`? See:
     // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
@@ -174,7 +174,7 @@ process_create(pid_t *pid,
     _exit(errno);
   }
 
-  if (child_pid == -1) {
+  if (child_process == -1) {
     error = REPROC_ERROR_SYSTEM;
     goto cleanup;
   }
@@ -222,17 +222,17 @@ cleanup:
 
   // `REPROC_ERROR_STREAM_CLOSED` is not an error here (see above).
   if (error != REPROC_SUCCESS && error != REPROC_ERROR_STREAM_CLOSED &&
-      child_pid > 0) {
+      child_process > 0) {
     // Make sure the child process doesn't become a zombie process the child
-    // process was started (`child_pid` > 0) but an error occurred.
-    if (waitpid(child_pid, NULL, 0) == -1) {
+    // process was started (`child_process` > 0) but an error occurred.
+    if (waitpid(child_process, NULL, 0) == -1) {
       return REPROC_ERROR_SYSTEM;
     }
 
     return error;
   }
 
-  *pid = child_pid;
+  *process = child_process;
 
   return REPROC_SUCCESS;
 }
@@ -250,14 +250,14 @@ static unsigned int parse_exit_status(int status)
   return (unsigned int) WTERMSIG(status);
 }
 
-static REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
+static REPROC_ERROR wait_no_hang(pid_t process, unsigned int *exit_status)
 {
   assert(exit_status);
 
   int status = 0;
   // Adding `WNOHANG` makes `waitpid` only check if the child process is still
   // running without waiting.
-  pid_t wait_result = waitpid(pid, &status, WNOHANG);
+  pid_t wait_result = waitpid(process, &status, WNOHANG);
   if (wait_result == 0) {
     return REPROC_ERROR_WAIT_TIMEOUT;
   } else if (wait_result == -1) {
@@ -269,13 +269,13 @@ static REPROC_ERROR wait_no_hang(pid_t pid, unsigned int *exit_status)
   return REPROC_SUCCESS;
 }
 
-static REPROC_ERROR wait_infinite(pid_t pid, unsigned int *exit_status)
+static REPROC_ERROR wait_infinite(pid_t process, unsigned int *exit_status)
 {
   assert(exit_status);
 
   int status = 0;
 
-  if (waitpid(pid, &status, 0) == -1) {
+  if (waitpid(process, &status, 0) == -1) {
     return REPROC_ERROR_SYSTEM;
   }
 
@@ -301,7 +301,7 @@ static struct timespec timespec_subtract(struct timespec lhs,
 }
 
 static REPROC_ERROR
-wait_timeout(pid_t pid, unsigned int timeout, unsigned int *exit_status)
+wait_timeout(pid_t process, unsigned int timeout, unsigned int *exit_status)
 {
   assert(timeout > 0);
   assert(exit_status);
@@ -336,7 +336,7 @@ wait_timeout(pid_t pid, unsigned int timeout, unsigned int *exit_status)
 #endif
 
   while (true) {
-    error = wait_no_hang(pid, exit_status);
+    error = wait_no_hang(process, exit_status);
     if (error != REPROC_ERROR_WAIT_TIMEOUT) {
       goto cleanup;
     }
@@ -416,33 +416,33 @@ cleanup:
 }
 
 REPROC_ERROR
-process_wait(pid_t pid, unsigned int timeout, unsigned int *exit_status)
+process_wait(pid_t process, unsigned int timeout, unsigned int *exit_status)
 {
   assert(exit_status);
 
   if (timeout == 0) {
-    return wait_no_hang(pid, exit_status);
+    return wait_no_hang(process, exit_status);
   }
 
   if (timeout == REPROC_INFINITE) {
-    return wait_infinite(pid, exit_status);
+    return wait_infinite(process, exit_status);
   }
 
-  return wait_timeout(pid, timeout, exit_status);
+  return wait_timeout(process, timeout, exit_status);
 }
 
-REPROC_ERROR process_terminate(pid_t pid)
+REPROC_ERROR process_terminate(pid_t process)
 {
-  if (kill(pid, SIGTERM) == -1) {
+  if (kill(process, SIGTERM) == -1) {
     return REPROC_ERROR_SYSTEM;
   }
 
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR process_kill(pid_t pid)
+REPROC_ERROR process_kill(pid_t process)
 {
-  if (kill(pid, SIGKILL) == -1) {
+  if (kill(process, SIGKILL) == -1) {
     return REPROC_ERROR_SYSTEM;
   }
 

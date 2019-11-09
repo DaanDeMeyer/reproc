@@ -21,19 +21,19 @@ struct process_options {
 };
 
 // Creates a child process and calls `execvp` with the arguments in `argv`. The
-// process id of the new child process is assigned to `pid`.
+// process id of the new child process is assigned to `process`.
 REPROC_ERROR
-process_create(pid_t *pid,
+process_create(pid_t *process,
                const char *const *argv,
                struct process_options options);
 
 // Waits `timeout` milliseconds for the process indicated by `pid` to exit and
 // stores the exit code in `exit_status`.
 REPROC_ERROR
-process_wait(pid_t pid, unsigned int timeout, unsigned int *exit_status);
+process_wait(pid_t process, unsigned int timeout, unsigned int *exit_status);
 
 // Sends the `SIGTERM` signal to the process indicated by `pid`.
-REPROC_ERROR process_terminate(pid_t pid);
+REPROC_ERROR process_terminate(pid_t process);
 
 // Sends the `SIGKILL` signal to the process indicated by `pid`.
-REPROC_ERROR process_kill(pid_t pid);
+REPROC_ERROR process_kill(pid_t process);
