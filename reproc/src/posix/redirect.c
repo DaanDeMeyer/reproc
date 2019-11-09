@@ -1,6 +1,6 @@
-#include <posix/redirect.h>
+#include <redirect.h>
 
-#include <posix/pipe.h>
+#include <pipe.h>
 
 #include <assert.h>
 #include <fcntl.h>
@@ -8,14 +8,14 @@
 
 static const char *DEVNULL = "/dev/null";
 
+static const struct pipe_options CHILD_OPTIONS = { .nonblocking = false };
+static const struct pipe_options PARENT_OPTIONS = { .nonblocking = true };
+
 REPROC_ERROR
 redirect(int *parent, int *child, REPROC_STREAM stream, REPROC_REDIRECT type)
 {
   assert(parent);
   assert(child);
-
-  const struct pipe_options blocking = { .nonblocking = false };
-  const struct pipe_options nonblocking = { .nonblocking = true };
 
   *parent = 0;
 
@@ -25,7 +25,7 @@ redirect(int *parent, int *child, REPROC_STREAM stream, REPROC_REDIRECT type)
 
       switch (type) {
         case REPROC_REDIRECT_PIPE:
-          return pipe_init(child, blocking, parent, nonblocking);
+          return pipe_init(child, CHILD_OPTIONS, parent, PARENT_OPTIONS);
 
         case REPROC_REDIRECT_INHERIT:
           *child = fileno(stdin);
@@ -44,7 +44,7 @@ redirect(int *parent, int *child, REPROC_STREAM stream, REPROC_REDIRECT type)
 
       switch (type) {
         case REPROC_REDIRECT_PIPE:
-          return pipe_init(parent, nonblocking, child, blocking);
+          return pipe_init(parent, PARENT_OPTIONS, child, CHILD_OPTIONS);
 
         case REPROC_REDIRECT_INHERIT:
           *child = fileno(stream == REPROC_STREAM_OUT ? stdout : stderr);

@@ -10,6 +10,16 @@
 extern "C" {
 #endif
 
+// `reproc_handle` allows to define a cross-platform internal API that is
+// implemented on each platform.
+#if defined(_WIN32)
+// `void *` = `HANDLE`
+typedef void *reproc_handle;
+#else
+// `int` = `pid_t` (used for fd's as well)
+typedef int reproc_handle;
+#endif
+
 /*! Used to store information about a child process. We define `reproc_t` in
 the header file so it can be allocated on the stack but its internals are prone
 to change and should **NOT** be depended on. */
@@ -18,18 +28,10 @@ typedef struct reproc_t {
   // successfully waiting once so we store the result.
   bool running;
   unsigned int exit_status;
-#if defined(_WIN32)
-  // `void *` = `HANDLE`
-  void *handle;
-  void *in;
-  void *out;
-  void *err;
-#else
-  int id;
-  int in;
-  int out;
-  int err;
-#endif
+  reproc_handle handle;
+  reproc_handle in;
+  reproc_handle out;
+  reproc_handle err;
 } reproc_t;
 
 /*! Used to tell reproc where to redirect the streams of the child process. */

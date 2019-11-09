@@ -1,7 +1,7 @@
-#include <windows/pipe.h>
+#include <pipe.h>
 
+#include <handle.h>
 #include <macro.h>
-#include <windows/handle.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -37,8 +37,8 @@ pipe_init(HANDLE *read,
   sprintf(name, "\\\\.\\Pipe\\RemoteExeAnon.%08lx.%08lx.%08lx",
           GetCurrentProcessId(), GetCurrentThreadId(), pipe_serial_number++);
 
-  DWORD read_mode = read_options.overlapped ? FILE_FLAG_OVERLAPPED : 0;
-  DWORD write_mode = write_options.overlapped ? FILE_FLAG_OVERLAPPED : 0;
+  DWORD read_mode = read_options.nonblocking ? FILE_FLAG_OVERLAPPED : 0;
+  DWORD write_mode = write_options.nonblocking ? FILE_FLAG_OVERLAPPED : 0;
 
   SECURITY_ATTRIBUTES security = { .nLength = sizeof(SECURITY_ATTRIBUTES),
                                    .lpSecurityDescriptor = NULL };

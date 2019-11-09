@@ -1,14 +1,14 @@
-#include <posix/process.h>
+#include <process.h>
 
-#include <posix/fd.h>
-#include <posix/path.h>
-#include <posix/pipe.h>
-
-#include <reproc/reproc.h>
+#include <handle.h>
+#include <pipe.h>
 
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
@@ -35,6 +35,68 @@
 #else
 #define SIGADDSET(set, signum) sigaddset((set), (signum))
 #endif
+
+// Returns true if the null-terminated string indicated by `path` is a relative
+// path. A path is relative if any character except the first is a forward slash
+// ('/').
+static bool path_is_relative(const char *path)
+{
+  return strlen(path) > 0 && path[0] != '/' && *strchr(path + 1, '/') != '\0';
+}
+
+// Prepends the null-terminated string indicated by `path` with the current
+// working directory. The caller is responsible for freeing the result of this
+// function. If an error occurs, `NULL` is returned and `errno` is set to
+// indicate the error.
+static char *path_prepend_cwd(const char *path)
+{
+  size_t path_size = strlen(path);
+  size_t cwd_size = PATH_MAX;
+
+  // We always allocate sufficient space for `path` but do not include this
+  // space in `cwd_size` so we can be sure that when `getcwd` succeeds there is
+  // sufficient space left in `cwd` to append `path`.
+
+  // +2 reserves space to add a null terminator and potentially a missing '/'
+  // after the current working directory.
+  char *cwd = malloc(sizeof(char) * cwd_size + path_size + 2);
+  if (!cwd) {
+    return NULL;
+  }
+
+  while (getcwd(cwd, cwd_size) == NULL) {
+    if (errno != ERANGE) {
+      free(cwd);
+      return NULL;
+    }
+
+    cwd_size += PATH_MAX;
+
+    char *result = realloc(cwd, cwd_size + path_size + 1);
+    if (result == NULL) {
+      free(cwd);
+      return NULL;
+    }
+
+    cwd = result;
+  }
+
+  cwd_size = strlen(cwd);
+
+  // Add a forward slash after `cwd` if there is none.
+  if (cwd[cwd_size - 1] != '/') {
+    cwd[cwd_size] = '/';
+    cwd[cwd_size + 1] = '\0';
+    cwd_size++;
+  }
+
+  // We've made sure there's sufficient space left in `cwd` to add `path` and a
+  // null terminator.
+  memcpy(cwd + cwd_size, path, path_size);
+  cwd[cwd_size + path_size] = '\0';
+
+  return cwd;
+}
 
 REPROC_ERROR
 process_create(pid_t *process,
@@ -181,13 +243,13 @@ process_create(pid_t *process,
 
   // Close error pipe write end on the parent's side so `pipe_read` will return
   // when it is closed on the child side as well.
-  fd_close(&error_pipe_write);
+  handle_close(&error_pipe_write);
 
   // `pipe_read` blocks until an error is reported from the child process or the
   // write end of the error pipe in the child process is closed.
   error = pipe_read(error_pipe_read, (uint8_t *) &child_error,
                     sizeof(child_error), &bytes_read);
-  fd_close(&error_pipe_read);
+  handle_close(&error_pipe_read);
 
   switch (error) {
     // `REPROC_ERROR_STREAM_CLOSED` is not an error because it means the pipe
@@ -217,8 +279,8 @@ process_create(pid_t *process,
   }
 
 cleanup:
-  fd_close(&error_pipe_read);
-  fd_close(&error_pipe_write);
+  handle_close(&error_pipe_read);
+  handle_close(&error_pipe_write);
 
   // `REPROC_ERROR_STREAM_CLOSED` is not an error here (see above).
   if (error != REPROC_SUCCESS && error != REPROC_ERROR_STREAM_CLOSED &&

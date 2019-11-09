@@ -1,7 +1,7 @@
-#include <posix/pipe.h>
+#include <pipe.h>
 
+#include <handle.h>
 #include <macro.h>
-#include <posix/fd.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -73,8 +73,8 @@ REPROC_ERROR pipe_init(int *read,
 
 cleanup:
   if (error) {
-    fd_close(read);
-    fd_close(write);
+    handle_close(read);
+    handle_close(write);
   }
 
   return error;

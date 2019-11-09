@@ -5,28 +5,21 @@ if(REPROC_MULTITHREADED)
   target_link_libraries(reproc PRIVATE Threads::Threads)
 endif()
 
-target_sources(reproc PRIVATE src/common.c src/sink.c)
+target_sources(reproc PRIVATE src/reproc.c src/sink.c)
 
 if(UNIX)
-  target_sources(reproc PRIVATE
-    src/posix/error.c
-    src/posix/fd.c
-    src/posix/path.c
-    src/posix/pipe.c
-    src/posix/process.c
-    src/posix/redirect.c
-    src/posix/reproc.c
-  )
+  set(REPROC_PLATFORM posix)
 elseif(WIN32)
-  target_sources(reproc PRIVATE
-    src/windows/error.c
-    src/windows/handle.c
-    src/windows/pipe.c
-    src/windows/process.c
-    src/windows/redirect.c
-    src/windows/reproc.c
-  )
+  set(REPROC_PLATFORM windows)
 endif()
+
+target_sources(reproc PRIVATE
+  src/${REPROC_PLATFORM}/error.c
+  src/${REPROC_PLATFORM}/handle.c
+  src/${REPROC_PLATFORM}/pipe.c
+  src/${REPROC_PLATFORM}/process.c
+  src/${REPROC_PLATFORM}/redirect.c
+)
 
 include(CheckSymbolExists)
 

@@ -1,6 +1,6 @@
-#include <windows/redirect.h>
+#include <redirect.h>
 
-#include <windows/pipe.h>
+#include <pipe.h>
 
 #include <assert.h>
 #include <stddef.h>
@@ -15,6 +15,12 @@ static SECURITY_ATTRIBUTES INHERIT_HANDLE = { .nLength = sizeof(
                                                   SECURITY_ATTRIBUTES),
                                               .bInheritHandle = false,
                                               .lpSecurityDescriptor = NULL };
+
+static const struct pipe_options CHILD_OPTIONS = { .inherit = true,
+                                                   .nonblocking = false };
+static const struct pipe_options PARENT_OPTIONS = { .inherit = false,
+                                                    .nonblocking = true };
+
 REPROC_ERROR
 redirect(HANDLE *parent,
          HANDLE *child,
@@ -24,11 +30,6 @@ redirect(HANDLE *parent,
   assert(parent);
   assert(child);
 
-  const struct pipe_options child_blocking = { .inherit = true,
-                                               .overlapped = false };
-  const struct pipe_options parent_overlapped = { .inherit = false,
-                                                  .overlapped = true };
-
   *parent = NULL;
 
   switch (stream) {
@@ -37,7 +38,7 @@ redirect(HANDLE *parent,
 
       switch (type) {
         case REPROC_REDIRECT_PIPE:
-          return pipe_init(child, child_blocking, parent, parent_overlapped);
+          return pipe_init(child, CHILD_OPTIONS, parent, PARENT_OPTIONS);
 
         case REPROC_REDIRECT_INHERIT:
           *child = GetStdHandle(STD_INPUT_HANDLE);
@@ -60,7 +61,7 @@ redirect(HANDLE *parent,
 
       switch (type) {
         case REPROC_REDIRECT_PIPE:
-          return pipe_init(parent, parent_overlapped, child, child_blocking);
+          return pipe_init(parent, PARENT_OPTIONS, child, CHILD_OPTIONS);
 
         case REPROC_REDIRECT_INHERIT:
           *child = GetStdHandle(stream == REPROC_STREAM_OUT ? STD_OUTPUT_HANDLE

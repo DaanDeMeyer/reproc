@@ -1,8 +1,6 @@
 #pragma once
 
-#include <reproc/error.h>
-
-typedef void *HANDLE;
+#include <reproc/reproc.h>
 
 struct process_options {
   // If `NULL`, the child process inherits the environment of the current
@@ -13,9 +11,9 @@ struct process_options {
   const char *working_directory;
 
   struct {
-    HANDLE in;
-    HANDLE out;
-    HANDLE err;
+    reproc_handle in;
+    reproc_handle out;
+    reproc_handle err;
   } redirect;
 };
 
@@ -25,17 +23,19 @@ struct process_options {
 // `handle` respectively. `options` contains options that modify how the child
 // process is spawned. See `process_options` for more information on the
 // possible options.
-REPROC_ERROR process_create(HANDLE *process,
+REPROC_ERROR process_create(reproc_handle *process,
                             const char *const *argv,
                             struct process_options options);
 
 // Waits `timeout` milliseconds for the process indicated by `pid` to exit and
 // stores the exit code in `exit_status`.
 REPROC_ERROR
-process_wait(HANDLE process, unsigned int timeout, unsigned int *exit_status);
+process_wait(reproc_handle process,
+             unsigned int timeout,
+             unsigned int *exit_status);
 
 // Sends the `CTRL-BREAK` signal to the process indicated by `pid`.
-REPROC_ERROR process_terminate(HANDLE process);
+REPROC_ERROR process_terminate(reproc_handle process);
 
 // Calls `TerminateProcess` on the process indicated by `handle`.
-REPROC_ERROR process_kill(HANDLE process);
+REPROC_ERROR process_kill(reproc_handle process);

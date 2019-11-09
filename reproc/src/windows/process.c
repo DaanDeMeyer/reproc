@@ -1,7 +1,7 @@
-#include <windows/process.h>
+#include <process.h>
 
+#include <handle.h>
 #include <macro.h>
-#include <windows/handle.h>
 
 #include <assert.h>
 #include <stdbool.h>

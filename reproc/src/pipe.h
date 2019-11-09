@@ -1,15 +1,10 @@
 #pragma once
 
-#include <reproc/error.h>
-
-#include <stdbool.h>
-#include <stdint.h>
-
-typedef void *HANDLE;
+#include <reproc/reproc.h>
 
 struct pipe_options {
-  bool inherit;
-  bool overlapped;
+  bool inherit; // Ignored on POSIX.
+  bool nonblocking;
 };
 
 // Creates a new anonymous pipe. `read` and `write` are set to the read and
@@ -17,9 +12,9 @@ struct pipe_options {
 // specify whether the `read` or `write` handle respectively should be inherited
 // by any child processes spawned by the current process.
 REPROC_ERROR
-pipe_init(HANDLE *read,
+pipe_init(reproc_handle *read,
           struct pipe_options read_options,
-          HANDLE *write,
+          reproc_handle *write,
           struct pipe_options write_options);
 
 // Reads up to `size` bytes from the pipe indicated by `handle` and stores them
@@ -27,7 +22,7 @@ pipe_init(HANDLE *read,
 //
 // This function only works on pipe handles opened with the
 // `FILE_FLAG_OVERLAPPED` flag.
-REPROC_ERROR pipe_read(HANDLE pipe,
+REPROC_ERROR pipe_read(reproc_handle pipe,
                        uint8_t *buffer,
                        unsigned int size,
                        unsigned int *bytes_read);
@@ -37,7 +32,7 @@ REPROC_ERROR pipe_read(HANDLE pipe,
 //
 // This function only works on pipe handles opened with the
 // `FILE_FLAG_OVERLAPPED` flag.
-REPROC_ERROR pipe_write(HANDLE pipe,
+REPROC_ERROR pipe_write(reproc_handle pipe,
                         const uint8_t *buffer,
                         unsigned int size,
                         unsigned int *bytes_written);
@@ -47,4 +42,5 @@ REPROC_ERROR pipe_write(HANDLE pipe,
 //
 // `REPROC_ERROR_STREAM_CLOSED` is returned if both `out` and `err` have been
 // closed.
-REPROC_ERROR pipe_wait(HANDLE *ready, HANDLE out, HANDLE err);
+REPROC_ERROR
+pipe_wait(reproc_handle *ready, reproc_handle out, reproc_handle err);
