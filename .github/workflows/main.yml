@@ -22,8 +22,7 @@ jobs:
           windows-clang,
           windows-gcc,
           macos-xcode,
-          macos-gcc-6,
-          macos-gcc-9
+          macos-gcc
         ]
 
         include:
@@ -67,15 +66,9 @@ jobs:
             os: macos-latest
             compiler: xcode
 
-          - name: macos-gcc-6
+          - name: macos-gcc
             os: macos-latest
             compiler: gcc
-            version: "6"
-
-          - name: macos-gcc-9
-            os: macos-latest
-            compiler: gcc
-            version: "9"
 
     steps:
       - uses: actions/checkout@v1
@@ -110,9 +103,9 @@ jobs:
           sudo ln -s /usr/local/opt/llvm/bin/clang-tidy /usr/local/bin/clang-tidy
 
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
-            brew install gcc@${{ matrix.version }}
-            echo "::set-env name=CC::gcc-${{ matrix.version }}"
-            echo "::set-env name=CXX::g++-${{ matrix.version }}"
+            brew install gcc
+            echo "::set-env name=CC::gcc"
+            echo "::set-env name=CXX::g++"
           else
             echo "::set-env name=CC::clang"
             echo "::set-env name=CXX::clang++"
