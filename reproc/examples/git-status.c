@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BUFFER_SIZE 4096
-
 static int fail(REPROC_ERROR error)
 {
   fprintf(stderr, "%s\n", reproc_error_string(error));
@@ -60,14 +58,14 @@ int main(void)
   // while loop keeps running until an error occurs in `reproc_read` (the child
   // process closing its output stream is also reported as an error).
   while (true) {
-    uint8_t buffer[BUFFER_SIZE];
+    uint8_t buffer[4096];
     unsigned int bytes_read = 0;
 
     // `reproc_read` takes an optional pointer to a `REPROC_STREAM` and sets its
     // value to the stream that it read from. As we're going to put both the
     // stdout and stderr output in the same string, we pass `NULL` since we
     // don't need to know which stream was read from.
-    error = reproc_read(&git_status, NULL, buffer, BUFFER_SIZE, &bytes_read);
+    error = reproc_read(&git_status, NULL, buffer, sizeof(buffer), &bytes_read);
     if (error) {
       break;
     }

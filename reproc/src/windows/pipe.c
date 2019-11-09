@@ -7,12 +7,19 @@
 #include <stdio.h>
 #include <windows.h>
 
-#define PIPE_BUFFER_SIZE 65536
-#define PIPE_SINGLE_INSTANCE 1
-#define PIPE_NO_TIMEOUT 0
+enum {
+  PIPE_BUFFER_SIZE = 65536,
+  PIPE_SINGLE_INSTANCE = 1,
+  PIPE_NO_TIMEOUT = 0,
+  FILE_NO_SHARE = 0,
+  FILE_NO_TEMPLATE = 0
+};
 
-#define FILE_NO_SHARE 0
-#define FILE_NO_TEMPLATE NULL
+static SECURITY_ATTRIBUTES HANDLE_DO_NOT_INHERIT = {
+  .nLength = sizeof(SECURITY_ATTRIBUTES),
+  .bInheritHandle = false,
+  .lpSecurityDescriptor = NULL
+};
 
 #ifdef __MINGW32__
 static __thread unsigned long pipe_serial_number = 0;
@@ -26,6 +33,9 @@ pipe_init(HANDLE *read,
           HANDLE *write,
           struct pipe_options write_options)
 {
+  assert(read);
+  assert(write);
+
   // Windows anonymous pipes don't support overlapped I/O so we use named pipes
   // instead. This code has been adapted from
   // https://stackoverflow.com/a/419736/11900641.
@@ -60,7 +70,7 @@ pipe_init(HANDLE *read,
 
   *write = CreateFileA(name, GENERIC_WRITE, FILE_NO_SHARE, &security,
                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | write_mode,
-                       FILE_NO_TEMPLATE);
+                       (HANDLE) FILE_NO_TEMPLATE);
 
   if (*write == INVALID_HANDLE_VALUE) {
     goto cleanup;
@@ -77,11 +87,6 @@ cleanup:
   return error;
 }
 
-static SECURITY_ATTRIBUTES DO_NOT_INHERIT = { .nLength = sizeof(
-                                                  SECURITY_ATTRIBUTES),
-                                              .bInheritHandle = false,
-                                              .lpSecurityDescriptor = NULL };
-
 REPROC_ERROR pipe_read(HANDLE pipe,
                        uint8_t *buffer,
                        unsigned int size,
@@ -94,7 +99,7 @@ REPROC_ERROR pipe_read(HANDLE pipe,
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
   OVERLAPPED overlapped = { 0 };
-  overlapped.hEvent = CreateEvent(&DO_NOT_INHERIT, true, false, NULL);
+  overlapped.hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false, NULL);
   if (overlapped.hEvent == NULL) {
     goto cleanup;
   }
@@ -113,7 +118,7 @@ REPROC_ERROR pipe_read(HANDLE pipe,
   }
 
   // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
-  rv = GetOverlappedResult(pipe, &overlapped, (LPDWORD) bytes_read, TRUE);
+  rv = GetOverlappedResult(pipe, &overlapped, (LPDWORD) bytes_read, true);
   if (rv == 0) {
     goto cleanup;
   }
@@ -138,7 +143,7 @@ REPROC_ERROR pipe_write(HANDLE pipe,
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
   OVERLAPPED overlapped = { 0 };
-  overlapped.hEvent = CreateEvent(&DO_NOT_INHERIT, true, false, NULL);
+  overlapped.hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false, NULL);
   if (overlapped.hEvent == NULL) {
     goto cleanup;
   }
@@ -157,7 +162,7 @@ REPROC_ERROR pipe_write(HANDLE pipe,
   }
 
   // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
-  rv = GetOverlappedResult(pipe, &overlapped, (LPDWORD) bytes_written, TRUE);
+  rv = GetOverlappedResult(pipe, &overlapped, (LPDWORD) bytes_written, true);
   if (rv == 0) {
     goto cleanup;
   }
@@ -190,7 +195,7 @@ REPROC_ERROR pipe_wait(HANDLE *ready, HANDLE out, HANDLE err)
   // https://github.com/python/cpython/blob/10ecbadb799ddf3393d1fc80119a3db14724d381/Lib/multiprocessing/connection.py#L826
 
   for (DWORD i = 0; i < ARRAY_SIZE(handles); i++) {
-    overlapped[i].hEvent = CreateEvent(&DO_NOT_INHERIT, true, false, NULL);
+    overlapped[i].hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false, NULL);
     if (overlapped[i].hEvent == NULL) {
       goto cleanup;
     }
@@ -260,7 +265,7 @@ cleanup:;
 
     DWORD bytes_transferred = 0;
     rv = (DWORD) GetOverlappedResult(handles[i], &overlapped[i],
-                                     &bytes_transferred, TRUE);
+                                     &bytes_transferred, true);
     if (rv == 0 && GetLastError() != ERROR_OPERATION_ABORTED &&
         GetLastError() != ERROR_BROKEN_PIPE) {
       error = REPROC_ERROR_SYSTEM;

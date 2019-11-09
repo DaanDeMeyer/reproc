@@ -4,9 +4,26 @@
 #include <macro.h>
 
 #include <assert.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <windows.h>
+
+static const DWORD CREATION_FLAGS =
+    // Create each child process in a new process group so we don't send
+    // `CTRL-BREAK` signals to more than one child process in
+    // `process_terminate`.
+    CREATE_NEW_PROCESS_GROUP |
+    // Create each child process with a Unicode environment as we accept any
+    // UTF-16 encoded environment (including Unicode characters). Create each
+    CREATE_UNICODE_ENVIRONMENT |
+    // Create each child with an extended STARTUPINFOEXW structure so we can
+    // specify which handles should be inherited.
+    EXTENDED_STARTUPINFO_PRESENT;
+
+static SECURITY_ATTRIBUTES HANDLE_DO_NOT_INHERIT = {
+  .nLength = sizeof(SECURITY_ATTRIBUTES),
+  .bInheritHandle = false,
+  .lpSecurityDescriptor = NULL
+};
 
 // Argument escaping implementation is based on the following blog post:
 // https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
@@ -235,23 +252,6 @@ handle_inherit_list_create(HANDLE *handles, size_t num_handles)
   return attribute_list;
 }
 
-static const DWORD CREATION_FLAGS =
-    // Create each child process in a new process group so we don't send
-    // `CTRL-BREAK` signals to more than one child process in
-    // `process_terminate`.
-    CREATE_NEW_PROCESS_GROUP |
-    // Create each child process with a Unicode environment as we accept any
-    // UTF-16 encoded environment (including Unicode characters). Create each
-    CREATE_UNICODE_ENVIRONMENT |
-    // Create each child with an extended STARTUPINFOEXW structure so we can
-    // specify which handles should be inherited.
-    EXTENDED_STARTUPINFO_PRESENT;
-
-static SECURITY_ATTRIBUTES DO_NOT_INHERIT = { .nLength = sizeof(
-                                                  SECURITY_ATTRIBUTES),
-                                              .bInheritHandle = false,
-                                              .lpSecurityDescriptor = NULL };
-
 REPROC_ERROR process_create(HANDLE *process,
                             const char *const *argv,
                             struct process_options options)
@@ -344,8 +344,8 @@ REPROC_ERROR process_create(HANDLE *process,
   LPSTARTUPINFOW startup_info_address = &extended_startup_info.StartupInfo;
 
   PROCESS_INFORMATION info;
-  BOOL rv = CreateProcessW(NULL, command_line_wstring, &DO_NOT_INHERIT,
-                           &DO_NOT_INHERIT, TRUE, CREATION_FLAGS,
+  BOOL rv = CreateProcessW(NULL, command_line_wstring, &HANDLE_DO_NOT_INHERIT,
+                           &HANDLE_DO_NOT_INHERIT, true, CREATION_FLAGS,
                            environment_line_wstring, working_directory_wstring,
                            startup_info_address, &info);
   if (!rv) {

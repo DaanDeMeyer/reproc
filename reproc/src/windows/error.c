@@ -1,6 +1,5 @@
 #include <reproc/error.h>
 
-#include <assert.h>
 #include <windows.h>
 
 unsigned int reproc_error_system(void)
@@ -8,7 +7,7 @@ unsigned int reproc_error_system(void)
   return GetLastError();
 }
 
-#define ERROR_STRING_MAX_SIZE 512
+enum { ERROR_STRING_MAX_SIZE = 512 };
 
 const char *reproc_error_string(REPROC_ERROR error)
 {

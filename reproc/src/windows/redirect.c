@@ -3,11 +3,9 @@
 #include <pipe.h>
 
 #include <assert.h>
-#include <stddef.h>
 #include <windows.h>
 
-#define FILE_NO_SHARE 0
-#define FILE_NO_TEMPLATE NULL
+enum { FILE_NO_SHARE = 0, FILE_NO_TEMPLATE = 0 };
 
 static const char *DEVNULL = "NUL";
 
@@ -48,7 +46,7 @@ redirect(HANDLE *parent,
         case REPROC_REDIRECT_DISCARD:
           *child = CreateFile(DEVNULL, GENERIC_READ, FILE_NO_SHARE,
                               &INHERIT_HANDLE, OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL, FILE_NO_TEMPLATE);
+                              FILE_ATTRIBUTE_NORMAL, (HANDLE) FILE_NO_TEMPLATE);
           return *child == INVALID_HANDLE_VALUE ? REPROC_ERROR_SYSTEM
                                                 : REPROC_SUCCESS;
       }
@@ -72,7 +70,7 @@ redirect(HANDLE *parent,
         case REPROC_REDIRECT_DISCARD:
           *child = CreateFile(DEVNULL, GENERIC_WRITE, FILE_NO_SHARE,
                               &INHERIT_HANDLE, OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL, FILE_NO_TEMPLATE);
+                              FILE_ATTRIBUTE_NORMAL, (HANDLE) FILE_NO_TEMPLATE);
           return *child == INVALID_HANDLE_VALUE ? REPROC_ERROR_SYSTEM
                                                 : REPROC_SUCCESS;
       }
