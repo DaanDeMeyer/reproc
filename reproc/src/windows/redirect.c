@@ -11,7 +11,7 @@ static const char *DEVNULL = "NUL";
 
 static SECURITY_ATTRIBUTES INHERIT_HANDLE = { .nLength = sizeof(
                                                   SECURITY_ATTRIBUTES),
-                                              .bInheritHandle = false,
+                                              .bInheritHandle = true,
                                               .lpSecurityDescriptor = NULL };
 
 static const struct pipe_options CHILD_OPTIONS = { .inherit = true,
