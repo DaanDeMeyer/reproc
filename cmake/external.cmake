@@ -26,4 +26,6 @@ if(REPROC_MULTITHREADED)
   if(NOT Threads_FOUND)
     message(FATAL_ERROR "REPROC_MULTITHREADED is enabled but the system's thread library was not found.")
   endif()
+
+  set(REPROC_THREAD_LIBRARY ${CMAKE_THREAD_LIBS_INIT})
 endif()
