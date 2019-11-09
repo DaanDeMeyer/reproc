@@ -16,7 +16,7 @@ reproc_start(reproc_t *process, const char *const *argv, reproc_options options)
   assert(argv);
   assert(argv[0] != NULL);
 
-  process->running = false;
+  *process = (reproc_t){ 0 };
 
   // Predeclare every variable so we can use `goto`.
 
