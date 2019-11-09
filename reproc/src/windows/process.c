@@ -101,7 +101,7 @@ static size_t argument_escape(char *dest, const char *argument)
   return (size_t)(dest - begin);
 }
 
-char *argv_join(const char *const *argv)
+static char *argv_join(const char *const *argv)
 {
   assert(argv);
 
@@ -136,7 +136,7 @@ char *argv_join(const char *const *argv)
   return joined;
 }
 
-size_t environment_join_size(const char *const *environment)
+static size_t environment_join_size(const char *const *environment)
 {
   size_t joined_size = 1; // Count the null terminator.
   for (int i = 0; environment[i] != NULL; i++) {
@@ -146,7 +146,7 @@ size_t environment_join_size(const char *const *environment)
   return joined_size;
 }
 
-char *environment_join(const char *const *environment)
+static char *environment_join(const char *const *environment)
 {
   assert(environment);
 
@@ -167,7 +167,7 @@ char *environment_join(const char *const *environment)
   return joined;
 }
 
-wchar_t *string_to_wstring(const char *string, size_t size)
+static wchar_t *string_to_wstring(const char *string, size_t size)
 {
   assert(string);
   // Overflow check although we really don't expect this to ever happen. This
@@ -201,44 +201,51 @@ wchar_t *string_to_wstring(const char *string, size_t size)
   return wstring;
 }
 
-#include <stdlib.h>
-
-static REPROC_ERROR handle_inherit_list_create(
-    HANDLE *handles, size_t amount, LPPROC_THREAD_ATTRIBUTE_LIST *result)
+static LPPROC_THREAD_ATTRIBUTE_LIST
+handle_inherit_list_create(HANDLE *handles, size_t num_handles)
 {
   assert(handles);
-  assert(result);
 
   // Get the required size for `attribute_list`.
   SIZE_T attribute_list_size = 0;
   if (!InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size) &&
       GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-    return REPROC_ERROR_SYSTEM;
+    return NULL;
   }
 
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = malloc(attribute_list_size);
   if (!attribute_list) {
-    return REPROC_ERROR_SYSTEM;
+    return NULL;
   }
 
   if (!InitializeProcThreadAttributeList(attribute_list, 1, 0,
                                          &attribute_list_size)) {
     free(attribute_list);
-    return REPROC_ERROR_SYSTEM;
+    return NULL;
   }
 
   // Add the handles to be inherited to `attribute_list`.
   if (!UpdateProcThreadAttribute(attribute_list, 0,
                                  PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,
-                                 amount * sizeof(HANDLE), NULL, NULL)) {
+                                 num_handles * sizeof(HANDLE), NULL, NULL)) {
     DeleteProcThreadAttributeList(attribute_list);
-    return REPROC_ERROR_SYSTEM;
+    return NULL;
   }
 
-  *result = attribute_list;
-
-  return REPROC_SUCCESS;
+  return attribute_list;
 }
+
+static const DWORD CREATION_FLAGS =
+    // Create each child process in a new process group so we don't send
+    // `CTRL-BREAK` signals to more than one child process in
+    // `process_terminate`.
+    CREATE_NEW_PROCESS_GROUP |
+    // Create each child process with a Unicode environment as we accept any
+    // UTF-16 encoded environment (including Unicode characters). Create each
+    CREATE_UNICODE_ENVIRONMENT |
+    // Create each child with an extended STARTUPINFOEXW structure so we can
+    // specify which handles should be inherited.
+    EXTENDED_STARTUPINFO_PRESENT;
 
 static SECURITY_ATTRIBUTES DO_NOT_INHERIT = { .nLength = sizeof(
                                                   SECURITY_ATTRIBUTES),
@@ -246,19 +253,63 @@ static SECURITY_ATTRIBUTES DO_NOT_INHERIT = { .nLength = sizeof(
                                               .lpSecurityDescriptor = NULL };
 
 REPROC_ERROR process_create(HANDLE *process,
-                            wchar_t *command_line,
+                            const char *const *argv,
                             struct process_options options)
 {
   assert(process);
-  assert(command_line);
+  assert(argv);
 
-  // Create each child process in a new process group so we don't send
-  // `CTRL-BREAK` signals to more than one child process in `process_terminate`.
-  // Create each child process with a Unicode environment as we accept any
-  // UTF-16 encoded environment (including Unicode characters).
-  DWORD creation_flags = CREATE_NEW_PROCESS_GROUP | CREATE_UNICODE_ENVIRONMENT;
+  char *command_line = NULL;
+  wchar_t *command_line_wstring = NULL;
+  char *environment_line = NULL;
+  wchar_t *environment_line_wstring = NULL;
+  wchar_t *working_directory_wstring = NULL;
+  LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
 
-  REPROC_ERROR error = REPROC_SUCCESS;
+  // Child processes inherit the error mode of their parents. To avoid child
+  // processes creating error dialogs we set our error mode to not create error
+  // dialogs temporarily which is inherited by the child process.
+  DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+
+  REPROC_ERROR error = REPROC_ERROR_SYSTEM;
+
+  // Join `argv` to a whitespace delimited string as required by
+  // `CreateProcessW`.
+  command_line = argv_join(argv);
+  if (command_line == NULL) {
+    goto cleanup;
+  }
+
+  // Convert UTF-8 to UTF-16 as required by `CreateProcessW`.
+  command_line_wstring = string_to_wstring(command_line,
+                                           strlen(command_line) + 1);
+  if (command_line_wstring == NULL) {
+    goto cleanup;
+  }
+
+  // Idem for `environment` if it isn't `NULL`.
+  if (options.environment != NULL) {
+    environment_line = environment_join(options.environment);
+    if (environment_line == NULL) {
+      goto cleanup;
+    }
+
+    size_t joined_size = environment_join_size(options.environment);
+    environment_line_wstring = string_to_wstring(environment_line, joined_size);
+    if (environment_line_wstring == NULL) {
+      goto cleanup;
+    }
+  }
+
+  // Idem for `working_directory` if it isn't `NULL`.
+  if (options.working_directory != NULL) {
+    size_t working_directory_size = strlen(options.working_directory) + 1;
+    working_directory_wstring = string_to_wstring(options.working_directory,
+                                                  working_directory_size);
+    if (working_directory_wstring == NULL) {
+      goto cleanup;
+    }
+  }
 
   // Windows Vista added the `STARTUPINFOEXW` structure in which we can put a
   // list of handles that should be inherited. Only these handles are inherited
@@ -267,62 +318,57 @@ REPROC_ERROR process_create(HANDLE *process,
   // handles it should inherit can still unintentionally inherit handles meant
   // for a reproc child process. See https://stackoverflow.com/a/2345126 for
   // more information.
-
   HANDLE inherit[3] = { options.redirect.in, options.redirect.out,
                         options.redirect.err };
-
-  LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
-  error = handle_inherit_list_create(inherit, ARRAY_SIZE(inherit),
-                                     &attribute_list);
-  if (error) {
-    return error;
+  attribute_list = handle_inherit_list_create(inherit, ARRAY_SIZE(inherit));
+  if (attribute_list == NULL) {
+    goto cleanup;
   }
-
-  creation_flags |= EXTENDED_STARTUPINFO_PRESENT;
 
   STARTUPINFOEXW extended_startup_info = {
     .StartupInfo = { .cb = sizeof(extended_startup_info),
-                     .dwFlags = STARTF_USESTDHANDLES,
+                     .dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW,
+                     // `STARTF_USESTDHANDLES`
                      .hStdInput = options.redirect.in,
                      .hStdOutput = options.redirect.out,
-                     .hStdError = options.redirect.err },
+                     .hStdError = options.redirect.err,
+                     // `STARTF_USESHOWWINDOW`. Make sure the console window of
+                     // the child process isn't visible. See
+                     // https://github.com/DaanDeMeyer/reproc/issues/6 and
+                     // https://github.com/DaanDeMeyer/reproc/pull/7 for more
+                     // information.
+                     .wShowWindow = SW_HIDE },
     .lpAttributeList = attribute_list
   };
 
   LPSTARTUPINFOW startup_info_address = &extended_startup_info.StartupInfo;
 
-  // Make sure the console window of the child process isn't visible. See
-  // https://github.com/DaanDeMeyer/reproc/issues/6 and
-  // https://github.com/DaanDeMeyer/reproc/pull/7 for more information.
-  startup_info_address->dwFlags |= STARTF_USESHOWWINDOW;
-  startup_info_address->wShowWindow = SW_HIDE;
-
   PROCESS_INFORMATION info;
-
-  // Child processes inherit the error mode of their parents. To avoid child
-  // processes creating error dialogs we set our error mode to not create error
-  // dialogs temporarily which is inherited by the child process.
-  DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
-
-  BOOL result = CreateProcessW(NULL, command_line, &DO_NOT_INHERIT,
-                               &DO_NOT_INHERIT, TRUE, creation_flags,
-                               options.environment, options.working_directory,
-                               startup_info_address, &info);
-
-  SetErrorMode(previous_error_mode);
-
-  DeleteProcThreadAttributeList(attribute_list);
+  BOOL rv = CreateProcessW(NULL, command_line_wstring, &DO_NOT_INHERIT,
+                           &DO_NOT_INHERIT, TRUE, CREATION_FLAGS,
+                           environment_line_wstring, working_directory_wstring,
+                           startup_info_address, &info);
+  if (!rv) {
+    goto cleanup;
+  }
 
   // We don't need the handle to the primary thread of the child process.
   handle_close(&info.hThread);
-
-  if (!result) {
-    return REPROC_ERROR_SYSTEM;
-  }
-
   *process = info.hProcess;
 
-  return REPROC_SUCCESS;
+  error = REPROC_SUCCESS;
+
+cleanup:
+  free(command_line);
+  free(command_line_wstring);
+  free(environment_line);
+  free(environment_line_wstring);
+  free(working_directory_wstring);
+  DeleteProcThreadAttributeList(attribute_list);
+
+  SetErrorMode(previous_error_mode);
+
+  return error;
 }
 
 REPROC_ERROR

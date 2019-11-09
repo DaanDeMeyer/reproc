@@ -16,28 +16,13 @@ reproc_start(reproc_t *process, const char *const *argv, reproc_options options)
   assert(argv);
   assert(argv[0] != NULL);
 
-  *process = (reproc_t){ 0 };
-
-  // Predeclare every variable so we can use `goto`.
-
   HANDLE child_in = NULL;
   HANDLE child_out = NULL;
   HANDLE child_err = NULL;
 
-  char *command_line = NULL;
-  wchar_t *command_line_wstring = NULL;
-  char *environment_line = NULL;
-  wchar_t *environment_line_wstring = NULL;
-  wchar_t *working_directory_wstring = NULL;
-
-  // Initialize to `REPROC_ERROR_SYSTEM` so we don't accidentally return
-  // `REPROC_SUCCESS`.
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
-  // While we already make sure the child process only inherits the child pipe
-  // handles using `STARTUPINFOEXW` (see `process.c`) we still disable
-  // inheritance of the parent pipe handles to lower the chance of child
-  // processes not created by reproc unintentionally inheriting these handles.
+  *process = (reproc_t){ 0 };
 
   error = redirect(&process->in, &child_in, REPROC_STREAM_IN,
                    options.redirect.in);
@@ -57,52 +42,13 @@ reproc_start(reproc_t *process, const char *const *argv, reproc_options options)
     goto cleanup;
   }
 
-  // Join `argv` to a whitespace delimited string as required by
-  // `CreateProcessW`.
-  command_line = argv_join(argv);
-  if (command_line == NULL) {
-    goto cleanup;
-  }
-
-  // Convert UTF-8 to UTF-16 as required by `CreateProcessW`.
-  command_line_wstring = string_to_wstring(command_line,
-                                           strlen(command_line) + 1);
-  if (command_line_wstring == NULL) {
-    goto cleanup;
-  }
-
-  // Idem for `environment` if it isn't `NULL`.
-  if (options.environment != NULL) {
-    environment_line = environment_join(options.environment);
-    if (environment_line == NULL) {
-      goto cleanup;
-    }
-
-    size_t joined_size = environment_join_size(options.environment);
-    environment_line_wstring = string_to_wstring(environment_line, joined_size);
-    if (environment_line_wstring == NULL) {
-      goto cleanup;
-    }
-  }
-
-  // Convert `working_directory` to UTF-16 if it isn't `NULL`.
-  if (options.working_directory != NULL) {
-    size_t working_directory_size = strlen(options.working_directory) + 1;
-    working_directory_wstring = string_to_wstring(options.working_directory,
-                                                  working_directory_size);
-    if (working_directory_wstring == NULL) {
-      goto cleanup;
-    }
-  }
-
   struct process_options process_options = {
-    .environment = environment_line_wstring,
-    .working_directory = working_directory_wstring,
+    .environment = options.environment,
+    .working_directory = options.working_directory,
     .redirect = { .in = child_in, .out = child_out, .err = child_err }
   };
 
-  error = process_create(&process->handle, command_line_wstring,
-                         process_options);
+  error = process_create(&process->handle, argv, process_options);
   if (error) {
     goto cleanup;
   }
@@ -111,17 +57,11 @@ reproc_start(reproc_t *process, const char *const *argv, reproc_options options)
 
 cleanup:
   // Either an error has ocurred or the child pipe endpoints have been copied to
-  // the stdin/stdout/stderr streams of the child process. Either way they can
+  // the stdin/stdout/stderr streams of the child process. Either way, they can
   // be safely closed in the parent process.
   handle_close(&child_in);
   handle_close(&child_out);
   handle_close(&child_err);
-
-  free(command_line);
-  free(command_line_wstring);
-  free(environment_line);
-  free(environment_line_wstring);
-  free(working_directory_wstring);
 
   if (error) {
     reproc_destroy(process);
