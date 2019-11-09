@@ -19,7 +19,10 @@ TEST_CASE("environment")
                                        nullptr };
   std::array<const char *, 3> envp = { "IP=127.0.0.1", "PORT=8080", nullptr };
 
-  error = reproc_start(&process, argv.data(), { .environment = envp.data() });
+  reproc_options options = {};
+  options.environment = envp.data();
+
+  error = reproc_start(&process, argv.data(), options);
   REQUIRE(!error);
 
   char *output = nullptr;
