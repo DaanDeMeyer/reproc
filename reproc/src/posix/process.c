@@ -315,13 +315,14 @@ static REPROC_ERROR wait_no_hang(pid_t process, unsigned int *exit_status)
   int status = 0;
   // Adding `WNOHANG` makes `waitpid` only check if the child process is still
   // running without waiting.
-  pid_t wait_result = waitpid(process, &status, WNOHANG);
-  if (wait_result == 0) {
+  pid_t rv = waitpid(process, &status, WNOHANG);
+  if (rv == 0) {
     return REPROC_ERROR_WAIT_TIMEOUT;
-  } else if (wait_result == -1) {
+  } else if (rv == -1) {
     return REPROC_ERROR_SYSTEM;
   }
 
+  assert(rv == process);
   *exit_status = parse_exit_status(status);
 
   return REPROC_SUCCESS;
