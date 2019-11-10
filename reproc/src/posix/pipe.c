@@ -40,11 +40,7 @@ REPROC_ERROR pipe_init(int *read,
   // If `pipe2` is not available we fall back to calling `fcntl` to set
   // `FD_CLOEXEC` immediately after creating a pipe.
 
-#if defined(REPROC_PIPE2_FOUND)
-  if (pipe2(pipefd, O_CLOEXEC) == -1) {
-    goto cleanup;
-  }
-#else
+#if defined(__APPLE__)
   if (pipe(pipefd) == -1) {
     goto cleanup;
   }
@@ -54,6 +50,10 @@ REPROC_ERROR pipe_init(int *read,
   }
 
   if (fcntl(pipefd[1], F_SETFD, FD_CLOEXEC) == -1) {
+    goto cleanup;
+  }
+#else
+  if (pipe2(pipefd, O_CLOEXEC) == -1) {
     goto cleanup;
   }
 #endif

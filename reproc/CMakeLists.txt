@@ -21,8 +21,6 @@ target_sources(reproc PRIVATE
   src/${REPROC_PLATFORM}/redirect.c
 )
 
-include(CheckSymbolExists)
-
 if(WIN32)
   target_compile_definitions(reproc PRIVATE WIN32_LEAN_AND_MEAN)
 endif()
@@ -34,25 +32,12 @@ if(MINGW)
   )
 endif()
 
-if(UNIX)
-  # Check if `pipe2` is available.
-  # Access to `pipe2` on Linux requires `_GNU_SOURCE` to be defined.
-
-  if(CMAKE_SYSTEM_NAME STREQUAL Linux)
-    list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
-  endif()
-
-  check_symbol_exists(pipe2 unistd.h REPROC_PIPE2_FOUND)
-
-  if(CMAKE_SYSTEM_NAME STREQUAL Linux)
-    list(REMOVE_AT CMAKE_REQUIRED_DEFINITIONS -1)
-  endif()
-
-  target_compile_definitions(reproc PRIVATE
-    $<$<PLATFORM_ID:Linux>:_GNU_SOURCE> # Needed for `pipe2` and `execvpe`.
-    $<$<BOOL:${REPROC_PIPE2_FOUND}>:REPROC_PIPE2_FOUND>
-  )
-endif()
+target_compile_definitions(reproc PRIVATE
+  $<$<PLATFORM_ID:Linux>:
+    # Needed for `pipe2` and `execvpe`.
+    _GNU_SOURCE
+  >
+)
 
 if(REPROC_TEST)
   target_sources(reproc-test PRIVATE
