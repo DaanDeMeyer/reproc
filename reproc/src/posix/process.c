@@ -334,10 +334,12 @@ static REPROC_ERROR wait_infinite(pid_t process, unsigned int *exit_status)
 
   int status = 0;
 
-  if (waitpid(process, &status, 0) == -1) {
+  pid_t rv = waitpid(process, &status, 0);
+  if (rv == -1) {
     return REPROC_ERROR_SYSTEM;
   }
 
+  assert(rv == process);
   *exit_status = parse_exit_status(status);
 
   return REPROC_SUCCESS;
