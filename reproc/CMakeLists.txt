@@ -21,18 +21,13 @@ target_sources(reproc PRIVATE
   src/${REPROC_PLATFORM}/redirect.c
 )
 
-if(WIN32)
-  target_compile_definitions(reproc PRIVATE WIN32_LEAN_AND_MEAN)
-endif()
-
-if(MINGW)
-  target_compile_definitions(reproc PRIVATE
-    WINVER=0x0600 # `WC_ERR_INVALID_CHARS`
-    _WIN32_WINNT=0x0600 # `InitializeProcThreadAttributeList`
-  )
-endif()
-
 target_compile_definitions(reproc PRIVATE
+  $<$<PLATFORM_ID:Windows>:
+    WIN32_LEAN_AND_MEAN
+    # Needed for `WC_ERR_INVALID_CHARS` and `InitializeProcThreadAttributeList`.
+    _WIN32_WINNT=_WIN32_WINNT_VISTA
+    NTDDI_VERSION=NTDDI_VISTA
+  >
   $<$<PLATFORM_ID:Linux>:
     # Needed for `pipe2` and `execvpe`.
     _GNU_SOURCE
