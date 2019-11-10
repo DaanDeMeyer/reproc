@@ -98,6 +98,8 @@ static char *path_prepend_cwd(const char *path)
   return cwd;
 }
 
+static const struct pipe_options PIPE_BLOCKING = { .nonblocking = false };
+
 REPROC_ERROR
 process_create(pid_t *process,
                const char *const *argv,
@@ -107,19 +109,15 @@ process_create(pid_t *process,
   assert(argv[0] != NULL);
   assert(process);
 
-  // Predeclare variables so we can use `goto`.
-  REPROC_ERROR error = REPROC_SUCCESS;
   pid_t child_process = 0;
-  int child_error = 0;
-  unsigned int bytes_read = 0;
-
-  const struct pipe_options blocking = { .nonblocking = false };
+  REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
   // We create an error pipe to receive errors from the child process. See this
   // answer https://stackoverflow.com/a/1586277 for more information.
   int error_pipe_read = 0;
   int error_pipe_write = 0;
-  error = pipe_init(&error_pipe_read, blocking, &error_pipe_write, blocking);
+  error = pipe_init(&error_pipe_read, PIPE_BLOCKING, &error_pipe_write,
+                    PIPE_BLOCKING);
   if (error) {
     goto cleanup;
   }
@@ -241,6 +239,9 @@ process_create(pid_t *process,
   // when it is closed on the child side as well.
   handle_close(&error_pipe_write);
 
+  int child_error = 0;
+  unsigned int bytes_read = 0;
+
   // `pipe_read` blocks until an error is reported from the child process or the
   // write end of the error pipe in the child process is closed.
   error = pipe_read(error_pipe_read, (uint8_t *) &child_error,
@@ -260,39 +261,32 @@ process_create(pid_t *process,
   // If an error was written to the error pipe we check that a full integer was
   // actually read. We don't expect a partial write to happen but if it ever
   // happens this should make it easier to discover.
-  if (error == REPROC_SUCCESS && bytes_read != sizeof(child_error)) {
-    error = REPROC_ERROR_SYSTEM;
-    goto cleanup;
-  }
+  assert(error == REPROC_ERROR_STREAM_CLOSED ||
+         bytes_read == sizeof(child_error));
 
   // If `read` does not return 0 an error will have occurred in the child
   // process (or with `read` itself but this is less likely).
   if (child_error != 0) {
     // Allow retrieving child process errors with `reproc_error_system`.
-    errno = child_error;
     error = REPROC_ERROR_SYSTEM;
+    errno = child_error;
     goto cleanup;
   }
+
+  error = REPROC_SUCCESS;
+  *process = child_process;
 
 cleanup:
   handle_close(&error_pipe_read);
   handle_close(&error_pipe_write);
 
-  // `REPROC_ERROR_STREAM_CLOSED` is not an error here (see above).
-  if (error != REPROC_SUCCESS && error != REPROC_ERROR_STREAM_CLOSED &&
-      child_process > 0) {
-    // Make sure the child process doesn't become a zombie process the child
-    // process was started (`child_process` > 0) but an error occurred.
-    if (waitpid(child_process, NULL, 0) == -1) {
-      return REPROC_ERROR_SYSTEM;
-    }
-
-    return error;
+  // Make sure the child process doesn't become a zombie process if the child
+  // process was started (`child_process` > 0) but an error occurred.
+  if (error && child_process > 0 && waitpid(child_process, NULL, 0) == -1) {
+    error = REPROC_ERROR_SYSTEM;
   }
 
-  *process = child_process;
-
-  return REPROC_SUCCESS;
+  return error;
 }
 
 static unsigned int parse_exit_status(int status)
