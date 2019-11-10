@@ -210,29 +210,25 @@ process_create(pid_t *process,
         continue;
       }
 
+      // We ignore `close` errors since we try to close every file descriptor
+      // including invalid ones and `close` sets `errno` when an invalid file
+      // descriptor is passed.
       close(i);
     }
 
-    // Ignore `close` errors since we try to close every file descriptor and
-    // `close` sets `errno` when an invalid file descriptor is passed.
-
-    // Replace the forked process with the process specified in `argv`'s first
-    // element. The casts are safe since `execvpe` doesn't actually change the
-    // contents of `argv` and `envp`.
-
-    int err = 0;
+    // The casts are safe since `execvp(e)` doesn't actually change the contents
+    // of `arguments` and `environment`.
+    char *const *arguments = (char *const *) argv;
+    char *const *environment = (char *const *) options.environment;
 
     if (options.environment != NULL) {
-      err = EXECVPE(program, (char *const *) argv,
-                    (char *const *) options.environment);
+      EXECVPE(program, arguments, environment);
     } else {
-      err = execvp(program, (char *const *) argv);
+      execvp(program, arguments);
     }
 
-    if (err == -1) {
-      (void) !write(error_pipe_write, &errno, sizeof(errno));
-    }
-
+    // We're guaranteed `execvp(e)` failed if this code is executed.
+    (void) !write(error_pipe_write, &errno, sizeof(errno));
     _exit(errno);
   }
 
