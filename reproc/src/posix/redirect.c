@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <unistd.h>
 
 static const char *DEVNULL = "/dev/null";
 
@@ -29,7 +28,7 @@ redirect(int *parent, int *child, REPROC_STREAM stream, REPROC_REDIRECT type)
           return pipe_init(child, CHILD_OPTIONS, parent, PARENT_OPTIONS);
 
         case REPROC_REDIRECT_INHERIT:
-          *child = dup(fileno(stdin));
+          *child = fcntl(fileno(stdin), F_DUPFD_CLOEXEC, 0);
           return *child == -1 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 
         case REPROC_REDIRECT_DISCARD:
@@ -47,8 +46,9 @@ redirect(int *parent, int *child, REPROC_STREAM stream, REPROC_REDIRECT type)
         case REPROC_REDIRECT_PIPE:
           return pipe_init(parent, PARENT_OPTIONS, child, CHILD_OPTIONS);
 
-        case REPROC_REDIRECT_INHERIT:
-          *child = dup(fileno(stream == REPROC_STREAM_OUT ? stdout : stderr));
+        case REPROC_REDIRECT_INHERIT:;
+          int fd = fileno(stream == REPROC_STREAM_OUT ? stdout : stderr);
+          *child = fcntl(fd, F_DUPFD_CLOEXEC, 0);
           return *child == -1 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 
         case REPROC_REDIRECT_DISCARD:
