@@ -19,6 +19,23 @@ redirect(int *parent, int *child, REPROC_STREAM stream, REPROC_REDIRECT type)
 
   *parent = 0;
 
+  int fd = -1;
+
+  if (type == REPROC_REDIRECT_INHERIT) {
+    // `REPROC_STREAM` => `FILE *`
+    FILE *file = stream == REPROC_STREAM_IN
+                     ? stdin
+                     : stream == REPROC_STREAM_OUT ? stdout : stderr;
+    fd = fileno(file);
+
+    // If we're inheriting a parent stream and the stream is not a valid stream
+    // (`fd == -1`), we interpret this as if the child process is inheriting a
+    // closed stream and discard all output from the child process stream.
+    if (fd == -1) {
+      type = REPROC_REDIRECT_DISCARD;
+    }
+  }
+
   switch (stream) {
 
     case REPROC_STREAM_IN:
@@ -28,7 +45,7 @@ redirect(int *parent, int *child, REPROC_STREAM stream, REPROC_REDIRECT type)
           return pipe_init(child, CHILD_OPTIONS, parent, PARENT_OPTIONS);
 
         case REPROC_REDIRECT_INHERIT:
-          *child = fcntl(fileno(stdin), F_DUPFD_CLOEXEC, 0);
+          *child = fcntl(fd, F_DUPFD_CLOEXEC, 0);
           return *child == -1 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 
         case REPROC_REDIRECT_DISCARD:
@@ -46,8 +63,7 @@ redirect(int *parent, int *child, REPROC_STREAM stream, REPROC_REDIRECT type)
         case REPROC_REDIRECT_PIPE:
           return pipe_init(parent, PARENT_OPTIONS, child, CHILD_OPTIONS);
 
-        case REPROC_REDIRECT_INHERIT:;
-          int fd = fileno(stream == REPROC_STREAM_OUT ? stdout : stderr);
+        case REPROC_REDIRECT_INHERIT:
           *child = fcntl(fd, F_DUPFD_CLOEXEC, 0);
           return *child == -1 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 
