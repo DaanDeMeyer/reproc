@@ -37,13 +37,12 @@ redirect_inherit(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
   assert(child);
 
   *parent = NULL;
-  HANDLE *stream_handle = NULL;
-
   DWORD stream_id = stream == REPROC_STREAM_IN
                         ? STD_INPUT_HANDLE
                         : stream == REPROC_STREAM_OUT ? STD_OUTPUT_HANDLE
                                                       : STD_ERROR_HANDLE;
-  stream_handle = GetStdHandle(stream_id);
+
+  HANDLE *stream_handle = GetStdHandle(stream_id);
   if (stream_handle == INVALID_HANDLE_VALUE) {
     return REPROC_ERROR_SYSTEM;
   }
