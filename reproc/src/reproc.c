@@ -7,6 +7,19 @@
 #include <redirect.h>
 
 #include <assert.h>
+#include <stdlib.h>
+
+struct reproc_t {
+  // On POSIX systems, we can't wait again on the same process after
+  // successfully waiting once so we store the result.
+  bool running;
+  unsigned int exit_status;
+
+  reproc_handle handle;
+  reproc_handle in;
+  reproc_handle out;
+  reproc_handle err;
+};
 
 const unsigned int REPROC_INFINITE = 0xFFFFFFFF; // == `INFINITE` on Windows
 
@@ -33,6 +46,11 @@ static REPROC_ERROR redirect(reproc_handle *parent,
 
   assert(false);
   return REPROC_ERROR_SYSTEM;
+}
+
+reproc_t *reproc_new(void)
+{
+  return malloc(sizeof(reproc_t));
 }
 
 REPROC_ERROR
@@ -338,4 +356,6 @@ void reproc_destroy(reproc_t *process)
   handle_close(&process->in);
   handle_close(&process->out);
   handle_close(&process->err);
+
+  free(process);
 }

@@ -15,7 +15,7 @@ static int fail(REPROC_ERROR error)
 int main(void)
 {
   // `reproc_t` stores necessary information between calls to reproc's API.
-  reproc_t git_status;
+  reproc_t *git_status = reproc_new();
 
   // `argv` must start with the name of the program to execute and must end with
   // a `NULL` value.
@@ -31,7 +31,7 @@ int main(void)
   // If the working directory is `NULL` the working directory of the parent
   // process is used. If the environment is `NULL`, the environment of the
   // parent process is used.
-  error = reproc_start(&git_status, argv, (reproc_options){ 0 });
+  error = reproc_start(git_status, argv, (reproc_options){ 0 });
 
   // reproc exposes a single error enum `REPROC_ERROR` which contains errors
   // specific to reproc and `REPROC_ERROR_SYSTEM` to indicate a system error
@@ -46,7 +46,7 @@ int main(void)
   // Close the stdin stream since we're not going to write any input to git.
   // While the example works perfectly without closing stdin we do it here to
   // show how `reproc_close` works.
-  reproc_close(&git_status, REPROC_STREAM_IN);
+  reproc_close(git_status, REPROC_STREAM_IN);
 
   // Start with an empty string (only space for the null terminator is
   // allocated).
@@ -65,7 +65,7 @@ int main(void)
     // value to the stream that it read from. As we're going to put both the
     // stdout and stderr output in the same string, we pass `NULL` since we
     // don't need to know which stream was read from.
-    error = reproc_read(&git_status, NULL, buffer, sizeof(buffer), &bytes_read);
+    error = reproc_read(git_status, NULL, buffer, sizeof(buffer), &bytes_read);
     if (error) {
       break;
     }
@@ -101,20 +101,20 @@ cleanup:
   // Wait for the process to exit. This should always be done since some systems
   // (POSIX) don't clean up system resources allocated to a child process until
   // the parent process explicitly waits for it after it has exited.
-  error = reproc_wait(&git_status, REPROC_INFINITE);
+  error = reproc_wait(git_status, REPROC_INFINITE);
 
-  // git status will always exit on its own so calling reproc_terminate or
-  // reproc_kill is not necessary.
+  // git status will always exit on its own so calling `reproc_terminate` or
+  // `reproc_kill` is not necessary.
 
-  // Clean up the resources allocated to the child process. Calling this
-  // function before calling `reproc_wait` (or `reproc_terminate`/`reproc_kill`)
-  // successfully will result in a resource leak on POSIX systems. See the
-  // Gotchas section in the readme for more information.
-  reproc_destroy(&git_status);
+  // Clean up all the resources allocated to the child process (including the
+  // memory allocated by `reproc_new`). Always execute a successful call to
+  // `reproc_wait` or `reproc_stop` before calling `reproc_destroy` to avoid
+  // resource leaks.
+  reproc_destroy(git_status);
 
   if (error) {
     return fail(error);
   }
 
-  return (int) reproc_exit_status(&git_status);
+  return (int) reproc_exit_status(git_status);
 }

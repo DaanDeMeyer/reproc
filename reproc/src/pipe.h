@@ -1,6 +1,11 @@
 #pragma once
 
-#include <reproc/reproc.h>
+#include <reproc/error.h>
+
+#include <handle.h>
+
+#include <stdbool.h>
+#include <stdint.h>
 
 struct pipe_options {
   bool inherit; // Ignored on POSIX.

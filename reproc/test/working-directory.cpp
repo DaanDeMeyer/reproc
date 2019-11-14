@@ -6,7 +6,8 @@
 
 TEST_CASE("working-directory")
 {
-  reproc_t process;
+  reproc_t *process = reproc_new();
+  REQUIRE(process);
 
   REPROC_ERROR error = REPROC_SUCCESS;
   INFO(reproc_error_system());
@@ -18,12 +19,12 @@ TEST_CASE("working-directory")
   reproc_options options = {};
   options.working_directory = working_directory;
 
-  error = reproc_start(&process, argv.data(), options);
+  error = reproc_start(process, argv.data(), options);
   REQUIRE(!error);
 
-  error = reproc_wait(&process, REPROC_INFINITE);
+  error = reproc_wait(process, REPROC_INFINITE);
   REQUIRE(!error);
-  REQUIRE(reproc_exit_status(&process) == 0);
+  REQUIRE(reproc_exit_status(process) == 0);
 
-  reproc_destroy(&process);
+  reproc_destroy(process);
 }

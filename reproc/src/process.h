@@ -1,6 +1,8 @@
 #pragma once
 
-#include <reproc/reproc.h>
+#include <reproc/error.h>
+
+#include <handle.h>
 
 struct process_options {
   // If `NULL`, the child process inherits the environment of the current

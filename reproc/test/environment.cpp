@@ -9,7 +9,8 @@
 
 TEST_CASE("environment")
 {
-  reproc_t process;
+  reproc_t *process = reproc_new();
+  REQUIRE(process);
 
   REPROC_ERROR error = REPROC_SUCCESS;
   INFO(reproc_error_system());
@@ -22,19 +23,19 @@ TEST_CASE("environment")
   reproc_options options = {};
   options.environment = envp.data();
 
-  error = reproc_start(&process, argv.data(), options);
+  error = reproc_start(process, argv.data(), options);
   REQUIRE(!error);
 
   char *output = nullptr;
-  error = reproc_drain(&process, reproc_sink_string, &output);
+  error = reproc_drain(process, reproc_sink_string, &output);
   REQUIRE(!error);
   REQUIRE(output != nullptr);
 
-  error = reproc_wait(&process, REPROC_INFINITE);
+  error = reproc_wait(process, REPROC_INFINITE);
   REQUIRE(!error);
-  REQUIRE(reproc_exit_status(&process) == 0);
+  REQUIRE(reproc_exit_status(process) == 0);
 
-  reproc_destroy(&process);
+  reproc_destroy(process);
 
   std::ostringstream concatenated;
   std::copy(envp.begin(), envp.end() - 1,

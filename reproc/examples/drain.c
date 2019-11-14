@@ -17,18 +17,18 @@ static int fail(REPROC_ERROR error)
 // information on how to use reproc.
 int main(void)
 {
-  reproc_t git_help;
+  reproc_t *git_help = reproc_new();
 
   const char *argv[3] = { "git", "--help", NULL };
 
   REPROC_ERROR error = REPROC_SUCCESS;
 
-  error = reproc_start(&git_help, argv, (reproc_options) { 0 });
+  error = reproc_start(git_help, argv, (reproc_options) { 0 });
   if (error) {
     return fail(error);
   }
 
-  reproc_close(&git_help, REPROC_STREAM_IN);
+  reproc_close(git_help, REPROC_STREAM_IN);
 
   // A sink function receives a single context parameter. For
   // `reproc_sink_string` we require a `char **` with its value set to `NULL` to
@@ -36,7 +36,7 @@ int main(void)
   // function needs more than one parameter, simply store the parameters in a
   // struct and pass the address of the struct as the `context` parameter.
   char *output = NULL;
-  error = reproc_drain(&git_help, reproc_sink_string, &output);
+  error = reproc_drain(git_help, reproc_sink_string, &output);
   if (error) {
     goto cleanup;
   }
@@ -53,13 +53,13 @@ cleanup:
   // `reproc_sink_string` so it's always safe to call `free` on it.
   free(output);
 
-  error = reproc_wait(&git_help, REPROC_INFINITE);
+  error = reproc_wait(git_help, REPROC_INFINITE);
 
-  reproc_destroy(&git_help);
+  reproc_destroy(git_help);
 
   if (error) {
     return fail(error);
   }
 
-  return (int) reproc_exit_status(&git_help);
+  return (int) reproc_exit_status(git_help);
 }

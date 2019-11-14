@@ -153,7 +153,7 @@ public:
   REPROCXX_EXPORT unsigned int exit_status() noexcept;
 
 private:
-  std::unique_ptr<reproc_t> process_;
+  std::unique_ptr<reproc_t, void (*)(reproc_t *)> process_;
 
   cleanup c1_;
   milliseconds t1_;

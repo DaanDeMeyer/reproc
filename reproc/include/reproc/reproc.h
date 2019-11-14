@@ -10,29 +10,10 @@
 extern "C" {
 #endif
 
-// `reproc_handle` allows to define a cross-platform internal API that is
-// implemented on each platform.
-#if defined(_WIN32)
-// `void *` = `HANDLE`
-typedef void *reproc_handle;
-#else
-// `int` = `pid_t` (used for fd's as well)
-typedef int reproc_handle;
-#endif
-
-/*! Used to store information about a child process. We define `reproc_t` in
-the header file so it can be allocated on the stack but its internals are prone
-to change and should **NOT** be depended on. */
-typedef struct reproc_t {
-  // On POSIX systems, we can't wait again on the same process after
-  // successfully waiting once so we store the result.
-  bool running;
-  unsigned int exit_status;
-  reproc_handle handle;
-  reproc_handle in;
-  reproc_handle out;
-  reproc_handle err;
-} reproc_t;
+/*! Used to store information about a child process. `reproc_t` is an opaque
+type and can be allocated and freed via `reproc_new` and `reproc_free`
+respectively. */
+typedef struct reproc_t reproc_t;
 
 /*! Used to tell reproc where to redirect the streams of the child process. */
 typedef enum {
@@ -90,6 +71,9 @@ typedef enum {
 
 /*! Tells a function that takes a timeout value to wait indefinitely. */
 REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
+
+/* Allocate a new `reproc_t` instance on the heap. */
+REPROC_EXPORT reproc_t *reproc_new(void);
 
 /*!
 Starts the process specified by `argv` in the given working directory and
@@ -311,8 +295,9 @@ REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_t *process,
 function before `process` has exited. */
 REPROC_EXPORT unsigned int reproc_exit_status(reproc_t *process);
 
-/*! Frees all allocated resources stored in `process`. It is undefined behaviour
-to call this function before `process` has exited. */
+/*! Release all resources associated with `process` including the memory
+allocated by `reproc_new`. Calling this function before a succesfull call to
+`reproc_wait` can result in resource leaks. */
 REPROC_EXPORT void reproc_destroy(reproc_t *process);
 
 #ifdef __cplusplus

@@ -2,6 +2,8 @@
 
 #include <reproc/reproc.h>
 
+#include <handle.h>
+
 // Sets up the requested redirection type for the given stream and stores the
 // resulting handles in `parent` and `child`.
 //

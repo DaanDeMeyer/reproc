@@ -20,23 +20,23 @@ int main(int argc, const char *argv[])
     return 1;
   }
 
-  reproc_t process;
+  reproc_t *process = reproc_new();
 
   reproc_options options = { .redirect = { .in = REPROC_REDIRECT_INHERIT,
                                            .out = REPROC_REDIRECT_INHERIT,
                                            .err = REPROC_REDIRECT_INHERIT } };
 
-  REPROC_ERROR error = reproc_start(&process, argv + 1, options);
+  REPROC_ERROR error = reproc_start(process, argv + 1, options);
   if (error) {
     return fail(error);
   }
 
-  error = reproc_wait(&process, REPROC_INFINITE);
+  error = reproc_wait(process, REPROC_INFINITE);
   if (error) {
     return fail(error);
   }
 
-  reproc_destroy(&process);
+  reproc_destroy(process);
 
-  return (int) reproc_exit_status(&process);
+  return (int) reproc_exit_status(process);
 }

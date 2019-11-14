@@ -34,7 +34,7 @@ process::process(cleanup c1,
                  milliseconds t2,
                  cleanup c3,
                  milliseconds t3)
-    : process_(new reproc_t()),
+    : process_(reproc_new(), reproc_destroy),
       c1_(c1),
       t1_(t1),
       c2_(c2),
@@ -51,8 +51,6 @@ process::~process() noexcept
   }
 
   stop(c1_, t1_, c2_, t2_, c3_, t3_);
-
-  reproc_destroy(process_.get());
 }
 
 process::process(process &&) noexcept = default; // NOLINT

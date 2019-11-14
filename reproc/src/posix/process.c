@@ -36,6 +36,10 @@
 #define SIGADDSET(set, signum) sigaddset((set), (signum))
 #endif
 
+// Including the entire reproc.h header is overkill so we import only the
+// constant we need.
+extern const unsigned int REPROC_INFINITE;
+
 // Returns true if the null-terminated string indicated by `path` is a relative
 // path. A path is relative if any character except the first is a forward slash
 // ('/').
