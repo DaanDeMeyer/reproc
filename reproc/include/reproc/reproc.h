@@ -291,9 +291,9 @@ REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_t *process,
                                        REPROC_CLEANUP c3,
                                        unsigned int t3);
 
-/*! Returns the exit status of `process`. It is undefined behaviour to call this
-function before `process` has exited. */
-REPROC_EXPORT unsigned int reproc_exit_status(reproc_t *process);
+/*! Returns the exit status of `process` if `process` has exited. Returns `-1`
+if `process` has not yet exited. */
+REPROC_EXPORT int reproc_exit_status(reproc_t *process);
 
 /*! Release all resources associated with `process` including the memory
 allocated by `reproc_new`. Calling this function before a succesfull call to

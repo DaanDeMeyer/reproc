@@ -150,7 +150,7 @@ public:
        milliseconds t3 = milliseconds(0)) noexcept;
 
   /*! `reproc_exit_status` */
-  REPROCXX_EXPORT unsigned int exit_status() noexcept;
+  REPROCXX_EXPORT int exit_status() noexcept;
 
 private:
   std::unique_ptr<reproc_t, void (*)(reproc_t *)> process_;

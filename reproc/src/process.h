@@ -32,9 +32,7 @@ REPROC_ERROR process_create(reproc_handle *process,
 // Waits `timeout` milliseconds for the process indicated by `pid` to exit and
 // stores the exit code in `exit_status`.
 REPROC_ERROR
-process_wait(reproc_handle process,
-             unsigned int timeout,
-             unsigned int *exit_status);
+process_wait(reproc_handle process, unsigned int timeout, int *exit_status);
 
 // Sends the `CTRL-BREAK` signal to the process indicated by `pid`.
 REPROC_ERROR process_terminate(reproc_handle process);

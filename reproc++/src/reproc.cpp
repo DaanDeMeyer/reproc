@@ -137,7 +137,7 @@ std::error_code process::stop(cleanup c1,
   return error_to_error_code(error);
 }
 
-unsigned int process::exit_status() noexcept
+int process::exit_status() noexcept
 {
   return reproc_exit_status(process_.get());
 }

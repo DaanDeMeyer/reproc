@@ -293,20 +293,18 @@ cleanup:
   return error;
 }
 
-static unsigned int parse_exit_status(int status)
+static int parse_exit_status(int status)
 {
-  // `WEXITSTATUS` returns a value between [0,256) so casting to `unsigned int`
-  // is safe.
   if (WIFEXITED(status)) {
-    return (unsigned int) WEXITSTATUS(status);
+    return WEXITSTATUS(status);
   }
 
   assert(WIFSIGNALED(status));
 
-  return (unsigned int) WTERMSIG(status);
+  return WTERMSIG(status);
 }
 
-static REPROC_ERROR wait_no_hang(pid_t process, unsigned int *exit_status)
+static REPROC_ERROR wait_no_hang(pid_t process, int *exit_status)
 {
   assert(exit_status);
 
@@ -326,7 +324,7 @@ static REPROC_ERROR wait_no_hang(pid_t process, unsigned int *exit_status)
   return REPROC_SUCCESS;
 }
 
-static REPROC_ERROR wait_infinite(pid_t process, unsigned int *exit_status)
+static REPROC_ERROR wait_infinite(pid_t process, int *exit_status)
 {
   assert(exit_status);
 
@@ -360,7 +358,7 @@ static struct timespec timespec_subtract(struct timespec lhs,
 }
 
 static REPROC_ERROR
-wait_timeout(pid_t process, unsigned int timeout, unsigned int *exit_status)
+wait_timeout(pid_t process, unsigned int timeout, int *exit_status)
 {
   assert(timeout > 0);
   assert(exit_status);
@@ -474,7 +472,7 @@ cleanup:
 }
 
 REPROC_ERROR
-process_wait(pid_t process, unsigned int timeout, unsigned int *exit_status)
+process_wait(pid_t process, unsigned int timeout, int *exit_status)
 {
   assert(exit_status);
 

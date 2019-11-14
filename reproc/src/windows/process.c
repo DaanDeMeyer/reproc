@@ -373,7 +373,7 @@ cleanup:
 }
 
 REPROC_ERROR
-process_wait(HANDLE process, unsigned int timeout, unsigned int *exit_status)
+process_wait(HANDLE process, unsigned int timeout, int *exit_status)
 {
   assert(process);
   assert(exit_status);
@@ -385,10 +385,12 @@ process_wait(HANDLE process, unsigned int timeout, unsigned int *exit_status)
     return REPROC_ERROR_SYSTEM;
   }
 
-  // `DWORD` is a typedef to `unsigned int` on Windows so the cast is safe.
-  if (!GetExitCodeProcess(process, (LPDWORD) exit_status)) {
+  DWORD status = 0;
+  if (!GetExitCodeProcess(process, &status)) {
     return REPROC_ERROR_SYSTEM;
   }
+
+  *exit_status = (int) status;
 
   return REPROC_SUCCESS;
 }

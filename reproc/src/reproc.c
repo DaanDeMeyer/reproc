@@ -13,7 +13,7 @@ struct reproc_t {
   // On POSIX systems, we can't wait again on the same process after
   // successfully waiting once so we store the result.
   bool running;
-  unsigned int exit_status;
+  int exit_status;
 
   reproc_handle handle;
   reproc_handle in;
@@ -50,7 +50,14 @@ static REPROC_ERROR redirect(reproc_handle *parent,
 
 reproc_t *reproc_new(void)
 {
-  return malloc(sizeof(reproc_t));
+  reproc_t *process = malloc(sizeof(reproc_t));
+  if (process == NULL) {
+    return NULL;
+  }
+
+  *process = (reproc_t) { .exit_status = -1 };
+
+  return process;
 }
 
 REPROC_ERROR
@@ -63,8 +70,6 @@ reproc_start(reproc_t *process, const char *const *argv, reproc_options options)
   reproc_handle child_in = 0;
   reproc_handle child_out = 0;
   reproc_handle child_err = 0;
-
-  *process = (reproc_t){ 0 };
 
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
@@ -205,7 +210,7 @@ bool reproc_running(reproc_t *process)
   return reproc_wait(process, 0) == REPROC_SUCCESS ? false : true;
 }
 
-unsigned int reproc_exit_status(reproc_t *process)
+int reproc_exit_status(reproc_t *process)
 {
   assert(process);
   return process->exit_status;

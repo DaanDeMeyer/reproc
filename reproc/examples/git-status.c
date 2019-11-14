@@ -116,5 +116,5 @@ cleanup:
     return fail(error);
   }
 
-  return (int) reproc_exit_status(git_status);
+  return reproc_exit_status(git_status);
 }
