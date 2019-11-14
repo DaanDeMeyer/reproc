@@ -19,7 +19,7 @@ static const struct pipe_options CHILD_OPTIONS = { .inherit = true,
 static const struct pipe_options PARENT_OPTIONS = { .inherit = false,
                                                     .nonblocking = true };
 
-static REPROC_ERROR
+REPROC_ERROR
 redirect_pipe(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
 {
   assert(parent);
@@ -30,7 +30,7 @@ redirect_pipe(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
              : pipe_init(parent, PARENT_OPTIONS, child, CHILD_OPTIONS);
 }
 
-static REPROC_ERROR
+REPROC_ERROR
 redirect_inherit(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
 {
   assert(parent);
@@ -58,7 +58,7 @@ redirect_inherit(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
   return rv == 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 }
 
-static REPROC_ERROR
+REPROC_ERROR
 redirect_discard(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
 {
   assert(parent);
@@ -72,30 +72,4 @@ redirect_discard(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
                       (HANDLE) FILE_NO_TEMPLATE);
 
   return *child == INVALID_HANDLE_VALUE ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
-}
-
-REPROC_ERROR
-redirect(HANDLE *parent,
-         HANDLE *child,
-         REPROC_STREAM stream,
-         REPROC_REDIRECT type)
-{
-  switch (type) {
-
-    case REPROC_REDIRECT_PIPE:
-      return redirect_pipe(parent, child, stream);
-
-    case REPROC_REDIRECT_INHERIT:
-      REPROC_ERROR error = redirect_inherit(parent, child, stream);
-      // Discard if the corresponding parent stream is closed.
-      return error == REPROC_ERROR_STREAM_CLOSED
-                 ? redirect_discard(parent, child, stream)
-                 : error;
-
-    case REPROC_REDIRECT_DISCARD:
-      return redirect_discard(parent, child, stream);
-  }
-
-  assert(false);
-  return REPROC_ERROR_SYSTEM;
 }

@@ -10,6 +10,31 @@
 
 const unsigned int REPROC_INFINITE = 0xFFFFFFFF; // == `INFINITE` on Windows
 
+static REPROC_ERROR redirect(reproc_handle *parent,
+                             reproc_handle *child,
+                             REPROC_STREAM stream,
+                             REPROC_REDIRECT type)
+{
+  switch (type) {
+
+    case REPROC_REDIRECT_PIPE:
+      return redirect_pipe(parent, child, stream);
+
+    case REPROC_REDIRECT_INHERIT:;
+      REPROC_ERROR error = redirect_inherit(parent, child, stream);
+      // Discard if the corresponding parent stream is closed.
+      return error == REPROC_ERROR_STREAM_CLOSED
+                 ? redirect_discard(parent, child, stream)
+                 : error;
+
+    case REPROC_REDIRECT_DISCARD:
+      return redirect_discard(parent, child, stream);
+  }
+
+  assert(false);
+  return REPROC_ERROR_SYSTEM;
+}
+
 REPROC_ERROR
 reproc_start(reproc_t *process, const char *const *argv, reproc_options options)
 {

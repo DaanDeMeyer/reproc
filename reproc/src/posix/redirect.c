@@ -11,7 +11,7 @@ static const char *DEVNULL = "/dev/null";
 static const struct pipe_options CHILD_OPTIONS = { .nonblocking = false };
 static const struct pipe_options PARENT_OPTIONS = { .nonblocking = true };
 
-static REPROC_ERROR redirect_pipe(int *parent, int *child, REPROC_STREAM stream)
+REPROC_ERROR redirect_pipe(int *parent, int *child, REPROC_STREAM stream)
 {
   assert(parent);
   assert(child);
@@ -21,8 +21,7 @@ static REPROC_ERROR redirect_pipe(int *parent, int *child, REPROC_STREAM stream)
              : pipe_init(parent, PARENT_OPTIONS, child, CHILD_OPTIONS);
 }
 
-static REPROC_ERROR
-redirect_inherit(int *parent, int *child, REPROC_STREAM stream)
+REPROC_ERROR redirect_inherit(int *parent, int *child, REPROC_STREAM stream)
 {
   assert(parent);
   assert(child);
@@ -42,8 +41,7 @@ redirect_inherit(int *parent, int *child, REPROC_STREAM stream)
   return *child == -1 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 }
 
-static REPROC_ERROR
-redirect_discard(int *parent, int *child, REPROC_STREAM stream)
+REPROC_ERROR redirect_discard(int *parent, int *child, REPROC_STREAM stream)
 {
   assert(parent);
   assert(child);
@@ -54,26 +52,4 @@ redirect_discard(int *parent, int *child, REPROC_STREAM stream)
   *child = open(DEVNULL, mode | O_CLOEXEC);
 
   return *child == -1 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
-}
-
-REPROC_ERROR
-redirect(int *parent, int *child, REPROC_STREAM stream, REPROC_REDIRECT type)
-{
-  switch (type) {
-
-    case REPROC_REDIRECT_PIPE:
-      return redirect_pipe(parent, child, stream);
-
-    case REPROC_REDIRECT_INHERIT:;
-      REPROC_ERROR error = redirect_inherit(parent, child, stream);
-      return error == REPROC_ERROR_STREAM_CLOSED
-                 ? redirect_discard(parent, child, stream)
-                 : error;
-
-    case REPROC_REDIRECT_DISCARD:
-      return redirect_discard(parent, child, stream);
-  }
-
-  assert(false);
-  return REPROC_ERROR_SYSTEM;
 }
