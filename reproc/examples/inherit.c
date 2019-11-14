@@ -36,7 +36,9 @@ int main(int argc, const char *argv[])
     return fail(error);
   }
 
+  int exit_status = reproc_exit_status(process);
+
   reproc_destroy(process);
 
-  return reproc_exit_status(process);
+  return exit_status;
 }

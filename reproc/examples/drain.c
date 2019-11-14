@@ -55,11 +55,13 @@ cleanup:
 
   error = reproc_wait(git_help, REPROC_INFINITE);
 
+  int exit_status = reproc_exit_status(git_help);
+
   reproc_destroy(git_help);
 
   if (error) {
     return fail(error);
   }
 
-  return reproc_exit_status(git_help);
+  return exit_status;
 }

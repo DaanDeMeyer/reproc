@@ -106,6 +106,8 @@ cleanup:
   // git status will always exit on its own so calling `reproc_terminate` or
   // `reproc_kill` is not necessary.
 
+  int exit_status = reproc_exit_status(git_status);
+
   // Clean up all the resources allocated to the child process (including the
   // memory allocated by `reproc_new`). Always execute a successful call to
   // `reproc_wait` or `reproc_stop` before calling `reproc_destroy` to avoid
@@ -116,5 +118,5 @@ cleanup:
     return fail(error);
   }
 
-  return reproc_exit_status(git_status);
+  return exit_status;
 }
