@@ -9,10 +9,9 @@
 #include <assert.h>
 #include <stdlib.h>
 
+enum { REPROC_STATUS_NOT_STARTED = -1, REPROC_STATUS_RUNNING = -2 };
+
 struct reproc_t {
-  // On POSIX systems, we can't wait again on the same process after
-  // successfully waiting once so we store the result.
-  bool running;
   int exit_status;
 
   reproc_handle handle;
@@ -55,7 +54,7 @@ reproc_t *reproc_new(void)
     return NULL;
   }
 
-  *process = (reproc_t) { .exit_status = -1 };
+  *process = (reproc_t){ .exit_status = REPROC_STATUS_NOT_STARTED };
 
   return process;
 }
@@ -64,6 +63,7 @@ REPROC_ERROR
 reproc_start(reproc_t *process, const char *const *argv, reproc_options options)
 {
   assert(process);
+  assert(process->exit_status == REPROC_STATUS_NOT_STARTED);
   assert(argv);
   assert(argv[0]);
 
@@ -115,7 +115,7 @@ cleanup:
   if (error) {
     reproc_destroy(process);
   } else {
-    process->running = true;
+    process->exit_status = REPROC_STATUS_RUNNING;
   }
 
   return error;
@@ -128,6 +128,7 @@ REPROC_ERROR reproc_read(reproc_t *process,
                          unsigned int *bytes_read)
 {
   assert(process);
+  assert(process->exit_status == REPROC_STATUS_RUNNING);
   assert(buffer);
   assert(bytes_read);
 
@@ -158,6 +159,7 @@ REPROC_ERROR reproc_parse(reproc_t *process,
                           void *context)
 {
   assert(process);
+  assert(process->exit_status == REPROC_STATUS_RUNNING);
   assert(parser);
 
   // A single call to `read` might contain multiple messages. By always calling
@@ -197,6 +199,7 @@ reproc_drain(reproc_t *process,
              void *context)
 {
   assert(process);
+  assert(process->exit_status == REPROC_STATUS_RUNNING);
   assert(sink);
 
   REPROC_ERROR error = reproc_parse(process, sink, context);
@@ -204,23 +207,12 @@ reproc_drain(reproc_t *process,
   return error == REPROC_ERROR_STREAM_CLOSED ? REPROC_SUCCESS : error;
 }
 
-bool reproc_running(reproc_t *process)
-{
-  assert(process);
-  return reproc_wait(process, 0) == REPROC_SUCCESS ? false : true;
-}
-
-int reproc_exit_status(reproc_t *process)
-{
-  assert(process);
-  return process->exit_status;
-}
-
 REPROC_ERROR
 reproc_write(reproc_t *process, const uint8_t *buffer, unsigned int size)
 {
   assert(process);
   assert(process->in);
+  assert(process->exit_status == REPROC_STATUS_RUNNING);
   assert(buffer);
 
   do {
@@ -242,6 +234,7 @@ reproc_write(reproc_t *process, const uint8_t *buffer, unsigned int size)
 void reproc_close(reproc_t *process, REPROC_STREAM stream)
 {
   assert(process);
+  assert(process->exit_status == REPROC_STATUS_RUNNING);
 
   switch (stream) {
     case REPROC_STREAM_IN:
@@ -262,25 +255,25 @@ REPROC_ERROR reproc_wait(reproc_t *process, unsigned int timeout)
 {
   assert(process);
 
-  if (!process->running) {
+  if (process->exit_status != REPROC_STATUS_RUNNING) {
     return REPROC_SUCCESS;
   }
 
-  REPROC_ERROR error = process_wait(process->handle, timeout,
-                                    &process->exit_status);
+  return process_wait(process->handle, timeout, &process->exit_status);
+}
 
-  if (error == REPROC_SUCCESS) {
-    process->running = false;
-  }
+bool reproc_running(reproc_t *process)
+{
+  assert(process);
 
-  return error;
+  return reproc_wait(process, 0) == REPROC_ERROR_WAIT_TIMEOUT;
 }
 
 REPROC_ERROR reproc_terminate(reproc_t *process)
 {
   assert(process);
 
-  if (!process->running) {
+  if (!reproc_running(process)) {
     return REPROC_SUCCESS;
   }
 
@@ -291,7 +284,7 @@ REPROC_ERROR reproc_kill(reproc_t *process)
 {
   assert(process);
 
-  if (!process->running) {
+  if (!reproc_running(process)) {
     return REPROC_SUCCESS;
   }
 
@@ -346,6 +339,13 @@ REPROC_ERROR reproc_stop(reproc_t *process,
   }
 
   return error;
+}
+
+int reproc_exit_status(reproc_t *process)
+{
+  assert(process);
+
+  return process->exit_status >= 0 ? process->exit_status : -1;
 }
 
 void reproc_destroy(reproc_t *process)

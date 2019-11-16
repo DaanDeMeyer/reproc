@@ -291,8 +291,8 @@ REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_t *process,
                                        REPROC_CLEANUP c3,
                                        unsigned int t3);
 
-/*! Returns the exit status of `process` if `process` has exited. Returns `-1`
-if `process` has not yet exited. */
+/*! Returns the exit status of `process` if `process` has exited. Returns
+`-1` `process` has not been started or if `process` is still running. */
 REPROC_EXPORT int reproc_exit_status(reproc_t *process);
 
 /*! Release all resources associated with `process` including the memory
