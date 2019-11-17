@@ -25,6 +25,29 @@ typedef enum {
   REPROC_REDIRECT_DISCARD
 } REPROC_REDIRECT;
 
+/*! Used to tell `reproc_stop` how to stop a child process. */
+typedef enum {
+  /*! noop (no operation) */
+  REPROC_STOP_NOOP,
+  /*! `reproc_wait` */
+  REPROC_STOP_WAIT,
+  /*! `reproc_terminate` */
+  REPROC_STOP_TERMINATE,
+  /*! `reproc_kill` */
+  REPROC_STOP_KILL,
+} REPROC_STOP;
+
+typedef struct reproc_stop_action {
+  REPROC_STOP action;
+  unsigned int timeout;
+} reproc_stop_action;
+
+typedef struct reproc_stop_actions {
+  reproc_stop_action first;
+  reproc_stop_action second;
+  reproc_stop_action third;
+} reproc_stop_actions;
+
 typedef struct reproc_options {
   /*!
   `environment` is an array of UTF-8 encoded, null terminated strings that
@@ -57,6 +80,15 @@ typedef struct reproc_options {
     REPROC_REDIRECT out;
     REPROC_REDIRECT err;
   } redirect;
+  /*!
+  Stop actions that are passed to `reproc_stop` in `reproc_destroy` to stop the
+  child process.
+
+  When `stop_actions` is default-initialized (3x noop with 0 timeout),
+  `reproc_destroy` will default to waiting indefinitely for the child process to
+  exit.
+  */
+  reproc_stop_actions stop_actions;
 } reproc_options;
 
 /*! Stream identifiers used to indicate which stream to act on. */
@@ -236,18 +268,6 @@ Possible errors:
 */
 REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_t *process);
 
-/*! Used to tell `reproc_stop` how to stop a child process. */
-typedef enum {
-  /*! noop (no operation) */
-  REPROC_CLEANUP_NOOP,
-  /*! `reproc_wait` */
-  REPROC_CLEANUP_WAIT,
-  /*! `reproc_terminate` */
-  REPROC_CLEANUP_TERMINATE,
-  /*! `reproc_kill` */
-  REPROC_CLEANUP_KILL
-} REPROC_CLEANUP;
-
 /*!
 Simplifies calling combinations of `reproc_wait`, `reproc_terminate` and
 `reproc_kill`. The function executes each specified step and waits (using
@@ -262,9 +282,9 @@ the child process to exit.
 
 ```c
 REPROC_ERROR error = reproc_stop(process,
-                                 REPROC_WAIT, 10000,
-                                 REPROC_TERMINATE, 5000,
-                                 REPROC_NOOP, 0);
+                                 REPROC_STOP_WAIT, 10000,
+                                 REPROC_STOP_TERMINATE, 5000,
+                                 REPROC_STOP_NOOP, 0);
 ```
 
 Call `reproc_wait`, `reproc_terminate` and `reproc_kill` directly if you need
@@ -284,12 +304,7 @@ Possible errors:
 - `REPROC_ERROR_SYSTEM`
 */
 REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_t *process,
-                                       REPROC_CLEANUP c1,
-                                       unsigned int t1,
-                                       REPROC_CLEANUP c2,
-                                       unsigned int t2,
-                                       REPROC_CLEANUP c3,
-                                       unsigned int t3);
+                                       reproc_stop_actions stop_actions);
 
 /*! Returns the exit status of `process` if `process` has exited. Returns
 `-1` `process` has not been started or if `process` is still running. */

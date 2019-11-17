@@ -18,6 +18,8 @@ struct reproc_t {
   reproc_handle in;
   reproc_handle out;
   reproc_handle err;
+
+  reproc_stop_actions stop_actions;
 };
 
 const unsigned int REPROC_INFINITE = 0xFFFFFFFF; // == `INFINITE` on Windows
@@ -45,6 +47,20 @@ static REPROC_ERROR redirect(reproc_handle *parent,
 
   assert(false);
   return REPROC_ERROR_SYSTEM;
+}
+
+static bool stop_action_equals(reproc_stop_action first,
+                               reproc_stop_action second)
+{
+  return first.action == second.action && first.timeout == second.timeout;
+}
+
+static bool stop_actions_equals(reproc_stop_actions first,
+                                reproc_stop_actions second)
+{
+  return stop_action_equals(first.first, second.first) &&
+         stop_action_equals(first.second, second.second) &&
+         stop_action_equals(first.third, second.third);
 }
 
 reproc_t *reproc_new(void)
@@ -100,6 +116,13 @@ reproc_start(reproc_t *process, const char *const *argv, reproc_options options)
   error = process_create(&process->handle, argv, process_options);
   if (error) {
     goto cleanup;
+  }
+
+  process->stop_actions = options.stop_actions;
+
+  if (stop_actions_equals(process->stop_actions, (reproc_stop_actions){ 0 })) {
+    process->stop_actions.first.action = REPROC_STOP_WAIT;
+    process->stop_actions.first.timeout = REPROC_INFINITE;
   }
 
   error = REPROC_SUCCESS;
@@ -291,38 +314,29 @@ REPROC_ERROR reproc_kill(reproc_t *process)
   return process_kill(process->handle);
 }
 
-REPROC_ERROR reproc_stop(reproc_t *process,
-                         REPROC_CLEANUP c1,
-                         unsigned int t1,
-                         REPROC_CLEANUP c2,
-                         unsigned int t2,
-                         REPROC_CLEANUP c3,
-                         unsigned int t3)
+REPROC_ERROR reproc_stop(reproc_t *process, reproc_stop_actions stop_actions)
 {
   assert(process);
 
-  REPROC_CLEANUP operations[3] = { c1, c2, c3 };
-  unsigned int timeouts[3] = { t1, t2, t3 };
+  reproc_stop_action actions[3] = { stop_actions.first, stop_actions.second,
+                                    stop_actions.third };
 
   // We don't set `error` to `REPROC_SUCCESS` so we can check if `reproc_wait`,
   // `reproc_terminate` or `reproc_kill` succeed (in which case `error` is set
   // to `REPROC_SUCCESS`).
   REPROC_ERROR error = REPROC_ERROR_WAIT_TIMEOUT;
 
-  for (unsigned int i = 0; i < ARRAY_SIZE(operations); i++) {
-    REPROC_CLEANUP operation = operations[i];
-    unsigned int timeout = timeouts[i];
-
-    switch (operation) {
-      case REPROC_CLEANUP_NOOP:
+  for (unsigned int i = 0; i < ARRAY_SIZE(actions); i++) {
+    switch (actions[i].action) {
+      case REPROC_STOP_NOOP:
         error = REPROC_SUCCESS;
         continue;
-      case REPROC_CLEANUP_WAIT:
+      case REPROC_STOP_WAIT:
         break;
-      case REPROC_CLEANUP_TERMINATE:
+      case REPROC_STOP_TERMINATE:
         error = reproc_terminate(process);
         break;
-      case REPROC_CLEANUP_KILL:
+      case REPROC_STOP_KILL:
         error = reproc_kill(process);
         break;
     }
@@ -332,7 +346,7 @@ REPROC_ERROR reproc_stop(reproc_t *process,
       break;
     }
 
-    error = reproc_wait(process, timeout);
+    error = reproc_wait(process, actions[i].timeout);
     if (error != REPROC_ERROR_WAIT_TIMEOUT) {
       break;
     }
@@ -351,6 +365,8 @@ int reproc_exit_status(reproc_t *process)
 void reproc_destroy(reproc_t *process)
 {
   assert(process);
+
+  reproc_stop(process, process->stop_actions);
 
   // Process handle only needs to be closed on Windows. `waitpid` takes care of
   // it for us on POSIX.
