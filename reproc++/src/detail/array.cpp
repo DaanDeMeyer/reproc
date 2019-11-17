@@ -1,7 +1,5 @@
 #include <reproc++/detail/array.hpp>
 
-#include <cstddef>
-
 namespace reproc {
 namespace detail {
 
@@ -29,7 +27,7 @@ array &array::operator=(array &&other) noexcept {
 array::~array() noexcept
 {
   if (owned_) {
-    for (size_t i = 0; data_[i] != nullptr; i++) {
+    for (unsigned int i = 0; data_[i] != nullptr; i++) {
       delete[] data_[i];
     }
 

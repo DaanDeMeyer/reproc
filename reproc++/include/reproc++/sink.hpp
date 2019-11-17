@@ -3,7 +3,6 @@
 #include <reproc++/export.hpp>
 #include <reproc++/reproc.hpp>
 
-#include <cstdint>
 #include <iosfwd>
 #include <mutex>
 #include <string>

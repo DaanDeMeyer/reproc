@@ -2,8 +2,6 @@
 
 #include <reproc/error.h>
 
-#include <string>
-
 namespace reproc {
 
 class error_category_impl : public std::error_category {

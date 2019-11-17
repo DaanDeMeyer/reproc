@@ -2,9 +2,6 @@
 
 #include <reproc/reproc.h>
 
-#include <array>
-#include <cassert>
-
 namespace reproc {
 
 static std::error_code error_to_error_code(REPROC_ERROR error)
@@ -22,7 +19,6 @@ static std::error_code error_to_error_code(REPROC_ERROR error)
                std::system_category() };
   }
 
-  assert(false);
   return {};
 }
 
