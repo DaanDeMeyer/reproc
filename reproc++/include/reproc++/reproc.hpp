@@ -45,10 +45,10 @@ struct options {
   const char *working_directory = nullptr;
 
   struct {
-    redirect in = redirect::pipe;
-    redirect out = redirect::pipe;
-    redirect err = redirect::pipe;
-  } redirect;
+    redirect in;
+    redirect out;
+    redirect err;
+  } redirect = {};
 
   struct stop_actions stop_actions = {};
 };
