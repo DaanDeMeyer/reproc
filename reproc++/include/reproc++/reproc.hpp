@@ -157,8 +157,6 @@ public:
 
 private:
   std::unique_ptr<reproc_t, void (*)(reproc_t *)> process_;
-
-  static constexpr unsigned int BUFFER_SIZE = 4096;
 };
 
 template <typename Parser>
@@ -175,13 +173,13 @@ std::error_code process::parse(Parser &&parser)
     return {};
   }
 
-  uint8_t buffer[BUFFER_SIZE]; // NOLINT
+  uint8_t buffer[4096]; // NOLINT
   std::error_code ec;
 
   while (true) {
     stream stream = {};
     unsigned int bytes_read = 0;
-    ec = read(&stream, buffer, BUFFER_SIZE, &bytes_read);
+    ec = read(&stream, buffer, sizeof(buffer), &bytes_read);
     if (ec) {
       break;
     }
