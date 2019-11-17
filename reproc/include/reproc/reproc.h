@@ -84,9 +84,8 @@ typedef struct reproc_options {
   Stop actions that are passed to `reproc_stop` in `reproc_destroy` to stop the
   child process.
 
-  When `stop_actions` is default-initialized (3x noop with 0 timeout),
-  `reproc_destroy` will default to waiting indefinitely for the child process to
-  exit.
+  When `stop_actions` is 3x `REPROC_STOP_NOOP`, `reproc_destroy` will default to
+  waiting indefinitely for the child process to exit.
   */
   reproc_stop_actions stop_actions;
 } reproc_options;

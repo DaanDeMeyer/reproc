@@ -49,20 +49,6 @@ static REPROC_ERROR redirect(reproc_handle *parent,
   return REPROC_ERROR_SYSTEM;
 }
 
-static bool stop_action_equals(reproc_stop_action first,
-                               reproc_stop_action second)
-{
-  return first.action == second.action && first.timeout == second.timeout;
-}
-
-static bool stop_actions_equals(reproc_stop_actions first,
-                                reproc_stop_actions second)
-{
-  return stop_action_equals(first.first, second.first) &&
-         stop_action_equals(first.second, second.second) &&
-         stop_action_equals(first.third, second.third);
-}
-
 reproc_t *reproc_new(void)
 {
   reproc_t *process = malloc(sizeof(reproc_t));
@@ -120,7 +106,11 @@ reproc_start(reproc_t *process, const char *const *argv, reproc_options options)
 
   process->stop_actions = options.stop_actions;
 
-  if (stop_actions_equals(process->stop_actions, (reproc_stop_actions){ 0 })) {
+  bool is_noop = process->stop_actions.first.action == REPROC_STOP_NOOP &&
+                 process->stop_actions.second.action == REPROC_STOP_NOOP &&
+                 process->stop_actions.third.action == REPROC_STOP_NOOP;
+
+  if (is_noop) {
     process->stop_actions.first.action = REPROC_STOP_WAIT;
     process->stop_actions.first.timeout = REPROC_INFINITE;
   }
