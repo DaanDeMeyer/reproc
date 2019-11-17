@@ -18,9 +18,6 @@ public:
   REPROCXX_EXPORT ~array() noexcept;
 
   REPROCXX_EXPORT const char *const *data() const noexcept;
-
-protected:
-  REPROCXX_EXPORT void data(const char *const *data, bool owned) noexcept;
 };
 
 } // namespace detail

@@ -22,11 +22,17 @@ public:
   */
   template <typename Arguments,
             typename = detail::enable_if_not_char_array<Arguments>>
-  arguments(const Arguments &arguments); // NOLINT
+  arguments(const Arguments &arguments) // NOLINT
+      : detail::array(from(arguments), true)
+  {}
+
+private:
+  template <typename Arguments>
+  static const char *const *from(const Arguments &arguments);
 };
 
-template <typename Arguments, typename>
-arguments::arguments(const Arguments &arguments) : detail::array(nullptr, false)
+template <typename Arguments>
+const char *const *arguments::from(const Arguments &arguments)
 {
   using size_type = typename Arguments::value_type::size_type;
 
@@ -47,7 +53,7 @@ arguments::arguments(const Arguments &arguments) : detail::array(nullptr, false)
 
   data[current] = nullptr;
 
-  this->data(data, true);
+  return data;
 }
 
 } // namespace reproc

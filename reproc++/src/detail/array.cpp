@@ -40,11 +40,5 @@ const char *const *array::data() const noexcept
   return data_;
 }
 
-void array::data(const char *const *data, bool owned) noexcept
-{
-  data_ = data;
-  owned_ = owned;
-}
-
 } // namespace detail
 } // namespace reproc

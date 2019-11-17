@@ -27,12 +27,17 @@ public:
   */
   template <typename Environment,
             typename = detail::enable_if_not_char_array<Environment>>
-  environment(const Environment &environment); // NOLINT
+  environment(const Environment &environment) // NOLINT
+    : detail::array(from(environment), true)
+  {}
+
+private:
+  template <typename Environment>
+  static const char *const *from(const Environment &environment);
 };
 
-template <typename Environment, typename>
-environment::environment(const Environment &environment)
-    : detail::array(nullptr, false)
+template <typename Environment>
+const char *const *environment::from(const Environment &environment)
 {
   const char **data = new const char *[environment.size() + 1];
 
@@ -69,7 +74,7 @@ environment::environment(const Environment &environment)
 
   data[current] = nullptr;
 
-  this->data(data, true);
+  return data;
 }
 
 } // namespace reproc
