@@ -39,13 +39,12 @@ private:
 template <typename Environment>
 const char *const *environment::from(const Environment &environment)
 {
-  const char **data = new const char *[environment.size() + 1];
-
   using name_size_type =
       typename Environment::value_type::first_type::size_type;
   using value_size_type =
       typename Environment::value_type::second_type::size_type;
 
+  const char **data = new const char *[environment.size() + 1];
   std::size_t current = 0;
 
   for (const auto &entry : environment) {
