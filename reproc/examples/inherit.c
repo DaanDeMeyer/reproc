@@ -2,12 +2,6 @@
 
 #include <stdio.h>
 
-static int fail(REPROC_ERROR error)
-{
-  fprintf(stderr, "%s\n", reproc_error_string(error));
-  return (int) error;
-}
-
 // Forwards the provided arguments to `reproc_start` which starts a child
 // process that inherits the standard streams of the parent process. It will
 // read its input from the stdin of this process and write its output to the
@@ -21,6 +15,7 @@ int main(int argc, const char *argv[])
   }
 
   reproc_t *process = reproc_new();
+  int exit_status = -1;
 
   reproc_options options = { .redirect = { .in = REPROC_REDIRECT_INHERIT,
                                            .out = REPROC_REDIRECT_INHERIT,
@@ -28,17 +23,23 @@ int main(int argc, const char *argv[])
 
   REPROC_ERROR error = reproc_start(process, argv + 1, options);
   if (error) {
-    return fail(error);
+    goto cleanup;
   }
 
   error = reproc_wait(process, REPROC_INFINITE);
   if (error) {
-    return fail(error);
+    goto cleanup;
   }
 
-  int exit_status = reproc_exit_status(process);
+  exit_status = reproc_exit_status(process);
 
+cleanup:
   reproc_destroy(process);
+
+  if (error) {
+    fprintf(stderr, "%s\n", reproc_error_string(error));
+    exit_status = (int) error;
+  }
 
   return exit_status;
 }
