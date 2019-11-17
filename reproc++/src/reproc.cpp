@@ -5,13 +5,15 @@
 #include <array>
 #include <cassert>
 
+namespace reproc {
+
 static std::error_code error_to_error_code(REPROC_ERROR error)
 {
   switch (error) {
     case REPROC_SUCCESS:
     case REPROC_ERROR_WAIT_TIMEOUT:
     case REPROC_ERROR_STREAM_CLOSED:
-      return static_cast<reproc::error>(error);
+      return static_cast<enum error>(error);
     case REPROC_ERROR_SYSTEM:
       // Convert operating system errors back to platform-specific error codes
       // to preserve the original error value and message. These can then be
@@ -24,37 +26,20 @@ static std::error_code error_to_error_code(REPROC_ERROR error)
   return {};
 }
 
-namespace reproc {
+static reproc_stop_actions
+stop_actions_to_reproc(stop_actions stop_actions)
+{
+  return { { static_cast<REPROC_STOP>(stop_actions.first.action),
+             stop_actions.first.timeout.count() },
+           { static_cast<REPROC_STOP>(stop_actions.second.action),
+             stop_actions.second.timeout.count() },
+           { static_cast<REPROC_STOP>(stop_actions.third.action),
+             stop_actions.third.timeout.count() } };
+}
 
 const milliseconds infinite = milliseconds(0xFFFFFFFF);
 
-process::process(cleanup c1,
-                 milliseconds t1,
-                 cleanup c2,
-                 milliseconds t2,
-                 cleanup c3,
-                 milliseconds t3)
-    : process_(reproc_new(), reproc_destroy),
-      c1_(c1),
-      t1_(t1),
-      c2_(c2),
-      t2_(t2),
-      c3_(c3),
-      t3_(t3)
-{}
-
-process::~process() noexcept
-{
-  // No cleanup is required if the object has been moved from.
-  if (!process_) {
-    return;
-  }
-
-  stop(c1_, t1_, c2_, t2_, c3_, t3_);
-}
-
-process::process(process &&) noexcept = default; // NOLINT
-process &process::operator=(process &&) noexcept = default;
+process::process() : process_(reproc_new(), reproc_destroy) {}
 
 std::error_code process::start(const arguments &arguments,
                                const options &options) noexcept
@@ -64,7 +49,8 @@ std::error_code process::start(const arguments &arguments,
     options.working_directory,
     { static_cast<REPROC_REDIRECT>(options.redirect.in),
       static_cast<REPROC_REDIRECT>(options.redirect.out),
-      static_cast<REPROC_REDIRECT>(options.redirect.err) }
+      static_cast<REPROC_REDIRECT>(options.redirect.err) },
+    stop_actions_to_reproc(options.stop_actions)
   };
 
   REPROC_ERROR error = reproc_start(process_.get(), arguments.data(),
@@ -82,7 +68,7 @@ std::error_code process::read(stream *stream,
                                    bytes_read);
 
   if (stream != nullptr) {
-    *stream = static_cast<reproc::stream>(tmp);
+    *stream = static_cast<enum stream>(tmp);
   }
 
   return error_to_error_code(error);
@@ -123,17 +109,11 @@ std::error_code process::kill() noexcept
   return error_to_error_code(error);
 }
 
-std::error_code process::stop(cleanup c1,
-                              milliseconds t1,
-                              cleanup c2,
-                              milliseconds t2,
-                              cleanup c3,
-                              milliseconds t3) noexcept
+std::error_code process::stop(stop_actions stop_actions) noexcept
 {
   REPROC_ERROR error = reproc_stop(process_.get(),
-                                   static_cast<REPROC_CLEANUP>(c1), t1.count(),
-                                   static_cast<REPROC_CLEANUP>(c2), t2.count(),
-                                   static_cast<REPROC_CLEANUP>(c3), t3.count());
+                                   stop_actions_to_reproc(stop_actions));
+
   return error_to_error_code(error);
 }
 

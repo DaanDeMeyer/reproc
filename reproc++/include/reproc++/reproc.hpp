@@ -20,8 +20,24 @@ exposing reproc's API when using reproc++ all the other structs, enums and
 constants of reproc have a replacement in reproc++ as well. */
 namespace reproc {
 
+using milliseconds = std::chrono::duration<unsigned int, std::milli>;
+
 /*! `REPROC_REDIRECT` */
 enum class redirect { pipe, inherit, discard };
+
+/*! `REPROC_STOP` */
+enum class stop { noop, wait, terminate, kill };
+
+struct stop_action {
+  stop action;
+  milliseconds timeout;
+};
+
+struct stop_actions {
+  stop_action first;
+  stop_action second;
+  stop_action third;
+};
 
 /*! `reproc_options` */
 struct options {
@@ -33,17 +49,15 @@ struct options {
     redirect out = redirect::pipe;
     redirect err = redirect::pipe;
   } redirect;
+
+  struct stop_actions stop_actions = {};
 };
 
 /*! `REPROC_STREAM` */
 enum class stream { in, out, err };
 
-using milliseconds = std::chrono::duration<unsigned int, std::milli>;
 /*! `REPROC_INFINITE` */
 REPROCXX_EXPORT extern const milliseconds infinite;
-
-/*! `REPROC_CLEANUP` */
-enum class cleanup { noop, wait, terminate, kill };
 
 /*! Improves on reproc's API by wrapping it in a class. Aside from methods that
 mimick reproc's API it also adds configurable RAII and several methods that
@@ -60,7 +74,7 @@ public:
   Example:
 
   ```c++
-  process example(cleanup::wait, 10000, cleanup::terminate, 5000);
+  process example(stop::wait, 10000, stop::terminate, 5000);
   ```
 
   If the child process is still running when example's destructor is called, it
@@ -71,20 +85,14 @@ public:
   The default arguments instruct the destructor to wait indefinitely for the
   child process to exit.
   */
-  REPROCXX_EXPORT explicit process(cleanup c1 = cleanup::wait,
-                                   milliseconds t1 = infinite,
-                                   cleanup c2 = cleanup::noop,
-                                   milliseconds t2 = milliseconds(0),
-                                   cleanup c3 = cleanup::noop,
-                                   milliseconds t3 = milliseconds(0));
+  REPROCXX_EXPORT process();
 
-  /*! Calls `stop` with the arguments provided in the constructor if the child
-  process is still running and frees all allocated resources. */
-  REPROCXX_EXPORT ~process() noexcept;
+  /*! `reproc_destroy` */
+  REPROCXX_EXPORT ~process() noexcept = default;
 
   // Enforce unique ownership of child processes.
-  REPROCXX_EXPORT process(process &&other) noexcept;
-  REPROCXX_EXPORT process &operator=(process &&other) noexcept;
+  REPROCXX_EXPORT process(process &&other) noexcept = default;
+  REPROCXX_EXPORT process &operator=(process &&other) noexcept = default;
 
   /*! `reproc_start` */
   REPROCXX_EXPORT std::error_code start(const arguments &arguments,
@@ -142,25 +150,13 @@ public:
 
   /*! `reproc_stop` */
   REPROCXX_EXPORT std::error_code
-  stop(cleanup c1,
-       milliseconds t1,
-       cleanup c2 = cleanup::noop,
-       milliseconds t2 = milliseconds(0),
-       cleanup c3 = cleanup::noop,
-       milliseconds t3 = milliseconds(0)) noexcept;
+  stop(stop_actions stop_actions) noexcept;
 
   /*! `reproc_exit_status` */
   REPROCXX_EXPORT int exit_status() noexcept;
 
 private:
   std::unique_ptr<reproc_t, void (*)(reproc_t *)> process_;
-
-  cleanup c1_;
-  milliseconds t1_;
-  cleanup c2_;
-  milliseconds t2_;
-  cleanup c3_;
-  milliseconds t3_;
 
   static constexpr unsigned int BUFFER_SIZE = 4096;
 };

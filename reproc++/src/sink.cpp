@@ -64,9 +64,7 @@ string::string(std::string &out, std::string &err, std::mutex &mutex) noexcept
     : sink_(out, err), mutex_(mutex)
 {}
 
-bool string::operator()(reproc::stream stream,
-                        const uint8_t *buffer,
-                        unsigned int size)
+bool string::operator()(stream stream, const uint8_t *buffer, unsigned int size)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   return sink_(stream, buffer, size);
