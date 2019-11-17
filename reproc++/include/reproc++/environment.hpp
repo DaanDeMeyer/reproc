@@ -67,6 +67,8 @@ environment::environment(const Environment &environment)
     *string = '\0';
   }
 
+  data[current] = nullptr;
+
   this->data(data, true);
 }
 
