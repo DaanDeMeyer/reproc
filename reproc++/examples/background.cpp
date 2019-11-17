@@ -26,11 +26,18 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  reproc::process background(reproc::cleanup::terminate,
-                             reproc::milliseconds(5000), reproc::cleanup::kill,
-                             reproc::milliseconds(2000));
+  reproc::process process;
 
-  std::error_code ec = background.start(argv + 1);
+  reproc::stop_actions stop_actions = {
+    { reproc::stop::terminate, reproc::milliseconds(5000) },
+    { reproc::stop::kill, reproc::milliseconds(2000) },
+    {}
+  };
+
+  reproc::options options;
+  options.stop_actions = stop_actions;
+
+  std::error_code ec = process.start(argv + 1, options);
 
   if (ec == std::errc::no_such_file_or_directory) {
     std::cerr << "Program not found. Make sure it's available from the PATH.";
@@ -45,13 +52,13 @@ int main(int argc, char *argv[])
   std::string output;
   std::mutex mutex;
 
-  auto drain_async = std::async(std::launch::async, [&background, &output,
+  auto drain_async = std::async(std::launch::async, [&process, &output,
                                                      &mutex]() {
     // `sink::thread_safe::string` locks a given mutex before appending to the
     // given string(s), allowing working with the string(s) across multiple
     // threads if the mutex is locked in the other threads as well.
     reproc::sink::thread_safe::string sink(output, output, mutex);
-    return background.drain(sink);
+    return process.drain(sink);
   });
 
   // Show new output every 2 seconds.
@@ -63,7 +70,7 @@ int main(int argc, char *argv[])
     output.clear();
   }
 
-  // Flush any remaining output of `background`.
+  // Flush any remaining output of `process`.
   std::cout << output;
 
   // Check if any errors occurred in the background thread.
@@ -72,15 +79,10 @@ int main(int argc, char *argv[])
     return fail(ec);
   }
 
-  // Only the background thread has stopped by this point. We can't be certain
-  // that `background` has stopped as well. Since we can't be sure what process
-  // we're running (the child process to run is determined by the user) we send
-  // a `SIGTERM` signal and `SIGKILL` if necessary (or the Windows equivalents).
-  ec = background.stop(reproc::cleanup::terminate, reproc::milliseconds(5000),
-                       reproc::cleanup::kill, reproc::milliseconds(2000));
+  ec = process.stop(stop_actions);
   if (ec) {
     return fail(ec);
   }
 
-  return static_cast<int>(background.exit_status());
+  return process.exit_status();
 }
