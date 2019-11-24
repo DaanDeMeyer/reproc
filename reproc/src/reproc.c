@@ -145,20 +145,22 @@ REPROC_ERROR reproc_read(reproc_t *process,
   assert(buffer);
   assert(bytes_read);
 
-  reproc_handle ready = 0;
+  reproc_handle pipes[2] = { process->err, process->out };
+  unsigned int ready = 0;
 
-  REPROC_ERROR error = pipe_wait(&ready, process->out, process->err);
+  REPROC_ERROR error = pipe_wait(pipes, ARRAY_SIZE(pipes), &ready);
   if (error) {
     return error;
   }
 
-  error = pipe_read(ready, buffer, size, bytes_read);
+  error = pipe_read(pipes[ready], buffer, size, bytes_read);
   if (error) {
     return error;
   }
 
   if (stream) {
-    *stream = ready == process->out ? REPROC_STREAM_OUT : REPROC_STREAM_ERR;
+    *stream = pipes[ready] == process->out ? REPROC_STREAM_OUT
+                                           : REPROC_STREAM_ERR;
   }
 
   return REPROC_SUCCESS;

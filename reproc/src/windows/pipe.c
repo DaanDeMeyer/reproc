@@ -1,10 +1,8 @@
 #include <pipe.h>
 
-#include <handle.h>
-#include <macro.h>
-
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <windows.h>
 
 enum {
@@ -175,49 +173,64 @@ cleanup:
   return error;
 }
 
-REPROC_ERROR pipe_wait(HANDLE *ready, HANDLE out, HANDLE err)
+REPROC_ERROR
+pipe_wait(const reproc_handle *pipes,
+          unsigned int num_pipes,
+          unsigned int *ready)
 {
   assert(ready);
 
-  HANDLE handles[2] = { err, out };
-  OVERLAPPED overlapped[2] = { 0 };
-  HANDLE events[2] = { 0 };
-  DWORD size = 0;
+  OVERLAPPED *overlapped = NULL;
+  HANDLE *events = NULL;
 
   // `BOOL` is either 0 or 1 even though it is defined as `int` so all casts of
   // functions returning `BOOL` to `DWORD` in this function are safe.
   DWORD rv = 0;
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
+  DWORD num_reads = 0;
+
+  overlapped = malloc(sizeof(OVERLAPPED) * num_pipes);
+  if (overlapped == NULL) {
+    goto cleanup;
+  }
+
+  events = malloc(sizeof(HANDLE) * num_pipes);
+  if (events == NULL) {
+    goto cleanup;
+  }
 
   // We emulate POSIX `poll` by issuing overlapped zero-sized reads and waiting
   // for the first one to complete. This approach is inspired by the CPython
   // multiprocessing module `wait` implementation:
   // https://github.com/python/cpython/blob/10ecbadb799ddf3393d1fc80119a3db14724d381/Lib/multiprocessing/connection.py#L826
 
-  for (DWORD i = 0; i < ARRAY_SIZE(handles); i++) {
-    overlapped[i].hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false, NULL);
+  for (DWORD i = 0; i < num_pipes; i++) {
+    overlapped[i] = (OVERLAPPED) { 0 };
+    overlapped[i].hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false,
+                                       NULL);
     if (overlapped[i].hEvent == NULL) {
       goto cleanup;
     }
 
-    rv = (DWORD) ReadFile(handles[i], (uint8_t[]){ 0 }, 0, NULL,
-                          &overlapped[i]);
+    rv = (DWORD) ReadFile(pipes[i], (uint8_t[]){ 0 }, 0, NULL, &overlapped[i]);
     if (rv == 0 && GetLastError() != ERROR_IO_PENDING &&
         GetLastError() != ERROR_BROKEN_PIPE) {
       goto cleanup;
     }
 
     if (rv != 0 || GetLastError() == ERROR_IO_PENDING) {
-      events[size++] = overlapped[i].hEvent;
+      num_reads++;
     }
+
+    events[i] = overlapped[i].hEvent;
   }
 
-  if (size == 0) {
+  if (num_reads == 0) {
     error = REPROC_ERROR_STREAM_CLOSED;
     goto cleanup;
   }
 
-  rv = WaitForMultipleObjects(size, events, false, INFINITE);
+  rv = WaitForMultipleObjects(num_pipes, events, false, INFINITE);
 
   // We don't expect `WAIT_ABANDONED_0` or `WAIT_TIMEOUT` to be valid here.
   assert(rv < WAIT_ABANDONED_0);
@@ -227,14 +240,15 @@ REPROC_ERROR pipe_wait(HANDLE *ready, HANDLE out, HANDLE err)
     goto cleanup;
   }
 
-  assert(rv < size);
+  assert(rv < num_pipes);
 
   // Map the signaled event back to its corresponding handle.
-  *ready = events[rv] == overlapped[0].hEvent ? handles[0] : handles[1];
+  *ready = rv;
 
   error = REPROC_SUCCESS;
 
 cleanup:;
+
   // Because we continue cleaning up even when an error occurs during cleanup,
   // we have to save the first error that occurs because `GetLastError()` might
   // get overridden with another error during further cleanup. When we're done,
@@ -242,12 +256,12 @@ cleanup:;
   // handle.
   DWORD first_system_error = 0;
 
-  for (DWORD i = 0; i < ARRAY_SIZE(handles); i++) {
+  for (DWORD i = 0; i < num_pipes; i++) {
 
     // Cancel any remaining zero-sized reads that we queued if they have not yet
     // completed.
 
-    rv = (DWORD) CancelIoEx(handles[i], &overlapped[i]);
+    rv = (DWORD) CancelIoEx(pipes[i], &overlapped[i]);
     if (rv == 0) {
       if (GetLastError() != ERROR_NOT_FOUND) {
         error = REPROC_ERROR_SYSTEM;
@@ -264,7 +278,7 @@ cleanup:;
     // wait until the read is actually cancelled.
 
     DWORD bytes_transferred = 0;
-    rv = (DWORD) GetOverlappedResult(handles[i], &overlapped[i],
+    rv = (DWORD) GetOverlappedResult(pipes[i], &overlapped[i],
                                      &bytes_transferred, true);
     if (rv == 0 && GetLastError() != ERROR_OPERATION_ABORTED &&
         GetLastError() != ERROR_BROKEN_PIPE) {
@@ -276,9 +290,12 @@ cleanup:;
     }
   }
 
-  for (DWORD i = 0; i < ARRAY_SIZE(handles); i++) {
+  for (DWORD i = 0; i < num_pipes; i++) {
     handle_close(&overlapped[i].hEvent);
   }
+
+  free(overlapped);
+  free(events);
 
   if (first_system_error) {
     SetLastError(first_system_error);

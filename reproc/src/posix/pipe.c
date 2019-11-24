@@ -1,12 +1,10 @@
 #include <pipe.h>
 
-#include <handle.h>
-#include <macro.h>
-
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 REPROC_ERROR pipe_init(int *read,
@@ -145,29 +143,44 @@ REPROC_ERROR pipe_write(int pipe,
   return REPROC_SUCCESS;
 }
 
-REPROC_ERROR pipe_wait(int *ready, int out, int err)
+REPROC_ERROR
+pipe_wait(const reproc_handle *pipes,
+          unsigned int num_pipes,
+          unsigned int *ready)
 {
+  assert(pipes);
   assert(ready);
 
-  // See 10.0.0 changelog for why we use `poll`.
+  REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
-  struct pollfd fds[2] = { { .fd = err, .events = POLLIN },
-                           { .fd = out, .events = POLLIN } };
-  if (poll(&fds[0], 2, -1) == -1) {
-    return REPROC_ERROR_SYSTEM;
+  struct pollfd *pollfds = malloc(sizeof(struct pollfd) * num_pipes);
+  if (pollfds == NULL) {
+    goto cleanup;
   }
 
-  for (size_t i = 0; i < ARRAY_SIZE(fds); i++) {
-    struct pollfd pollfd = fds[i];
+  for (unsigned int i = 0; i < num_pipes; i++) {
+    pollfds[i].fd = pipes[i];
+    pollfds[i].events = POLLIN;
+  }
+
+  if (poll(pollfds, num_pipes, -1) == -1) {
+    goto cleanup;
+  }
+
+  for (unsigned int i = 0; i < num_pipes; i++) {
+    struct pollfd pollfd = pollfds[i];
 
     if (pollfd.revents & POLLIN || pollfd.revents & POLLERR) {
-      *ready = pollfd.fd;
-      return REPROC_SUCCESS;
+      *ready = i;
+      error = REPROC_SUCCESS;
+      goto cleanup;
     }
   }
 
-  // Both streams should have been closed by the child process if we get here.
-  assert(fds[0].revents & POLLHUP && fds[1].revents & POLLHUP);
+  error = REPROC_ERROR_STREAM_CLOSED;
 
-  return REPROC_ERROR_STREAM_CLOSED;
+cleanup:
+  free(pollfds);
+
+  return error;
 }

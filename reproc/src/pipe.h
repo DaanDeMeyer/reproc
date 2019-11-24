@@ -42,10 +42,12 @@ REPROC_ERROR pipe_write(reproc_handle pipe,
                         unsigned int size,
                         unsigned int *bytes_written);
 
-// Block until `out` or `err` has data available to read. The first file
-// descriptor that has data available to read is stored in `ready`.
+// Block until one of the pipes in `pipes` has data available to read and stores
+// its index in `ready`.
 //
-// `REPROC_ERROR_STREAM_CLOSED` is returned if both `out` and `err` have been
+// `REPROC_ERROR_STREAM_CLOSED` is returned if all pipes in `pipes` have been
 // closed.
 REPROC_ERROR
-pipe_wait(reproc_handle *ready, reproc_handle out, reproc_handle err);
+pipe_wait(const reproc_handle *pipes,
+          unsigned int num_pipes,
+          unsigned int *ready);
