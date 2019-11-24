@@ -153,7 +153,7 @@ pipe_wait(const reproc_handle *pipes,
 
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
-  struct pollfd *pollfds = malloc(sizeof(struct pollfd) * num_pipes);
+  struct pollfd *pollfds = calloc(num_pipes, sizeof(struct pollfd));
   if (pollfds == NULL) {
     goto cleanup;
   }

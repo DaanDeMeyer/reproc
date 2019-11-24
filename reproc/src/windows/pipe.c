@@ -189,12 +189,12 @@ pipe_wait(const reproc_handle *pipes,
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
   DWORD num_reads = 0;
 
-  overlapped = malloc(sizeof(OVERLAPPED) * num_pipes);
+  overlapped = calloc(num_pipes, sizeof(OVERLAPPED));
   if (overlapped == NULL) {
     goto cleanup;
   }
 
-  events = malloc(sizeof(HANDLE) * num_pipes);
+  events = calloc(num_pipes, sizeof(HANDLE));
   if (events == NULL) {
     goto cleanup;
   }
@@ -205,7 +205,6 @@ pipe_wait(const reproc_handle *pipes,
   // https://github.com/python/cpython/blob/10ecbadb799ddf3393d1fc80119a3db14724d381/Lib/multiprocessing/connection.py#L826
 
   for (DWORD i = 0; i < num_pipes; i++) {
-    overlapped[i] = (OVERLAPPED) { 0 };
     overlapped[i].hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false,
                                        NULL);
     if (overlapped[i].hEvent == NULL) {

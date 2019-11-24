@@ -133,7 +133,7 @@ static char *argv_join(const char *const *argv)
     }
   }
 
-  char *joined = malloc(sizeof(char) * joined_size);
+  char *joined = calloc(joined_size, sizeof(char));
   if (joined == NULL) {
     return NULL;
   }
@@ -168,7 +168,7 @@ static char *environment_join(const char *const *environment)
 {
   assert(environment);
 
-  char *joined = malloc(sizeof(char) * environment_join_size(environment));
+  char *joined = calloc(environment_join_size(environment), sizeof(char));
   if (joined == NULL) {
     return NULL;
   }
@@ -202,7 +202,7 @@ static wchar_t *string_to_wstring(const char *string, size_t size)
 
   // `MultiByteToWideChar` does not return negative values so the cast to
   // `size_t` is safe.
-  wchar_t *wstring = malloc(sizeof(wchar_t) * (size_t) rv);
+  wchar_t *wstring = calloc((size_t) rv, sizeof(wchar_t));
   if (wstring == NULL) {
     return NULL;
   }

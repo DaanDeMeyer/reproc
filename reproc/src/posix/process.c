@@ -63,7 +63,7 @@ static char *path_prepend_cwd(const char *path)
 
   // +2 reserves space to add a null terminator and potentially a missing '/'
   // after the current working directory.
-  char *cwd = malloc(sizeof(char) * cwd_size + path_size + 2);
+  char *cwd = calloc(cwd_size + path_size + 2, sizeof(char));
   if (!cwd) {
     return NULL;
   }
