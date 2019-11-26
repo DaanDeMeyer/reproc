@@ -4,7 +4,7 @@ param (
  )
 
 $vswherePath = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
-$vsInstallationPath = & "$vswherePath" -latest -property installationPath
+$vsInstallationPath = & "$vswherePath" -latest -products * -property installationPath
 $vsDevCmdPath = "`"$vsInstallationPath\Common7\Tools\vsdevcmd.bat`""
 $command = "$vsDevCmdPath -no_logo -arch=$arch -host_arch=$hostArch"
 
