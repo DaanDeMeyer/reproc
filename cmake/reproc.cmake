@@ -2,6 +2,8 @@
 
 get_directory_property(REPROC_IS_SUBDIRECTORY PARENT_DIRECTORY)
 
+option(REPROC_OBJECT_LIBRARIES "Build CMake object libraries")
+
 # Don't add libraries to the install target by default if the project is built
 # from within another project as a static library.
 if(REPROC_IS_SUBDIRECTORY AND NOT BUILD_SHARED_LIBS)
@@ -175,7 +177,11 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
 endfunction()
 
 function(reproc_add_library TARGET LANGUAGE STANDARD)
-  add_library(${TARGET})
+  if(REPROC_OBJECT_LIBRARIES)
+    add_library(${TARGET} OBJECT)
+  else()
+    add_library(${TARGET})
+  endif()
 
   reproc_add_common(${TARGET} ${LANGUAGE} ${STANDARD} lib)
   # Enable -fvisibility=hidden and -fvisibility-inlines-hidden (if applicable).

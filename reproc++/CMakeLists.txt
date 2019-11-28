@@ -5,11 +5,17 @@ target_link_libraries(reproc++ PRIVATE
   $<$<BOOL:${REPROC_MULTITHREADED}>:Threads::Threads>
 )
 
-target_sources(reproc++ PRIVATE
-  src/detail/array.cpp
-  src/error.cpp
-  src/reproc.cpp
-  src/sink.cpp
+target_sources(
+  reproc++
+  PRIVATE
+    src/detail/array.cpp
+    src/error.cpp
+    src/reproc.cpp
+    src/sink.cpp
+  INTERFACE
+    # We manually propagate reproc's object files until CMake adds support for
+    # doing it automatically.
+    $<$<BOOL:${REPROC_OBJECT_LIBRARIES}>:$<TARGET_OBJECTS:reproc>>
 )
 
 if(REPROC_EXAMPLES)
