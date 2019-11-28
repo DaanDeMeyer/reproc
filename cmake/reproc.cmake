@@ -6,7 +6,7 @@ option(REPROC_OBJECT_LIBRARIES "Build CMake object libraries")
 
 # Don't add libraries to the install target by default if the project is built
 # from within another project as a static library.
-if(REPROC_IS_SUBDIRECTORY AND NOT BUILD_SHARED_LIBS)
+if(REPROC_OBJECT_LIBRARIES OR (REPROC_IS_SUBDIRECTORY AND NOT BUILD_SHARED_LIBS))
   option(REPROC_INSTALL "Generate installation rules." OFF)
 else()
   option(REPROC_INSTALL "Generate installation rules." ON)
