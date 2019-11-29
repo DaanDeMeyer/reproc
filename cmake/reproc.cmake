@@ -1,21 +1,19 @@
+include(CheckCXXCompilerFlag)
+include(CMakePackageConfigHelpers)
+include(GenerateExportHeader)
+include(GNUInstallDirs)
+
 ### Installation options ###
 
 get_directory_property(REPROC_IS_SUBDIRECTORY PARENT_DIRECTORY)
 
-option(REPROC_OBJECT_LIBRARIES "Build CMake object libraries")
-
 # Don't add libraries to the install target by default if the project is built
 # from within another project as a static library.
 if(REPROC_OBJECT_LIBRARIES OR (REPROC_IS_SUBDIRECTORY AND NOT BUILD_SHARED_LIBS))
-  option(REPROC_INSTALL "Generate installation rules." OFF)
-else()
-  option(REPROC_INSTALL "Generate installation rules." ON)
+  set(REPROC_INSTALL_DEFAULT ON)
 endif()
 
-mark_as_advanced(REPROC_INSTALL)
-
-include(GNUInstallDirs)
-
+option(REPROC_INSTALL "Generate installation rules." ${REPROC_INSTALL_DEFAULT})
 option(REPROC_INSTALL_PKGCONFIG "Install pkg-config files." ON)
 
 set(REPROC_INSTALL_CMAKECONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake
@@ -23,11 +21,14 @@ set(REPROC_INSTALL_CMAKECONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake
 set(REPROC_INSTALL_PKGCONFIGDIR ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     CACHE STRING "pkg-config files installation directory.")
 
+option(REPROC_OBJECT_LIBRARIES "Build CMake object libraries")
+
 mark_as_advanced(
   REPROC_INSTALL
   REPROC_INSTALL_PKGCONFIG
   REPROC_INSTALL_CMAKECONFIGDIR
   REPROC_INSTALL_PKGCONFIGDIR
+  REPROC_OBJECT_LIBRARIES
 )
 
 ### Developer options ###
@@ -48,39 +49,14 @@ if(REPROC_TIDY)
   find_program(REPROC_TIDY_PROGRAM clang-tidy)
   mark_as_advanced(REPROC_TIDY_PROGRAM)
 
-  if(REPROC_TIDY_PROGRAM)
-    if(REPROC_WARNINGS_AS_ERRORS)
-      set(REPROC_TIDY_PROGRAM ${REPROC_TIDY_PROGRAM} -warnings-as-errors=*)
-    endif()
-  else()
+  if(NOT REPROC_TIDY_PROGRAM)
     message(FATAL_ERROR "clang-tidy not found")
   endif()
+
+  if(REPROC_WARNINGS_AS_ERRORS)
+    set(REPROC_TIDY_PROGRAM ${REPROC_TIDY_PROGRAM} -warnings-as-errors=*)
+  endif()
 endif()
-
-### Global Setup ###
-
-get_property(REPROC_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
-
-foreach(LANGUAGE IN ITEMS C CXX)
-  if(NOT LANGUAGE IN_LIST REPROC_ENABLED_LANGUAGES)
-    continue()
-  endif()
-
-  if(MSVC)
-    if(LANGUAGE STREQUAL C)
-      include(CheckCCompilerFlag)
-      check_c_compiler_flag(/permissive- REPROC_${LANGUAGE}_HAVE_PERMISSIVE)
-    else()
-      include(CheckCXXCompilerFlag)
-      check_cxx_compiler_flag(/permissive- REPROC_${LANGUAGE}_HAVE_PERMISSIVE)
-    endif()
-  endif()
-endforeach()
-
-### Includes ###
-
-include(GenerateExportHeader)
-include(CMakePackageConfigHelpers)
 
 ### Functions ###
 
@@ -110,15 +86,17 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   ### Common development flags (warnings + sanitizers + colors) ###
 
   if(MSVC)
+    check_cxx_compiler_flag(/permissive- REPROC_HAVE_PERMISSIVE)
+
     target_compile_options(${TARGET} PRIVATE
       /nologo # Silence MSVC compiler version output.
       $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:/WX> # -Werror
-      $<$<BOOL:${REPROC_${LANGUAGE}_HAVE_PERMISSIVE}>:/permissive->
+      $<$<BOOL:${REPROC_HAVE_PERMISSIVE}>:/permissive->
     )
 
-    target_compile_definitions(${TARGET} PRIVATE
-      _CRT_SECURE_NO_WARNINGS
-    )
+    target_compile_definitions(${TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS)
+
+    target_link_options(${TARGET} PRIVATE /nologo)
 
     if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.15.0)
       # CMake 3.15 does not add /W3 to the compiler flags by default anymore
@@ -132,10 +110,6 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       # least C99.
       target_compile_options(${TARGET} PRIVATE /wd4204)
     endif()
-
-    target_link_options(${TARGET} PRIVATE
-      /nologo # Silence MSVC linker version output.
-    )
   else()
     target_compile_options(${TARGET} PRIVATE
       -Wall

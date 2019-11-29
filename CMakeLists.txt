@@ -9,17 +9,18 @@ project(
   LANGUAGES C
 )
 
+# Common options and functions separated for easier reuse in other projects.
+include(cmake/reproc.cmake)
+
 option(REPROC++ "Build reproc++.")
 option(REPROC_TEST "Build tests.")
 option(REPROC_EXAMPLES "Build examples.")
 option(REPROC_MULTITHREADED "Use `pthread_sigmask` and link against the system's thread library" ON)
 
-# Enable languages before configuring all enabled languages in reproc.cmake.
 if(REPROC++ OR REPROC_TEST)
   enable_language(CXX)
 endif()
 
-include(cmake/reproc.cmake)
 include(cmake/external.cmake)
 
 if(REPROC_TEST)
