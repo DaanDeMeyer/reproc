@@ -12,10 +12,15 @@ project(
 # Common options and functions separated for easier reuse in other projects.
 include(cmake/reproc.cmake)
 
-option(REPROC++ "Build reproc++.")
-option(REPROC_TEST "Build tests.")
-option(REPROC_EXAMPLES "Build examples.")
-option(REPROC_MULTITHREADED "Use `pthread_sigmask` and link against the system's thread library" ON)
+option(REPROC++ "Build reproc++." ${REPROC_DEVELOP})
+option(REPROC_TEST "Build tests." ${REPROC_DEVELOP})
+option(REPROC_EXAMPLES "Build examples." ${REPROC_DEVELOP})
+
+option(
+  REPROC_MULTITHREADED
+  "Use `pthread_sigmask` and link against the system's thread library"
+  ON
+)
 
 if(REPROC++ OR REPROC_TEST)
   enable_language(CXX)

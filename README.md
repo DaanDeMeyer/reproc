@@ -130,21 +130,21 @@ reproc's build can be configured using the following CMake options:
 
 ### User
 
-- `REPROC++`: Build reproc++ (default: `OFF`).
-- `REPROC_TEST`: Build tests (default: `OFF`).
+- `REPROC++`: Build reproc++ (default: `${REPROC_DEVELOP}`).
+- `REPROC_TEST`: Build tests (default: `${REPROC_DEVELOP}`).
 
   Run the tests by running the `test` binary which can be found in the build
   directory after building reproc.
 
-- `REPROC_EXAMPLES`: Build examples (default: `OFF`).
+- `REPROC_EXAMPLES`: Build examples (default: `${REPROC_DEVELOP}`).
 
   The resulting binaries will be located in the examples folder of each project
   subdirectory in the build directory after building reproc.
 
 ### Advanced
 
-- `REPROC_OBJECT_LIBRARIES`: Build CMake object libraries (default: `OFF`,
-  overrides `BUILD_SHARED_LIBS`).
+- `REPROC_OBJECT_LIBRARIES`: Build CMake object libraries. Overrides
+  `BUILD_SHARED_LIBS` (default: `${REPROC_DEVELOP}`).
 
   This is useful to directly include reproc in another library. When building
   reproc as a static or shared library, it has to be installed alongside the
@@ -180,8 +180,10 @@ reproc's build can be configured using the following CMake options:
 
 ### Developer
 
-- `REPROC_SANITIZERS`: Build with sanitizers (default: `OFF`).
-- `REPROC_TIDY`: Run clang-tidy when building (default: `OFF`).
+- `REPROC_DEVELOP`: Configure option default values for development (default:
+  `OFF` unless the `REPROC_DEVELOP` environment variable is set).
+- `REPROC_SANITIZERS`: Build with sanitizers (default: `${REPROC_DEVELOP}`).
+- `REPROC_TIDY`: Run clang-tidy when building (default: `${REPROC_DEVELOP}`).
 - `REPROC_WARNINGS_AS_ERRORS`: Add -Werror or equivalent to the compile flags
   and clang-tidy (default: `OFF`).
 

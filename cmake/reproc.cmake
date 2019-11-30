@@ -3,7 +3,31 @@ include(CMakePackageConfigHelpers)
 include(GenerateExportHeader)
 include(GNUInstallDirs)
 
+### Developer options ###
+
+option(REPROC_DEVELOP "Enable all developer options." $ENV{REPROC_DEVELOP})
+option(REPROC_TIDY "Run clang-tidy when building." ${REPROC_DEVELOP})
+
+option(
+  REPROC_SANITIZERS
+  "Build with sanitizers on configurations that support it."
+  ${REPROC_DEVELOP}
+)
+
+option(
+  REPROC_WARNINGS_AS_ERRORS
+  "Add -Werror or equivalent to the compile flags and clang-tidy."
+)
+
+mark_as_advanced(
+  REPROC_TIDY
+  REPROC_SANITIZERS
+  REPROC_WARNINGS_AS_ERRORS
+)
+
 ### Installation options ###
+
+option(REPROC_OBJECT_LIBRARIES "Build CMake object libraries" ${REPROC_DEVELOP})
 
 get_directory_property(REPROC_IS_SUBDIRECTORY PARENT_DIRECTORY)
 
@@ -16,31 +40,24 @@ endif()
 option(REPROC_INSTALL "Generate installation rules." ${REPROC_INSTALL_DEFAULT})
 option(REPROC_INSTALL_PKGCONFIG "Install pkg-config files." ON)
 
-set(REPROC_INSTALL_CMAKECONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake
-    CACHE STRING "CMake config files installation directory.")
-set(REPROC_INSTALL_PKGCONFIGDIR ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-    CACHE STRING "pkg-config files installation directory.")
+set(
+  REPROC_INSTALL_CMAKECONFIGDIR
+  ${CMAKE_INSTALL_LIBDIR}/cmake
+  CACHE STRING "CMake config files installation directory."
+)
 
-option(REPROC_OBJECT_LIBRARIES "Build CMake object libraries")
+set(
+  REPROC_INSTALL_PKGCONFIGDIR
+  ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+  CACHE STRING "pkg-config files installation directory."
+)
 
 mark_as_advanced(
+  REPROC_OBJECT_LIBRARIES
   REPROC_INSTALL
   REPROC_INSTALL_PKGCONFIG
   REPROC_INSTALL_CMAKECONFIGDIR
   REPROC_INSTALL_PKGCONFIGDIR
-  REPROC_OBJECT_LIBRARIES
-)
-
-### Developer options ###
-
-option(REPROC_TIDY "Run clang-tidy when building.")
-option(REPROC_SANITIZERS "Build with sanitizers on configurations that support it.")
-option(REPROC_WARNINGS_AS_ERRORS "Add -Werror or equivalent to the compile flags and clang-tidy.")
-
-mark_as_advanced(
-  REPROC_TIDY
-  REPROC_SANITIZERS
-  REPROC_WARNINGS_AS_ERRORS
 )
 
 ### clang-tidy ###
