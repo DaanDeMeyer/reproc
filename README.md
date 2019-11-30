@@ -153,8 +153,7 @@ reproc's build can be configured using the following CMake options:
   consuming library and no extra installation is necessary.
 
 - `REPROC_INSTALL`: Generate installation rules (default: `ON` unless
-  `BUILD_SHARED_LIBS` is disabled and reproc is built via CMake's
-  `add_subdirectory` command).
+  `REPROC_OBJECT_LIBRARIES` is enabled).
 - `REPROC_INSTALL_CMAKECONFIGDIR`: CMake config files installation directory
   (default: `${CMAKE_INSTALL_LIBDIR}/cmake`).
 - `REPROC_INSTALL_PKGCONFIG`: Install pkg-config files (default: `ON`)

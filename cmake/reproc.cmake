@@ -29,11 +29,7 @@ mark_as_advanced(
 
 option(REPROC_OBJECT_LIBRARIES "Build CMake object libraries" ${REPROC_DEVELOP})
 
-get_directory_property(REPROC_IS_SUBDIRECTORY PARENT_DIRECTORY)
-
-# Don't add libraries to the install target by default if the project is built
-# from within another project as a static library.
-if(REPROC_OBJECT_LIBRARIES OR (REPROC_IS_SUBDIRECTORY AND NOT BUILD_SHARED_LIBS))
+if(NOT REPROC_OBJECT_LIBRARIES)
   set(REPROC_INSTALL_DEFAULT ON)
 endif()
 
