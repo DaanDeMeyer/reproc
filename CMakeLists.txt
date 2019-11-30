@@ -1,6 +1,15 @@
 # 3.13 is needed for `target_link_options`.
 cmake_minimum_required(VERSION 3.13...3.15)
 
+# TODO: Remove once CMake 3.17 is released.
+if(CMAKE_GENERATOR MATCHES "Unix Makefiles|Ninja")
+  set(
+    CMAKE_EXPORT_COMPILE_COMMANDS
+    $ENV{CMAKE_EXPORT_COMPILE_COMMANDS}
+    CACHE BOOL "Enable/Disable output of compile commands during generation."
+  )
+endif()
+
 project(
   reproc
   VERSION 10.0.0
