@@ -71,7 +71,7 @@ add_subdirectory(<path-to-reproc>) # For example: add_subdirectory(external/repr
 CMake options can be specified before calling `add_subdirectory`:
 
 ```cmake
-option(REPROC++ ON)
+set(REPROC++ ON)
 add_subdirectory(<path-to-reproc>)
 ```
 
