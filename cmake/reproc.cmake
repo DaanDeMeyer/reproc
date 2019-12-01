@@ -211,6 +211,16 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
       ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}/export.${HEADER_EXT}
   )
 
+  # `generate_export_header` generates `dllexport/dllimport` export macros for
+  # object libraries on Windows which leads to linker errors when using them.
+  # By defining `${EXPORT_MACRO_BASE}_STATIC_DEFINE`, we make sure the export
+  # macros expand to nothing.
+  if(REPROC_OBJECT_LIBRARIES AND (WIN32 OR CYGWIN))
+      target_compile_definitions(${TARGET} PUBLIC
+        ${EXPORT_MACRO_BASE}_STATIC_DEFINE
+      )
+  endif()
+
   # Make sure we follow the popular naming convention for shared libraries on
   # UNIX systems.
   set_target_properties(${TARGET} PROPERTIES
