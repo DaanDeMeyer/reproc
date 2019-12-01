@@ -190,8 +190,8 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
   endif()
 
   # A preprocesor macro cannot contain + so we replace it with x.
-  string(REPLACE + x EXPORT_MACRO ${TARGET})
-  string(TOUPPER ${EXPORT_MACRO} EXPORT_MACRO_UPPER)
+  string(REPLACE + x EXPORT_MACRO_BASE ${TARGET})
+  string(TOUPPER ${EXPORT_MACRO_BASE} EXPORT_MACRO_BASE)
 
   if(LANGUAGE STREQUAL C)
     set(HEADER_EXT h)
@@ -206,7 +206,7 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
   # to avoid.
   generate_export_header(
     ${TARGET}
-    BASE_NAME ${EXPORT_MACRO_UPPER}
+    BASE_NAME ${EXPORT_MACRO_BASE}
     EXPORT_FILE_NAME
       ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}/export.${HEADER_EXT}
   )
