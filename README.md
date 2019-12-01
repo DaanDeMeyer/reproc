@@ -92,7 +92,7 @@ If using a package manager is not an option, you can build and install reproc
 from source:
 
 ```sh
-cmake -B build -S .
+cmake -B build
 cmake --build build
 cmake --install build
 ```
