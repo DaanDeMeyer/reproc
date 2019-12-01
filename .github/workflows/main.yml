@@ -163,6 +163,7 @@ jobs:
           -DREPROC++=ON
           -DREPROC_TEST=ON
           -DREPROC_EXAMPLES=ON
+          -DREPROC_WARNINGS=ON
           -DREPROC_WARNINGS_AS_ERRORS=ON
           -DREPROC_TIDY=ON
 

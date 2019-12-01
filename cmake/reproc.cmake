@@ -6,6 +6,7 @@ include(GNUInstallDirs)
 ### Developer options ###
 
 option(REPROC_DEVELOP "Enable all developer options." $ENV{REPROC_DEVELOP})
+option(REPROC_WARNINGS "Enable compiler warnings" ${REPROC_DEVELOP})
 option(REPROC_TIDY "Run clang-tidy when building." ${REPROC_DEVELOP})
 
 option(
@@ -98,45 +99,52 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
 
   ### Common development flags (warnings + sanitizers + colors) ###
 
-  if(MSVC)
-    check_cxx_compiler_flag(/permissive- REPROC_HAVE_PERMISSIVE)
+  if(REPROC_WARNINGS)
+    if(MSVC)
+      check_cxx_compiler_flag(/permissive- REPROC_HAVE_PERMISSIVE)
+
+      target_compile_options(${TARGET} PRIVATE
+        /nologo # Silence MSVC compiler version output.
+        $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:/WX> # -Werror
+        $<$<BOOL:${REPROC_HAVE_PERMISSIVE}>:/permissive->
+      )
+
+      target_compile_definitions(${TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS)
+
+      target_link_options(${TARGET} PRIVATE /nologo)
+
+      if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.15.0)
+        # CMake 3.15 does not add /W3 to the compiler flags by default anymore
+        # so we add /W4 instead.
+        target_compile_options(${TARGET} PRIVATE /W4)
+      endif()
+
+      if(NOT STANDARD STREQUAL 90)
+        # MSVC reports non-constant initializers as a nonstandard extension but
+        # they've been standardized in C99 so we disable it if we're targeting at
+        # least C99.
+        target_compile_options(${TARGET} PRIVATE /wd4204)
+      endif()
+    else()
+      target_compile_options(${TARGET} PRIVATE
+        -Wall
+        -Wextra
+        -pedantic
+        -Wconversion
+        -Wsign-conversion
+        $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-Werror>
+        $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-pedantic-errors>
+      )
+
+      if(LANGUAGE STREQUAL C OR CMAKE_CXX_COMPILER_ID MATCHES Clang)
+        target_compile_options(${TARGET} PRIVATE -Wmissing-prototypes)
+      endif()
+    endif()
 
     target_compile_options(${TARGET} PRIVATE
-      /nologo # Silence MSVC compiler version output.
-      $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:/WX> # -Werror
-      $<$<BOOL:${REPROC_HAVE_PERMISSIVE}>:/permissive->
+      $<$<${LANGUAGE}_COMPILER_ID:GNU>:-fdiagnostics-color>
+      $<$<${LANGUAGE}_COMPILER_ID:Clang>:-fcolor-diagnostics>
     )
-
-    target_compile_definitions(${TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS)
-
-    target_link_options(${TARGET} PRIVATE /nologo)
-
-    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.15.0)
-      # CMake 3.15 does not add /W3 to the compiler flags by default anymore
-      # so we add /W4 instead.
-      target_compile_options(${TARGET} PRIVATE /W4)
-    endif()
-
-    if(NOT STANDARD STREQUAL 90)
-      # MSVC reports non-constant initializers as a nonstandard extension but
-      # they've been standardized in C99 so we disable it if we're targeting at
-      # least C99.
-      target_compile_options(${TARGET} PRIVATE /wd4204)
-    endif()
-  else()
-    target_compile_options(${TARGET} PRIVATE
-      -Wall
-      -Wextra
-      -pedantic
-      -Wconversion
-      -Wsign-conversion
-      $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-Werror>
-      $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-pedantic-errors>
-    )
-
-    if(LANGUAGE STREQUAL C OR CMAKE_CXX_COMPILER_ID MATCHES Clang)
-      target_compile_options(${TARGET} PRIVATE -Wmissing-prototypes)
-    endif()
   endif()
 
   if(REPROC_SANITIZERS)
@@ -156,11 +164,6 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
       target_link_options(${TARGET} PRIVATE -fsanitize=address,undefined)
     endif()
   endif()
-
-  target_compile_options(${TARGET} PRIVATE
-    $<$<${LANGUAGE}_COMPILER_ID:GNU>:-fdiagnostics-color>
-    $<$<${LANGUAGE}_COMPILER_ID:Clang>:-fcolor-diagnostics>
-  )
 endfunction()
 
 function(reproc_add_library TARGET LANGUAGE STANDARD)
