@@ -1,5 +1,7 @@
 #include <pipe.h>
 
+#include <macro.h>
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,11 +21,7 @@ static SECURITY_ATTRIBUTES HANDLE_DO_NOT_INHERIT = {
   .lpSecurityDescriptor = NULL
 };
 
-#ifdef __MINGW32__
-static __thread unsigned long pipe_serial_number = 0;
-#else
-__declspec(thread) static unsigned long pipe_serial_number = 0;
-#endif
+static THREAD_LOCAL unsigned long pipe_serial_number = 0;
 
 REPROC_ERROR
 pipe_init(HANDLE *read,
