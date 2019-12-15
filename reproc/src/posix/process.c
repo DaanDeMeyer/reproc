@@ -368,8 +368,8 @@ wait_timeout(pid_t process, unsigned int timeout, int *exit_status)
   sigemptyset(&chld_mask);
   SIGADDSET(&chld_mask, SIGCHLD);
 
-  // We block `SIGCHLD` to avoid a race condition between `wait_no_hang` and
-  // `sigtimedwait` where the child process is still running when `wait_no_hang`
+  // We block `SIGCHLD` to avoid a race condition between `waitpid` and
+  // `sigtimedwait` where the child process is still running when `waitpid`
   // returns but exits before we call `sigtimedwait`. By blocking the signal, it
   // stays pending when we receive the signal and since `sigtimedwait` watches
   // for pending signals the race condition is solved.
