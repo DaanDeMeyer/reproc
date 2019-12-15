@@ -274,7 +274,16 @@ REPROC_ERROR reproc_wait(reproc_t *process, unsigned int timeout)
     return REPROC_SUCCESS;
   }
 
-  return process_wait(process->handle, timeout, &process->exit_status);
+  unsigned int completed = 0;
+  REPROC_ERROR error = process_wait(&process->handle, 1, timeout, &completed,
+                                    &process->exit_status);
+  if (error) {
+    return error;
+  }
+
+  assert(completed == 1);
+
+  return REPROC_SUCCESS;
 }
 
 bool reproc_running(reproc_t *process)

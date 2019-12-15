@@ -372,12 +372,18 @@ cleanup:
 }
 
 REPROC_ERROR
-process_wait(HANDLE process, unsigned int timeout, int *exit_status)
+process_wait(HANDLE *processes,
+             unsigned int num_processes,
+             unsigned int timeout,
+             unsigned int *completed,
+             int *exit_status)
 {
-  assert(process);
+  assert(processes);
+  (void) num_processes;
   assert(exit_status);
+  assert(completed);
 
-  DWORD wait_result = WaitForSingleObject(process, timeout);
+  DWORD wait_result = WaitForSingleObject(processes[0], timeout);
   if (wait_result == WAIT_TIMEOUT) {
     return REPROC_ERROR_WAIT_TIMEOUT;
   } else if (wait_result == WAIT_FAILED) {
@@ -385,10 +391,11 @@ process_wait(HANDLE process, unsigned int timeout, int *exit_status)
   }
 
   DWORD status = 0;
-  if (!GetExitCodeProcess(process, &status)) {
+  if (!GetExitCodeProcess(processes[0], &status)) {
     return REPROC_ERROR_SYSTEM;
   }
 
+  *completed = 0;
   *exit_status = (int) status;
 
   return REPROC_SUCCESS;

@@ -29,10 +29,18 @@ REPROC_ERROR process_create(reproc_handle *process,
                             const char *const *argv,
                             struct process_options options);
 
-// Waits `timeout` milliseconds for the process indicated by `pid` to exit and
-// stores the exit code in `exit_status`.
+// Waits `timeout` milliseconds for any process in `processes` to exit. If a
+// process exits within the configured timeout, its index in `processes` is
+// stored in `completed` and its exit status is stored in `exit_status`.
+//
+// If `timeout` is `REPROC_INFINITE`, this function waits indefinitely for a
+// process to exit.
 REPROC_ERROR
-process_wait(reproc_handle process, unsigned int timeout, int *exit_status);
+process_wait(reproc_handle *processes,
+             unsigned int num_processes,
+             unsigned int timeout,
+             unsigned int *completed,
+             int *exit_status);
 
 // Sends the `CTRL-BREAK` signal to the process indicated by `pid`.
 REPROC_ERROR process_terminate(reproc_handle process);

@@ -303,41 +303,13 @@ static int parse_exit_status(int status)
   return WTERMSIG(status);
 }
 
-static REPROC_ERROR wait_no_hang(pid_t process, int *exit_status)
+static struct timespec timespec_from_milliseconds(long milliseconds)
 {
-  assert(exit_status);
+  struct timespec result;
+  result.tv_sec = milliseconds / 1000;              // ms -> s
+  result.tv_nsec = (milliseconds % 1000) * 1000000; // leftover ms -> ns
 
-  int status = 0;
-  // Adding `WNOHANG` makes `waitpid` only check if the child process is still
-  // running without waiting.
-  pid_t rv = waitpid(process, &status, WNOHANG);
-  if (rv == 0) {
-    return REPROC_ERROR_WAIT_TIMEOUT;
-  } else if (rv == -1) {
-    return REPROC_ERROR_SYSTEM;
-  }
-
-  assert(rv == process);
-  *exit_status = parse_exit_status(status);
-
-  return REPROC_SUCCESS;
-}
-
-static REPROC_ERROR wait_infinite(pid_t process, int *exit_status)
-{
-  assert(exit_status);
-
-  int status = 0;
-
-  pid_t rv = waitpid(process, &status, 0);
-  if (rv == -1) {
-    return REPROC_ERROR_SYSTEM;
-  }
-
-  assert(rv == process);
-  *exit_status = parse_exit_status(status);
-
-  return REPROC_SUCCESS;
+  return result;
 }
 
 static struct timespec timespec_subtract(struct timespec lhs,
@@ -356,10 +328,74 @@ static struct timespec timespec_subtract(struct timespec lhs,
   return result;
 }
 
-static REPROC_ERROR
-wait_timeout(pid_t process, unsigned int timeout, int *exit_status)
+static int exit_check(pid_t *processes,
+                      unsigned int num_processes,
+                      unsigned int *completed,
+                      int *exit_status)
 {
-  assert(timeout > 0);
+  assert(completed);
+  assert(exit_status);
+
+  for (unsigned int i = 0; i < num_processes; i++) {
+    int status = 0;
+    int rv = waitpid(processes[i], &status, WNOHANG);
+    if (rv == -1) {
+      return REPROC_ERROR_SYSTEM;
+    }
+
+    if (rv > 0) {
+      assert(rv == processes[i]);
+      *completed = i;
+      *exit_status = parse_exit_status(status);
+      return 0;
+    }
+  }
+
+  errno = EAGAIN;
+  return -1;
+}
+
+static int signal_wait(int signal, const struct timespec *timeout)
+{
+#if defined(__APPLE__)
+  int queue = kqueue();
+  if (queue == -1) {
+    return -1;
+  }
+
+  struct kevent event;
+  EV_SET(&event, signal, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+
+  int rv = kevent(queue, &event, 1, &event, 1, timeout);
+
+  // Translate `kevent` errors into Linux errno style equivalents.
+  if (rv == 0) {
+    rv = -1;
+    errno = EAGAIN;
+  } else if (rv > 0 && event.flags & EV_ERROR) {
+    rv = -1;
+    errno = (int) event.data;
+  }
+
+  close(queue);
+
+  return rv;
+#else
+  sigset_t set;
+  SIGADDSET(&set, signal);
+
+  return timeout == NULL ? sigwaitinfo(&set, NULL)
+                         : sigtimedwait(&set, NULL, timeout);
+#endif
+}
+
+REPROC_ERROR process_wait(pid_t *processes,
+                          unsigned int num_processes,
+                          unsigned int timeout,
+                          unsigned int *completed,
+                          int *exit_status)
+{
+  assert(completed);
   assert(exit_status);
 
   sigset_t chld_mask;
@@ -368,38 +404,33 @@ wait_timeout(pid_t process, unsigned int timeout, int *exit_status)
   sigemptyset(&chld_mask);
   SIGADDSET(&chld_mask, SIGCHLD);
 
-  // We block `SIGCHLD` to avoid a race condition between `waitpid` and
-  // `sigtimedwait` where the child process is still running when `waitpid`
-  // returns but exits before we call `sigtimedwait`. By blocking the signal, it
-  // stays pending when we receive the signal and since `sigtimedwait` watches
-  // for pending signals the race condition is solved.
+  // We block `SIGCHLD` first to avoid a race condition between `exit_check` and
+  // `signal_wait` where the child process is still running when `exit_check`
+  // returns but finishes before we call `signal_wait`. By blocking `SIGCHLD`
+  // before calling `exit_check`, the signal stays pending until `signal_wait`
+  // is called which processes the pending signal.
   if (SIGMASK(SIG_BLOCK, &chld_mask, &old_mask) == -1) {
     return REPROC_ERROR_SYSTEM;
   }
 
-  int status = 0;
-
-  struct timespec remaining;
-  remaining.tv_sec = timeout / 1000;              // ms -> s
-  remaining.tv_nsec = (timeout % 1000) * 1000000; // leftover ms -> ns
+  struct timespec remaining = timespec_from_milliseconds(timeout);
 
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
-  // MacOS does not support `sigtimedwait` so we use `kqueue` instead.
-#if defined(__APPLE__)
-  int queue = kqueue();
-  struct kevent event;
-  EV_SET(&event, SIGCHLD, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-  kevent(queue, &event, 1, NULL, 0, NULL);
-#endif
-
   while (true) {
-    int rv = waitpid(process, &status, WNOHANG);
-    if (rv == -1) {
-      goto cleanup;
-    } else if (rv > 0) {
+    // Check if any process in `processes` has finished.
+
+    int rv = exit_check(processes, num_processes, completed, exit_status);
+    if (rv == 0) {
       break;
     }
+
+    if (rv == -1 && errno != EAGAIN) {
+      goto cleanup;
+    }
+
+    // No process has finished, record the current time so we can calculate how
+    // much time has passed after `signal_wait` returns.
 
     struct timespec before;
     rv = clock_gettime(CLOCK_REALTIME, &before);
@@ -407,37 +438,19 @@ wait_timeout(pid_t process, unsigned int timeout, int *exit_status)
       goto cleanup;
     }
 
-#if defined(__APPLE__)
-    rv = kevent(queue, NULL, 0, &event, 1, &remaining);
+    // Wait until a `SIGCHLD` signal occurs or the timeout expires.
 
-    // Translate `kevent` errors to their `sigtimedwait` equivalents.
-    if (rv == 0) {
-      rv = -1;
-      errno = EAGAIN;
-    } else if (rv > 0 && event.flags & EV_ERROR) {
-      rv = -1;
-      errno = (int) event.data;
-    }
-#else
-    rv = sigtimedwait(&chld_mask, NULL, &remaining);
-#endif
+    rv = signal_wait(SIGCHLD, timeout == REPROC_INFINITE ? NULL : &remaining);
+    if (rv == -1) {
+      if (errno == EAGAIN) {
+        error = REPROC_ERROR_WAIT_TIMEOUT;
+      }
 
-    // Check if the timeout has expired.
-    if (rv == -1 && errno == EAGAIN) {
-      error = REPROC_ERROR_WAIT_TIMEOUT;
       goto cleanup;
     }
 
-    // Anything other than `EINTR` means system failure. If `EINTR` occurs or we
-    // get a `SIGCHLD`, we subtract the passed time from `remaining` and try
-    // again. Note that a `SIGCHLD` doesn't necessarily mean that the child
-    // process we're waiting for has exited so we keep looping until the timeout
-    // expires or `waitpid` verifies that the process we're waiting for has
-    // stopped.
-
-    if (rv == -1 && errno != EINTR) {
-      goto cleanup;
-    }
+    // A `SIGCHLD` signal occurred, update the remaining time before the timeout
+    // expires and repeat the loop.
 
     struct timespec after;
     rv = clock_gettime(CLOCK_REALTIME, &after);
@@ -445,45 +458,18 @@ wait_timeout(pid_t process, unsigned int timeout, int *exit_status)
       goto cleanup;
     }
 
-    struct timespec passed = timespec_subtract(after, before);
-    remaining = timespec_subtract(remaining, passed);
-
-    // Avoid passing a negative timeout to `sigtimedwait`.
-    if (remaining.tv_sec < 0) {
-      remaining.tv_sec = 0;
-      remaining.tv_nsec = 0;
-    }
+    struct timespec elapsed = timespec_subtract(after, before);
+    remaining = timespec_subtract(remaining, elapsed);
   }
 
   error = REPROC_SUCCESS;
-  *exit_status = parse_exit_status(status);
 
 cleanup:
-#if defined(__APPLE__)
-  close(queue);
-#endif
-
   if (SIGMASK(SIG_SETMASK, &old_mask, NULL) == -1) {
     error = REPROC_ERROR_SYSTEM;
   }
 
   return error;
-}
-
-REPROC_ERROR
-process_wait(pid_t process, unsigned int timeout, int *exit_status)
-{
-  assert(exit_status);
-
-  if (timeout == 0) {
-    return wait_no_hang(process, exit_status);
-  }
-
-  if (timeout == REPROC_INFINITE) {
-    return wait_infinite(process, exit_status);
-  }
-
-  return wait_timeout(process, timeout, exit_status);
 }
 
 REPROC_ERROR process_terminate(pid_t process)
