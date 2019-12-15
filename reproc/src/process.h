@@ -19,12 +19,8 @@ struct process_options {
   } redirect;
 };
 
-// Spawns a child process that executes the command stored in `command_line`.
-// `command_line` is required to be in the format expected by `CreateProcessW`.
-// The process id and handle of the new child process are assigned to `pid` and
-// `handle` respectively. `options` contains options that modify how the child
-// process is spawned. See `process_options` for more information on the
-// possible options.
+// Spawns a child process that executes the command stored in `argv`.
+// The process handle of the new child process is assigned to `process`.
 REPROC_ERROR process_create(reproc_handle *process,
                             const char *const *argv,
                             struct process_options options);
@@ -42,8 +38,10 @@ process_wait(reproc_handle *processes,
              unsigned int *completed,
              int *exit_status);
 
-// Sends the `CTRL-BREAK` signal to the process indicated by `pid`.
+// Sends the `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) signal to the process
+// indicated by `process`.
 REPROC_ERROR process_terminate(reproc_handle process);
 
-// Calls `TerminateProcess` on the process indicated by `handle`.
+// Sends the `SIGKILL` signal to `process` (POSIX) or calls `TerminateProcess`
+// on `process` (Windows).
 REPROC_ERROR process_kill(reproc_handle process);
