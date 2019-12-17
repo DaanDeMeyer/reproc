@@ -17,9 +17,9 @@ struct pipe_options {
 // specify whether the `read` or `write` handle respectively should be inherited
 // by any child processes spawned by the current process.
 REPROC_ERROR
-pipe_init(reproc_handle *read,
+pipe_init(handle *read,
           struct pipe_options read_options,
-          reproc_handle *write,
+          handle *write,
           struct pipe_options write_options);
 
 // Reads up to `size` bytes from the pipe indicated by `handle` and stores them
@@ -27,7 +27,7 @@ pipe_init(reproc_handle *read,
 //
 // This function only works on pipe handles opened with the
 // `FILE_FLAG_OVERLAPPED` flag.
-REPROC_ERROR pipe_read(reproc_handle pipe,
+REPROC_ERROR pipe_read(handle pipe,
                        uint8_t *buffer,
                        unsigned int size,
                        unsigned int *bytes_read);
@@ -37,7 +37,7 @@ REPROC_ERROR pipe_read(reproc_handle pipe,
 //
 // This function only works on pipe handles opened with the
 // `FILE_FLAG_OVERLAPPED` flag.
-REPROC_ERROR pipe_write(reproc_handle pipe,
+REPROC_ERROR pipe_write(handle pipe,
                         const uint8_t *buffer,
                         unsigned int size,
                         unsigned int *bytes_written);
@@ -48,6 +48,6 @@ REPROC_ERROR pipe_write(reproc_handle pipe,
 // `REPROC_ERROR_STREAM_CLOSED` is returned if all pipes in `pipes` have been
 // closed.
 REPROC_ERROR
-pipe_wait(const reproc_handle *pipes,
+pipe_wait(const handle *pipes,
           unsigned int num_pipes,
           unsigned int *ready);

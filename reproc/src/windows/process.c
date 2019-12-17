@@ -353,7 +353,7 @@ REPROC_ERROR process_create(HANDLE *process,
   }
 
   // We don't need the handle to the primary thread of the child process.
-  handle_close(&info.hThread);
+  handle_destroy(info.hThread);
   *process = info.hProcess;
 
   error = REPROC_SUCCESS;
@@ -428,7 +428,7 @@ REPROC_ERROR process_kill(HANDLE process)
   return REPROC_SUCCESS;
 }
 
-void process_destroy(HANDLE *process)
+HANDLE process_destroy(HANDLE process)
 {
-  handle_close(process);
+  return handle_destroy(process);
 }

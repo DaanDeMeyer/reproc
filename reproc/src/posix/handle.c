@@ -4,21 +4,18 @@
 #include <errno.h>
 #include <unistd.h>
 
-void handle_close(int *handle)
-{
-  assert(handle);
+const int HANDLE_INVALID = -1;
 
-  // Do nothing and return if `handle` is 0 (null) so callers don't have to
-  // check if a handle has been closed already.
-  if (*handle == 0) {
-    return;
+int handle_destroy(int handle)
+{
+  if (handle == HANDLE_INVALID) {
+    return HANDLE_INVALID;
   }
 
   // Avoid `close` errors overriding other system errors.
   int last_system_error = errno;
-  close(*handle);
+  close(handle);
   errno = last_system_error;
 
-  // `close` should not be repeated on error so always set `handle` to 0.
-  *handle = 0;
+  return HANDLE_INVALID;
 }

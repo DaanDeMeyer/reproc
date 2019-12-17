@@ -22,8 +22,7 @@ static std::error_code error_to_error_code(REPROC_ERROR error)
   return {};
 }
 
-static reproc_stop_actions
-stop_actions_to_reproc(stop_actions stop_actions)
+static reproc_stop_actions stop_actions_to_reproc(stop_actions stop_actions)
 {
   return { { static_cast<REPROC_STOP>(stop_actions.first.action),
              stop_actions.first.timeout.count() },
@@ -35,7 +34,9 @@ stop_actions_to_reproc(stop_actions stop_actions)
 
 const milliseconds infinite = milliseconds(0xFFFFFFFF);
 
-process::process() : process_(reproc_new(), reproc_destroy) {}
+auto deleter = [](reproc_t *process) { reproc_destroy(process); };
+
+process::process() : process_(reproc_new(), deleter) {}
 
 std::error_code process::start(const arguments &arguments,
                                const options &options) noexcept

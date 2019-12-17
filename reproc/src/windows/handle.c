@@ -3,22 +3,18 @@
 #include <assert.h>
 #include <windows.h>
 
-void handle_close(HANDLE *handle)
-{
-  assert(handle);
+const HANDLE HANDLE_INVALID = INVALID_HANDLE_VALUE; // NOLINT
 
-  // Do nothing if `handle` is `NULL` so callers don't have to check if `handle`
-  // has already been closed.
-  if (*handle == NULL || *handle == INVALID_HANDLE_VALUE) {
-    return;
+HANDLE handle_destroy(HANDLE handle)
+{
+  if (handle == NULL || handle == HANDLE_INVALID) {
+    return HANDLE_INVALID;
   }
 
   // Avoid `CloseHandle` errors overriding other system errors.
   unsigned int last_error = GetLastError();
-  CloseHandle(*handle);
+  CloseHandle(handle);
   SetLastError(last_error);
 
-  // `CloseHandle` should not be repeated if an error occurs so we always set
-  // `handle` to `NULL`.
-  *handle = NULL;
+  return HANDLE_INVALID;
 }

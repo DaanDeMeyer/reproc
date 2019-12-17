@@ -26,7 +26,7 @@ REPROC_ERROR redirect_inherit(int *parent, int *child, REPROC_STREAM stream)
   assert(parent);
   assert(child);
 
-  *parent = 0;
+  *parent = HANDLE_INVALID;
   FILE *file = stream == REPROC_STREAM_IN
                    ? stdin
                    : stream == REPROC_STREAM_OUT ? stdout : stderr;
@@ -46,7 +46,7 @@ REPROC_ERROR redirect_discard(int *parent, int *child, REPROC_STREAM stream)
   assert(parent);
   assert(child);
 
-  *parent = 0;
+  *parent = HANDLE_INVALID;
   int mode = stream == REPROC_STREAM_IN ? O_RDONLY : O_WRONLY;
 
   *child = open(DEVNULL, mode | O_CLOEXEC);

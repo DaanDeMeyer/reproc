@@ -13,15 +13,15 @@ struct process_options {
   const char *working_directory;
 
   struct {
-    reproc_handle in;
-    reproc_handle out;
-    reproc_handle err;
+    handle in;
+    handle out;
+    handle err;
   } redirect;
 };
 
 // Spawns a child process that executes the command stored in `argv`.
 // The process handle of the new child process is assigned to `process`.
-REPROC_ERROR process_create(reproc_handle *process,
+REPROC_ERROR process_create(handle *process,
                             const char *const *argv,
                             struct process_options options);
 
@@ -32,7 +32,7 @@ REPROC_ERROR process_create(reproc_handle *process,
 // If `timeout` is `REPROC_INFINITE`, this function waits indefinitely for a
 // process to exit.
 REPROC_ERROR
-process_wait(reproc_handle *processes,
+process_wait(handle *processes,
              unsigned int num_processes,
              unsigned int timeout,
              unsigned int *completed,
@@ -40,10 +40,10 @@ process_wait(reproc_handle *processes,
 
 // Sends the `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) signal to the process
 // indicated by `process`.
-REPROC_ERROR process_terminate(reproc_handle process);
+REPROC_ERROR process_terminate(handle process);
 
 // Sends the `SIGKILL` signal to `process` (POSIX) or calls `TerminateProcess`
 // on `process` (Windows).
-REPROC_ERROR process_kill(reproc_handle process);
+REPROC_ERROR process_kill(handle process);
 
-void process_destroy(reproc_handle *process);
+handle process_destroy(handle process);

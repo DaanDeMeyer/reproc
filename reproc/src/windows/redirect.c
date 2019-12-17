@@ -36,7 +36,7 @@ redirect_inherit(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
   assert(parent);
   assert(child);
 
-  *parent = NULL;
+  *parent = HANDLE_INVALID;
   DWORD stream_id = stream == REPROC_STREAM_IN
                         ? STD_INPUT_HANDLE
                         : stream == REPROC_STREAM_OUT ? STD_OUTPUT_HANDLE
@@ -64,7 +64,7 @@ redirect_discard(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
   assert(parent);
   assert(child);
 
-  *parent = NULL;
+  *parent = HANDLE_INVALID;
   DWORD mode = stream == REPROC_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
 
   *child = CreateFile(DEVNULL, mode, FILE_NO_SHARE, &INHERIT_HANDLE,

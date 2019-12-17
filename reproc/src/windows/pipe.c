@@ -57,7 +57,6 @@ pipe_init(HANDLE *read,
                            PIPE_TYPE_BYTE | PIPE_WAIT, PIPE_SINGLE_INSTANCE,
                            PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE, PIPE_NO_TIMEOUT,
                            &security);
-
   if (*read == INVALID_HANDLE_VALUE) {
     goto cleanup;
   }
@@ -67,7 +66,6 @@ pipe_init(HANDLE *read,
   *write = CreateFileA(name, GENERIC_WRITE, FILE_NO_SHARE, &security,
                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | write_mode,
                        (HANDLE) FILE_NO_TEMPLATE);
-
   if (*write == INVALID_HANDLE_VALUE) {
     goto cleanup;
   }
@@ -76,8 +74,8 @@ pipe_init(HANDLE *read,
 
 cleanup:
   if (error) {
-    handle_close(read);
-    handle_close(write);
+    *read = handle_destroy(*read);
+    *write = handle_destroy(*write);
   }
 
   return error;
@@ -122,7 +120,7 @@ REPROC_ERROR pipe_read(HANDLE pipe,
   error = REPROC_SUCCESS;
 
 cleanup:
-  handle_close(&overlapped.hEvent);
+  handle_destroy(overlapped.hEvent);
 
   return error;
 }
@@ -166,13 +164,13 @@ REPROC_ERROR pipe_write(HANDLE pipe,
   error = REPROC_SUCCESS;
 
 cleanup:
-  handle_close(&overlapped.hEvent);
+  handle_destroy(overlapped.hEvent);
 
   return error;
 }
 
 REPROC_ERROR
-pipe_wait(const reproc_handle *pipes,
+pipe_wait(const handle *pipes,
           unsigned int num_pipes,
           unsigned int *ready)
 {
@@ -288,7 +286,7 @@ cleanup:;
   }
 
   for (DWORD i = 0; i < num_pipes; i++) {
-    handle_close(&overlapped[i].hEvent);
+    handle_destroy(overlapped[i].hEvent);
   }
 
   free(overlapped);

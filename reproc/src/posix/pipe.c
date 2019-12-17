@@ -71,8 +71,8 @@ REPROC_ERROR pipe_init(int *read,
 
 cleanup:
   if (error) {
-    handle_close(read);
-    handle_close(write);
+    *read = handle_destroy(*read);
+    *write = handle_destroy(*write);
   }
 
   return error;
@@ -144,7 +144,7 @@ REPROC_ERROR pipe_write(int pipe,
 }
 
 REPROC_ERROR
-pipe_wait(const reproc_handle *pipes,
+pipe_wait(const handle *pipes,
           unsigned int num_pipes,
           unsigned int *ready)
 {

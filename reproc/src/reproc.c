@@ -14,18 +14,18 @@ enum { REPROC_STATUS_NOT_STARTED = -1, REPROC_STATUS_RUNNING = -2 };
 struct reproc_t {
   int exit_status;
 
-  reproc_handle handle;
-  reproc_handle in;
-  reproc_handle out;
-  reproc_handle err;
+  handle handle;
+  handle in;
+  handle out;
+  handle err;
 
   reproc_stop_actions stop_actions;
 };
 
 const unsigned int REPROC_INFINITE = 0xFFFFFFFF; // == `INFINITE` on Windows
 
-static REPROC_ERROR redirect(reproc_handle *parent,
-                             reproc_handle *child,
+static REPROC_ERROR redirect(handle *parent,
+                             handle *child,
                              REPROC_STREAM stream,
                              REPROC_REDIRECT type)
 {
@@ -56,7 +56,11 @@ reproc_t *reproc_new(void)
     return NULL;
   }
 
-  *process = (reproc_t){ .exit_status = REPROC_STATUS_NOT_STARTED };
+  *process = (reproc_t){ .exit_status = REPROC_STATUS_NOT_STARTED,
+                         .handle = HANDLE_INVALID,
+                         .in = HANDLE_INVALID,
+                         .out = HANDLE_INVALID,
+                         .err = HANDLE_INVALID };
 
   return process;
 }
@@ -69,9 +73,9 @@ reproc_start(reproc_t *process, const char *const *argv, reproc_options options)
   assert(argv);
   assert(argv[0]);
 
-  reproc_handle child_in = 0;
-  reproc_handle child_out = 0;
-  reproc_handle child_err = 0;
+  handle child_in = HANDLE_INVALID;
+  handle child_out = HANDLE_INVALID;
+  handle child_err = HANDLE_INVALID;
 
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
@@ -121,14 +125,15 @@ cleanup:
   // Either an error has ocurred or the child pipe endpoints have been copied to
   // the stdin/stdout/stderr streams of the child process. Either way, they can
   // be safely closed in the parent process.
-  handle_close(&child_in);
-  handle_close(&child_out);
-  handle_close(&child_err);
+  handle_destroy(child_in);
+  handle_destroy(child_out);
+  handle_destroy(child_err);
 
   if (error) {
-    handle_close(&process->in);
-    handle_close(&process->out);
-    handle_close(&process->err);
+    process->handle = process_destroy(process->handle);
+    process->in = handle_destroy(process->in);
+    process->out = handle_destroy(process->out);
+    process->err = handle_destroy(process->err);
   } else {
     process->exit_status = REPROC_STATUS_RUNNING;
   }
@@ -147,7 +152,7 @@ REPROC_ERROR reproc_read(reproc_t *process,
   assert(buffer);
   assert(bytes_read);
 
-  reproc_handle pipes[2] = { process->err, process->out };
+  handle pipes[2] = { process->err, process->out };
   unsigned int ready = 0;
 
   REPROC_ERROR error = pipe_wait(pipes, ARRAY_SIZE(pipes), &ready);
@@ -255,13 +260,13 @@ void reproc_close(reproc_t *process, REPROC_STREAM stream)
 
   switch (stream) {
     case REPROC_STREAM_IN:
-      handle_close(&process->in);
+      process->in = handle_destroy(process->in);
       return;
     case REPROC_STREAM_OUT:
-      handle_close(&process->out);
+      process->out = handle_destroy(process->out);
       return;
     case REPROC_STREAM_ERR:
-      handle_close(&process->err);
+      process->err = handle_destroy(process->err);
       return;
   }
 
@@ -283,7 +288,7 @@ REPROC_ERROR reproc_wait(reproc_t *process, unsigned int timeout)
     return error;
   }
 
-  assert(completed == 1);
+  assert(completed == 0);
 
   return REPROC_SUCCESS;
 }
@@ -365,17 +370,17 @@ int reproc_exit_status(reproc_t *process)
   return process->exit_status >= 0 ? process->exit_status : -1;
 }
 
-void reproc_destroy(reproc_t *process)
+reproc_t *reproc_destroy(reproc_t *process)
 {
   assert(process);
 
   reproc_stop(process, process->stop_actions);
 
-  process_destroy(&process->handle);
-
-  handle_close(&process->in);
-  handle_close(&process->out);
-  handle_close(&process->err);
+  process->handle = process_destroy(process->handle);
+  process->in = handle_destroy(process->in);
+  process->out = handle_destroy(process->out);
+  process->err = handle_destroy(process->err);
 
   free(process);
+  return NULL;
 }

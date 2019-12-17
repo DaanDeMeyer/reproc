@@ -309,10 +309,18 @@ REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_t *process,
 `-1` `process` has not been started or if `process` is still running. */
 REPROC_EXPORT int reproc_exit_status(reproc_t *process);
 
-/*! Release all resources associated with `process` including the memory
-allocated by `reproc_new`. Calling this function before a succesfull call to
-`reproc_wait` can result in resource leaks. */
-REPROC_EXPORT void reproc_destroy(reproc_t *process);
+/*!
+Release all resources associated with `process` including the memory allocated
+by `reproc_new`. Calling this function before a succesfull call to `reproc_wait`
+can result in resource leaks.
+
+Does not nothing if `process` is an invalid `reproc_t` instance and always
+returns an invalid `reproc_t` instance (`NULL`). By assiging the result of
+`reproc_destroy`, it can be safely called multiple times on the same instance.
+
+Example: `process = reproc_destroy(process)`.
+*/
+REPROC_EXPORT reproc_t *reproc_destroy(reproc_t *process);
 
 #ifdef __cplusplus
 }

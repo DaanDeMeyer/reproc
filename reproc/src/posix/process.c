@@ -112,13 +112,13 @@ process_create(pid_t *process,
   assert(argv[0] != NULL);
   assert(process);
 
-  pid_t child_process = 0;
+  pid_t child_process = HANDLE_INVALID;
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
   // We create an error pipe to receive errors from the child process. See this
   // answer https://stackoverflow.com/a/1586277 for more information.
-  int error_pipe_read = 0;
-  int error_pipe_write = 0;
+  int error_pipe_read = HANDLE_INVALID;
+  int error_pipe_write = HANDLE_INVALID;
   error = pipe_init(&error_pipe_read, PIPE_BLOCKING, &error_pipe_write,
                     PIPE_BLOCKING);
   if (error) {
@@ -240,7 +240,7 @@ process_create(pid_t *process,
 
   // Close error pipe write end on the parent's side so `pipe_read` will return
   // when it is closed on the child side as well.
-  handle_close(&error_pipe_write);
+  error_pipe_write = handle_destroy(error_pipe_write);
 
   int child_error = 0;
   unsigned int bytes_read = 0;
@@ -249,7 +249,7 @@ process_create(pid_t *process,
   // write end of the error pipe in the child process is closed.
   error = pipe_read(error_pipe_read, (uint8_t *) &child_error,
                     sizeof(child_error), &bytes_read);
-  handle_close(&error_pipe_read);
+  error_pipe_read = handle_destroy(error_pipe_read);
 
   switch (error) {
     // `REPROC_ERROR_STREAM_CLOSED` is not an error because it means the pipe
@@ -280,8 +280,8 @@ process_create(pid_t *process,
   *process = child_process;
 
 cleanup:
-  handle_close(&error_pipe_read);
-  handle_close(&error_pipe_write);
+  handle_destroy(error_pipe_read);
+  handle_destroy(error_pipe_write);
 
   // Make sure the child process doesn't become a zombie process if the child
   // process was started (`child_process` > 0) but an error occurred.
@@ -490,8 +490,9 @@ REPROC_ERROR process_kill(pid_t process)
   return REPROC_SUCCESS;
 }
 
-void process_destroy(pid_t *process)
+pid_t process_destroy(pid_t process)
 {
   // `waitpid` already cleans up the process for us.
   (void) process;
+  return HANDLE_INVALID;
 }
