@@ -489,3 +489,9 @@ REPROC_ERROR process_kill(pid_t process)
 
   return REPROC_SUCCESS;
 }
+
+void process_destroy(pid_t *process)
+{
+  // `waitpid` already cleans up the process for us.
+  (void) process;
+}

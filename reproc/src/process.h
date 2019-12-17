@@ -45,3 +45,5 @@ REPROC_ERROR process_terminate(reproc_handle process);
 // Sends the `SIGKILL` signal to `process` (POSIX) or calls `TerminateProcess`
 // on `process` (Windows).
 REPROC_ERROR process_kill(reproc_handle process);
+
+void process_destroy(reproc_handle *process);

@@ -126,7 +126,9 @@ cleanup:
   handle_close(&child_err);
 
   if (error) {
-    reproc_destroy(process);
+    handle_close(&process->in);
+    handle_close(&process->out);
+    handle_close(&process->err);
   } else {
     process->exit_status = REPROC_STATUS_RUNNING;
   }
@@ -369,11 +371,7 @@ void reproc_destroy(reproc_t *process)
 
   reproc_stop(process, process->stop_actions);
 
-  // Process handle only needs to be closed on Windows. `waitpid` takes care of
-  // it for us on POSIX.
-#if defined(_WIN32)
-  handle_close(&process->handle);
-#endif
+  process_destroy(&process->handle);
 
   handle_close(&process->in);
   handle_close(&process->out);

@@ -427,3 +427,8 @@ REPROC_ERROR process_kill(HANDLE process)
 
   return REPROC_SUCCESS;
 }
+
+void process_destroy(HANDLE *process)
+{
+  handle_close(process);
+}
