@@ -242,7 +242,13 @@ pipe_wait(const handle *pipes,
 
   error = REPROC_SUCCESS;
 
-cleanup:;
+cleanup:
+  // If a memory allocation failed, we don't have to do any other cleanup.
+  if (overlapped == NULL || events == NULL) {
+    free(overlapped);
+    free(events);
+    return error;
+  }
 
   // Because we continue cleaning up even when an error occurs during cleanup,
   // we have to save the first error that occurs because `GetLastError()` might
