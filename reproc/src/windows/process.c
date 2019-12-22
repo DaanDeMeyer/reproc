@@ -221,8 +221,8 @@ static wchar_t *string_to_wstring(const char *string, size_t size)
 
   // Determine wstring size (`MultiByteToWideChar` returns the required size if
   // its last two arguments are `NULL` and 0).
-  int r = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string,
-                               (int) size, NULL, 0);
+  int r = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string, (int) size,
+                              NULL, 0);
   if (r == 0) {
     return NULL;
   }
@@ -294,13 +294,12 @@ REPROC_ERROR process_create(HANDLE *process,
   wchar_t *working_directory_wstring = NULL;
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
   PROCESS_INFORMATION info = { HANDLE_INVALID, HANDLE_INVALID, 0, 0 };
+  BOOL r = 0;
 
   // Child processes inherit the error mode of their parents. To avoid child
   // processes creating error dialogs we set our error mode to not create error
   // dialogs temporarily which is inherited by the child process.
   DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
-
-  REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
   if (job_reference_count == 0) {
     // `CreateJobObject` makes the handle uninheritable by default so we do not
@@ -319,9 +318,9 @@ REPROC_ERROR process_create(HANDLE *process,
       .CompletionPort = job_completion_port
     };
 
-    BOOL r = SetInformationJobObject(
-        job_object, JobObjectAssociateCompletionPortInformation, &port_info,
-        sizeof(port_info));
+    r = SetInformationJobObject(job_object,
+                                JobObjectAssociateCompletionPortInformation,
+                                &port_info, sizeof(port_info));
     if (r == 0) {
       goto cleanup;
     }
@@ -397,10 +396,10 @@ REPROC_ERROR process_create(HANDLE *process,
 
   LPSTARTUPINFOW startup_info_address = &extended_startup_info.StartupInfo;
 
-  BOOL r = CreateProcessW(NULL, command_line_wstring, &HANDLE_DO_NOT_INHERIT,
-                           &HANDLE_DO_NOT_INHERIT, true, CREATION_FLAGS,
-                           environment_line_wstring, working_directory_wstring,
-                           startup_info_address, &info);
+  r = CreateProcessW(NULL, command_line_wstring, &HANDLE_DO_NOT_INHERIT,
+                     &HANDLE_DO_NOT_INHERIT, true, CREATION_FLAGS,
+                     environment_line_wstring, working_directory_wstring,
+                     startup_info_address, &info);
   if (r == 0) {
     goto cleanup;
   }
@@ -418,8 +417,6 @@ REPROC_ERROR process_create(HANDLE *process,
   *process = info.hProcess;
   job_reference_count++;
 
-  error = REPROC_SUCCESS;
-
 cleanup:
   free(command_line);
   free(command_line_wstring);
@@ -431,7 +428,7 @@ cleanup:
 
   SetErrorMode(previous_error_mode);
 
-  if (error) {
+  if (r == 0) {
     if (info.hProcess != HANDLE_INVALID) {
       // The process is guaranteed to be suspended if we get here so terminating
       // it should be safe as it shouldn't be able to leak anything.
@@ -448,7 +445,7 @@ cleanup:
     }
   }
 
-  return error;
+  return r == 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 }
 
 REPROC_ERROR
@@ -462,10 +459,12 @@ process_wait(HANDLE *processes,
   assert(exit_status);
   assert(completed);
 
+  BOOL r = 0;
+
   for (unsigned int i = 0; i < num_processes; i++) {
     if (WaitForSingleObject(processes[i], 0) == WAIT_OBJECT_0) {
       DWORD status = 0;
-      BOOL r = GetExitCodeProcess(processes[i], &status);
+      r = GetExitCodeProcess(processes[i], &status);
       if (r == 0) {
         return REPROC_ERROR_SYSTEM;
       }
@@ -487,10 +486,9 @@ process_wait(HANDLE *processes,
     unsigned long long completion_key = 0;
     LPOVERLAPPED lpoverlapped = NULL;
 
-    BOOL r = GetQueuedCompletionStatus(job_completion_port, &completion_code,
-                                        &completion_key, &lpoverlapped,
-                                        timeout == INFINITE ? timeout
-                                                            : remaining);
+    r = GetQueuedCompletionStatus(job_completion_port, &completion_code,
+                                  &completion_key, &lpoverlapped,
+                                  timeout == INFINITE ? timeout : remaining);
     if (r == 0) {
       return GetLastError() == WAIT_TIMEOUT ? REPROC_ERROR_WAIT_TIMEOUT
                                             : REPROC_ERROR_SYSTEM;
@@ -517,7 +515,7 @@ process_wait(HANDLE *processes,
   }
 
   DWORD status = 0;
-  BOOL r = GetExitCodeProcess(processes[completed_index], &status);
+  r = GetExitCodeProcess(processes[completed_index], &status);
   if (r == 0) {
     return REPROC_ERROR_SYSTEM;
   }
@@ -535,11 +533,9 @@ REPROC_ERROR process_terminate(HANDLE process)
   // `GenerateConsoleCtrlEvent` can only be called on a process group. To call
   // `GenerateConsoleCtrlEvent` on a single child process it has to be put in
   // its own process group (which we did when starting the child process).
-  if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, GetProcessId(process))) {
-    return REPROC_ERROR_SYSTEM;
-  }
-
-  return REPROC_SUCCESS;
+  return GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, GetProcessId(process)) == 0
+             ? REPROC_ERROR_SYSTEM
+             : REPROC_SUCCESS;
 }
 
 REPROC_ERROR process_kill(HANDLE process)
@@ -549,11 +545,8 @@ REPROC_ERROR process_kill(HANDLE process)
   // We use 137 (`SIGKILL`) as the exit status because it is the same exit
   // status as a process that is stopped with the `SIGKILL` signal on POSIX
   // systems.
-  if (!TerminateProcess(process, SIGKILL)) {
-    return REPROC_ERROR_SYSTEM;
-  }
-
-  return REPROC_SUCCESS;
+  return TerminateProcess(process, SIGKILL) == 0 ? REPROC_ERROR_SYSTEM
+                                                 : REPROC_SUCCESS;
 }
 
 HANDLE process_destroy(HANDLE process)

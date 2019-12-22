@@ -36,11 +36,12 @@ redirect_inherit(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
   assert(parent);
   assert(child);
 
-  *parent = HANDLE_INVALID;
   DWORD stream_id = stream == REPROC_STREAM_IN
                         ? STD_INPUT_HANDLE
                         : stream == REPROC_STREAM_OUT ? STD_OUTPUT_HANDLE
                                                       : STD_ERROR_HANDLE;
+  HANDLE handle = HANDLE_INVALID;
+  BOOL r = 0;
 
   HANDLE *stream_handle = GetStdHandle(stream_id);
   if (stream_handle == INVALID_HANDLE_VALUE) {
@@ -51,11 +52,16 @@ redirect_inherit(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
     return REPROC_ERROR_STREAM_CLOSED;
   }
 
-  BOOL r = DuplicateHandle(GetCurrentProcess(), stream_handle,
-                            GetCurrentProcess(), child, 0, true,
-                            DUPLICATE_SAME_ACCESS);
+  r = DuplicateHandle(GetCurrentProcess(), stream_handle, GetCurrentProcess(),
+                      &handle, 0, true, DUPLICATE_SAME_ACCESS);
+  if (r == 0) {
+    return REPROC_ERROR_SYSTEM;
+  }
 
-  return r == 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
+  *parent = HANDLE_INVALID;
+  *child = handle;
+
+  return REPROC_SUCCESS;
 }
 
 REPROC_ERROR
@@ -64,12 +70,17 @@ redirect_discard(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
   assert(parent);
   assert(child);
 
-  *parent = HANDLE_INVALID;
   DWORD mode = stream == REPROC_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
 
-  *child = CreateFile(DEVNULL, mode, FILE_NO_SHARE, &INHERIT_HANDLE,
-                      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
-                      (HANDLE) FILE_NO_TEMPLATE);
+  HANDLE handle = CreateFile(DEVNULL, mode, FILE_NO_SHARE, &INHERIT_HANDLE,
+                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
+                             (HANDLE) FILE_NO_TEMPLATE);
+  if (handle == INVALID_HANDLE_VALUE) {
+    return REPROC_ERROR_SYSTEM;
+  }
 
-  return *child == INVALID_HANDLE_VALUE ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
+  *parent = HANDLE_INVALID;
+  *child = handle;
+
+  return REPROC_SUCCESS;
 }
