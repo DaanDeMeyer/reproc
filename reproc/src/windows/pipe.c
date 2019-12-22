@@ -38,20 +38,17 @@ pipe_init(HANDLE *read,
   //
   // Copyright (c) 1997  Microsoft Corporation
 
-  // Thread-safe unique name for the named pipe.
-  char name[MAX_PATH];
-  sprintf(name, "\\\\.\\Pipe\\RemoteExeAnon.%08lx.%08lx.%08lx",
-          GetCurrentProcessId(), GetCurrentThreadId(), pipe_serial_number++);
-
+  char name[MAX_PATH]; // Thread-safe unique name for the named pipe.
   HANDLE pipe_handles[2] = { HANDLE_INVALID, HANDLE_INVALID };
-
   DWORD read_mode = read_options.nonblocking ? FILE_FLAG_OVERLAPPED : 0;
   DWORD write_mode = write_options.nonblocking ? FILE_FLAG_OVERLAPPED : 0;
-
   SECURITY_ATTRIBUTES security = { .nLength = sizeof(SECURITY_ATTRIBUTES),
-                                   .lpSecurityDescriptor = NULL };
+                                   .lpSecurityDescriptor = NULL,
+                                   .bInheritHandle = read_options.inherit };
+  BOOL r = 0;
 
-  security.bInheritHandle = read_options.inherit;
+  sprintf(name, "\\\\.\\Pipe\\RemoteExeAnon.%08lx.%08lx.%08lx",
+          GetCurrentProcessId(), GetCurrentThreadId(), pipe_serial_number++);
 
   pipe_handles[0] = CreateNamedPipeA(name, PIPE_ACCESS_INBOUND | read_mode,
                                      PIPE_TYPE_BYTE | PIPE_WAIT,
@@ -59,6 +56,7 @@ pipe_init(HANDLE *read,
                                      PIPE_BUFFER_SIZE, PIPE_NO_TIMEOUT,
                                      &security);
   if (pipe_handles[0] == INVALID_HANDLE_VALUE) {
+    r = 0;
     goto cleanup;
   }
 
@@ -69,20 +67,22 @@ pipe_init(HANDLE *read,
                                 FILE_ATTRIBUTE_NORMAL | write_mode,
                                 (HANDLE) FILE_NO_TEMPLATE);
   if (pipe_handles[1] == INVALID_HANDLE_VALUE) {
+    r = 0;
     goto cleanup;
   }
 
   *read = pipe_handles[0];
   *write = pipe_handles[1];
 
+  r = 1;
+
 cleanup:
-  if (pipe_handles[1] == INVALID_HANDLE_VALUE) {
+  if (r == 0) {
     handle_destroy(pipe_handles[0]);
     handle_destroy(pipe_handles[1]);
   }
 
-  return pipe_handles[1] == INVALID_HANDLE_VALUE ? REPROC_ERROR_SYSTEM
-                                                 : REPROC_SUCCESS;
+  return r == 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 }
 
 REPROC_ERROR pipe_read(HANDLE pipe,
@@ -99,6 +99,7 @@ REPROC_ERROR pipe_read(HANDLE pipe,
   OVERLAPPED overlapped = { 0 };
   overlapped.hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false, NULL);
   if (overlapped.hEvent == NULL) {
+    r = 0;
     goto cleanup;
   }
 
@@ -136,6 +137,7 @@ REPROC_ERROR pipe_write(HANDLE pipe,
   OVERLAPPED overlapped = { 0 };
   overlapped.hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false, NULL);
   if (overlapped.hEvent == NULL) {
+    r = 0;
     goto cleanup;
   }
 
@@ -167,18 +169,20 @@ pipe_wait(const handle *pipes, unsigned int num_pipes, unsigned int *ready)
   OVERLAPPED *overlapped = NULL;
   HANDLE *events = NULL;
   DWORD num_reads = 0;
-  DWORD r = 0;
+  BOOL r = 0;
 
   // `BOOL` is either 0 or 1 even though it is defined as `int` so all casts of
   // functions returning `BOOL` to `DWORD` in this function are safe.
 
   overlapped = calloc(num_pipes, sizeof(OVERLAPPED));
   if (overlapped == NULL) {
+    r = 0;
     goto cleanup;
   }
 
   events = calloc(num_pipes, sizeof(HANDLE));
   if (events == NULL) {
+    r = 0;
     goto cleanup;
   }
 
@@ -191,10 +195,11 @@ pipe_wait(const handle *pipes, unsigned int num_pipes, unsigned int *ready)
     overlapped[i].hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false,
                                        NULL);
     if (overlapped[i].hEvent == NULL) {
+      r = 0;
       goto cleanup;
     }
 
-    r = (DWORD) ReadFile(pipes[i], (uint8_t[]){ 0 }, 0, NULL, &overlapped[i]);
+    r = ReadFile(pipes[i], (uint8_t[]){ 0 }, 0, NULL, &overlapped[i]);
     if (r == 0 && GetLastError() != ERROR_IO_PENDING &&
         GetLastError() != ERROR_BROKEN_PIPE) {
       goto cleanup;
@@ -213,20 +218,20 @@ pipe_wait(const handle *pipes, unsigned int num_pipes, unsigned int *ready)
     goto cleanup;
   }
 
-  r = WaitForMultipleObjects(num_pipes, events, false, INFINITE);
-
+  DWORD result = WaitForMultipleObjects(num_pipes, events, false, INFINITE);
   // We don't expect `WAIT_ABANDONED_0` or `WAIT_TIMEOUT` to be valid here.
-  assert(r < WAIT_ABANDONED_0);
-  assert(r != WAIT_TIMEOUT);
+  assert(result < WAIT_ABANDONED_0);
+  assert(result != WAIT_TIMEOUT);
 
-  if (r == WAIT_FAILED) {
+  if (result == WAIT_FAILED) {
+    r = 0;
     goto cleanup;
   }
 
-  assert(r < num_pipes);
+  assert(result < num_pipes);
 
   // Map the signaled event back to its corresponding handle.
-  *ready = r;
+  *ready = result;
   r = 1;
 
 cleanup:

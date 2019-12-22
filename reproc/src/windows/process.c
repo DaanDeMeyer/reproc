@@ -305,6 +305,7 @@ REPROC_ERROR process_create(HANDLE *process,
   // `CreateProcessW`.
   command_line = argv_join(argv);
   if (command_line == NULL) {
+    r = 0;
     goto cleanup;
   }
 
@@ -312,6 +313,7 @@ REPROC_ERROR process_create(HANDLE *process,
   command_line_wstring = string_to_wstring(command_line,
                                            strlen(command_line) + 1);
   if (command_line_wstring == NULL) {
+    r = 0;
     goto cleanup;
   }
 
@@ -319,12 +321,14 @@ REPROC_ERROR process_create(HANDLE *process,
   if (options.environment != NULL) {
     environment_line = environment_join(options.environment);
     if (environment_line == NULL) {
+      r = 0;
       goto cleanup;
     }
 
     size_t joined_size = environment_join_size(options.environment);
     environment_line_wstring = string_to_wstring(environment_line, joined_size);
     if (environment_line_wstring == NULL) {
+      r = 0;
       goto cleanup;
     }
   }
@@ -335,6 +339,7 @@ REPROC_ERROR process_create(HANDLE *process,
     working_directory_wstring = string_to_wstring(options.working_directory,
                                                   working_directory_size);
     if (working_directory_wstring == NULL) {
+      r = 0;
       goto cleanup;
     }
   }
@@ -350,6 +355,7 @@ REPROC_ERROR process_create(HANDLE *process,
                         options.redirect.err };
   attribute_list = handle_inherit_list_create(inherit, ARRAY_SIZE(inherit));
   if (attribute_list == NULL) {
+    r = 0;
     goto cleanup;
   }
 
@@ -384,11 +390,13 @@ REPROC_ERROR process_create(HANDLE *process,
     // pass `DO_NOT_INHERIT` here.
     job_object = CreateJobObjectA(NULL, NULL);
     if (job_object == NULL) {
+      r = 0;
       goto cleanup;
     }
 
     job_completion_port = CreateIoCompletionPort(HANDLE_INVALID, NULL, 0, 0);
     if (job_completion_port == NULL) {
+      r = 0;
       goto cleanup;
     }
 
