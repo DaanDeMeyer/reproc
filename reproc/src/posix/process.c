@@ -75,8 +75,8 @@ static char *path_prepend_cwd(const char *path)
   // +2 reserves space to add a null terminator and potentially a missing '/'
   // after the current working directory.
   char *cwd = calloc(cwd_size + path_size + 2, sizeof(char));
-  if (!cwd) {
-    return NULL;
+  if (cwd == NULL) {
+    return cwd;
   }
 
   while (getcwd(cwd, cwd_size) == NULL) {
@@ -90,7 +90,7 @@ static char *path_prepend_cwd(const char *path)
     char *result = realloc(cwd, cwd_size + path_size + 1);
     if (result == NULL) {
       free(cwd);
-      return NULL;
+      return result;
     }
 
     cwd = result;

@@ -14,7 +14,7 @@ bool reproc_sink_string(REPROC_STREAM stream,
   size_t string_size = *string == NULL ? 0 : strlen(*string);
 
   char *realloc_result = realloc(*string, string_size + size + 1);
-  if (!realloc_result) {
+  if (realloc_result == NULL) {
     free(*string);
     *string = NULL;
     return false;

@@ -261,7 +261,7 @@ handle_inherit_list_create(HANDLE *handles, size_t num_handles)
   }
 
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = malloc(attribute_list_size);
-  if (!attribute_list) {
+  if (attribute_list == NULL) {
     return NULL;
   }
 

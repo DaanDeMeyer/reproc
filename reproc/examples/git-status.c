@@ -68,7 +68,7 @@ int main(void)
     // that in mind. Add 1 to size to leave space for the null terminator which
     // isn't included in `output_size`.
     char *realloc_result = realloc(output, output_size + bytes_read + 1);
-    if (!realloc_result) {
+    if (realloc_result == NULL) {
       fprintf(stderr, "Failed to allocate memory for output\n");
       goto cleanup;
     } else {
