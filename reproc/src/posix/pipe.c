@@ -71,8 +71,8 @@ REPROC_ERROR pipe_init(int *read,
 
 cleanup:
   if (r < 0) {
-    *read = handle_destroy(*read);
-    *write = handle_destroy(*write);
+    handle_destroy(pipefd[0]);
+    handle_destroy(pipefd[1]);
   }
 
   return r < 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
