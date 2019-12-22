@@ -15,7 +15,7 @@ REPROC_ERROR pipe_init(int *read,
   assert(read);
   assert(write);
 
-  int pipefd[2];
+  int pipefd[2] = { -1, -1 };
   int r = -1;
 
   // On POSIX systems, by default file descriptors are inherited by child
