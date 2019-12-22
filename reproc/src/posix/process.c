@@ -112,7 +112,7 @@ process_create(pid_t *process,
   assert(argv[0] != NULL);
   assert(process);
 
-  pid_t child_process = HANDLE_INVALID;
+  pid_t child = HANDLE_INVALID;
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
   // We create an error pipe to receive errors from the child process. See
@@ -125,9 +125,9 @@ process_create(pid_t *process,
     goto cleanup;
   }
 
-  child_process = fork();
+  child = fork();
 
-  if (child_process == 0) {
+  if (child == 0) {
     // Child process code. Since we're in the child process we exit on errors.
 
     const char *program = argv[0];
@@ -216,7 +216,7 @@ process_create(pid_t *process,
     _exit(errno);
   }
 
-  if (child_process == -1) {
+  if (child == -1) {
     error = REPROC_ERROR_SYSTEM;
     goto cleanup;
   }
@@ -260,7 +260,7 @@ process_create(pid_t *process,
   }
 
   error = REPROC_SUCCESS;
-  *process = child_process;
+  *process = child;
 
 cleanup:
   handle_destroy(error_pipe_read);
@@ -268,7 +268,7 @@ cleanup:
 
   // Make sure the child process doesn't become a zombie process if the child
   // process was started (`child_process` > 0) but an error occurred.
-  if (error && child_process > 0 && waitpid(child_process, NULL, 0) == -1) {
+  if (error && child > 0 && waitpid(child, NULL, 0) == -1) {
     error = REPROC_ERROR_SYSTEM;
   }
 
