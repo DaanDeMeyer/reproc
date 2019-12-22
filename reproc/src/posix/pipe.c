@@ -16,10 +16,6 @@ REPROC_ERROR pipe_init(int *read,
   assert(write);
 
   int pipefd[2];
-
-  int read_mode = read_options.nonblocking ? O_NONBLOCK : 0;
-  int write_mode = write_options.nonblocking ? O_NONBLOCK : 0;
-
   int r = -1;
 
   // On POSIX systems, by default file descriptors are inherited by child
@@ -60,12 +56,12 @@ REPROC_ERROR pipe_init(int *read,
   }
 #endif
 
-  r = fcntl(pipefd[0], F_SETFL, read_mode);
+  r = fcntl(pipefd[0], F_SETFL, read_options.nonblocking ? O_NONBLOCK : 0);
   if (r < 0) {
     goto cleanup;
   }
 
-  r = fcntl(pipefd[1], F_SETFL, write_mode);
+  r = fcntl(pipefd[1], F_SETFL, write_options.nonblocking ? O_NONBLOCK : 0);
   if (r < 0) {
     goto cleanup;
   }
