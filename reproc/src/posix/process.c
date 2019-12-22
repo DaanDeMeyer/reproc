@@ -101,6 +101,83 @@ static char *path_prepend_cwd(const char *path)
   return cwd;
 }
 
+static pid_t process_fork(int error_pipe_write)
+{
+  sigset_t old_mask = { 0 };
+  sigset_t new_mask = { 0 };
+
+  int rv = -1;
+
+  // We don't want signal handlers of the parent to run in the child process so
+  // we block all signals before forking.
+
+  rv = sigfillset(&new_mask);
+  if (rv == -1) {
+    return -1;
+  }
+
+  rv = SIGMASK(SIG_SETMASK, &new_mask, &old_mask);
+  if (rv == -1) {
+    return -1;
+  }
+
+  int child = fork();
+  if (child != 0) {
+    // Parent process or `fork` error.
+
+    // Restore the parent's signal mask but make sure we don't overwrite the
+    // `fork` error if there is one.
+    int error = child == -1 ? errno : 0;
+    SIGMASK(SIG_SETMASK, &old_mask, NULL);
+    errno = error;
+    return child;
+  }
+
+  // Child process
+
+  // Reset all signal handlers so they don't run in the child process before
+  // `exec` is called. By default, a child process inherits the parent's signal
+  // handlers but we override this as most signal handlers won't be written in a
+  // way that they can deal with being run in a child process.
+
+  struct sigaction action = { .sa_handler = SIG_DFL };
+
+  rv = sigemptyset(&action.sa_mask);
+  if (rv == -1) {
+    goto cleanup;
+  }
+
+  for (int i = 0; i < NSIG; i++) {
+    rv = sigaction(i, &action, NULL);
+    if (rv == -1 && errno != EINVAL) {
+      goto cleanup;
+    }
+  }
+
+  // Reset the child's signal mask to the default signal mask. By default, a
+  // child process inherits the parent's signal mask (even over an `exec` call)
+  // but we override this as most processes won't be written in a way that they
+  // can deal with starting with a custom signal mask.
+
+  rv = sigemptyset(&new_mask);
+  if (rv == -1) {
+    goto cleanup;
+  }
+
+  rv = SIGMASK(SIG_SETMASK, &new_mask, NULL);
+  if (rv == -1) {
+    goto cleanup;
+  }
+
+cleanup:
+  if (rv == -1) {
+    (void) !write(error_pipe_write, &errno, sizeof(errno));
+    _exit(errno);
+  }
+
+  return rv;
+}
+
 static const struct pipe_options PIPE_BLOCKING = { .nonblocking = false };
 
 REPROC_ERROR
@@ -125,7 +202,7 @@ process_create(pid_t *process,
     goto cleanup;
   }
 
-  child = fork();
+  child = process_fork(error_pipe_write);
 
   if (child == 0) {
     // Child process code. Since we're in the child process we exit on errors.
