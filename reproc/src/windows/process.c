@@ -322,7 +322,7 @@ REPROC_ERROR process_create(HANDLE *process,
     BOOL rv = SetInformationJobObject(
         job_object, JobObjectAssociateCompletionPortInformation, &port_info,
         sizeof(port_info));
-    if (!rv) {
+    if (rv == 0) {
       goto cleanup;
     }
   }
@@ -401,17 +401,17 @@ REPROC_ERROR process_create(HANDLE *process,
                            &HANDLE_DO_NOT_INHERIT, true, CREATION_FLAGS,
                            environment_line_wstring, working_directory_wstring,
                            startup_info_address, &info);
-  if (!rv) {
+  if (rv == 0) {
     goto cleanup;
   }
 
   rv = AssignProcessToJobObject(job_object, info.hProcess);
-  if (!rv) {
+  if (rv == 0) {
     goto cleanup;
   }
 
   rv = ResumeThread(info.hThread) == 1;
-  if (!rv) {
+  if (rv == 0) {
     goto cleanup;
   }
 
@@ -466,7 +466,7 @@ process_wait(HANDLE *processes,
     if (WaitForSingleObject(processes[i], 0) == WAIT_OBJECT_0) {
       DWORD status = 0;
       BOOL rv = GetExitCodeProcess(processes[i], &status);
-      if (!rv) {
+      if (rv == 0) {
         return REPROC_ERROR_SYSTEM;
       }
 
@@ -491,7 +491,7 @@ process_wait(HANDLE *processes,
                                         &completion_key, &lpoverlapped,
                                         timeout == INFINITE ? timeout
                                                             : remaining);
-    if (!rv) {
+    if (rv == 0) {
       return GetLastError() == WAIT_TIMEOUT ? REPROC_ERROR_WAIT_TIMEOUT
                                             : REPROC_ERROR_SYSTEM;
     }
@@ -518,7 +518,7 @@ process_wait(HANDLE *processes,
 
   DWORD status = 0;
   BOOL rv = GetExitCodeProcess(processes[completed_index], &status);
-  if (!rv) {
+  if (rv == 0) {
     return REPROC_ERROR_SYSTEM;
   }
 
