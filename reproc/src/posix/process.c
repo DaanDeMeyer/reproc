@@ -110,19 +110,19 @@ static pid_t process_fork(int error_pipe_write)
   sigset_t old_mask = { 0 };
   sigset_t new_mask = { 0 };
 
-  int rv = -1;
+  int r = -1;
 
   // We don't want signal handlers of the parent to run in the child process so
   // we block all signals before forking.
 
-  rv = sigfillset(&new_mask);
-  if (rv == -1) {
-    return -1;
+  r = sigfillset(&new_mask);
+  if (r < 0) {
+    return r;
   }
 
-  rv = signal_mask(SIG_SETMASK, &new_mask, &old_mask);
-  if (rv == -1) {
-    return -1;
+  r = signal_mask(SIG_SETMASK, &new_mask, &old_mask);
+  if (r < 0) {
+    return r;
   }
 
   int child = fork();
@@ -131,7 +131,7 @@ static pid_t process_fork(int error_pipe_write)
 
     // Restore the parent's signal mask but make sure we don't overwrite the
     // `fork` error if there is one.
-    int error = child == -1 ? errno : 0;
+    int error = child < 0 ? errno : 0;
     signal_mask(SIG_SETMASK, &old_mask, NULL);
     errno = error;
     return child;
@@ -146,14 +146,14 @@ static pid_t process_fork(int error_pipe_write)
 
   struct sigaction action = { .sa_handler = SIG_DFL };
 
-  rv = sigemptyset(&action.sa_mask);
-  if (rv == -1) {
+  r = sigemptyset(&action.sa_mask);
+  if (r < 0) {
     goto cleanup;
   }
 
   for (int i = 0; i < NSIG; i++) {
-    rv = sigaction(i, &action, NULL);
-    if (rv == -1 && errno != EINVAL) {
+    r = sigaction(i, &action, NULL);
+    if (r < 0 && errno != EINVAL) {
       goto cleanup;
     }
   }
@@ -163,23 +163,23 @@ static pid_t process_fork(int error_pipe_write)
   // but we override this as most processes won't be written in a way that they
   // can deal with starting with a custom signal mask.
 
-  rv = sigemptyset(&new_mask);
-  if (rv == -1) {
+  r = sigemptyset(&new_mask);
+  if (r < 0) {
     goto cleanup;
   }
 
-  rv = signal_mask(SIG_SETMASK, &new_mask, NULL);
-  if (rv == -1) {
+  r = signal_mask(SIG_SETMASK, &new_mask, NULL);
+  if (r < 0) {
     goto cleanup;
   }
 
 cleanup:
-  if (rv == -1) {
+  if (r < 0) {
     (void) !write(error_pipe_write, &errno, sizeof(errno));
     _exit(errno);
   }
 
-  return rv;
+  return r;
 }
 
 static const struct pipe_options PIPE_BLOCKING = { .nonblocking = false };
@@ -193,13 +193,15 @@ process_create(pid_t *process,
   assert(argv[0] != NULL);
   assert(process);
 
+  int error_pipe_read = HANDLE_INVALID;
+  int error_pipe_write = HANDLE_INVALID;
   pid_t child = HANDLE_INVALID;
+
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
+  int r = -1;
 
   // We create an error pipe to receive errors from the child process. See
   // https://stackoverflow.com/a/1586277 for more information.
-  int error_pipe_read = HANDLE_INVALID;
-  int error_pipe_write = HANDLE_INVALID;
   error = pipe_init(&error_pipe_read, PIPE_BLOCKING, &error_pipe_write,
                     PIPE_BLOCKING);
   if (error) {
@@ -227,37 +229,36 @@ process_create(pid_t *process,
         }
       }
 
-      if (chdir(options.working_directory) == -1) {
+      r = chdir(options.working_directory);
+      if (r < 0) {
         (void) !write(error_pipe_write, &errno, sizeof(errno));
         _exit(errno);
       }
     }
 
-    int rv = -1;
-
     // Redirect stdin, stdout and stderr.
     // `_exit` ensures open file descriptors (pipes) are closed.
 
-    rv = dup2(options.redirect.in, STDIN_FILENO);
-    if (rv == -1) {
+    r = dup2(options.redirect.in, STDIN_FILENO);
+    if (r < 0) {
       (void) !write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
 
-    rv = dup2(options.redirect.out, STDOUT_FILENO);
-    if (rv == -1) {
+    r = dup2(options.redirect.out, STDOUT_FILENO);
+    if (r < 0) {
       (void) !write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
 
-    rv = dup2(options.redirect.err, STDERR_FILENO);
-    if (rv == -1) {
+    r = dup2(options.redirect.err, STDERR_FILENO);
+    if (r < 0) {
       (void) !write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
 
     int max_fd = (int) sysconf(_SC_OPEN_MAX);
-    if (max_fd == -1) {
+    if (max_fd < 0) {
       (void) !write(error_pipe_write, &errno, sizeof(errno));
       _exit(errno);
     }
@@ -297,7 +298,7 @@ process_create(pid_t *process,
     _exit(errno);
   }
 
-  if (child == -1) {
+  if (child < 0) {
     error = REPROC_ERROR_SYSTEM;
     goto cleanup;
   }
@@ -349,8 +350,11 @@ cleanup:
 
   // Make sure the child process doesn't become a zombie process if the child
   // process was started (`child_process` > 0) but an error occurred.
-  if (error && child > 0 && waitpid(child, NULL, 0) == -1) {
-    error = REPROC_ERROR_SYSTEM;
+  if (error && child > 0) {
+    r = waitpid(child, NULL, 0);
+    if (r != child) {
+      error = REPROC_ERROR_SYSTEM;
+    }
   }
 
   return error;
@@ -402,13 +406,13 @@ static int exit_check(pid_t *processes,
 
   for (unsigned int i = 0; i < num_processes; i++) {
     int status = 0;
-    int rv = waitpid(processes[i], &status, WNOHANG);
-    if (rv == -1) {
-      return REPROC_ERROR_SYSTEM;
+    int r = waitpid(processes[i], &status, WNOHANG);
+    if (r < 0) {
+      return r;
     }
 
-    if (rv > 0) {
-      assert(rv == processes[i]);
+    if (r > 0) {
+      assert(r == processes[i]);
       *completed = i;
       *exit_status = parse_exit_status(status);
       return 0;
@@ -423,27 +427,27 @@ static int signal_wait(int signal, const struct timespec *timeout)
 {
 #if defined(__APPLE__)
   int queue = kqueue();
-  if (queue == -1) {
+  if (queue < 0) {
     return -1;
   }
 
   struct kevent event;
   EV_SET(&event, signal, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
 
-  int rv = kevent(queue, &event, 1, &event, 1, timeout);
+  int r = kevent(queue, &event, 1, &event, 1, timeout);
 
   // Translate `kevent` errors into Linux errno style equivalents.
-  if (rv == 0) {
-    rv = -1;
+  if (r == 0) {
+    r = -1;
     errno = EAGAIN;
-  } else if (rv > 0 && event.flags & EV_ERROR) {
-    rv = -1;
+  } else if (r > 0 && event.flags & EV_ERROR) {
+    r = -1;
     errno = (int) event.data;
   }
 
   close(queue);
 
-  return rv;
+  return r;
 #else
   sigset_t set;
   SIGADDSET(&set, signal);
@@ -465,31 +469,40 @@ REPROC_ERROR process_wait(pid_t *processes,
   sigset_t chld_mask;
   sigset_t old_mask;
 
-  sigemptyset(&chld_mask);
-  SIGADDSET(&chld_mask, SIGCHLD);
+  REPROC_ERROR error = REPROC_ERROR_SYSTEM;
+  int r = -1;
+
+  r = sigemptyset(&chld_mask);
+  if (r < 0) {
+    return error;
+  }
+
+  r = SIGADDSET(&chld_mask, SIGCHLD);
+  if (r < 0) {
+    return error;
+  }
 
   // We block `SIGCHLD` first to avoid a race condition between `exit_check` and
   // `signal_wait` where the child process is still running when `exit_check`
   // returns but finishes before we call `signal_wait`. By blocking `SIGCHLD`
   // before calling `exit_check`, the signal stays pending until `signal_wait`
   // is called which processes the pending signal.
-  if (signal_mask(SIG_BLOCK, &chld_mask, &old_mask) == -1) {
-    return REPROC_ERROR_SYSTEM;
+  r = signal_mask(SIG_BLOCK, &chld_mask, &old_mask);
+  if (r < 0) {
+    return error;
   }
 
   struct timespec remaining = timespec_from_milliseconds(timeout);
 
-  REPROC_ERROR error = REPROC_ERROR_SYSTEM;
-
   while (true) {
     // Check if any process in `processes` has finished.
 
-    int rv = exit_check(processes, num_processes, completed, exit_status);
-    if (rv == 0) {
+    int r = exit_check(processes, num_processes, completed, exit_status);
+    if (r == 0) {
       break;
     }
 
-    if (rv == -1 && errno != EAGAIN) {
+    if (r < 0 && errno != EAGAIN) {
       goto cleanup;
     }
 
@@ -497,15 +510,15 @@ REPROC_ERROR process_wait(pid_t *processes,
     // much time has passed after `signal_wait` returns.
 
     struct timespec before;
-    rv = clock_gettime(CLOCK_REALTIME, &before);
-    if (rv == -1) {
+    r = clock_gettime(CLOCK_REALTIME, &before);
+    if (r < 0) {
       goto cleanup;
     }
 
     // Wait until a `SIGCHLD` signal occurs or the timeout expires.
 
-    rv = signal_wait(SIGCHLD, timeout == REPROC_INFINITE ? NULL : &remaining);
-    if (rv == -1) {
+    r = signal_wait(SIGCHLD, timeout == REPROC_INFINITE ? NULL : &remaining);
+    if (r < 0) {
       if (errno == EAGAIN) {
         error = REPROC_ERROR_WAIT_TIMEOUT;
       }
@@ -517,8 +530,8 @@ REPROC_ERROR process_wait(pid_t *processes,
     // expires and repeat the loop.
 
     struct timespec after;
-    rv = clock_gettime(CLOCK_REALTIME, &after);
-    if (rv == -1) {
+    r = clock_gettime(CLOCK_REALTIME, &after);
+    if (r < 0) {
       goto cleanup;
     }
 
@@ -529,7 +542,8 @@ REPROC_ERROR process_wait(pid_t *processes,
   error = REPROC_SUCCESS;
 
 cleanup:
-  if (signal_mask(SIG_SETMASK, &old_mask, NULL) == -1) {
+  r = signal_mask(SIG_SETMASK, &old_mask, NULL);
+  if (r < 0) {
     error = REPROC_ERROR_SYSTEM;
   }
 
@@ -538,20 +552,12 @@ cleanup:
 
 REPROC_ERROR process_terminate(pid_t process)
 {
-  if (kill(process, SIGTERM) == -1) {
-    return REPROC_ERROR_SYSTEM;
-  }
-
-  return REPROC_SUCCESS;
+  return kill(process, SIGTERM) < 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 }
 
 REPROC_ERROR process_kill(pid_t process)
 {
-  if (kill(process, SIGKILL) == -1) {
-    return REPROC_ERROR_SYSTEM;
-  }
-
-  return REPROC_SUCCESS;
+  return kill(process, SIGKILL) < 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 }
 
 pid_t process_destroy(pid_t process)

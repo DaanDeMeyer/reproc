@@ -98,8 +98,8 @@ REPROC_ERROR pipe_read(HANDLE pipe,
     goto cleanup;
   }
 
-  BOOL rv = ReadFile(pipe, buffer, size, NULL, &overlapped);
-  if (rv == 0) {
+  BOOL r = ReadFile(pipe, buffer, size, NULL, &overlapped);
+  if (r == 0) {
     switch (GetLastError()) {
       case ERROR_BROKEN_PIPE:
         error = REPROC_ERROR_STREAM_CLOSED;
@@ -112,8 +112,8 @@ REPROC_ERROR pipe_read(HANDLE pipe,
   }
 
   // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
-  rv = GetOverlappedResult(pipe, &overlapped, (LPDWORD) bytes_read, true);
-  if (rv == 0) {
+  r = GetOverlappedResult(pipe, &overlapped, (LPDWORD) bytes_read, true);
+  if (r == 0) {
     goto cleanup;
   }
 
@@ -142,8 +142,8 @@ REPROC_ERROR pipe_write(HANDLE pipe,
     goto cleanup;
   }
 
-  BOOL rv = WriteFile(pipe, buffer, size, NULL, &overlapped);
-  if (rv == 0) {
+  BOOL r = WriteFile(pipe, buffer, size, NULL, &overlapped);
+  if (r == 0) {
     switch (GetLastError()) {
       case ERROR_BROKEN_PIPE:
         error = REPROC_ERROR_STREAM_CLOSED;
@@ -156,8 +156,8 @@ REPROC_ERROR pipe_write(HANDLE pipe,
   }
 
   // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
-  rv = GetOverlappedResult(pipe, &overlapped, (LPDWORD) bytes_written, true);
-  if (rv == 0) {
+  r = GetOverlappedResult(pipe, &overlapped, (LPDWORD) bytes_written, true);
+  if (r == 0) {
     goto cleanup;
   }
 
@@ -181,7 +181,7 @@ pipe_wait(const handle *pipes,
 
   // `BOOL` is either 0 or 1 even though it is defined as `int` so all casts of
   // functions returning `BOOL` to `DWORD` in this function are safe.
-  DWORD rv = 0;
+  DWORD r = 0;
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
   DWORD num_reads = 0;
 
@@ -207,13 +207,13 @@ pipe_wait(const handle *pipes,
       goto cleanup;
     }
 
-    rv = (DWORD) ReadFile(pipes[i], (uint8_t[]){ 0 }, 0, NULL, &overlapped[i]);
-    if (rv == 0 && GetLastError() != ERROR_IO_PENDING &&
+    r = (DWORD) ReadFile(pipes[i], (uint8_t[]){ 0 }, 0, NULL, &overlapped[i]);
+    if (r == 0 && GetLastError() != ERROR_IO_PENDING &&
         GetLastError() != ERROR_BROKEN_PIPE) {
       goto cleanup;
     }
 
-    if (rv != 0 || GetLastError() == ERROR_IO_PENDING) {
+    if (r != 0 || GetLastError() == ERROR_IO_PENDING) {
       num_reads++;
     }
 
@@ -225,20 +225,20 @@ pipe_wait(const handle *pipes,
     goto cleanup;
   }
 
-  rv = WaitForMultipleObjects(num_pipes, events, false, INFINITE);
+  r = WaitForMultipleObjects(num_pipes, events, false, INFINITE);
 
   // We don't expect `WAIT_ABANDONED_0` or `WAIT_TIMEOUT` to be valid here.
-  assert(rv < WAIT_ABANDONED_0);
-  assert(rv != WAIT_TIMEOUT);
+  assert(r < WAIT_ABANDONED_0);
+  assert(r != WAIT_TIMEOUT);
 
-  if (rv == WAIT_FAILED) {
+  if (r == WAIT_FAILED) {
     goto cleanup;
   }
 
-  assert(rv < num_pipes);
+  assert(r < num_pipes);
 
   // Map the signaled event back to its corresponding handle.
-  *ready = rv;
+  *ready = r;
 
   error = REPROC_SUCCESS;
 
@@ -262,8 +262,8 @@ cleanup:
     // Cancel any remaining zero-sized reads that we queued if they have not yet
     // completed.
 
-    rv = (DWORD) CancelIoEx(pipes[i], &overlapped[i]);
-    if (rv == 0) {
+    r = (DWORD) CancelIoEx(pipes[i], &overlapped[i]);
+    if (r == 0) {
       if (GetLastError() != ERROR_NOT_FOUND) {
         error = REPROC_ERROR_SYSTEM;
 
@@ -279,9 +279,9 @@ cleanup:
     // wait until the read is actually cancelled.
 
     DWORD bytes_transferred = 0;
-    rv = (DWORD) GetOverlappedResult(pipes[i], &overlapped[i],
+    r = (DWORD) GetOverlappedResult(pipes[i], &overlapped[i],
                                      &bytes_transferred, true);
-    if (rv == 0 && GetLastError() != ERROR_OPERATION_ABORTED &&
+    if (r == 0 && GetLastError() != ERROR_OPERATION_ABORTED &&
         GetLastError() != ERROR_BROKEN_PIPE) {
       error = REPROC_ERROR_SYSTEM;
 

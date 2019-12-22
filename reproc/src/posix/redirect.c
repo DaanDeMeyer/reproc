@@ -32,13 +32,13 @@ REPROC_ERROR redirect_inherit(int *parent, int *child, REPROC_STREAM stream)
                    : stream == REPROC_STREAM_OUT ? stdout : stderr;
 
   int fd = fileno(file);
-  if (fd == -1) {
+  if (fd < 0) {
     return REPROC_ERROR_STREAM_CLOSED;
   }
 
   *child = fcntl(fd, F_DUPFD_CLOEXEC, 0);
 
-  return *child == -1 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
+  return *child < 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 }
 
 REPROC_ERROR redirect_discard(int *parent, int *child, REPROC_STREAM stream)
@@ -51,5 +51,5 @@ REPROC_ERROR redirect_discard(int *parent, int *child, REPROC_STREAM stream)
 
   *child = open(DEVNULL, mode | O_CLOEXEC);
 
-  return *child == -1 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
+  return *child < 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 }

@@ -21,6 +21,7 @@ REPROC_ERROR pipe_init(int *read,
   int write_mode = write_options.nonblocking ? O_NONBLOCK : 0;
 
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
+  int r = -1;
 
   // On POSIX systems, by default file descriptors are inherited by child
   // processes when calling `exec`. To prevent unintended leaking of file
@@ -39,28 +40,34 @@ REPROC_ERROR pipe_init(int *read,
   // `FD_CLOEXEC` immediately after creating a pipe.
 
 #if defined(__APPLE__)
-  if (pipe(pipefd) == -1) {
+  r = pipe(pipefd);
+  if (r < 0) {
     goto cleanup;
   }
 
-  if (fcntl(pipefd[0], F_SETFD, FD_CLOEXEC) == -1) {
+  r = fcntl(pipefd[0], F_SETFD, FD_CLOEXEC);
+  if (r < 0) {
     goto cleanup;
   }
 
-  if (fcntl(pipefd[1], F_SETFD, FD_CLOEXEC) == -1) {
+  r = fcntl(pipefd[1], F_SETFD, FD_CLOEXEC);
+  if (r < 0) {
     goto cleanup;
   }
 #else
-  if (pipe2(pipefd, O_CLOEXEC) == -1) {
+  r = pipe2(pipefd, O_CLOEXEC);
+  if (r < 0) {
     goto cleanup;
   }
 #endif
 
-  if (fcntl(pipefd[0], F_SETFL, read_mode) == -1) {
+  r = fcntl(pipefd[0], F_SETFL, read_mode);
+  if (r < 0) {
     goto cleanup;
   }
 
-  if (fcntl(pipefd[1], F_SETFL, write_mode) == -1) {
+  r = fcntl(pipefd[1], F_SETFL, write_mode);
+  if (r < 0) {
     goto cleanup;
   }
 
@@ -89,18 +96,13 @@ pipe_read(int pipe,
 
   *bytes_read = 0;
 
-  ssize_t error = read(pipe, buffer, size);
+  ssize_t r = read(pipe, buffer, size);
   // `read` returns 0 to indicate the other end of the pipe was closed.
-  if (error == 0) {
-    return REPROC_ERROR_STREAM_CLOSED;
-  } else if (error == -1) {
-    return REPROC_ERROR_SYSTEM;
+  if (r <= 0) {
+    return r == 0 ? REPROC_ERROR_STREAM_CLOSED : REPROC_ERROR_SYSTEM;
   }
 
-  // If `error` is not -1 or 0 it represents the amount of bytes read.
-  // The cast is safe since `size` is an unsigned int and `read` will not read
-  // more than `size` bytes.
-  *bytes_read = (unsigned int) error;
+  *bytes_read = (unsigned int) r;
 
   return REPROC_SUCCESS;
 }
@@ -116,15 +118,17 @@ REPROC_ERROR pipe_write(int pipe,
   *bytes_written = 0;
 
   struct pollfd pollfd = { .fd = pipe, .events = POLLOUT };
-  // -1 tells `poll` we want to wait indefinitely for events.
-  if (poll(&pollfd, 1, -1) == -1) {
+  ssize_t r = -1;
+
+  r = poll(&pollfd, 1, -1);
+  if (r <= 0) {
     return REPROC_ERROR_SYSTEM;
   }
 
   assert(pollfd.revents & POLLOUT || pollfd.revents & POLLERR);
 
-  ssize_t error = write(pipe, buffer, size);
-  if (error == -1) {
+  r = write(pipe, buffer, size);
+  if (r < 0) {
     switch (errno) {
       // `write` sets `errno` to `EPIPE` to indicate the other end of the pipe
       // was closed.
@@ -135,18 +139,13 @@ REPROC_ERROR pipe_write(int pipe,
     }
   }
 
-  // If `error` is not -1 it represents the amount of bytes written.
-  // The cast is safe since it's impossible to write more bytes than `size`
-  // which is an unsigned int.
-  *bytes_written = (unsigned int) error;
+  *bytes_written = (unsigned int) r;
 
   return REPROC_SUCCESS;
 }
 
 REPROC_ERROR
-pipe_wait(const handle *pipes,
-          unsigned int num_pipes,
-          unsigned int *ready)
+pipe_wait(const handle *pipes, unsigned int num_pipes, unsigned int *ready)
 {
   assert(pipes);
   assert(ready);
@@ -163,7 +162,8 @@ pipe_wait(const handle *pipes,
     pollfds[i].events = POLLIN;
   }
 
-  if (poll(pollfds, num_pipes, -1) == -1) {
+  int r = poll(pollfds, num_pipes, -1);
+  if (r <= 0) {
     goto cleanup;
   }
 

@@ -221,15 +221,15 @@ static wchar_t *string_to_wstring(const char *string, size_t size)
 
   // Determine wstring size (`MultiByteToWideChar` returns the required size if
   // its last two arguments are `NULL` and 0).
-  int rv = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string,
+  int r = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string,
                                (int) size, NULL, 0);
-  if (rv == 0) {
+  if (r == 0) {
     return NULL;
   }
 
   // `MultiByteToWideChar` does not return negative values so the cast to
   // `size_t` is safe.
-  wchar_t *wstring = calloc((size_t) rv, sizeof(wchar_t));
+  wchar_t *wstring = calloc((size_t) r, sizeof(wchar_t));
   if (wstring == NULL) {
     return NULL;
   }
@@ -237,8 +237,8 @@ static wchar_t *string_to_wstring(const char *string, size_t size)
   // Now we pass our allocated string and its size as the last two arguments
   // instead of `NULL` and 0 which makes `MultiByteToWideChar` actually perform
   // the conversion.
-  rv = MultiByteToWideChar(CP_UTF8, 0, string, (int) size, wstring, rv);
-  if (rv == 0) {
+  r = MultiByteToWideChar(CP_UTF8, 0, string, (int) size, wstring, r);
+  if (r == 0) {
     free(wstring);
     return NULL;
   }
@@ -319,10 +319,10 @@ REPROC_ERROR process_create(HANDLE *process,
       .CompletionPort = job_completion_port
     };
 
-    BOOL rv = SetInformationJobObject(
+    BOOL r = SetInformationJobObject(
         job_object, JobObjectAssociateCompletionPortInformation, &port_info,
         sizeof(port_info));
-    if (rv == 0) {
+    if (r == 0) {
       goto cleanup;
     }
   }
@@ -397,21 +397,21 @@ REPROC_ERROR process_create(HANDLE *process,
 
   LPSTARTUPINFOW startup_info_address = &extended_startup_info.StartupInfo;
 
-  BOOL rv = CreateProcessW(NULL, command_line_wstring, &HANDLE_DO_NOT_INHERIT,
+  BOOL r = CreateProcessW(NULL, command_line_wstring, &HANDLE_DO_NOT_INHERIT,
                            &HANDLE_DO_NOT_INHERIT, true, CREATION_FLAGS,
                            environment_line_wstring, working_directory_wstring,
                            startup_info_address, &info);
-  if (rv == 0) {
+  if (r == 0) {
     goto cleanup;
   }
 
-  rv = AssignProcessToJobObject(job_object, info.hProcess);
-  if (rv == 0) {
+  r = AssignProcessToJobObject(job_object, info.hProcess);
+  if (r == 0) {
     goto cleanup;
   }
 
-  rv = ResumeThread(info.hThread) == 1;
-  if (rv == 0) {
+  r = ResumeThread(info.hThread) == 1;
+  if (r == 0) {
     goto cleanup;
   }
 
@@ -465,8 +465,8 @@ process_wait(HANDLE *processes,
   for (unsigned int i = 0; i < num_processes; i++) {
     if (WaitForSingleObject(processes[i], 0) == WAIT_OBJECT_0) {
       DWORD status = 0;
-      BOOL rv = GetExitCodeProcess(processes[i], &status);
-      if (rv == 0) {
+      BOOL r = GetExitCodeProcess(processes[i], &status);
+      if (r == 0) {
         return REPROC_ERROR_SYSTEM;
       }
 
@@ -487,11 +487,11 @@ process_wait(HANDLE *processes,
     unsigned long long completion_key = 0;
     LPOVERLAPPED lpoverlapped = NULL;
 
-    BOOL rv = GetQueuedCompletionStatus(job_completion_port, &completion_code,
+    BOOL r = GetQueuedCompletionStatus(job_completion_port, &completion_code,
                                         &completion_key, &lpoverlapped,
                                         timeout == INFINITE ? timeout
                                                             : remaining);
-    if (rv == 0) {
+    if (r == 0) {
       return GetLastError() == WAIT_TIMEOUT ? REPROC_ERROR_WAIT_TIMEOUT
                                             : REPROC_ERROR_SYSTEM;
     }
@@ -517,8 +517,8 @@ process_wait(HANDLE *processes,
   }
 
   DWORD status = 0;
-  BOOL rv = GetExitCodeProcess(processes[completed_index], &status);
-  if (rv == 0) {
+  BOOL r = GetExitCodeProcess(processes[completed_index], &status);
+  if (r == 0) {
     return REPROC_ERROR_SYSTEM;
   }
 

@@ -51,11 +51,11 @@ redirect_inherit(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
     return REPROC_ERROR_STREAM_CLOSED;
   }
 
-  BOOL rv = DuplicateHandle(GetCurrentProcess(), stream_handle,
+  BOOL r = DuplicateHandle(GetCurrentProcess(), stream_handle,
                             GetCurrentProcess(), child, 0, true,
                             DUPLICATE_SAME_ACCESS);
 
-  return rv == 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
+  return r == 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 }
 
 REPROC_ERROR
