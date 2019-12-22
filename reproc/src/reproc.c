@@ -365,9 +365,7 @@ REPROC_ERROR reproc_stop(reproc_t *process, reproc_stop_actions stop_actions)
 
 int reproc_exit_status(reproc_t *process)
 {
-  assert(process);
-
-  return process->exit_status >= 0 ? process->exit_status : -1;
+  return process->exit_status;
 }
 
 reproc_t *reproc_destroy(reproc_t *process)

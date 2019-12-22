@@ -306,7 +306,8 @@ REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_t *process,
                                        reproc_stop_actions stop_actions);
 
 /*! Returns the exit status of `process` if `process` has exited. Returns
-`-1` if `process` has not been started or if `process` is still running. */
+a negative value if `process` has not been started or if `process` is still
+running. */
 REPROC_EXPORT int reproc_exit_status(reproc_t *process);
 
 /*!
