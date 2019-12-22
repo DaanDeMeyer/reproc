@@ -251,10 +251,12 @@ handle_inherit_list_create(HANDLE *handles, size_t num_handles)
 {
   assert(handles);
 
+  BOOL r = 0;
+
   // Get the required size for `attribute_list`.
   SIZE_T attribute_list_size = 0;
-  if (!InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size) &&
-      GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+  r = InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size);
+  if (r == 0 && GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
     return NULL;
   }
 
@@ -263,16 +265,18 @@ handle_inherit_list_create(HANDLE *handles, size_t num_handles)
     return NULL;
   }
 
-  if (!InitializeProcThreadAttributeList(attribute_list, 1, 0,
-                                         &attribute_list_size)) {
+  r = InitializeProcThreadAttributeList(attribute_list, 1, 0,
+                                        &attribute_list_size);
+  if (r == 0) {
     free(attribute_list);
     return NULL;
   }
 
   // Add the handles to be inherited to `attribute_list`.
-  if (!UpdateProcThreadAttribute(attribute_list, 0,
-                                 PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,
-                                 num_handles * sizeof(HANDLE), NULL, NULL)) {
+  r = UpdateProcThreadAttribute(attribute_list, 0,
+                                PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,
+                                num_handles * sizeof(HANDLE), NULL, NULL);
+  if (r == 0) {
     DeleteProcThreadAttributeList(attribute_list);
     return NULL;
   }
