@@ -26,7 +26,6 @@ REPROC_ERROR redirect_inherit(int *parent, int *child, REPROC_STREAM stream)
   assert(parent);
   assert(child);
 
-  *parent = HANDLE_INVALID;
   FILE *file = stream == REPROC_STREAM_IN
                    ? stdin
                    : stream == REPROC_STREAM_OUT ? stdout : stderr;
@@ -36,9 +35,15 @@ REPROC_ERROR redirect_inherit(int *parent, int *child, REPROC_STREAM stream)
     return REPROC_ERROR_STREAM_CLOSED;
   }
 
-  *child = fcntl(fd, F_DUPFD_CLOEXEC, 0);
+  int r = fcntl(fd, F_DUPFD_CLOEXEC, 0);
+  if (r < 0) {
+    return REPROC_ERROR_SYSTEM;
+  }
 
-  return *child < 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
+  *parent = HANDLE_INVALID;
+  *child = r;
+
+  return REPROC_SUCCESS;
 }
 
 REPROC_ERROR redirect_discard(int *parent, int *child, REPROC_STREAM stream)
@@ -46,10 +51,15 @@ REPROC_ERROR redirect_discard(int *parent, int *child, REPROC_STREAM stream)
   assert(parent);
   assert(child);
 
-  *parent = HANDLE_INVALID;
   int mode = stream == REPROC_STREAM_IN ? O_RDONLY : O_WRONLY;
 
-  *child = open(DEVNULL, mode | O_CLOEXEC);
+  int r = open(DEVNULL, mode | O_CLOEXEC);
+  if (r < 0) {
+    return REPROC_ERROR_SYSTEM;
+  }
 
-  return *child < 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
+  *parent = HANDLE_INVALID;
+  *child = r;
+
+  return REPROC_SUCCESS;
 }
