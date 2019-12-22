@@ -16,12 +16,6 @@
 #include <sys/event.h>
 #endif
 
-#if defined(REPROC_MULTITHREADED)
-#define SIGMASK pthread_sigmask
-#else
-#define SIGMASK sigprocmask
-#endif
-
 #if defined(__APPLE__)
 #define EXECVPE execve
 #else
@@ -38,6 +32,16 @@
 // Including the entire reproc.h header is overkill so we import only the
 // constant we need.
 extern const unsigned int REPROC_INFINITE;
+
+static int signal_mask(int how, const sigset_t *newmask, sigset_t *oldmask)
+{
+  #if defined(REPROC_MULTITHREADED)
+    errno = pthread_sigmask(how, newmask, oldmask);
+    return errno == 0 ? 0 : -1;
+  #else
+    return sigprocmask(how, newmask, oldmask);
+  #endif
+}
 
 // Returns true if the null-terminated string indicated by `path` is a relative
 // path. A path is relative if any character except the first is a forward slash
@@ -116,7 +120,7 @@ static pid_t process_fork(int error_pipe_write)
     return -1;
   }
 
-  rv = SIGMASK(SIG_SETMASK, &new_mask, &old_mask);
+  rv = signal_mask(SIG_SETMASK, &new_mask, &old_mask);
   if (rv == -1) {
     return -1;
   }
@@ -128,7 +132,7 @@ static pid_t process_fork(int error_pipe_write)
     // Restore the parent's signal mask but make sure we don't overwrite the
     // `fork` error if there is one.
     int error = child == -1 ? errno : 0;
-    SIGMASK(SIG_SETMASK, &old_mask, NULL);
+    signal_mask(SIG_SETMASK, &old_mask, NULL);
     errno = error;
     return child;
   }
@@ -164,7 +168,7 @@ static pid_t process_fork(int error_pipe_write)
     goto cleanup;
   }
 
-  rv = SIGMASK(SIG_SETMASK, &new_mask, NULL);
+  rv = signal_mask(SIG_SETMASK, &new_mask, NULL);
   if (rv == -1) {
     goto cleanup;
   }
@@ -469,7 +473,7 @@ REPROC_ERROR process_wait(pid_t *processes,
   // returns but finishes before we call `signal_wait`. By blocking `SIGCHLD`
   // before calling `exit_check`, the signal stays pending until `signal_wait`
   // is called which processes the pending signal.
-  if (SIGMASK(SIG_BLOCK, &chld_mask, &old_mask) == -1) {
+  if (signal_mask(SIG_BLOCK, &chld_mask, &old_mask) == -1) {
     return REPROC_ERROR_SYSTEM;
   }
 
@@ -525,7 +529,7 @@ REPROC_ERROR process_wait(pid_t *processes,
   error = REPROC_SUCCESS;
 
 cleanup:
-  if (SIGMASK(SIG_SETMASK, &old_mask, NULL) == -1) {
+  if (signal_mask(SIG_SETMASK, &old_mask, NULL) == -1) {
     error = REPROC_ERROR_SYSTEM;
   }
 
