@@ -113,5 +113,5 @@ cleanup:
     exit_status = (int) error;
   }
 
-  return exit_status;
+  return exit_status < 0 ? (int) reproc_error_system() : exit_status;
 }
