@@ -115,8 +115,8 @@ process_create(pid_t *process,
   pid_t child_process = HANDLE_INVALID;
   REPROC_ERROR error = REPROC_ERROR_SYSTEM;
 
-  // We create an error pipe to receive errors from the child process. See this
-  // answer https://stackoverflow.com/a/1586277 for more information.
+  // We create an error pipe to receive errors from the child process. See
+  // https://stackoverflow.com/a/1586277 for more information.
   int error_pipe_read = HANDLE_INVALID;
   int error_pipe_write = HANDLE_INVALID;
   error = pipe_init(&error_pipe_read, PIPE_BLOCKING, &error_pipe_write,
@@ -128,16 +128,14 @@ process_create(pid_t *process,
   child_process = fork();
 
   if (child_process == 0) {
-    // Child process code. Since we're in the child process we can exit on
-    // error. Why `_exit`? See:
-    // https://stackoverflow.com/questions/5422831/what-is-the-difference-between-using-exit-exit-in-a-conventional-linux-fo?noredirect=1&lq=1
+    // Child process code. Since we're in the child process we exit on errors.
 
     const char *program = argv[0];
 
     if (options.working_directory) {
-      // We prepend the parent working directory to `program` if it is relative
-      // so that it will always be searched for relative to the parent working
-      // directory even after executing `chdir`.
+      // We prepend the parent working directory to `program` if it is a
+      // relative path so that it will always be searched for relative to the
+      // parent working directory even after executing `chdir`.
       if (path_is_relative(program)) {
         // We don't have to free `program` manually as it will be automatically
         // freed when `_exit` or `execvp` is called.
@@ -183,30 +181,15 @@ process_create(pid_t *process,
       _exit(errno);
     }
 
-    // While using `pipe2` prevents file descriptors created by reproc from
-    // leaking into other child processes, file descriptors created outside of
-    // reproc without the `FD_CLOEXEC` flag set will still leak into reproc
-    // child processes. To mostly get around this after forking and redirecting
-    // the standard streams (stdin, stdout, stderr) of the child process we
-    // close all file descriptors (except the standard streams) up to
-    // `_SC_OPEN_MAX` (obtained with `sysconf`) in the child process.
-    // `_SC_OPEN_MAX` describes the maximum number of files that a process can
-    // have open at any time. As a result, trying to close every file descriptor
-    // up to this number closes all file descriptors of the child process which
-    // includes file descriptors that were leaked into the child process.
-    // However, an application can manually lower the resource limit at any time
-    // (for example with `setrlimit(RLIMIT_NOFILE)`), which can lead to open
-    // file descriptors with a value above the new resource limit if they were
-    // created before the resource limit was lowered. These file descriptors
-    // will not be closed in the child process since only the file descriptors
-    // up to the latest resource limit are closed. Of course, this only happens
-    // if the application manually lowers the resource limit.
+    // Not all pipes might have been created with the `FD_CLOEXEC` flag so we
+    // manually close all file descriptors (except the standard streams) as an
+    // extra measure to prevent file descriptors leaking into the child process.
 
     for (int i = 3; i < max_fd; i++) {
-      // We might still need the error pipe so we don't close it. The error pipe
-      // is created with `FD_CLOEXEC` which results in it being closed
-      // automatically when `exec` or `_exit` are called so we don't have to
-      // manually close it.
+      // We might still need the error pipe to report `exec` failures so we
+      // don't close it. The error pipe has the `FD_CLOEXEC` set which
+      // guarantees it will be closed automatically when `exec` or `_exit` are
+      // called so we don't have to manually close it.
       if (i == error_pipe_write) {
         continue;
       }
@@ -228,7 +211,7 @@ process_create(pid_t *process,
       execvp(program, arguments);
     }
 
-    // We're guaranteed `execvp(e)` failed if this code is executed.
+    // We're guaranteed `execvp(e)` failed if this code is reached.
     (void) !write(error_pipe_write, &errno, sizeof(errno));
     _exit(errno);
   }
