@@ -301,31 +301,6 @@ REPROC_ERROR process_create(HANDLE *process,
   // dialogs temporarily which is inherited by the child process.
   DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
 
-  if (job_reference_count == 0) {
-    // `CreateJobObject` makes the handle uninheritable by default so we do not
-    // pass `DO_NOT_INHERIT` here.
-    job_object = CreateJobObjectA(NULL, NULL);
-    if (job_object == NULL) {
-      goto cleanup;
-    }
-
-    job_completion_port = CreateIoCompletionPort(HANDLE_INVALID, NULL, 0, 0);
-    if (job_completion_port == NULL) {
-      goto cleanup;
-    }
-
-    JOBOBJECT_ASSOCIATE_COMPLETION_PORT port_info = {
-      .CompletionPort = job_completion_port
-    };
-
-    r = SetInformationJobObject(job_object,
-                                JobObjectAssociateCompletionPortInformation,
-                                &port_info, sizeof(port_info));
-    if (r == 0) {
-      goto cleanup;
-    }
-  }
-
   // Join `argv` to a whitespace delimited string as required by
   // `CreateProcessW`.
   command_line = argv_join(argv);
@@ -402,6 +377,31 @@ REPROC_ERROR process_create(HANDLE *process,
                      startup_info_address, &info);
   if (r == 0) {
     goto cleanup;
+  }
+
+  if (job_reference_count == 0) {
+    // `CreateJobObject` makes the handle uninheritable by default so we do not
+    // pass `DO_NOT_INHERIT` here.
+    job_object = CreateJobObjectA(NULL, NULL);
+    if (job_object == NULL) {
+      goto cleanup;
+    }
+
+    job_completion_port = CreateIoCompletionPort(HANDLE_INVALID, NULL, 0, 0);
+    if (job_completion_port == NULL) {
+      goto cleanup;
+    }
+
+    JOBOBJECT_ASSOCIATE_COMPLETION_PORT port_info = {
+      .CompletionPort = job_completion_port
+    };
+
+    r = SetInformationJobObject(job_object,
+                                JobObjectAssociateCompletionPortInformation,
+                                &port_info, sizeof(port_info));
+    if (r == 0) {
+      goto cleanup;
+    }
   }
 
   r = AssignProcessToJobObject(job_object, info.hProcess);
