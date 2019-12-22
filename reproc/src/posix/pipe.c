@@ -100,6 +100,8 @@ pipe_read(int pipe,
   return REPROC_SUCCESS;
 }
 
+static const int POLL_INFINITE = -1;
+
 REPROC_ERROR pipe_write(int pipe,
                         const uint8_t *buffer,
                         unsigned int size,
@@ -111,7 +113,7 @@ REPROC_ERROR pipe_write(int pipe,
   struct pollfd pollfd = { .fd = pipe, .events = POLLOUT };
   ssize_t r = -1;
 
-  r = poll(&pollfd, 1, -1);
+  r = poll(&pollfd, 1, POLL_INFINITE);
   if (r <= 0) {
     return REPROC_ERROR_SYSTEM;
   }
@@ -154,7 +156,7 @@ pipe_wait(const handle *pipes, unsigned int num_pipes, unsigned int *ready)
     pollfds[i].events = POLLIN;
   }
 
-  r = poll(pollfds, num_pipes, -1);
+  r = poll(pollfds, num_pipes, POLL_INFINITE);
   if (r < 0) {
     goto cleanup;
   }
