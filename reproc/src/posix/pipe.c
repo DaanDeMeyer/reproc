@@ -20,7 +20,6 @@ REPROC_ERROR pipe_init(int *read,
   int read_mode = read_options.nonblocking ? O_NONBLOCK : 0;
   int write_mode = write_options.nonblocking ? O_NONBLOCK : 0;
 
-  REPROC_ERROR error = REPROC_ERROR_SYSTEM;
   int r = -1;
 
   // On POSIX systems, by default file descriptors are inherited by child
@@ -74,15 +73,13 @@ REPROC_ERROR pipe_init(int *read,
   *read = pipefd[0];
   *write = pipefd[1];
 
-  error = REPROC_SUCCESS;
-
 cleanup:
-  if (error) {
+  if (r < 0) {
     *read = handle_destroy(*read);
     *write = handle_destroy(*write);
   }
 
-  return error;
+  return r < 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
 }
 
 REPROC_ERROR
@@ -150,37 +147,36 @@ pipe_wait(const handle *pipes, unsigned int num_pipes, unsigned int *ready)
   assert(pipes);
   assert(ready);
 
-  REPROC_ERROR error = REPROC_ERROR_SYSTEM;
+  unsigned int i = 0;
+  int r = -1;
 
   struct pollfd *pollfds = calloc(num_pipes, sizeof(struct pollfd));
   if (pollfds == NULL) {
     goto cleanup;
   }
 
-  for (unsigned int i = 0; i < num_pipes; i++) {
+  for (i = 0; i < num_pipes; i++) {
     pollfds[i].fd = pipes[i];
     pollfds[i].events = POLLIN;
   }
 
-  int r = poll(pollfds, num_pipes, -1);
-  if (r <= 0) {
+  r = poll(pollfds, num_pipes, -1);
+  if (r < 0) {
     goto cleanup;
   }
 
-  for (unsigned int i = 0; i < num_pipes; i++) {
+  for (i = 0; i < num_pipes; i++) {
     struct pollfd pollfd = pollfds[i];
 
     if (pollfd.revents & POLLIN || pollfd.revents & POLLERR) {
       *ready = i;
-      error = REPROC_SUCCESS;
       goto cleanup;
     }
   }
 
-  error = REPROC_ERROR_STREAM_CLOSED;
-
 cleanup:
   free(pollfds);
 
-  return error;
+  return r < 0 ? REPROC_ERROR_SYSTEM
+               : i == num_pipes ? REPROC_ERROR_STREAM_CLOSED : REPROC_SUCCESS;
 }
