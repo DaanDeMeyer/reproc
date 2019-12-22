@@ -87,9 +87,9 @@ pipe_read(int pipe,
   assert(buffer);
   assert(bytes_read);
 
-  *bytes_read = 0;
+  ssize_t r = -1;
 
-  ssize_t r = read(pipe, buffer, size);
+  r = read(pipe, buffer, size);
   // `read` returns 0 to indicate the other end of the pipe was closed.
   if (r <= 0) {
     return r == 0 ? REPROC_ERROR_STREAM_CLOSED : REPROC_ERROR_SYSTEM;
@@ -107,8 +107,6 @@ REPROC_ERROR pipe_write(int pipe,
 {
   assert(buffer);
   assert(bytes_written);
-
-  *bytes_written = 0;
 
   struct pollfd pollfd = { .fd = pipe, .events = POLLOUT };
   ssize_t r = -1;
