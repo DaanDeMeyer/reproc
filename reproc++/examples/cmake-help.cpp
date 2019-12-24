@@ -58,7 +58,15 @@ int main()
 
   // By default, The `process` destructor waits indefinitely for the child
   // process to exit to ensure proper cleanup. See the forward example for
-  // information on how this can be configured.
+  // information on how this can be configured. However, when relying on the
+  // `process` destructor, we cannot check the exit status of the process so it
+  // usually makes sense to explicitly wait for the process to exit and check
+  // its exit status.
 
-  return EXIT_SUCCESS;
+  ec = process.wait(reproc::infinite);
+  if (ec) {
+    return fail(ec);
+  }
+
+  return process.exit_status();
 }
