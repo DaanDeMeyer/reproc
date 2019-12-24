@@ -56,7 +56,7 @@ static int signal_mask(int how, const sigset_t *newmask, sigset_t *oldmask)
 // ('/').
 static bool path_is_relative(const char *path)
 {
-  return strlen(path) > 0 && path[0] != '/' && *strchr(path + 1, '/') != '\0';
+  return strlen(path) > 0 && path[0] != '/' && strchr(path + 1, '/') != NULL;
 }
 
 // Prepends the null-terminated string indicated by `path` with the current
