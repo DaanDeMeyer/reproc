@@ -4,77 +4,58 @@ on: push
 
 jobs:
   ci:
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.config.os }}-${{ matrix.config.compiler }}-${{ matrix.config.version }}
+    runs-on: ${{ matrix.config.os }}-latest
 
     strategy:
       fail-fast: false
       matrix:
-        # Github Actions requires a single row to be added to the build matrix.
-        # See https://help.github.com/en/articles/workflow-syntax-for-github-actions.
-        name: [
-          ubuntu-gcc-6,
-          ubuntu-gcc-9,
-          ubuntu-clang-6,
-          ubuntu-clang-9,
-          windows-cl,
-          windows-clang-cl,
-          windows-clang,
-          windows-gcc,
-          macos-xcode,
-          macos-gcc
-        ]
-
-        include:
-          - name: ubuntu-gcc-6
-            os: ubuntu-latest
+        config:
+          - os: ubuntu
             compiler: gcc
             version: "6"
 
-          - name: ubuntu-gcc-9
-            os: ubuntu-latest
+          - os: ubuntu
             compiler: gcc
             version: "9"
 
-          - name: ubuntu-clang-6
-            os: ubuntu-latest
+          - os: ubuntu
             compiler: clang
             version: "6.0"
 
-          - name: ubuntu-clang-9
-            os: ubuntu-latest
+          - os: ubuntu
             compiler: clang
             version: "9"
 
-          - name: windows-cl
-            os: windows-latest
+          - os: windows
             compiler: cl
+            version: "default"
 
-          - name: windows-clang-cl
-            os: windows-latest
+          - os: windows
             compiler: clang-cl
+            version: "latest"
 
-          - name: windows-clang
-            os: windows-latest
+          - os: windows
             compiler: clang
+            version: "latest"
 
-          - name: windows-gcc
-            os: windows-latest
+          - os: windows
             compiler: gcc
+            version: "latest"
 
-          - name: macos-xcode
-            os: macos-latest
+          - os: macos
             compiler: xcode
+            version: "default"
 
-          - name: macos-gcc
-            os: macos-latest
+          - os: macos
             compiler: gcc
+            version: "latest"
 
     steps:
       - uses: actions/checkout@v1
 
-      - name: Install (Linux)
-        if: runner.os == 'Linux'
+      - name: Install (Ubuntu)
+        if: matrix.config.os == 'ubuntu'
         run: |
           curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Linux-x86_64.tar.gz -o cmake.tar.gz
           sudo tar xf cmake.tar.gz --strip 1 -C /usr/local
@@ -86,23 +67,23 @@ jobs:
           sudo apt-get install -y ninja-build clang-tidy-9
           sudo ln -s /usr/bin/clang-tidy-9 /usr/local/bin/clang-tidy
 
-          if [ "${{ matrix.compiler }}" = "gcc" ]; then
-            sudo apt-get install -y g++-${{ matrix.version }}
-            echo "::set-env name=CC::gcc-${{ matrix.version }}"
-            echo "::set-env name=CXX::g++-${{ matrix.version }}"
+          if [ "${{ matrix.config.compiler }}" = "gcc" ]; then
+            sudo apt-get install -y g++-${{ matrix.config.version }}
+            echo "::set-env name=CC::gcc-${{ matrix.config.version }}"
+            echo "::set-env name=CXX::g++-${{ matrix.config.version }}"
           else
-            sudo apt-get install -y clang-${{ matrix.version }}
-            echo "::set-env name=CC::clang-${{ matrix.version }}"
-            echo "::set-env name=CXX::clang++-${{ matrix.version }}"
+            sudo apt-get install -y clang-${{ matrix.config.version }}
+            echo "::set-env name=CC::clang-${{ matrix.config.version }}"
+            echo "::set-env name=CXX::clang++-${{ matrix.config.version }}"
           fi
 
       - name: Install (macOS)
-        if: runner.os == 'macOS'
+        if: matrix.config.os == 'macos'
         run: |
           brew install ninja llvm
           sudo ln -s /usr/local/opt/llvm/bin/clang-tidy /usr/local/bin/clang-tidy
 
-          if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          if [ "${{ matrix.config.compiler }}" = "gcc" ]; then
             brew install gcc
             echo "::set-env name=CC::gcc"
             echo "::set-env name=CXX::g++"
@@ -112,12 +93,12 @@ jobs:
           fi
 
       - name: Install (Windows)
-        if: runner.os == 'Windows'
+        if: matrix.config.os == 'windows'
         run: |
           Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
           scoop install cmake ninja llvm --global
 
-          if ("${{ matrix.compiler }}" -eq "gcc") {
+          if ("${{ matrix.config.compiler }}" -eq "gcc") {
             echo "::set-env name=CC::gcc"
             echo "::set-env name=CXX::g++"
             # Git Bash adds its own version of libstdc++-6.dll to the PATH which
@@ -126,12 +107,12 @@ jobs:
             # fail to execute. We fix the issue by linking statically against
             # libstdc++.
             echo "::set-env name=CXXFLAGS::-static-libstdc++"
-          } elseif ("${{ matrix.compiler }}" -eq "clang") {
+          } elseif ("${{ matrix.config.compiler }}" -eq "clang") {
             echo "::set-env name=CC::clang"
             echo "::set-env name=CXX::clang++"
           } else {
-            echo "::set-env name=CC::${{ matrix.compiler }}"
-            echo "::set-env name=CXX::${{ matrix.compiler }}"
+            echo "::set-env name=CC::${{ matrix.config.compiler }}"
+            echo "::set-env name=CXX::${{ matrix.config.compiler }}"
           }
 
           # We add the output directories to the PATH to make sure the tests and
@@ -142,7 +123,7 @@ jobs:
           # Make all PATH additions made by scoop and ourselves global.
           echo "::set-env name=PATH::$env:PATH"
 
-          if ("${{ matrix.compiler }}".endswith("cl")) {
+          if ("${{ matrix.config.compiler }}".endswith("cl")) {
             & .github\workflows\vsenv.ps1 -arch x64 -hostArch x64
           }
 
@@ -166,8 +147,8 @@ jobs:
           -DREPROC_WARNINGS_AS_ERRORS=ON
           -DREPROC_TIDY=ON
 
-      - name: Configure Sanitizers (Linux && macOS)
-        if: runner.os == 'Linux' || runner.os == 'macOS'
+      - name: Configure Sanitizers (Ubuntu && macOS)
+        if: matrix.config.os == 'ubuntu' || matrix.config.os == 'macos'
         run: cmake build -DREPROC_SANITIZERS=ON
 
       - name: Build
