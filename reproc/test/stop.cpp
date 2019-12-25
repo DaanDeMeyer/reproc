@@ -12,7 +12,7 @@ TEST_CASE("stop")
   INFO(reproc_error_system());
   INFO(reproc_error_string(error));
 
-  std::array<const char *, 2> argv{ RESOURCE_DIRECTORY "/infinite", nullptr };
+  std::array<const char *, 2> argv{ RESOURCE_DIRECTORY "/stop", nullptr };
 
   error = reproc_start(process, argv.data(), {});
   REQUIRE(!error);

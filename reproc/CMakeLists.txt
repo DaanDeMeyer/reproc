@@ -35,22 +35,13 @@ target_compile_definitions(reproc PRIVATE
 )
 
 if(REPROC_TEST)
-  target_sources(reproc-test PRIVATE
-    test/argv.cpp
-    test/environment.cpp
-    test/io.cpp
-    test/overflow.cpp
-    test/stop.cpp
-    test/working-directory.cpp
-  )
+  function(reproc_add_test TARGET)
+    target_sources(reproc-test PRIVATE test/${TARGET}.cpp)
 
-  target_link_libraries(reproc-test PRIVATE reproc)
-
-  function(reproc_add_test_helper TARGET)
     add_executable(reproc-${TARGET})
 
-    reproc_add_common(reproc-${TARGET} CXX 11 resources)
-    target_sources(reproc-${TARGET} PRIVATE resources/${TARGET}.cpp)
+    reproc_add_common(reproc-${TARGET} C 99 resources)
+    target_sources(reproc-${TARGET} PRIVATE resources/${TARGET}.c)
     set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
 
     # Build the helper executable as part of reproc-test build.
@@ -58,13 +49,14 @@ if(REPROC_TEST)
   endfunction()
 
   # Helper binaries required by reproc's tests.
-  reproc_add_test_helper(argv)
-  reproc_add_test_helper(environment)
-  reproc_add_test_helper(infinite)
-  reproc_add_test_helper(io)
-  reproc_add_test_helper(working-directory)
-  reproc_add_test_helper(overflow)
+  reproc_add_test(argv)
+  reproc_add_test(environment)
+  reproc_add_test(io)
+  reproc_add_test(overflow)
+  reproc_add_test(stop)
+  reproc_add_test(working-directory)
 
+  target_link_libraries(reproc-test PRIVATE reproc)
   target_compile_definitions(reproc-test PRIVATE
     RESOURCE_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/resources"
   )
