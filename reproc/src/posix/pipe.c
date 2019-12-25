@@ -122,14 +122,9 @@ REPROC_ERROR pipe_write(int pipe,
 
   r = write(pipe, buffer, size);
   if (r < 0) {
-    switch (errno) {
-      // `write` sets `errno` to `EPIPE` to indicate the other end of the pipe
-      // was closed.
-      case EPIPE:
-        return REPROC_ERROR_STREAM_CLOSED;
-      default:
-        return REPROC_ERROR_SYSTEM;
-    }
+    // `write` sets `errno` to `EPIPE` to indicate the other end of the pipe was
+    // closed.
+    return errno == EPIPE ? REPROC_ERROR_STREAM_CLOSED : REPROC_ERROR_SYSTEM;
   }
 
   *bytes_written = (unsigned int) r;
