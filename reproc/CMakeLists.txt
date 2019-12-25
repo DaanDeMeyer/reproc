@@ -62,7 +62,7 @@ if(REPROC_TEST)
   reproc_add_test_helper(environment)
   reproc_add_test_helper(infinite)
   reproc_add_test_helper(io)
-  reproc_add_test_helper(noop)
+  reproc_add_test_helper(working-directory)
   reproc_add_test_helper(overflow)
 
   target_compile_definitions(reproc-test PRIVATE
