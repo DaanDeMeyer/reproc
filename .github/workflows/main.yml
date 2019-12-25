@@ -96,7 +96,7 @@ jobs:
         if: matrix.config.os == 'windows'
         run: |
           Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
-          scoop install cmake ninja llvm --global
+          scoop install ninja llvm --global
 
           if ("${{ matrix.config.compiler }}" -eq "gcc") {
             echo "::set-env name=CC::gcc"
