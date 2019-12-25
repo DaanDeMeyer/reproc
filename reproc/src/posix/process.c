@@ -257,21 +257,17 @@ process_create(pid_t *process,
     // Child process code. Since we're in the child process we can exit on
     // errors.
 
-    const char *program = argv[0];
+    // We prepend the parent working directory to `program` if it is a
+    // relative path so that it will always be searched for relative to the
+    // parent working directory even after executing `chdir`.
+    const char *program = options.working_directory && path_is_relative(argv[0])
+                              ? path_prepend_cwd(argv[0])
+                              : argv[0];
+    if (program == NULL) {
+      _exit(write_errno(error_pipe_write));
+    }
 
     if (options.working_directory) {
-      // We prepend the parent working directory to `program` if it is a
-      // relative path so that it will always be searched for relative to the
-      // parent working directory even after executing `chdir`.
-      if (path_is_relative(program)) {
-        // We don't have to free `program` manually as it will be automatically
-        // freed when `_exit` or `execvp` is called.
-        program = path_prepend_cwd(program);
-        if (program == NULL) {
-          _exit(write_errno(error_pipe_write));
-        }
-      }
-
       r = chdir(options.working_directory);
       if (r < 0) {
         _exit(write_errno(error_pipe_write));
