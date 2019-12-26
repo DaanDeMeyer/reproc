@@ -29,6 +29,11 @@ auto deleter = [](reproc_t *process) { reproc_destroy(process); };
 
 process::process() : process_(reproc_new(), deleter) {}
 
+process::~process() noexcept = default;
+
+process::process(process &&other) noexcept = default;
+process &process::operator=(process &&other) noexcept = default;
+
 std::error_code process::start(const arguments &arguments,
                                const options &options) noexcept
 {
