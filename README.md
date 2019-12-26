@@ -183,6 +183,7 @@ reproc's build can be configured using the following CMake options:
   `OFF` unless the `REPROC_DEVELOP` environment variable is set).
 - `REPROC_SANITIZERS`: Build with sanitizers (default: `${REPROC_DEVELOP}`).
 - `REPROC_TIDY`: Run clang-tidy when building (default: `${REPROC_DEVELOP}`).
+- `REPROC_WARNINGS`: Enable compiler warnings (default: `${REPROC_DEVELOP}`)
 - `REPROC_WARNINGS_AS_ERRORS`: Add -Werror or equivalent to the compile flags
   and clang-tidy (default: `OFF`).
 
