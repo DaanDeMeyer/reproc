@@ -8,9 +8,7 @@ target_link_libraries(reproc++ PRIVATE
 target_sources(
   reproc++
   PRIVATE
-    src/detail/array.cpp
     src/reproc.cpp
-    src/sink.cpp
   INTERFACE
     # We manually propagate reproc's object files until CMake adds support for
     # doing it automatically.

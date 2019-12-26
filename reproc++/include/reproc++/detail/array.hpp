@@ -1,7 +1,5 @@
 #pragma once
 
-#include <reproc++/export.hpp>
-
 namespace reproc {
 namespace detail {
 
@@ -10,14 +8,43 @@ class array {
   bool owned_;
 
 public:
-  REPROCXX_EXPORT array(const char *const *data, bool owned) noexcept;
+  array(const char *const *data, bool owned) noexcept
+      : data_(data), owned_(owned)
+  {}
 
-  REPROCXX_EXPORT array(array &&other) noexcept;
-  REPROCXX_EXPORT array &operator=(array &&other) noexcept;
+  array(array &&other) noexcept : data_(other.data_), owned_(other.owned_)
+  {
+    other.data_ = nullptr;
+    owned_ = false;
+  }
 
-  REPROCXX_EXPORT ~array() noexcept;
+  array &operator=(array &&other) noexcept
+  {
+    if (&other != this) {
+      data_ = other.data_;
+      owned_ = other.owned_;
+      other.data_ = nullptr;
+      owned_ = false;
+    }
 
-  REPROCXX_EXPORT const char *const *data() const noexcept;
+    return *this;
+  }
+
+  ~array() noexcept
+  {
+    if (owned_) {
+      for (unsigned int i = 0; data_[i] != nullptr; i++) {
+        delete[] data_[i];
+      }
+
+      delete[] data_;
+    }
+  }
+
+  const char *const *data() const noexcept
+  {
+    return data_;
+  }
 };
 
 } // namespace detail

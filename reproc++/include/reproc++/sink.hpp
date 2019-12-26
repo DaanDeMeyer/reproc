@@ -1,10 +1,10 @@
 #pragma once
 
-#include <reproc++/export.hpp>
 #include <reproc++/reproc.hpp>
 
 #include <iosfwd>
 #include <mutex>
+#include <ostream>
 #include <string>
 
 namespace reproc {
@@ -16,10 +16,25 @@ class string {
   std::string &err_;
 
 public:
-  REPROCXX_EXPORT explicit string(std::string &out, std::string &err) noexcept;
+  explicit string(std::string &out, std::string &err) noexcept
+      : out_(out), err_(err)
+  {}
 
-  REPROCXX_EXPORT bool
-  operator()(stream stream, const uint8_t *buffer, unsigned int size);
+  bool operator()(stream stream, const uint8_t *buffer, unsigned int size)
+  {
+    switch (stream) {
+      case stream::out:
+        out_.append(reinterpret_cast<const char *>(buffer), size);
+        break;
+      case stream::err:
+        err_.append(reinterpret_cast<const char *>(buffer), size);
+        break;
+      case stream::in:
+        break;
+    }
+
+    return true;
+  }
 };
 
 /*! Forwards all output to `out`. */
@@ -28,18 +43,40 @@ class ostream {
   std::ostream &err_;
 
 public:
-  REPROCXX_EXPORT explicit ostream(std::ostream &out,
-                                   std::ostream &err) noexcept;
+  explicit ostream(std::ostream &out, std::ostream &err) noexcept
 
-  REPROCXX_EXPORT bool
-  operator()(stream stream, const uint8_t *buffer, unsigned int size);
+      : out_(out), err_(err)
+  {}
+
+  bool operator()(stream stream, const uint8_t *buffer, unsigned int size)
+  {
+    switch (stream) {
+      case stream::out:
+        out_.write(reinterpret_cast<const char *>(buffer), size);
+        break;
+      case stream::err:
+        err_.write(reinterpret_cast<const char *>(buffer), size);
+        break;
+      case stream::in:
+        break;
+    }
+
+    return true;
+  }
 };
 
 /*! Discards all output. */
 class discard {
 public:
-  REPROCXX_EXPORT bool
-  operator()(stream stream, const uint8_t *buffer, unsigned int size) noexcept;
+  bool
+  operator()(stream stream, const uint8_t *buffer, unsigned int size) noexcept
+  {
+    (void) stream;
+    (void) buffer;
+    (void) size;
+
+    return true;
+  }
 };
 
 namespace thread_safe {
@@ -49,11 +86,15 @@ class string {
   std::mutex &mutex_;
 
 public:
-  REPROCXX_EXPORT
-  string(std::string &out, std::string &err, std::mutex &mutex) noexcept;
+  string(std::string &out, std::string &err, std::mutex &mutex) noexcept
+      : sink_(out, err), mutex_(mutex)
+  {}
 
-  REPROCXX_EXPORT bool
-  operator()(stream stream, const uint8_t *buffer, unsigned int size);
+  bool operator()(stream stream, const uint8_t *buffer, unsigned int size)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return sink_(stream, buffer, size);
+  }
 };
 
 } // namespace thread_safe
