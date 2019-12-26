@@ -24,7 +24,12 @@ namespace reproc {
 namespace error {
 
 constexpr std::errc wait_timeout = std::errc::resource_unavailable_try_again;
+#if defined(_WIN32)
+// https://github.com/microsoft/STL/pull/406
+static const std::error_code stream_closed = { 109, std::system_category() };
+#else
 constexpr std::errc stream_closed = std::errc::broken_pipe;
+#endif
 
 } // namespace error
 
