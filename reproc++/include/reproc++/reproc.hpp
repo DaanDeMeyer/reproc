@@ -117,26 +117,14 @@ public:
   read(uint8_t *buffer, unsigned int size) noexcept;
 
   /*!
-  Calls `read` on `stream` until `parser` returns false or an error occurs.
-  `parser` receives the output after each read.
+  `reproc_drain` but takes a lambda as its argument instead of a function and
+  context pointer.
 
-  `parser` is always called once with an empty buffer to give the parser the
-  chance to process all output from the previous call to `parse` one by one.
-
-  `Parser` expects the following signature:
+  `sink` expects the following signature:
 
   ```c++
-  bool parser(stream stream, const uint8_t *buffer, unsigned int size);
+  bool sink(stream stream, const uint8_t *buffer, unsigned int size);
   ```
-  */
-  template <typename Parser>
-  std::error_code parse(Parser &&parser);
-
-  /*!
-  `parse` but `stream_closed` is not treated as an error. `Sink` expects the
-  same signature as `Parser` in `parse`.
-
-  For examples of sinks, see `sink.hpp`.
   */
   template <typename Sink>
   std::error_code drain(Sink &&sink);
@@ -170,17 +158,17 @@ private:
   std::unique_ptr<reproc_t, void (*)(reproc_t *)> process_;
 };
 
-template <typename Parser>
-std::error_code process::parse(Parser &&parser)
+template <typename Sink>
+std::error_code process::drain(Sink &&sink)
 {
-  // We can't use compound literals in C++ to pass the initial value to `parser`
+  // We can't use compound literals in C++ to pass the initial value to `sink`
   // so we use a constexpr value instead.
   static constexpr uint8_t initial = 0;
 
   // A single call to `read` might contain multiple messages. By always calling
-  // `parser` once with no data before reading, we give it the chance to process
+  // `sink` once with no data before reading, we give it the chance to process
   // all previous output one by one before reading from the child process again.
-  if (!parser(stream::in, &initial, 0)) {
+  if (!sink(stream::in, &initial, 0)) {
     return {};
   }
 
@@ -195,19 +183,11 @@ std::error_code process::parse(Parser &&parser)
       break;
     }
 
-    // `parser` returns false to tell us to stop reading.
-    if (!parser(stream, buffer, bytes_read)) {
+    // `sink` returns false to tell us to stop reading.
+    if (!sink(stream, buffer, bytes_read)) {
       break;
     }
   }
-
-  return ec;
-}
-
-template <typename Sink>
-std::error_code process::drain(Sink &&sink)
-{
-  std::error_code ec = parse(std::forward<Sink>(sink));
 
   return ec == error::stream_closed ? std::error_code() : ec;
 }

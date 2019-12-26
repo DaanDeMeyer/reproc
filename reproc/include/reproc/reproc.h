@@ -160,25 +160,16 @@ REPROC_EXPORT int reproc_read(reproc_t *process,
                               unsigned int size);
 
 /*!
-Calls `reproc_read` on `stream` until `parser` returns false or an error occurs.
-`parser` receives the output after each read, along with `context`.
+Calls `reproc_read` on `stream` until `sink` returns false, an error occurs or
+both the stdout and stderr streams are closed. `sink` receives the output after
+each read, along with `context`.
 
-`reproc_parse` always starts by calling `parser` once with an empty buffer and
-`stream` set to `REPROC_STREAM_IN` to give the parser the chance to process all
-output from the previous call to `reproc_parse` one by one.
+`reproc_drain` always starts by calling `sink` once with an empty buffer and
+`stream` set to `REPROC_STREAM_IN` to give the sink the chance to process all
+output from the previous call to `reproc_drain` one by one.
 
-Actionable errors:
-- `REPROC_ERROR_STREAM_CLOSED`
-*/
-REPROC_EXPORT int reproc_parse(reproc_t *process,
-                               bool (*parser)(REPROC_STREAM stream,
-                                              const uint8_t *buffer,
-                                              unsigned int size,
-                                              void *context),
-                               void *context);
-
-/*!
-`reproc_parse` but `REPROC_ERROR_STREAM_CLOSED` is not treated as an error.
+Note that his function returns 0 instead of `REPROC_ERROR_STREAM_CLOSED` when
+both output streams of the child process are closed.
 
 For examples of sinks, see `sink.h`.
 */
