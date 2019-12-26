@@ -1,5 +1,7 @@
 #include <reproc/reproc.h>
 
+#include <error.h>
+
 #include <stdlib.h>
 #include <windows.h>
 
@@ -8,7 +10,12 @@ enum { ERROR_STRING_MAX_SIZE = 512 };
 const int REPROC_ERROR_STREAM_CLOSED = -ERROR_BROKEN_PIPE;
 const int REPROC_ERROR_WAIT_TIMEOUT = -WAIT_TIMEOUT;
 
-const char *reproc_error_string(int error)
+int error_unify(int r, int success)
+{
+  return r == 0 ? -(int) GetLastError() : success;
+}
+
+const char *error_string(int error)
 {
   static wchar_t wstring[ERROR_STRING_MAX_SIZE];
   int r = 0;

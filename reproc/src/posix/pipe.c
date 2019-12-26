@@ -1,5 +1,7 @@
 #include <pipe.h>
 
+#include <error.h>
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -76,7 +78,7 @@ cleanup:
     handle_destroy(pipefd[1]);
   }
 
-  return r < 0 ? -errno : 0;
+  return error_unify(r, 0);
 }
 
 int pipe_read(int pipe, uint8_t *buffer, unsigned int size)
@@ -87,7 +89,12 @@ int pipe_read(int pipe, uint8_t *buffer, unsigned int size)
   assert(r <= INT_MAX);
 
   // `read` returns 0 to indicate the other end of the pipe was closed.
-  return r < 0 ? -errno : r == 0 ? -EPIPE : (int) r;
+  if (r == 0) {
+    r = -1;
+    errno = EPIPE;
+  }
+
+  return error_unify((int) r, (int) r);
 }
 
 static const int POLL_INFINITE = -1;
@@ -101,7 +108,7 @@ int pipe_write(int pipe, const uint8_t *buffer, unsigned int size)
 
   r = poll(&pollfd, 1, POLL_INFINITE);
   if (r < 0) {
-    return -errno;
+    goto cleanup;
   }
 
   assert(pollfd.revents & POLLOUT || pollfd.revents & POLLERR);
@@ -109,7 +116,8 @@ int pipe_write(int pipe, const uint8_t *buffer, unsigned int size)
   r = write(pipe, buffer, size);
   assert(r <= INT_MAX);
 
-  return r < 0 ? -errno : (int) r;
+cleanup:
+  return error_unify((int) r, (int) r);
 }
 
 int pipe_wait(const handle *pipes, unsigned int num_pipes)
@@ -145,8 +153,13 @@ int pipe_wait(const handle *pipes, unsigned int num_pipes)
     }
   }
 
+  if (i == num_pipes) {
+    r = -1;
+    errno = EPIPE;
+  }
+
 cleanup:
   free(pollfds);
 
-  return r < 0 ? -errno : i == num_pipes ? -EPIPE : r;
+  return error_unify(r, r);
 }

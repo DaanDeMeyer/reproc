@@ -1,5 +1,6 @@
 #include <redirect.h>
 
+#include <error.h>
 #include <pipe.h>
 
 #include <assert.h>
@@ -47,6 +48,7 @@ int redirect_inherit(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
   }
 
   if (stream_handle == NULL) {
+    r = 0;
     SetLastError(ERROR_BROKEN_PIPE);
     goto cleanup;
   }
@@ -61,7 +63,7 @@ int redirect_inherit(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
   *child = handle;
 
 cleanup:
-  return r == 0 ? -(int) GetLastError() : 0;
+  return error_unify(r, 0);
 }
 
 int redirect_discard(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
@@ -70,17 +72,21 @@ int redirect_discard(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
   assert(child);
 
   DWORD mode = stream == REDIRECT_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
+  BOOL r = 0;
 
   HANDLE handle = CreateFile(DEVNULL, mode, FILE_NO_SHARE, &INHERIT_HANDLE,
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
                              (HANDLE) FILE_NO_TEMPLATE);
   if (handle == INVALID_HANDLE_VALUE) {
+    r = 0;
     goto cleanup;
   }
 
   *parent = HANDLE_INVALID;
   *child = handle;
 
+  r = 1;
+
 cleanup:
-  return handle == INVALID_HANDLE_VALUE ? -(int) GetLastError() : 0;
+  return error_unify(r, 0);
 }

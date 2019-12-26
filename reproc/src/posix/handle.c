@@ -1,6 +1,6 @@
 #include <handle.h>
 
-#include <macro.h>
+#include <error.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -15,7 +15,7 @@ int handle_destroy(int handle)
   }
 
   // Avoid `close` errors overriding other system errors.
-  PROTECT_ERRNO(close(handle));
+  PROTECT_SYSTEM_ERROR(close(handle));
 
   return HANDLE_INVALID;
 }

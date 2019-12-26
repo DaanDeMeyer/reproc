@@ -1,5 +1,6 @@
 #include <reproc/reproc.h>
 
+#include <error.h>
 #include <handle.h>
 #include <macro.h>
 #include <pipe.h>
@@ -373,4 +374,9 @@ reproc_t *reproc_destroy(reproc_t *process)
 
   free(process);
   return NULL;
+}
+
+const char *reproc_error_string(int error)
+{
+  return error_string(error);
 }

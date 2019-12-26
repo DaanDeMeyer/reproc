@@ -1,5 +1,7 @@
 #include <handle.h>
 
+#include <error.h>
+
 #include <assert.h>
 #include <windows.h>
 
@@ -12,9 +14,7 @@ HANDLE handle_destroy(HANDLE handle)
   }
 
   // Avoid `CloseHandle` errors overriding other system errors.
-  unsigned int last_error = GetLastError();
-  CloseHandle(handle);
-  SetLastError(last_error);
+  PROTECT_SYSTEM_ERROR(CloseHandle(handle));
 
   return HANDLE_INVALID;
 }

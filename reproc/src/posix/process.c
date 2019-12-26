@@ -1,6 +1,6 @@
 #include <process.h>
 
-#include <macro.h>
+#include <error.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -148,7 +148,7 @@ cleanup:
 
 static int write_errno(int fd)
 {
-  PROTECT_ERRNO(write(fd, &errno, sizeof(errno)));
+  PROTECT_SYSTEM_ERROR(write(fd, &errno, sizeof(errno)));
   return errno;
 }
 
@@ -171,11 +171,11 @@ static pid_t process_fork(int error_pipe)
     return r;
   }
 
-  int child = fork();
-  if (child != 0) {
+  r = fork();
+  if (r != 0) {
     // Parent process or `fork` error.
-    PROTECT_ERRNO(signal_mask(SIG_SETMASK, &old_mask, NULL));
-    return child;
+    PROTECT_SYSTEM_ERROR(signal_mask(SIG_SETMASK, &old_mask, NULL));
+    return r;
   }
 
   // Child process
@@ -337,6 +337,8 @@ int process_create(pid_t *process,
     goto cleanup;
   }
 
+  assert(r <= INT_MAX);
+
   if (child_errno != 0) {
     r = -1;
     errno = child_errno;
@@ -352,10 +354,10 @@ cleanup:
   // Make sure the child process doesn't become a zombie process if the child
   // process was started (`child_process` > 0) but an error occurred.
   if (r < 0 && child > 0) {
-    PROTECT_ERRNO(waitpid(child, NULL, 0));
+    PROTECT_SYSTEM_ERROR(waitpid(child, NULL, 0));
   }
 
-  return r < 0 ? -errno : (int) r;
+  return error_unify((int) r, 0);
 }
 
 static struct timespec timespec_from_milliseconds(long milliseconds)
@@ -535,22 +537,22 @@ int process_wait(pid_t *processes,
 
 cleanup:
   if (signals_blocked) {
-    PROTECT_ERRNO(signal_mask(SIG_SETMASK, &old_mask, NULL));
+    PROTECT_SYSTEM_ERROR(signal_mask(SIG_SETMASK, &old_mask, NULL));
   }
 
-  return r < 0 ? -errno : r;
+  return error_unify(r, r);
 }
 
 int process_terminate(pid_t process)
 {
   int r = kill(process, SIGTERM);
-  return r < 0 ? -errno : r;
+  return error_unify(r, 0);
 }
 
 int process_kill(pid_t process)
 {
   int r = kill(process, SIGKILL);
-  return r < 0 ? -errno : r;
+  return error_unify(r, 0);
 }
 
 pid_t process_destroy(pid_t process)

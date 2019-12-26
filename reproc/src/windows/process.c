@@ -1,5 +1,6 @@
 #include <process.h>
 
+#include <error.h>
 #include <macro.h>
 
 #include <assert.h>
@@ -162,6 +163,7 @@ static char *argv_join(const char *const *argv)
 
   char *joined = calloc(joined_size, sizeof(char));
   if (joined == NULL) {
+    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return NULL;
   }
 
@@ -197,6 +199,7 @@ static char *environment_join(const char *const *environment)
 
   char *joined = calloc(environment_join_size(environment), sizeof(char));
   if (joined == NULL) {
+    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return NULL;
   }
 
@@ -231,6 +234,7 @@ static wchar_t *string_to_wstring(const char *string, size_t size)
   // `size_t` is safe.
   wchar_t *wstring = calloc((size_t) r, sizeof(wchar_t));
   if (wstring == NULL) {
+    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return NULL;
   }
 
@@ -262,6 +266,7 @@ handle_inherit_list_create(HANDLE *handles, size_t num_handles)
 
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = malloc(attribute_list_size);
   if (attribute_list == NULL) {
+    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return NULL;
   }
 
@@ -457,7 +462,7 @@ cleanup:
     }
   }
 
-  return r == 0 ? -(int) GetLastError() : 0;
+  return error_unify(r, 0);
 }
 
 int process_wait(HANDLE *processes,
@@ -531,7 +536,7 @@ int process_wait(HANDLE *processes,
   *exit_status = (int) status;
 
 cleanup:
-  return r == 0 ? -(int) GetLastError() : (int) completed;
+  return error_unify(r, (int) completed);
 }
 
 int process_terminate(HANDLE process)
@@ -541,9 +546,9 @@ int process_terminate(HANDLE process)
   // `GenerateConsoleCtrlEvent` can only be called on a process group. To call
   // `GenerateConsoleCtrlEvent` on a single child process it has to be put in
   // its own process group (which we did when starting the child process).
-  return GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, GetProcessId(process)) == 0
-             ? -(int) GetLastError()
-             : 0;
+  BOOL r = GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, GetProcessId(process));
+
+  return error_unify(r, 0);
 }
 
 int process_kill(HANDLE process)
@@ -553,7 +558,9 @@ int process_kill(HANDLE process)
   // We use 137 (`SIGKILL`) as the exit status because it is the same exit
   // status as a process that is stopped with the `SIGKILL` signal on POSIX
   // systems.
-  return TerminateProcess(process, SIGKILL) == 0 ? -(int) GetLastError() : 0;
+  BOOL r = TerminateProcess(process, SIGKILL);
+
+  return error_unify(r, 0);
 }
 
 HANDLE process_destroy(HANDLE process)

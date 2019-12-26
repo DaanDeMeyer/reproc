@@ -15,10 +15,10 @@ respectively. */
 typedef struct reproc_t reproc_t;
 
 /*! A timeout value passed to an API function expired. */
-REPROC_EXPORT extern const int REPROC_ERROR_WAIT_TIMEOUT;
+extern REPROC_EXPORT const int REPROC_ERROR_WAIT_TIMEOUT;
 /*! The child process closed one of its streams (and in the case of
 stdout/stderr all of the data remaining in that stream has been read). */
-REPROC_EXPORT extern const int REPROC_ERROR_STREAM_CLOSED;
+extern REPROC_EXPORT const int REPROC_ERROR_STREAM_CLOSED;
 
 /*! Used to tell reproc where to redirect the streams of the child process. */
 typedef enum {
@@ -106,7 +106,7 @@ typedef enum {
 } REPROC_STREAM;
 
 /*! Tells a function that takes a timeout value to wait indefinitely. */
-REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
+extern REPROC_EXPORT const unsigned int REPROC_INFINITE;
 
 /* Allocate a new `reproc_t` instance on the heap. */
 REPROC_EXPORT reproc_t *reproc_new(void);

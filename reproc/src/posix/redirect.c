@@ -1,5 +1,6 @@
 #include <redirect.h>
 
+#include <error.h>
 #include <pipe.h>
 
 #include <assert.h>
@@ -49,7 +50,7 @@ int redirect_inherit(int *parent, int *child, REDIRECT_STREAM stream)
   *child = fd;
 
 cleanup:
-  return r < 0 ? -errno : r;
+  return error_unify(r, 0);
 }
 
 int redirect_discard(int *parent, int *child, REDIRECT_STREAM stream)
@@ -70,5 +71,5 @@ int redirect_discard(int *parent, int *child, REDIRECT_STREAM stream)
   *child = fd;
 
 cleanup:
-  return r < 0 ? -errno : r;
+  return error_unify(r, 0);
 }

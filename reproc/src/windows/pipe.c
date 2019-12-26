@@ -1,5 +1,6 @@
 #include <pipe.h>
 
+#include <error.h>
 #include <macro.h>
 
 #include <assert.h>
@@ -81,7 +82,7 @@ cleanup:
     handle_destroy(pipe_handles[1]);
   }
 
-  return r == 0 ? -(int) GetLastError() : 0;
+  return error_unify(r, 0);
 }
 
 int pipe_read(HANDLE pipe, uint8_t *buffer, unsigned int size)
@@ -114,7 +115,7 @@ int pipe_read(HANDLE pipe, uint8_t *buffer, unsigned int size)
 cleanup:
   handle_destroy(overlapped.hEvent);
 
-  return r == 0 ? -(int) GetLastError() : (int) bytes_read;
+  return error_unify(r, (int) bytes_read);
 }
 
 int pipe_write(HANDLE pipe, const uint8_t *buffer, unsigned int size)
@@ -147,7 +148,7 @@ int pipe_write(HANDLE pipe, const uint8_t *buffer, unsigned int size)
 cleanup:
   handle_destroy(overlapped.hEvent);
 
-  return r == 0 ? -(int) GetLastError() : (int) bytes_written;
+  return error_unify(r, (int) bytes_written);
 }
 
 int pipe_wait(const handle *pipes, unsigned int num_pipes)
@@ -164,12 +165,14 @@ int pipe_wait(const handle *pipes, unsigned int num_pipes)
   overlapped = calloc(num_pipes, sizeof(OVERLAPPED));
   if (overlapped == NULL) {
     r = 0;
+    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     goto cleanup;
   }
 
   events = calloc(num_pipes, sizeof(HANDLE));
   if (events == NULL) {
     r = 0;
+    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     goto cleanup;
   }
 
@@ -201,7 +204,8 @@ int pipe_wait(const handle *pipes, unsigned int num_pipes)
 
   if (num_reads == 0) {
     // All streams have been closed.
-    r = 1;
+    r = 0;
+    SetLastError(ERROR_BROKEN_PIPE);
     goto cleanup;
   }
 
@@ -226,39 +230,41 @@ cleanup:
   if (overlapped == NULL || events == NULL) {
     free(overlapped);
     free(events);
-    return -(int) GetLastError();
+    return error_unify(r, 0);
   }
 
-  // Because we continue cleaning up even when an error occurs during cleanup,
-  // we have to save the first error that occurs because `GetLastError()` might
-  // get overridden with another error during further cleanup. When we're done,
-  // we reset `GetLastError()` to the first error that occurred that we couldn't
-  // handle.
-  DWORD first_system_error = GetLastError();
-  BOOL k = 0;
+  // `GetLastError` will get overridden during cleanup so we save it.
+  DWORD system_error = r == 0 ? GetLastError() : 0;
 
   for (DWORD i = 0; i < num_pipes; i++) {
 
     // Cancel any remaining zero-sized reads that we queued if they have not yet
     // completed.
 
-    k = CancelIoEx(pipes[i], &overlapped[i]);
-    if (k == 0) {
-      if (GetLastError() != ERROR_NOT_FOUND && first_system_error == 0) {
-        first_system_error = GetLastError();
-      }
-
+    r = CancelIoEx(pipes[i], &overlapped[i]);
+    if (r == 0 && GetLastError() == ERROR_NOT_FOUND) {
+      r = 1;
       continue;
+    }
+
+    if (r == 0) {
+      // An error occurred that we did not expect.
+      break;
     }
 
     // `CancelIoEx` only requests cancellation. We use `GetOverlappedResult` to
     // wait until the read is actually cancelled.
 
     DWORD bytes_transferred = 0;
-    k = GetOverlappedResult(pipes[i], &overlapped[i], &bytes_transferred, true);
-    if (k == 0 && GetLastError() != ERROR_OPERATION_ABORTED &&
-        GetLastError() != ERROR_BROKEN_PIPE && first_system_error == 0) {
-      first_system_error = GetLastError();
+    r = GetOverlappedResult(pipes[i], &overlapped[i], &bytes_transferred, true);
+    if (r == 0 && (GetLastError() == ERROR_OPERATION_ABORTED ||
+        GetLastError() == ERROR_BROKEN_PIPE)) {
+      r = 1;
+    }
+
+    if (r == 0) {
+      // An error occurred that we did not expect.
+      break;
     }
   }
 
@@ -269,10 +275,12 @@ cleanup:
   free(overlapped);
   free(events);
 
-  if (first_system_error > 0) {
-    SetLastError(first_system_error);
+  if (r > 0) {
+    // If no errors occurred during cleanup that we did not expect, reset the
+    // error variables to the values they had before we started cleanup.
+    r = system_error == 0;
+    SetLastError(system_error);
   }
 
-  return r == 0 ? -(int) GetLastError()
-                : num_reads == 0 ? -ERROR_BROKEN_PIPE : ready;
+  return error_unify(r, ready);
 }
