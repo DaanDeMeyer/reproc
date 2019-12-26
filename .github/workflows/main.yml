@@ -101,12 +101,6 @@ jobs:
           if ("${{ matrix.config.compiler }}" -eq "gcc") {
             echo "::set-env name=CC::gcc"
             echo "::set-env name=CXX::g++"
-            # Git Bash adds its own version of libstdc++-6.dll to the PATH which
-            # differs from the version which MinGW links against. Because this
-            # version is found before MinGW's version, the tests and examples
-            # fail to execute. We fix the issue by linking statically against
-            # libstdc++.
-            echo "::set-env name=CXXFLAGS::-static-libstdc++"
           } elseif ("${{ matrix.config.compiler }}" -eq "clang") {
             echo "::set-env name=CC::clang"
             echo "::set-env name=CXX::clang++"
@@ -154,17 +148,29 @@ jobs:
       - name: Build
         run: cmake --build build
 
-      # Aside from running the tests we also make sure the examples don't
-      # crash or return a non-zero exit code.
-
       - name: Test
-        shell: bash
-        run: |
-          build/test
+        run: build/test
 
-          build/reproc/examples/drain
-          build/reproc/examples/git-status
-          build/reproc/examples/inherit cmake --help
-          build/reproc++/examples/background cmake --help
-          build/reproc++/examples/cmake-help
-          build/reproc++/examples/forward cmake --help
+      # Aside from running the tests we also make sure the examples don't crash
+      # or return a non-zero exit code. Because Github Actions only checks the
+      # exit code of the last command executed by Powershell (Windows) to
+      # determine if the step succeeded or failed, we run each example in its
+      # own step.
+
+      - name: "Examples: drain"
+        run: build/reproc/examples/drain
+
+      - name: "Examples: git-status"
+        run: build/reproc/examples/git-status
+
+      - name: "Examples: inherit"
+        run: build/reproc/examples/inherit cmake --help
+
+      - name: "Examples: background"
+        run: build/reproc++/examples/background cmake --help
+
+      - name: "Examples: cmake-help"
+        run: build/reproc++/examples/cmake-help
+
+      - name: "Examples: forward"
+        run: build/reproc++/examples/forward cmake --help
