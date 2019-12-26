@@ -59,6 +59,8 @@ struct stop_actions {
 
 /*! `reproc_options` */
 struct options {
+  /*! Implicitly converts from any STL container of string pairs to the
+  environment format expected by `reproc_start`. */
   class environment environment;
   const char *working_directory = nullptr;
 
@@ -92,7 +94,8 @@ public:
   REPROCXX_EXPORT process(process &&other) noexcept;
   REPROCXX_EXPORT process &operator=(process &&other) noexcept;
 
-  /*! `reproc_start` */
+  /*! `reproc_start` but implicitly converts from STL containers to the
+  arguments format expected by `reproc_start`. */
   REPROCXX_EXPORT std::error_code start(const arguments &arguments,
                                         const options &options = {}) noexcept;
 
