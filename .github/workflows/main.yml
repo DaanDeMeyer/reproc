@@ -162,9 +162,9 @@ jobs:
         run: |
           build/test
 
-          build/reproc/examples/drain > /dev/null
-          build/reproc/examples/git-status > /dev/null
-          build/reproc/examples/inherit cmake --help > /dev/null
-          build/reproc++/examples/background cmake --help > /dev/null
-          build/reproc++/examples/cmake-help > /dev/null
-          build/reproc++/examples/forward cmake --help > /dev/null
+          build/reproc/examples/drain
+          build/reproc/examples/git-status
+          build/reproc/examples/inherit cmake --help
+          build/reproc++/examples/background cmake --help
+          build/reproc++/examples/cmake-help
+          build/reproc++/examples/forward cmake --help
