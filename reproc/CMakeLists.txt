@@ -5,7 +5,7 @@ if(REPROC_MULTITHREADED)
   target_link_libraries(reproc PRIVATE Threads::Threads)
 endif()
 
-target_sources(reproc PRIVATE src/reproc.c src/sink.c)
+target_sources(reproc PRIVATE src/reproc.c)
 
 if(UNIX)
   set(REPROC_PLATFORM posix)

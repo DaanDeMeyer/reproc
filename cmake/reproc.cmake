@@ -107,6 +107,7 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
         /nologo # Silence MSVC compiler version output.
         $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:/WX> # -Werror
         $<$<BOOL:${REPROC_HAVE_PERMISSIVE}>:/permissive->
+        /wd4068
       )
 
       target_compile_definitions(${TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS)
@@ -132,6 +133,7 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
         -pedantic
         -Wconversion
         -Wsign-conversion
+        -Wno-unknown-pragmas
         $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-Werror>
         $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-pedantic-errors>
       )

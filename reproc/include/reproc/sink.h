@@ -2,11 +2,12 @@
 
 #pragma once
 
-#include <reproc/export.h>
 #include <reproc/reproc.h>
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,16 +37,64 @@ their output because `strlen` is used to calculate the current output size.
 The `drain` example shows how to use `reproc_sink_string`.
 ```
 */
-REPROC_EXPORT bool reproc_sink_string(REPROC_STREAM stream,
-                                      const uint8_t *buffer,
-                                      unsigned int size,
-                                      void *context);
+static bool reproc_sink_string(REPROC_STREAM stream,
+                               const uint8_t *buffer,
+                               unsigned int size,
+                               void *context);
 
 /*! Discards the output of a process. */
-REPROC_EXPORT bool reproc_sink_discard(REPROC_STREAM stream,
+static bool reproc_sink_discard(REPROC_STREAM stream,
+                                const uint8_t *buffer,
+                                unsigned int size,
+                                void *context);
+
+// We inline the sink implementations to avoid allocation/de-allocation issues
+// over module (DLL) boundaries. By inlining the implementations, memory is
+// always allocated and freed in the user's executable/DLL.
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+
+static inline bool reproc_sink_string(REPROC_STREAM stream,
+                                      const uint8_t *buffer,
+                                      unsigned int size,
+                                      void *context)
+{
+  (void) stream;
+
+  char **string = (char **) context;
+  size_t string_size = *string == NULL ? 0 : strlen(*string);
+
+  char *realloc_result = (char *) realloc(*string, string_size + size + 1);
+  if (realloc_result == NULL) {
+    free(*string);
+    *string = NULL;
+    return false;
+  } else {
+    *string = realloc_result;
+  }
+
+  memcpy(*string + string_size, buffer, size);
+
+  (*string)[string_size + size] = '\0';
+
+  return true;
+}
+
+static inline bool reproc_sink_discard(REPROC_STREAM stream,
                                        const uint8_t *buffer,
                                        unsigned int size,
-                                       void *context);
+                                       void *context)
+{
+  (void) stream;
+  (void) buffer;
+  (void) size;
+  (void) context;
+
+  return true;
+}
+
+#pragma clang diagnostic pop
 
 #ifdef __cplusplus
 }
