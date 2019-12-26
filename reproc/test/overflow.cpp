@@ -10,23 +10,23 @@ TEST_CASE("overflow")
   reproc_t *process = reproc_new();
   REQUIRE(process);
 
-  REPROC_ERROR error = REPROC_SUCCESS;
-  INFO(reproc_error_system());
-  INFO(reproc_error_string(error));
+  int r = -1;
+  INFO(-r);
+  INFO(reproc_error_string(r));
 
   std::array<const char *, 2> argv = { RESOURCE_DIRECTORY "/overflow",
                                        nullptr };
 
-  error = reproc_start(process, argv.data(), {});
-  REQUIRE(!error);
+  r = reproc_start(process, argv.data(), {});
+  REQUIRE(r >= 0);
 
   char *output = nullptr;
-  error = reproc_drain(process, reproc_sink_string, &output);
-  REQUIRE(!error);
+  r = reproc_drain(process, reproc_sink_string, &output);
+  REQUIRE(r >= 0);
   REQUIRE(output != nullptr);
 
-  error = reproc_wait(process, REPROC_INFINITE);
-  REQUIRE(!error);
+  r = reproc_wait(process, REPROC_INFINITE);
+  REQUIRE(r >= 0);
   REQUIRE(reproc_exit_status(process) == 0);
 
   reproc_destroy(process);

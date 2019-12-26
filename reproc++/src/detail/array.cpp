@@ -13,7 +13,8 @@ array::array(array &&other) noexcept : data_(other.data_), owned_(other.owned_)
   owned_ = false;
 }
 
-array &array::operator=(array &&other) noexcept {
+array &array::operator=(array &&other) noexcept
+{
   if (&other != this) {
     data_ = other.data_;
     owned_ = other.owned_;

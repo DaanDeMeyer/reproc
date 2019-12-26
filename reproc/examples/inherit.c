@@ -1,6 +1,7 @@
 #include <reproc/reproc.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 
 // Forwards the provided arguments to `reproc_start` which starts a child
 // process that inherits the standard streams of the parent process. It will
@@ -15,31 +16,30 @@ int main(int argc, const char *argv[])
   }
 
   reproc_t *process = reproc_new();
-  int exit_status = -1;
 
   reproc_options options = { .redirect = { .in = REPROC_REDIRECT_INHERIT,
                                            .out = REPROC_REDIRECT_INHERIT,
                                            .err = REPROC_REDIRECT_INHERIT } };
+  int r = -1;
 
-  REPROC_ERROR error = reproc_start(process, argv + 1, options);
-  if (error) {
+  r = reproc_start(process, argv + 1, options);
+  if (r < 0) {
     goto cleanup;
   }
 
-  error = reproc_wait(process, REPROC_INFINITE);
-  if (error) {
+  r = reproc_wait(process, REPROC_INFINITE);
+  if (r < 0) {
     goto cleanup;
   }
 
-  exit_status = reproc_exit_status(process);
+  r = reproc_exit_status(process);
 
 cleanup:
   reproc_destroy(process);
 
-  if (error) {
-    fprintf(stderr, "%s\n", reproc_error_string(error));
-    exit_status = (int) error;
+  if (r < 0) {
+    fprintf(stderr, "%s\n", reproc_error_string(r));
   }
 
-  return exit_status < 0 ? (int) reproc_error_system() : exit_status;
+  return abs(r);
 }

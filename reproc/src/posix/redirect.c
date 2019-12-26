@@ -3,6 +3,7 @@
 #include <pipe.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 
@@ -11,55 +12,63 @@ static const char *DEVNULL = "/dev/null";
 static const struct pipe_options CHILD_OPTIONS = { .nonblocking = false };
 static const struct pipe_options PARENT_OPTIONS = { .nonblocking = true };
 
-REPROC_ERROR redirect_pipe(int *parent, int *child, REPROC_STREAM stream)
+int redirect_pipe(int *parent, int *child, REDIRECT_STREAM stream)
 {
   assert(parent);
   assert(child);
 
-  return stream == REPROC_STREAM_IN
+  return stream == REDIRECT_STREAM_IN
              ? pipe_init(child, CHILD_OPTIONS, parent, PARENT_OPTIONS)
              : pipe_init(parent, PARENT_OPTIONS, child, CHILD_OPTIONS);
 }
 
-REPROC_ERROR redirect_inherit(int *parent, int *child, REPROC_STREAM stream)
+int redirect_inherit(int *parent, int *child, REDIRECT_STREAM stream)
 {
   assert(parent);
   assert(child);
 
-  FILE *file = stream == REPROC_STREAM_IN
+  FILE *file = stream == REDIRECT_STREAM_IN
                    ? stdin
-                   : stream == REPROC_STREAM_OUT ? stdout : stderr;
+                   : stream == REDIRECT_STREAM_OUT ? stdout : stderr;
+  int r = -1;
 
-  int fd = fileno(file);
-  if (fd < 0) {
-    return REPROC_ERROR_STREAM_CLOSED;
+  r = fileno(file);
+  if (r < 0) {
+    errno = errno == EBADF ? -EPIPE : -errno;
+    goto cleanup;
   }
 
-  int r = fcntl(fd, F_DUPFD_CLOEXEC, 0);
+  int fd = r;
+
+  r = fcntl(fd, F_DUPFD_CLOEXEC, 0);
   if (r < 0) {
-    return REPROC_ERROR_SYSTEM;
+    goto cleanup;
   }
 
   *parent = HANDLE_INVALID;
-  *child = r;
+  *child = fd;
 
-  return REPROC_SUCCESS;
+cleanup:
+  return r < 0 ? -errno : r;
 }
 
-REPROC_ERROR redirect_discard(int *parent, int *child, REPROC_STREAM stream)
+int redirect_discard(int *parent, int *child, REDIRECT_STREAM stream)
 {
   assert(parent);
   assert(child);
 
-  int mode = stream == REPROC_STREAM_IN ? O_RDONLY : O_WRONLY;
+  int mode = stream == REDIRECT_STREAM_IN ? O_RDONLY : O_WRONLY;
 
   int r = open(DEVNULL, mode | O_CLOEXEC);
   if (r < 0) {
-    return REPROC_ERROR_SYSTEM;
+    goto cleanup;
   }
 
-  *parent = HANDLE_INVALID;
-  *child = r;
+  int fd = r;
 
-  return REPROC_SUCCESS;
+  *parent = HANDLE_INVALID;
+  *child = fd;
+
+cleanup:
+  return r < 0 ? -errno : r;
 }

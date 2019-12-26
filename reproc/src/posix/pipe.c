@@ -3,14 +3,15 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <poll.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-REPROC_ERROR pipe_init(int *read,
-                       struct pipe_options read_options,
-                       int *write,
-                       struct pipe_options write_options)
+int pipe_init(int *read,
+              struct pipe_options read_options,
+              int *write,
+              struct pipe_options write_options)
 {
   assert(read);
   assert(write);
@@ -75,74 +76,53 @@ cleanup:
     handle_destroy(pipefd[1]);
   }
 
-  return r < 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
+  return r < 0 ? -errno : 0;
 }
 
-REPROC_ERROR
-pipe_read(int pipe,
-          uint8_t *buffer,
-          unsigned int size,
-          unsigned int *bytes_read)
+int pipe_read(int pipe, uint8_t *buffer, unsigned int size)
 {
   assert(buffer);
-  assert(bytes_read);
 
-  ssize_t r = -1;
+  ssize_t r = read(pipe, buffer, size);
+  assert(r <= INT_MAX);
 
-  r = read(pipe, buffer, size);
   // `read` returns 0 to indicate the other end of the pipe was closed.
-  if (r <= 0) {
-    return r == 0 ? REPROC_ERROR_STREAM_CLOSED : REPROC_ERROR_SYSTEM;
-  }
-
-  *bytes_read = (unsigned int) r;
-
-  return REPROC_SUCCESS;
+  return r < 0 ? -errno : r == 0 ? -EPIPE : (int) r;
 }
 
 static const int POLL_INFINITE = -1;
 
-REPROC_ERROR pipe_write(int pipe,
-                        const uint8_t *buffer,
-                        unsigned int size,
-                        unsigned int *bytes_written)
+int pipe_write(int pipe, const uint8_t *buffer, unsigned int size)
 {
   assert(buffer);
-  assert(bytes_written);
 
   struct pollfd pollfd = { .fd = pipe, .events = POLLOUT };
   ssize_t r = -1;
 
   r = poll(&pollfd, 1, POLL_INFINITE);
-  if (r <= 0) {
-    return REPROC_ERROR_SYSTEM;
+  if (r < 0) {
+    return -errno;
   }
 
   assert(pollfd.revents & POLLOUT || pollfd.revents & POLLERR);
 
   r = write(pipe, buffer, size);
-  if (r < 0) {
-    // `write` sets `errno` to `EPIPE` to indicate the other end of the pipe was
-    // closed.
-    return errno == EPIPE ? REPROC_ERROR_STREAM_CLOSED : REPROC_ERROR_SYSTEM;
-  }
+  assert(r <= INT_MAX);
 
-  *bytes_written = (unsigned int) r;
-
-  return REPROC_SUCCESS;
+  return r < 0 ? -errno : (int) r;
 }
 
-REPROC_ERROR
-pipe_wait(const handle *pipes, unsigned int num_pipes, unsigned int *ready)
+int pipe_wait(const handle *pipes, unsigned int num_pipes)
 {
   assert(pipes);
-  assert(ready);
+  assert(num_pipes <= INT_MAX);
 
   unsigned int i = 0;
   int r = -1;
 
   struct pollfd *pollfds = calloc(num_pipes, sizeof(struct pollfd));
   if (pollfds == NULL) {
+    r = -1;
     goto cleanup;
   }
 
@@ -160,14 +140,13 @@ pipe_wait(const handle *pipes, unsigned int num_pipes, unsigned int *ready)
     struct pollfd pollfd = pollfds[i];
 
     if (pollfd.revents & POLLIN || pollfd.revents & POLLERR) {
-      *ready = i;
-      goto cleanup;
+      r = (int) i;
+      break;
     }
   }
 
 cleanup:
   free(pollfds);
 
-  return r < 0 ? REPROC_ERROR_SYSTEM
-               : i == num_pipes ? REPROC_ERROR_STREAM_CLOSED : REPROC_SUCCESS;
+  return r < 0 ? -errno : i == num_pipes ? -EPIPE : r;
 }

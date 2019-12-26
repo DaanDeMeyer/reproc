@@ -36,14 +36,13 @@ int main()
     return fail(ec);
   }
 
-  std::string output;
-
   // `process::drain` reads from the stdout and stderr streams of the child
   // process until both are closed or an error occurs. Providing it with a
   // string sink makes it store all output in the string(s) passed to the string
   // sink. Passing the same string to both the `out` and `err` arguments of
   // `sink::string` causes the stdout and stderr output to get stored in the
   // same string.
+  std::string output;
   ec = process.drain(reproc::sink::string(output, output));
   if (ec) {
     return fail(ec);

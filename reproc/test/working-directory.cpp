@@ -13,9 +13,9 @@ TEST_CASE("working-directory")
   reproc_t *process = reproc_new();
   REQUIRE(process);
 
-  REPROC_ERROR error = REPROC_SUCCESS;
-  INFO(reproc_error_system());
-  INFO(reproc_error_string(error));
+  int r = -1;
+  INFO(-r);
+  INFO(reproc_error_string(r));
 
   const char *working_directory = RESOURCE_DIRECTORY;
   std::array<const char *, 2> argv{ RESOURCE_DIRECTORY "/working-directory",
@@ -24,18 +24,18 @@ TEST_CASE("working-directory")
   reproc_options options = {};
   options.working_directory = working_directory;
 
-  error = reproc_start(process, argv.data(), options);
-  REQUIRE(!error);
+  r = reproc_start(process, argv.data(), options);
+  REQUIRE(r >= 0);
 
   char *output = nullptr;
-  error = reproc_drain(process, reproc_sink_string, &output);
-  REQUIRE(!error);
+  r = reproc_drain(process, reproc_sink_string, &output);
+  REQUIRE(r >= 0);
 
   std::replace(output, output + strlen(output), '\\', '/');
   REQUIRE(std::string(output) == RESOURCE_DIRECTORY);
 
-  error = reproc_wait(process, REPROC_INFINITE);
-  REQUIRE(!error);
+  r = reproc_wait(process, REPROC_INFINITE);
+  REQUIRE(r >= 0);
   REQUIRE(reproc_exit_status(process) == 0);
 
   reproc_destroy(process);

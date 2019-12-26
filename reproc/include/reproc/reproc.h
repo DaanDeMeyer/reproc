@@ -1,6 +1,5 @@
 #pragma once
 
-#include <reproc/error.h>
 #include <reproc/export.h>
 
 #include <stdbool.h>
@@ -14,6 +13,12 @@ extern "C" {
 type and can be allocated and freed via `reproc_new` and `reproc_free`
 respectively. */
 typedef struct reproc_t reproc_t;
+
+/*! A timeout value passed to an API function expired. */
+REPROC_EXPORT extern const int REPROC_ERROR_WAIT_TIMEOUT;
+/*! The child process closed one of its streams (and in the case of
+stdout/stderr all of the data remaining in that stream has been read). */
+REPROC_EXPORT extern const int REPROC_ERROR_STREAM_CLOSED;
 
 /*! Used to tell reproc where to redirect the streams of the child process. */
 typedef enum {
@@ -130,38 +135,29 @@ the executable. None of these elements can be `NULL`.
 - The final element must be `NULL`.
 
 Example: ["cmake", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", `NULL`]
-
-Possible errors:
-- `REPROC_ERROR_SYSTEM`
 */
-REPROC_EXPORT REPROC_ERROR reproc_start(reproc_t *process,
-                                        const char *const *argv,
-                                        reproc_options options);
+REPROC_EXPORT int reproc_start(reproc_t *process,
+                               const char *const *argv,
+                               reproc_options options);
 
 /*!
-Reads up to `size` bytes from either the child process stdout or stderr stream
-and stores them them in `buffer`. The amount of bytes read is stored in
-`bytes_read`.
+Reads up to `size` bytes into `buffer` from either the child process stdout or
+stderr stream and returns the amount of bytes read.
 
 If `stream` is not `NULL`, it is used to store the stream that was
 read from (`REPROC_STREAM_OUT` or `REPROC_STREAM_ERR`).
-
-Assuming no other errors occur this function will return `REPROC_SUCCESS` until
-the stream is closed and all remaining data has been read.
 
 It is undefined behaviour to call this function on child process streams that
 were not specified as `REPROC_REDIRECT_PIPE` in the options passed to
 `reproc_start`.
 
-Possible errors:
+Actionable errors:
 - `REPROC_ERROR_STREAM_CLOSED`
-- `REPROC_ERROR_SYSTEM`
 */
-REPROC_EXPORT REPROC_ERROR reproc_read(reproc_t *process,
-                                       REPROC_STREAM *stream,
-                                       uint8_t *buffer,
-                                       unsigned int size,
-                                       unsigned int *bytes_read);
+REPROC_EXPORT int reproc_read(reproc_t *process,
+                              REPROC_STREAM *stream,
+                              uint8_t *buffer,
+                              unsigned int size);
 
 /*!
 Calls `reproc_read` on `stream` until `parser` returns false or an error occurs.
@@ -171,31 +167,27 @@ Calls `reproc_read` on `stream` until `parser` returns false or an error occurs.
 `stream` set to `REPROC_STREAM_IN` to give the parser the chance to process all
 output from the previous call to `reproc_parse` one by one.
 
-Possible errors:
+Actionable errors:
 - `REPROC_ERROR_STREAM_CLOSED`
-- `REPROC_ERROR_SYSTEM`
 */
-REPROC_EXPORT REPROC_ERROR reproc_parse(reproc_t *process,
-                                        bool (*parser)(REPROC_STREAM stream,
-                                                       const uint8_t *buffer,
-                                                       unsigned int size,
-                                                       void *context),
-                                        void *context);
+REPROC_EXPORT int reproc_parse(reproc_t *process,
+                               bool (*parser)(REPROC_STREAM stream,
+                                              const uint8_t *buffer,
+                                              unsigned int size,
+                                              void *context),
+                               void *context);
 
 /*!
 `reproc_parse` but `REPROC_ERROR_STREAM_CLOSED` is not treated as an error.
 
 For examples of sinks, see `sink.h`.
-
-Possible errors:
-- `REPROC_ERROR_SYSTEM`
 */
-REPROC_EXPORT REPROC_ERROR reproc_drain(reproc_t *process,
-                                        bool (*sink)(REPROC_STREAM stream,
-                                                     const uint8_t *buffer,
-                                                     unsigned int size,
-                                                     void *context),
-                                        void *context);
+REPROC_EXPORT int reproc_drain(reproc_t *process,
+                               bool (*sink)(REPROC_STREAM stream,
+                                            const uint8_t *buffer,
+                                            unsigned int size,
+                                            void *context),
+                               void *context);
 
 /*!
 Writes `size` bytes from `buffer` to the standard input (stdin) of the child
@@ -209,19 +201,17 @@ It is undefined behaviour to call this function on a process whose stdin stream
 was not specified as `REPROC_REDIRECT_PIPE` in the options passed to
 `reproc_start`.
 
-Possible errors:
+Actionable errors:
 - `REPROC_ERROR_STREAM_CLOSED`
-- `REPROC_ERROR_SYSTEM`
 */
-REPROC_EXPORT REPROC_ERROR reproc_write(reproc_t *process,
-                                        const uint8_t *buffer,
-                                        unsigned int size);
+REPROC_EXPORT int
+reproc_write(reproc_t *process, const uint8_t *buffer, unsigned int size);
 
 /*!
 Closes the stream endpoint of the parent process indicated by `stream`.
 
 This function is necessary when a child process reads from stdin until it is
-closed. After writing all the input to the child process with `reproc_write`,
+closed. After writing all the input to the child process using `reproc_write`,
 the standard input stream can be closed using this function.
 */
 REPROC_EXPORT void reproc_close(reproc_t *process, REPROC_STREAM stream);
@@ -236,11 +226,10 @@ wait indefinitely for the child process to exit.
 If this function returns `REPROC_SUCCESS`, `process` has exited and its exit
 status can be retrieved with `reproc_exit_status`.
 
-Possible errors:
+Actionable errors:
 - `REPROC_ERROR_WAIT_TIMEOUT`
-- `REPROC_ERROR_SYSTEM`
 */
-REPROC_EXPORT REPROC_ERROR reproc_wait(reproc_t *process, unsigned int timeout);
+REPROC_EXPORT int reproc_wait(reproc_t *process, unsigned int timeout);
 
 /*! Returns `true` if `process` is still running, `false` otherwise. */
 REPROC_EXPORT bool reproc_running(reproc_t *process);
@@ -250,22 +239,16 @@ Sends the `SIGTERM` signal (POSIX) or the `CTRL-BREAK` signal (Windows) to the
 child process. Remember that successfull calls to `reproc_wait` and
 `reproc_destroy` are required to make sure the child process is completely
 cleaned up.
-
-Possible errors:
-- `REPROC_ERROR_SYSTEM`
 */
-REPROC_EXPORT REPROC_ERROR reproc_terminate(reproc_t *process);
+REPROC_EXPORT int reproc_terminate(reproc_t *process);
 
 /*!
 Sends the `SIGKILL` signal to the child process (POSIX) or calls
 `TerminateProcess` (Windows) on the child process. Remember that successfull
 calls to `reproc_wait` and `reproc_destroy` are required to make sure the child
 process is completely cleaned up.
-
-Possible errors:
-- `REPROC_ERROR_SYSTEM`
 */
-REPROC_EXPORT REPROC_ERROR reproc_kill(reproc_t *process);
+REPROC_EXPORT int reproc_kill(reproc_t *process);
 
 /*!
 Simplifies calling combinations of `reproc_wait`, `reproc_terminate` and
@@ -298,12 +281,11 @@ indicated by the first element.
 If this function returns `REPROC_SUCCESS`, `process` has exited and its exit
 status can be retrieved with `reproc_exit_status`.
 
-Possible errors:
+Actionable errors:
 - `REPROC_ERROR_WAIT_TIMEOUT`
-- `REPROC_ERROR_SYSTEM`
 */
-REPROC_EXPORT REPROC_ERROR reproc_stop(reproc_t *process,
-                                       reproc_stop_actions stop_actions);
+REPROC_EXPORT int reproc_stop(reproc_t *process,
+                              reproc_stop_actions stop_actions);
 
 /*! Returns the exit status of `process` if `process` has exited. Returns
 a negative value if `process` has not been started or if `process` is still
@@ -322,6 +304,14 @@ returns an invalid `reproc_t` instance (`NULL`). By assiging the result of
 Example: `process = reproc_destroy(process)`.
 */
 REPROC_EXPORT reproc_t *reproc_destroy(reproc_t *process);
+
+/*!
+Returns a string describing `error`. This string must not be modified by the
+caller.
+
+This function is not thread-safe.
+*/
+REPROC_EXPORT const char *reproc_error_string(int error);
 
 #ifdef __cplusplus
 }

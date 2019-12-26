@@ -13,27 +13,25 @@ int main(void)
 {
   reproc_t *process = reproc_new();
 
-  char *output = NULL;
-  int exit_status = -1;
-
   const char *argv[3] = { "git", "--help", NULL };
 
-  REPROC_ERROR error = REPROC_SUCCESS;
+  char *output = NULL;
+  int r = -1;
 
-  error = reproc_start(process, argv, (reproc_options) { 0 });
-  if (error) {
+  r = reproc_start(process, argv, (reproc_options){ 0 });
+  if (r < 0) {
     goto cleanup;
   }
 
   reproc_close(process, REPROC_STREAM_IN);
 
-  // A sink function receives a single context parameter. For
-  // `reproc_sink_string` we require a `char **` with its value set to `NULL` to
-  // be passed to `reproc_drain` along with `reproc_sink_string`. If a sink
-  // function needs more than one parameter, simply store the parameters in a
-  // struct and pass the address of the struct as the `context` parameter.
-  error = reproc_drain(process, reproc_sink_string, &output);
-  if (error) {
+  // A sink function receives a single context parameter. `reproc_sink_string`
+  // requires a `char **` with its value set to `NULL` to be passed to
+  // `reproc_drain` along with `reproc_sink_string`. If a sink function needs
+  // more than one parameter, simply store the parameters in a struct and pass
+  // the address of the struct as the `context` parameter.
+  r = reproc_drain(process, reproc_sink_string, &output);
+  if (r < 0) {
     goto cleanup;
   }
 
@@ -44,12 +42,12 @@ int main(void)
 
   printf("%s", output);
 
-  error = reproc_wait(process, REPROC_INFINITE);
-  if (error) {
+  r = reproc_wait(process, REPROC_INFINITE);
+  if (r < 0) {
     goto cleanup;
   }
 
-  exit_status = reproc_exit_status(process);
+  r = reproc_exit_status(process);
 
 cleanup:
   // `output` always points to valid memory or is set to `NULL` by
@@ -58,10 +56,9 @@ cleanup:
 
   reproc_destroy(process);
 
-  if (error) {
-    fprintf(stderr, "%s\n", reproc_error_string(error));
-    exit_status = (int) error;
+  if (r < 0) {
+    fprintf(stderr, "%s\n", reproc_error_string(r));
   }
 
-  return exit_status < 0 ? (int) reproc_error_system() : exit_status;
+  return abs(r);
 }

@@ -9,7 +9,6 @@ target_sources(
   reproc++
   PRIVATE
     src/detail/array.cpp
-    src/error.cpp
     src/reproc.cpp
     src/sink.cpp
   INTERFACE

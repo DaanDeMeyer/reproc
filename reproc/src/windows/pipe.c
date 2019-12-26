@@ -23,11 +23,10 @@ static SECURITY_ATTRIBUTES HANDLE_DO_NOT_INHERIT = {
 
 static THREAD_LOCAL unsigned long pipe_serial_number = 0;
 
-REPROC_ERROR
-pipe_init(HANDLE *read,
-          struct pipe_options read_options,
-          HANDLE *write,
-          struct pipe_options write_options)
+int pipe_init(HANDLE *read,
+              struct pipe_options read_options,
+              HANDLE *write,
+              struct pipe_options write_options)
 {
   assert(read);
   assert(write);
@@ -82,18 +81,15 @@ cleanup:
     handle_destroy(pipe_handles[1]);
   }
 
-  return r == 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
+  return r == 0 ? -(int) GetLastError() : 0;
 }
 
-REPROC_ERROR pipe_read(HANDLE pipe,
-                       uint8_t *buffer,
-                       unsigned int size,
-                       unsigned int *bytes_read)
+int pipe_read(HANDLE pipe, uint8_t *buffer, unsigned int size)
 {
   assert(pipe);
   assert(buffer);
-  assert(bytes_read);
 
+  DWORD bytes_read = 0;
   BOOL r = 0;
 
   OVERLAPPED overlapped = { 0 };
@@ -108,30 +104,25 @@ REPROC_ERROR pipe_read(HANDLE pipe,
     goto cleanup;
   }
 
-  // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
-  r = GetOverlappedResult(pipe, &overlapped, (LPDWORD) bytes_read, true);
+  r = GetOverlappedResult(pipe, &overlapped, &bytes_read, true);
   if (r == 0) {
     goto cleanup;
   }
 
+  assert(bytes_read <= INT_MAX);
+
 cleanup:
   handle_destroy(overlapped.hEvent);
 
-  return r > 0
-             ? REPROC_SUCCESS
-             : GetLastError() == ERROR_BROKEN_PIPE ? REPROC_ERROR_STREAM_CLOSED
-                                                   : REPROC_ERROR_SYSTEM;
+  return r == 0 ? -(int) GetLastError() : (int) bytes_read;
 }
 
-REPROC_ERROR pipe_write(HANDLE pipe,
-                        const uint8_t *buffer,
-                        unsigned int size,
-                        unsigned int *bytes_written)
+int pipe_write(HANDLE pipe, const uint8_t *buffer, unsigned int size)
 {
   assert(pipe);
   assert(buffer);
-  assert(bytes_written);
 
+  DWORD bytes_written = 0;
   BOOL r = 0;
 
   OVERLAPPED overlapped = { 0 };
@@ -146,29 +137,25 @@ REPROC_ERROR pipe_write(HANDLE pipe,
     goto cleanup;
   }
 
-  // The cast is safe since `DWORD` is a typedef to `unsigned int` on Windows.
-  r = GetOverlappedResult(pipe, &overlapped, (LPDWORD) bytes_written, true);
+  r = GetOverlappedResult(pipe, &overlapped, &bytes_written, true);
   if (r == 0) {
     goto cleanup;
   }
 
+  assert(bytes_written <= INT_MAX);
+
 cleanup:
   handle_destroy(overlapped.hEvent);
 
-  return r > 0
-             ? REPROC_SUCCESS
-             : GetLastError() == ERROR_BROKEN_PIPE ? REPROC_ERROR_STREAM_CLOSED
-                                                   : REPROC_ERROR_SYSTEM;
+  return r == 0 ? -(int) GetLastError() : (int) bytes_written;
 }
 
-REPROC_ERROR
-pipe_wait(const handle *pipes, unsigned int num_pipes, unsigned int *ready)
+int pipe_wait(const handle *pipes, unsigned int num_pipes)
 {
-  assert(ready);
-
   OVERLAPPED *overlapped = NULL;
   HANDLE *events = NULL;
   DWORD num_reads = 0;
+  int ready = -1;
   BOOL r = 0;
 
   // `BOOL` is either 0 or 1 even though it is defined as `int` so all casts of
@@ -228,10 +215,10 @@ pipe_wait(const handle *pipes, unsigned int num_pipes, unsigned int *ready)
     goto cleanup;
   }
 
-  assert(result < num_pipes);
+  assert(result < num_pipes && result <= INT_MAX);
 
   // Map the signaled event back to its corresponding handle.
-  *ready = result;
+  ready = (int) result;
   r = 1;
 
 cleanup:
@@ -239,7 +226,7 @@ cleanup:
   if (overlapped == NULL || events == NULL) {
     free(overlapped);
     free(events);
-    return REPROC_ERROR_SYSTEM;
+    return -(int) GetLastError();
   }
 
   // Because we continue cleaning up even when an error occurs during cleanup,
@@ -286,6 +273,6 @@ cleanup:
     SetLastError(first_system_error);
   }
 
-  return r == 0 ? REPROC_ERROR_SYSTEM
-                : num_reads == 0 ? REPROC_ERROR_STREAM_CLOSED : REPROC_SUCCESS;
+  return r == 0 ? -(int) GetLastError()
+                : num_reads == 0 ? -ERROR_BROKEN_PIPE : ready;
 }

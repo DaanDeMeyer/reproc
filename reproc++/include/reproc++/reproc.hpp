@@ -2,12 +2,13 @@
 
 #include <reproc++/arguments.hpp>
 #include <reproc++/environment.hpp>
-#include <reproc++/error.hpp>
 #include <reproc++/export.hpp>
 
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <system_error>
+#include <tuple>
 
 // Forward declare `reproc_t` so we don't have to include reproc.h in the
 // header.
@@ -19,6 +20,13 @@ integrating with C++'s `std::error_code` error handling mechanism. To avoid
 exposing reproc's API when using reproc++ all the other structs, enums and
 constants of reproc have a replacement in reproc++ as well. */
 namespace reproc {
+
+namespace error {
+
+constexpr std::errc wait_timeout = std::errc::resource_unavailable_try_again;
+constexpr std::errc stream_closed = std::errc::broken_pipe;
+
+} // namespace error
 
 using milliseconds = std::chrono::duration<unsigned int, std::milli>;
 
@@ -98,11 +106,10 @@ public:
   REPROCXX_EXPORT std::error_code start(const arguments &arguments,
                                         const options &options = {}) noexcept;
 
-  /*! `reproc_read` */
-  REPROCXX_EXPORT std::error_code read(stream *stream,
-                                       uint8_t *buffer,
-                                       unsigned int size,
-                                       unsigned int *bytes_read) noexcept;
+  /*! `reproc_read` but returns a tuple of (stream read from, amount of bytes
+  read, error_code) instead of taking output arguments by pointer. */
+  REPROCXX_EXPORT std::tuple<stream, unsigned int, std::error_code>
+  read(uint8_t *buffer, unsigned int size) noexcept;
 
   /*!
   Calls `read` on `stream` until `parser` returns false or an error occurs.
@@ -149,8 +156,7 @@ public:
   REPROCXX_EXPORT std::error_code kill() noexcept;
 
   /*! `reproc_stop` */
-  REPROCXX_EXPORT std::error_code
-  stop(stop_actions stop_actions) noexcept;
+  REPROCXX_EXPORT std::error_code stop(stop_actions stop_actions) noexcept;
 
   /*! `reproc_exit_status` */
   REPROCXX_EXPORT int exit_status() noexcept;
@@ -179,7 +185,7 @@ std::error_code process::parse(Parser &&parser)
   while (true) {
     stream stream = {};
     unsigned int bytes_read = 0;
-    ec = read(&stream, buffer, sizeof(buffer), &bytes_read);
+    std::tie(stream, bytes_read, ec) = read(buffer, sizeof(buffer));
     if (ec) {
       break;
     }
@@ -198,7 +204,7 @@ std::error_code process::drain(Sink &&sink)
 {
   std::error_code ec = parse(std::forward<Sink>(sink));
 
-  return ec == error::stream_closed ? error::success : ec;
+  return ec == error::stream_closed ? std::error_code() : ec;
 }
 
 } // namespace reproc

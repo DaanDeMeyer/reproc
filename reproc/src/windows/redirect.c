@@ -19,68 +19,68 @@ static const struct pipe_options CHILD_OPTIONS = { .inherit = true,
 static const struct pipe_options PARENT_OPTIONS = { .inherit = false,
                                                     .nonblocking = true };
 
-REPROC_ERROR
-redirect_pipe(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
+int redirect_pipe(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
 {
   assert(parent);
   assert(child);
 
-  return stream == REPROC_STREAM_IN
+  return stream == REDIRECT_STREAM_IN
              ? pipe_init(child, CHILD_OPTIONS, parent, PARENT_OPTIONS)
              : pipe_init(parent, PARENT_OPTIONS, child, CHILD_OPTIONS);
 }
 
-REPROC_ERROR
-redirect_inherit(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
+int redirect_inherit(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
 {
   assert(parent);
   assert(child);
 
-  DWORD stream_id = stream == REPROC_STREAM_IN
+  DWORD stream_id = stream == REDIRECT_STREAM_IN
                         ? STD_INPUT_HANDLE
-                        : stream == REPROC_STREAM_OUT ? STD_OUTPUT_HANDLE
-                                                      : STD_ERROR_HANDLE;
+                        : stream == REDIRECT_STREAM_OUT ? STD_OUTPUT_HANDLE
+                                                        : STD_ERROR_HANDLE;
   HANDLE handle = HANDLE_INVALID;
   BOOL r = 0;
 
   HANDLE *stream_handle = GetStdHandle(stream_id);
   if (stream_handle == INVALID_HANDLE_VALUE) {
-    return REPROC_ERROR_SYSTEM;
+    goto cleanup;
   }
 
   if (stream_handle == NULL) {
-    return REPROC_ERROR_STREAM_CLOSED;
+    SetLastError(ERROR_BROKEN_PIPE);
+    goto cleanup;
   }
 
   r = DuplicateHandle(GetCurrentProcess(), stream_handle, GetCurrentProcess(),
                       &handle, 0, true, DUPLICATE_SAME_ACCESS);
   if (r == 0) {
-    return REPROC_ERROR_SYSTEM;
+    goto cleanup;
   }
 
   *parent = HANDLE_INVALID;
   *child = handle;
 
-  return REPROC_SUCCESS;
+cleanup:
+  return r == 0 ? -(int) GetLastError() : 0;
 }
 
-REPROC_ERROR
-redirect_discard(HANDLE *parent, HANDLE *child, REPROC_STREAM stream)
+int redirect_discard(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
 {
   assert(parent);
   assert(child);
 
-  DWORD mode = stream == REPROC_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
+  DWORD mode = stream == REDIRECT_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
 
   HANDLE handle = CreateFile(DEVNULL, mode, FILE_NO_SHARE, &INHERIT_HANDLE,
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
                              (HANDLE) FILE_NO_TEMPLATE);
   if (handle == INVALID_HANDLE_VALUE) {
-    return REPROC_ERROR_SYSTEM;
+    goto cleanup;
   }
 
   *parent = HANDLE_INVALID;
   *child = handle;
 
-  return REPROC_SUCCESS;
+cleanup:
+  return handle == INVALID_HANDLE_VALUE ? -(int) GetLastError() : 0;
 }

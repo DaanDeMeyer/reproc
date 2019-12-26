@@ -12,33 +12,33 @@ io(const char *mode, const std::string &input, const std::string &expected)
   reproc_t *process = reproc_new();
   REQUIRE(process);
 
-  REPROC_ERROR error = REPROC_SUCCESS;
-  INFO(reproc_error_system());
-  INFO(reproc_error_string(error));
+  int r = -1;
+  INFO(-r);
+  INFO(reproc_error_string(r));
 
   std::array<const char *, 3> argv = { RESOURCE_DIRECTORY "/io", mode,
                                        nullptr };
 
-  error = reproc_start(process, argv.data(), {});
-  REQUIRE(!error);
+  r = reproc_start(process, argv.data(), {});
+  REQUIRE(r >= 0);
 
   unsigned int size = static_cast<unsigned int>(input.size());
 
-  error = reproc_write(process,
-                       reinterpret_cast<const uint8_t *>(input.data()), size);
-  REQUIRE(!error);
+  r = reproc_write(process, reinterpret_cast<const uint8_t *>(input.data()),
+                   size);
+  REQUIRE(r >= 0);
 
   reproc_close(process, REPROC_STREAM_IN);
 
   char *output = nullptr;
-  error = reproc_drain(process, reproc_sink_string, &output);
-  REQUIRE(!error);
+  r = reproc_drain(process, reproc_sink_string, &output);
+  REQUIRE(r >= 0);
   REQUIRE(output != nullptr);
 
   REQUIRE_EQ(output, expected);
 
-  error = reproc_wait(process, REPROC_INFINITE);
-  REQUIRE(!error);
+  r = reproc_wait(process, REPROC_INFINITE);
+  REQUIRE(r >= 0);
   REQUIRE(reproc_exit_status(process) == 0);
 
   reproc_destroy(process);

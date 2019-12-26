@@ -4,23 +4,14 @@
 
 namespace reproc {
 
-static std::error_code error_to_error_code(REPROC_ERROR error)
-{
-  switch (error) {
-    case REPROC_SUCCESS:
-    case REPROC_ERROR_WAIT_TIMEOUT:
-    case REPROC_ERROR_STREAM_CLOSED:
-      return static_cast<enum error>(error);
-    case REPROC_ERROR_SYSTEM:
-      // Convert operating system errors back to platform-specific error codes
-      // to preserve the original error value and message. These can then be
-      // matched against using the `std::errc` error condition.
-      return { static_cast<int>(reproc_error_system()),
-               std::system_category() };
-  }
+namespace error {
 
-  return {};
+static std::error_code from(int r)
+{
+  return { -r, std::system_category() };
 }
+
+} // namespace error
 
 static reproc_stop_actions stop_actions_to_reproc(stop_actions stop_actions)
 {
@@ -50,32 +41,28 @@ std::error_code process::start(const arguments &arguments,
     stop_actions_to_reproc(options.stop_actions)
   };
 
-  REPROC_ERROR error = reproc_start(process_.get(), arguments.data(),
-                                    reproc_options);
-  return error_to_error_code(error);
+  int r = reproc_start(process_.get(), arguments.data(), reproc_options);
+  return error::from(r);
 }
 
-std::error_code process::read(stream *stream,
-                              uint8_t *buffer,
-                              unsigned int size,
-                              unsigned int *bytes_read) noexcept
+std::tuple<stream, unsigned int, std::error_code>
+process::read(uint8_t *buffer, unsigned int size) noexcept
 {
-  REPROC_STREAM tmp = {};
-  REPROC_ERROR error = reproc_read(process_.get(), &tmp, buffer, size,
-                                   bytes_read);
+  REPROC_STREAM stream = {};
 
-  if (stream != nullptr) {
-    *stream = static_cast<enum stream>(tmp);
-  }
+  int r = reproc_read(process_.get(), &stream, buffer, size);
 
-  return error_to_error_code(error);
+  unsigned int bytes_read = r < 0 ? 0 : static_cast<unsigned int>(r);
+  std::error_code ec = r < 0 ? error::from(r) : std::error_code();
+
+  return { static_cast<enum stream>(stream), bytes_read, ec };
 }
 
 std::error_code process::write(const uint8_t *buffer,
                                unsigned int size) noexcept
 {
-  REPROC_ERROR error = reproc_write(process_.get(), buffer, size);
-  return error_to_error_code(error);
+  int r = reproc_write(process_.get(), buffer, size);
+  return error::from(r);
 }
 
 void process::close(stream stream) noexcept
@@ -90,28 +77,26 @@ bool process::running() noexcept
 
 std::error_code process::wait(milliseconds timeout) noexcept
 {
-  REPROC_ERROR error = reproc_wait(process_.get(), timeout.count());
-  return error_to_error_code(error);
+  int r = reproc_wait(process_.get(), timeout.count());
+  return error::from(r);
 }
 
 std::error_code process::terminate() noexcept
 {
-  REPROC_ERROR error = reproc_terminate(process_.get());
-  return error_to_error_code(error);
+  int r = reproc_terminate(process_.get());
+  return error::from(r);
 }
 
 std::error_code process::kill() noexcept
 {
-  REPROC_ERROR error = reproc_kill(process_.get());
-  return error_to_error_code(error);
+  int r = reproc_kill(process_.get());
+  return error::from(r);
 }
 
 std::error_code process::stop(stop_actions stop_actions) noexcept
 {
-  REPROC_ERROR error = reproc_stop(process_.get(),
-                                   stop_actions_to_reproc(stop_actions));
-
-  return error_to_error_code(error);
+  int r = reproc_stop(process_.get(), stop_actions_to_reproc(stop_actions));
+  return error::from(r);
 }
 
 int process::exit_status() noexcept

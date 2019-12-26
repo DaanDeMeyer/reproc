@@ -284,9 +284,9 @@ handle_inherit_list_create(HANDLE *handles, size_t num_handles)
   return attribute_list;
 }
 
-REPROC_ERROR process_create(HANDLE *process,
-                            const char *const *argv,
-                            struct process_options options)
+int process_create(HANDLE *process,
+                   const char *const *argv,
+                   struct process_options options)
 {
   assert(process);
   assert(argv);
@@ -457,20 +457,18 @@ cleanup:
     }
   }
 
-  return r == 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
+  return r == 0 ? -(int) GetLastError() : 0;
 }
 
-REPROC_ERROR
-process_wait(HANDLE *processes,
-             unsigned int num_processes,
-             unsigned int timeout,
-             unsigned int *completed,
-             int *exit_status)
+int process_wait(HANDLE *processes,
+                 unsigned int num_processes,
+                 unsigned int timeout,
+                 int *exit_status)
 {
-  assert(completed);
   assert(exit_status);
-  assert(completed);
+  assert(num_processes <= INT_MAX);
 
+  unsigned int completed = num_processes;
   BOOL r = 0;
 
   for (unsigned int i = 0; i < num_processes; i++) {
@@ -478,20 +476,19 @@ process_wait(HANDLE *processes,
       DWORD status = 0;
       r = GetExitCodeProcess(processes[i], &status);
       if (r == 0) {
-        return REPROC_ERROR_SYSTEM;
+        goto cleanup;
       }
 
-      *completed = i;
+      completed = i;
       *exit_status = (int) status;
 
-      return REPROC_SUCCESS;
+      goto cleanup;
     }
   }
 
   unsigned int remaining = timeout;
-  long long completed_index = -1;
 
-  while (completed_index == -1) {
+  while (completed == num_processes) {
     unsigned long long before = GetTickCount64();
 
     DWORD completion_code = 0;
@@ -502,8 +499,7 @@ process_wait(HANDLE *processes,
                                   &completion_key, &lpoverlapped,
                                   timeout == INFINITE ? timeout : remaining);
     if (r == 0) {
-      return GetLastError() == WAIT_TIMEOUT ? REPROC_ERROR_WAIT_TIMEOUT
-                                            : REPROC_ERROR_SYSTEM;
+      goto cleanup;
     }
 
     unsigned long long after = GetTickCount64();
@@ -520,25 +516,25 @@ process_wait(HANDLE *processes,
 
     for (unsigned int i = 0; i < num_processes; i++) {
       if (GetProcessId(processes[i]) == pid) {
-        completed_index = i;
+        completed = i;
         break;
       }
     }
   }
 
   DWORD status = 0;
-  r = GetExitCodeProcess(processes[completed_index], &status);
+  r = GetExitCodeProcess(processes[completed], &status);
   if (r == 0) {
-    return REPROC_ERROR_SYSTEM;
+    goto cleanup;
   }
 
-  *completed = (unsigned int) completed_index;
   *exit_status = (int) status;
 
-  return REPROC_SUCCESS;
+cleanup:
+  return r == 0 ? -(int) GetLastError() : (int) completed;
 }
 
-REPROC_ERROR process_terminate(HANDLE process)
+int process_terminate(HANDLE process)
 {
   assert(process);
 
@@ -546,19 +542,18 @@ REPROC_ERROR process_terminate(HANDLE process)
   // `GenerateConsoleCtrlEvent` on a single child process it has to be put in
   // its own process group (which we did when starting the child process).
   return GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, GetProcessId(process)) == 0
-             ? REPROC_ERROR_SYSTEM
-             : REPROC_SUCCESS;
+             ? -(int) GetLastError()
+             : 0;
 }
 
-REPROC_ERROR process_kill(HANDLE process)
+int process_kill(HANDLE process)
 {
   assert(process);
 
   // We use 137 (`SIGKILL`) as the exit status because it is the same exit
   // status as a process that is stopped with the `SIGKILL` signal on POSIX
   // systems.
-  return TerminateProcess(process, SIGKILL) == 0 ? REPROC_ERROR_SYSTEM
-                                                 : REPROC_SUCCESS;
+  return TerminateProcess(process, SIGKILL) == 0 ? -(int) GetLastError() : 0;
 }
 
 HANDLE process_destroy(HANDLE process)

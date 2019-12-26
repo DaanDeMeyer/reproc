@@ -28,7 +28,7 @@ public:
   template <typename Environment,
             typename = detail::enable_if_not_char_array<Environment>>
   environment(const Environment &environment) // NOLINT
-    : detail::array(from(environment), true)
+      : detail::array(from(environment), true)
   {}
 
 private:

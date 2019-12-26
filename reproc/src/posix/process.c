@@ -1,5 +1,7 @@
 #include <process.h>
 
+#include <macro.h>
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -8,7 +10,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
@@ -33,13 +34,6 @@
 // Including the entire reproc.h header is overkill so we import only the
 // constant we need.
 extern const unsigned int REPROC_INFINITE;
-
-#define PROTECT_ERRNO(expression)                                              \
-  do {                                                                         \
-    int saved_errno = errno;                                                   \
-    (void) !(expression);                                                      \
-    errno = saved_errno;                                                       \
-  } while (false)
 
 static int signal_mask(int how, const sigset_t *newmask, sigset_t *oldmask)
 {
@@ -158,7 +152,7 @@ static int write_errno(int fd)
   return errno;
 }
 
-static pid_t process_fork(int error_socket)
+static pid_t process_fork(int error_pipe)
 {
   sigset_t old_mask = { 0 };
   sigset_t new_mask = { 0 };
@@ -222,16 +216,15 @@ static pid_t process_fork(int error_socket)
 
 cleanup:
   if (r < 0) {
-    _exit(write_errno(error_socket));
+    _exit(write_errno(error_pipe));
   }
 
   return r;
 }
 
-REPROC_ERROR
-process_create(pid_t *process,
-               const char *const *argv,
-               struct process_options options)
+int process_create(pid_t *process,
+                   const char *const *argv,
+                   struct process_options options)
 {
   assert(argv);
   assert(argv[0] != NULL);
@@ -242,7 +235,7 @@ process_create(pid_t *process,
   int child = HANDLE_INVALID;
   ssize_t r = -1;
 
-  // We create an error socket pair to receive errors from the child process.
+  // We create an error pipe to receive errors from the child process.
   r = process_pipe(&error_pipe_read, &error_pipe_write);
   if (r < 0) {
     goto cleanup;
@@ -255,7 +248,7 @@ process_create(pid_t *process,
 
   if (r == 0) {
     // Child process code. Since we're in the child process we can exit on
-    // errors.
+    // failure.
 
     // We prepend the parent working directory to `program` if it is a
     // relative path so that it will always be searched for relative to the
@@ -267,7 +260,7 @@ process_create(pid_t *process,
       _exit(write_errno(error_pipe_write));
     }
 
-    if (options.working_directory) {
+    if (options.working_directory != NULL) {
       r = chdir(options.working_directory);
       if (r < 0) {
         _exit(write_errno(error_pipe_write));
@@ -302,8 +295,8 @@ process_create(pid_t *process,
     // child process.
 
     for (int i = 3; i < max_fd; i++) {
-      // We might still need the error socket to report `exec` failures so we
-      // don't close it. The error socket has the `FD_CLOEXEC` flag set which
+      // We might still need the error pipe to report `exec` failures so we
+      // don't close it. The error pipe has the `FD_CLOEXEC` flag set which
       // guarantees it will be closed automatically when `exec` or `_exit` are
       // called so we don't have to manually close it.
       if (i == error_pipe_write) {
@@ -333,11 +326,11 @@ process_create(pid_t *process,
 
   child = (int) r;
 
-  // Close error socket write end on the parent's side so `read` will return
+  // Close the error pipe write end on the parent's side so `read` will return
   // when it is closed on the child side as well.
   error_pipe_write = handle_destroy(error_pipe_write);
 
-  // Wait until the child process closes the error socket.
+  // Wait until the child process closes the error pipe.
   int child_errno = 0;
   r = read(error_pipe_read, &child_errno, sizeof(child_errno));
   if (r < 0) {
@@ -345,7 +338,6 @@ process_create(pid_t *process,
   }
 
   if (child_errno != 0) {
-    // Allow retrieving child process errors with `reproc_error_system`.
     r = -1;
     errno = child_errno;
     goto cleanup;
@@ -363,7 +355,7 @@ cleanup:
     PROTECT_ERRNO(waitpid(child, NULL, 0));
   }
 
-  return r < 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
+  return r < 0 ? -errno : (int) r;
 }
 
 static struct timespec timespec_from_milliseconds(long milliseconds)
@@ -393,29 +385,38 @@ static struct timespec timespec_subtract(struct timespec lhs,
 
 static int exit_check(pid_t *processes,
                       unsigned int num_processes,
-                      unsigned int *completed,
                       int *exit_status)
 {
-  assert(completed);
   assert(exit_status);
+  assert(num_processes <= INT_MAX);
 
-  for (unsigned int i = 0; i < num_processes; i++) {
-    int status = 0;
-    int r = waitpid(processes[i], &status, WNOHANG);
+  unsigned int i = 0;
+  int status = -1;
+  int r = -1;
+
+  for (i = 0; i < num_processes; i++) {
+    r = waitpid(processes[i], &status, WNOHANG);
     if (r < 0) {
-      return r;
+      goto cleanup;
     }
 
     if (r > 0) {
-      assert(r == processes[i]);
-      *completed = i;
-      *exit_status = WIFEXITED(status) ? WEXITSTATUS(status) : WTERMSIG(status);
-      return 0;
+      break;
     }
   }
 
-  errno = EAGAIN;
-  return -1;
+  if (i == num_processes) {
+    // All processes are still running.
+    r = -1;
+    errno = EAGAIN;
+  } else {
+    // The process at index `i` in `processes` has exited.
+    r = (int) i;
+    *exit_status = WIFEXITED(status) ? WEXITSTATUS(status) : WTERMSIG(status);
+  }
+
+cleanup:
+  return r;
 }
 
 static int signal_wait(int signal, const struct timespec *timeout)
@@ -443,11 +444,11 @@ static int signal_wait(int signal, const struct timespec *timeout)
     errno = (int) event.data;
   }
 
-  close(queue);
+  handle_destroy(queue);
 
   return r;
 #else
-  sigset_t set;
+  sigset_t set = { 0 };
 
   r = SIGADDSET(&set, signal);
   if (r < 0) {
@@ -459,27 +460,26 @@ static int signal_wait(int signal, const struct timespec *timeout)
 #endif
 }
 
-REPROC_ERROR process_wait(pid_t *processes,
-                          unsigned int num_processes,
-                          unsigned int timeout,
-                          unsigned int *completed,
-                          int *exit_status)
+int process_wait(pid_t *processes,
+                 unsigned int num_processes,
+                 unsigned int timeout,
+                 int *exit_status)
 {
-  assert(completed);
   assert(exit_status);
 
-  sigset_t chld_mask;
-  sigset_t old_mask;
+  sigset_t chld_mask = { 0 };
+  sigset_t old_mask = { 0 };
+  bool signals_blocked = false;
   int r = -1;
 
   r = sigemptyset(&chld_mask);
   if (r < 0) {
-    return REPROC_ERROR_SYSTEM;
+    goto cleanup;
   }
 
   r = SIGADDSET(&chld_mask, SIGCHLD);
   if (r < 0) {
-    return REPROC_ERROR_SYSTEM;
+    goto cleanup;
   }
 
   // We block `SIGCHLD` first to avoid a race condition between `exit_check` and
@@ -489,16 +489,17 @@ REPROC_ERROR process_wait(pid_t *processes,
   // is called which processes the pending signal.
   r = signal_mask(SIG_BLOCK, &chld_mask, &old_mask);
   if (r < 0) {
-    return REPROC_ERROR_SYSTEM;
+    goto cleanup;
   }
 
-  bool expired = false;
+  signals_blocked = true;
+
   struct timespec remaining = timespec_from_milliseconds(timeout);
 
   while (true) {
     // Check if any process in `processes` has finished.
 
-    r = exit_check(processes, num_processes, completed, exit_status);
+    r = exit_check(processes, num_processes, exit_status);
     if (r >= 0 || errno != EAGAIN) {
       goto cleanup;
     }
@@ -516,11 +517,6 @@ REPROC_ERROR process_wait(pid_t *processes,
 
     r = signal_wait(SIGCHLD, timeout == REPROC_INFINITE ? NULL : &remaining);
     if (r < 0) {
-      if (errno == EAGAIN) {
-        r = 0;
-        expired = true;
-      }
-
       goto cleanup;
     }
 
@@ -538,20 +534,23 @@ REPROC_ERROR process_wait(pid_t *processes,
   }
 
 cleanup:
-  PROTECT_ERRNO(signal_mask(SIG_SETMASK, &old_mask, NULL));
+  if (signals_blocked) {
+    PROTECT_ERRNO(signal_mask(SIG_SETMASK, &old_mask, NULL));
+  }
 
-  return r < 0 ? REPROC_ERROR_SYSTEM
-               : expired ? REPROC_ERROR_WAIT_TIMEOUT : REPROC_SUCCESS;
+  return r < 0 ? -errno : r;
 }
 
-REPROC_ERROR process_terminate(pid_t process)
+int process_terminate(pid_t process)
 {
-  return kill(process, SIGTERM) < 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
+  int r = kill(process, SIGTERM);
+  return r < 0 ? -errno : r;
 }
 
-REPROC_ERROR process_kill(pid_t process)
+int process_kill(pid_t process)
 {
-  return kill(process, SIGKILL) < 0 ? REPROC_ERROR_SYSTEM : REPROC_SUCCESS;
+  int r = kill(process, SIGKILL);
+  return r < 0 ? -errno : r;
 }
 
 pid_t process_destroy(pid_t process)
