@@ -13,7 +13,7 @@ static std::error_code from(int r)
 
 } // namespace error
 
-static reproc_stop_actions stop_actions_to_reproc(stop_actions stop_actions)
+static reproc_stop_actions reproc_stop_actions_from(stop_actions stop_actions)
 {
   return { { static_cast<REPROC_STOP>(stop_actions.first.action),
              stop_actions.first.timeout.count() },
@@ -43,7 +43,7 @@ std::error_code process::start(const arguments &arguments,
     { static_cast<REPROC_REDIRECT>(options.redirect.in),
       static_cast<REPROC_REDIRECT>(options.redirect.out),
       static_cast<REPROC_REDIRECT>(options.redirect.err) },
-    stop_actions_to_reproc(options.stop_actions)
+    reproc_stop_actions_from(options.stop_actions)
   };
 
   int r = reproc_start(process_.get(), arguments.data(), reproc_options);
@@ -100,7 +100,7 @@ std::error_code process::kill() noexcept
 
 std::error_code process::stop(stop_actions stop_actions) noexcept
 {
-  int r = reproc_stop(process_.get(), stop_actions_to_reproc(stop_actions));
+  int r = reproc_stop(process_.get(), reproc_stop_actions_from(stop_actions));
   return error::from(r);
 }
 
