@@ -195,24 +195,39 @@ can be found in the examples subdirectory of [reproc](reproc/examples) and
 
 ## Error handling
 
-Most functions in reproc's API return a value from the `REPROC_ERROR` enum.
-`REPROC_ERROR` represents all possible errors that can occur when calling reproc
-API functions. Not all errors apply to each function so the documentation of
-each function includes a section detailing which errors can occur when calling
-that function. System errors are represented by `REPROC_ERROR_SYSTEM`. The
-`reproc_error_system` function can be used to retrieve the actual system error.
-To get a string representation of an error, pass the error code to
-`reproc_error_string`. If the error code passed to `reproc_error_string` is
-`REPROC_ERROR_SYSTEM`, `reproc_error_string` returns a string representation of
-the error returned by `reproc_error_system`.
+On failure, Most functions in reproc's API return a negative `errno` (POSIX) or
+`GetLastError` (Windows) style error code. For actionable errors, reproc
+provides constants (`REPROC_ERROR_WAIT_TIMEOUT`, `REPROC_ERROR_STREAM_CLOSED`,
+...) that can be used to match against the error without having to write
+platform-specific code. To get a string representation of an error, pass it to
+`reproc_error_string`.
+
+```c
+reproc_t *process = reproc_new();
+
+int r = reproc_start(...);
+if (r < 0) {
+  goto cleanup;
+}
+
+r = reproc_write(...)
+if (r == REPROC_ERROR_STREAM_CLOSED) {
+  goto cleanup;
+}
+
+cleanup:
+if (r < 0) {
+  printf("%s\n", reproc_error_string(r));
+}
+
+return abs(r);
+```
 
 reproc++'s API integrates with the C++ standard library error codes mechanism
-(`std::error_code` and `std::error_condition`). All functions in reproc++'s API
+(`std::error_code` and `std::error_condition`). Most methods in reproc++'s API
 return `std::error_code` values that contain the actual system error that
-occurred. This means `reproc_error_system` is not necessary in reproc++ since
-the returned error codes store the actual system error instead of the value of
-`REPROC_ERROR_SYSTEM`. You can test against these error codes using the
-`std::errc` error condition enum:
+occurred. You can test against these error codes using the `std::errc` error
+condition enum:
 
 ```c++
 reproc::process;
@@ -233,7 +248,10 @@ if (ec) {
 }
 ```
 
-If needed, you can also convert `std::error_code`'s to exceptions using
+reproc++ also provides aliases for relevant `std::errc` constants that are named
+similarly to the error constants in reproc.
+
+If needed, `std::error_code`'s can be converted to exceptions using
 `std::system_error`:
 
 ```c++
