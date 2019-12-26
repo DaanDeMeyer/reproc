@@ -23,7 +23,10 @@ namespace reproc {
 
 namespace error {
 
+/*! `REPROC_ERROR_WAIT_TIMEOUT` */
 constexpr std::errc wait_timeout = std::errc::resource_unavailable_try_again;
+
+/*! `REPROC_ERROR_STREAM_CLOSED` */
 #if defined(_WIN32)
 // https://github.com/microsoft/STL/pull/406
 static const std::error_code stream_closed = { 109, std::system_category() };
@@ -41,11 +44,13 @@ enum class redirect { pipe, inherit, discard };
 /*! `REPROC_STOP` */
 enum class stop { noop, wait, terminate, kill };
 
+/*! `REPROC_STOP_ACTION` */
 struct stop_action {
   stop action;
   milliseconds timeout;
 };
 
+/*! `REPROC_STOP_ACTIONS` */
 struct stop_actions {
   stop_action first;
   stop_action second;
@@ -72,32 +77,12 @@ enum class stream { in, out, err };
 /*! `REPROC_INFINITE` */
 REPROCXX_EXPORT extern const milliseconds infinite;
 
-/*! Improves on reproc's API by wrapping it in a class. Aside from methods that
-mimick reproc's API it also adds configurable RAII and several methods that
-reduce the boilerplate required to use reproc from idiomatic C++ code. */
+/*! Improves on reproc's API by adding RAII and changing the API of some
+functions to be more idiomatic C++. */
 class process {
 
 public:
-  /*!
-  Allocates memory for reproc's `reproc_t` struct.
-
-  The arguments are passed to `stop` in the destructor if the process is still
-  running by then.
-
-  Example:
-
-  ```c++
-  process example(stop::wait, 10000, stop::terminate, 5000);
-  ```
-
-  If the child process is still running when example's destructor is called, it
-  will first wait ten seconds for the child process to exit on its own before
-  sending `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) and waiting five more
-  seconds for the child process to exit.
-
-  The default arguments instruct the destructor to wait indefinitely for the
-  child process to exit.
-  */
+  /*! `reproc_new` */
   REPROCXX_EXPORT process();
 
   /*! `reproc_destroy` */
@@ -167,7 +152,7 @@ std::error_code process::drain(Sink &&sink)
 
   // A single call to `read` might contain multiple messages. By always calling
   // `sink` once with no data before reading, we give it the chance to process
-  // all previous output one by one before reading from the child process again.
+  // all previous output before reading from the child process again.
   if (!sink(stream::in, &initial, 0)) {
     return {};
   }
