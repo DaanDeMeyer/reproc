@@ -1,6 +1,7 @@
 #include <process.h>
 
 #include "error.h"
+#include "macro.h"
 #include "pipe.h"
 
 #include <assert.h>
@@ -110,11 +111,14 @@ static char *path_prepend_cwd(const char *path)
 
 static int write_errno(int fd)
 {
-  PROTECT_SYSTEM_ERROR(write(fd, &errno, sizeof(errno)));
-  return errno;
+  (void) !write(fd, &errno, sizeof(errno));
+  return 0;
 }
 
-static pid_t process_fork(int error_pipe)
+static pid_t process_fork(int *error_pipe_read,
+                          int *error_pipe_write,
+                          struct stdio redirect,
+                          pid_t group)
 {
   sigset_t old_mask = { 0 };
   sigset_t new_mask = { 0 };
@@ -134,10 +138,42 @@ static pid_t process_fork(int error_pipe)
   }
 
   r = fork();
-  if (r != 0) {
-    // Parent process or `fork` error.
+  if (r < 0) {
+    // `fork` error.
     PROTECT_SYSTEM_ERROR(signal_mask(SIG_SETMASK, &old_mask, NULL));
     return r;
+  }
+
+  if (r > 0) {
+    // Parent process
+
+    int child = r;
+
+    // From now on, the child process might have started so we don't report
+    // errors from `signal_mask` and `pipe_read`. This puts the responsibility
+    // for cleaning up the process in the hands of the user from now on.
+
+    PROTECT_SYSTEM_ERROR(signal_mask(SIG_SETMASK, &old_mask, NULL));
+
+    // Close the error pipe write end on the parent's side so `read` will return
+    // when it is closed on the child side as well.
+    *error_pipe_write = handle_destroy(*error_pipe_write);
+
+    int child_errno = 0;
+    PROTECT_SYSTEM_ERROR(pipe_read(*error_pipe_read, (uint8_t *) &child_errno,
+                                   sizeof(child_errno)));
+
+    if (child_errno > 0) {
+      // If the child writes to the error pipe, we're certain the child process
+      // exited on its own and we can report the error as usual.
+      PROTECT_SYSTEM_ERROR(waitpid(child, NULL, 0));
+      r = -1;
+      errno = child_errno;
+    }
+
+    *error_pipe_read = handle_destroy(*error_pipe_read);
+
+    return r < 0 ? r : child;
   }
 
   // Child process
@@ -176,12 +212,58 @@ static pid_t process_fork(int error_pipe)
     goto cleanup;
   }
 
-cleanup:
+  r = setpgid(0, group);
   if (r < 0) {
-    _exit(write_errno(error_pipe));
+    goto cleanup;
   }
 
-  return r;
+  // Redirect stdin, stdout and stderr.
+
+  int vec[3] = { redirect.in, redirect.out, redirect.err };
+  int stdio[3] = { STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO };
+
+  for (size_t i = 0; i < ARRAY_SIZE(vec); i++) {
+    if (vec[i] != HANDLE_INVALID) {
+      r = dup2(vec[i], stdio[i]);
+      if (r < 0) {
+        goto cleanup;
+      }
+    } else {
+      handle_destroy(stdio[i]);
+    }
+  }
+
+  int max_fd = (int) sysconf(_SC_OPEN_MAX);
+  if (max_fd < 0) {
+    goto cleanup;
+  }
+
+  // Not all file descriptors might have been created with the `FD_CLOEXEC`
+  // flag so we manually close all file descriptors (except the standard
+  // streams) as an extra measure to prevent file descriptors leaking into the
+  // child process.
+
+  for (int i = 3; i < max_fd; i++) {
+    // We might still need the error pipe to report `exec` failures so we
+    // don't close it. The error pipe has the `FD_CLOEXEC` flag set which
+    // guarantees it will be closed automatically when `exec` or `_exit` are
+    // called so we don't have to manually close it.
+    if (i == *error_pipe_write) {
+      continue;
+    }
+
+    // We ignore `close` errors since we try to close every file descriptor
+    // including invalid ones and `close` sets `errno` when an invalid file
+    // descriptor is passed.
+    handle_destroy(i);
+  }
+
+cleanup:
+  if (r < 0) {
+    _exit(write_errno(*error_pipe_write));
+  }
+
+  return 0;
 }
 
 static const struct pipe_options PIPE_BLOCKING = { .nonblocking = false };
@@ -196,7 +278,6 @@ int process_create(pid_t *process,
 
   int error_pipe_read = HANDLE_INVALID;
   int error_pipe_write = HANDLE_INVALID;
-  pid_t child = HANDLE_INVALID;
   ssize_t r = -1;
 
   // We create an error pipe to receive errors from the child process.
@@ -206,7 +287,9 @@ int process_create(pid_t *process,
     goto cleanup;
   }
 
-  r = process_fork(error_pipe_write);
+  // Put the child process in its own process group so we can use `waitpid` to
+  // wait on both the child process and a timeout process at the same time.
+  r = process_fork(&error_pipe_read, &error_pipe_write, options.redirect, 0);
   if (r < 0) {
     goto cleanup;
   }
@@ -232,48 +315,6 @@ int process_create(pid_t *process,
       }
     }
 
-    // Redirect stdin, stdout and stderr.
-
-    r = dup2(options.redirect.in, STDIN_FILENO);
-    if (r < 0) {
-      _exit(write_errno(error_pipe_write));
-    }
-
-    r = dup2(options.redirect.out, STDOUT_FILENO);
-    if (r < 0) {
-      _exit(write_errno(error_pipe_write));
-    }
-
-    r = dup2(options.redirect.err, STDERR_FILENO);
-    if (r < 0) {
-      _exit(write_errno(error_pipe_write));
-    }
-
-    int max_fd = (int) sysconf(_SC_OPEN_MAX);
-    if (max_fd < 0) {
-      _exit(write_errno(error_pipe_write));
-    }
-
-    // Not all file descriptors might have been created with the `FD_CLOEXEC`
-    // flag so we manually close all file descriptors (except the standard
-    // streams) as an extra measure to prevent file descriptors leaking into the
-    // child process.
-
-    for (int i = 3; i < max_fd; i++) {
-      // We might still need the error pipe to report `exec` failures so we
-      // don't close it. The error pipe has the `FD_CLOEXEC` flag set which
-      // guarantees it will be closed automatically when `exec` or `_exit` are
-      // called so we don't have to manually close it.
-      if (i == error_pipe_write) {
-        continue;
-      }
-
-      // We ignore `close` errors since we try to close every file descriptor
-      // including invalid ones and `close` sets `errno` when an invalid file
-      // descriptor is passed.
-      close(i);
-    }
-
     // The casts are safe since `execvp(e)` doesn't actually change the contents
     // of `arguments` and `environment`.
     char *const *arguments = (char *const *) argv;
@@ -290,225 +331,86 @@ int process_create(pid_t *process,
   }
 
   assert(r <= INT_MAX);
-  child = (int) r;
-
-  // Close the error pipe write end on the parent's side so `read` will return
-  // when it is closed on the child side as well.
-  error_pipe_write = handle_destroy(error_pipe_write);
-
-  // Wait until the child process closes the error pipe.
-  int child_errno = 0;
-  r = pipe_read(error_pipe_read, (uint8_t *) &child_errno, sizeof(child_errno));
-  if (r == -EPIPE) {
-    r = 0; // We expect the stream to be closed.
-  }
-
-  if (r < 0) {
-    goto cleanup;
-  }
-
-  assert(r <= INT_MAX);
-
-  if (child_errno != 0) {
-    r = -1;
-    errno = child_errno;
-    goto cleanup;
-  }
-
-  *process = child;
+  *process = (int) r;
 
 cleanup:
   handle_destroy(error_pipe_read);
   handle_destroy(error_pipe_write);
 
-  // Make sure the child process doesn't become a zombie process if the child
-  // process was started (`child_process` > 0) but an error occurred.
-  if (r < 0 && child > 0) {
-    PROTECT_SYSTEM_ERROR(waitpid(child, NULL, 0));
-  }
-
   return error_unify((int) r, 0);
 }
 
-static struct timespec timespec_from_milliseconds(long milliseconds)
+static int parse_exit_status(int status)
 {
-  struct timespec result;
-  result.tv_sec = milliseconds / 1000;              // ms -> s
-  result.tv_nsec = (milliseconds % 1000) * 1000000; // leftover ms -> ns
-
-  return result;
+  return WIFEXITED(status) ? WEXITSTATUS(status) : WTERMSIG(status);
 }
 
-static struct timespec timespec_subtract(struct timespec lhs,
-                                         struct timespec rhs)
+int process_wait(pid_t process, unsigned int timeout)
 {
-  struct timespec result = { 0, 0 };
-
-  result.tv_sec = lhs.tv_sec - rhs.tv_sec;
-  result.tv_nsec = lhs.tv_nsec - rhs.tv_nsec;
-
-  while (result.tv_nsec < 0) {
-    result.tv_nsec += 1000000000;
-    result.tv_sec--;
-  }
-
-  return result;
-}
-
-static int exit_check(pid_t *processes, size_t num_processes, int *exit_status)
-{
-  assert(exit_status);
-  assert(num_processes <= INT_MAX);
-
-  size_t i = 0;
-  int status = -1;
+  int error_pipe_read = HANDLE_INVALID;
+  int error_pipe_write = HANDLE_INVALID;
+  int status = 0;
   int r = -1;
 
-  for (i = 0; i < num_processes; i++) {
-    r = waitpid(processes[i], &status, WNOHANG);
-    if (r < 0) {
-      goto cleanup;
-    }
-
-    if (r > 0) {
-      break;
-    }
-  }
-
-  if (i == num_processes) {
-    // All processes are still running.
-    r = -1;
-    errno = EAGAIN;
-  } else {
-    // The process at index `i` in `processes` has exited.
-    r = (int) i;
-    *exit_status = WIFEXITED(status) ? WEXITSTATUS(status) : WTERMSIG(status);
-  }
-
-cleanup:
-  return r;
-}
-
-static int signal_wait(int signal, const struct timespec *timeout)
-{
-  int r = -1;
-
-#if defined(__APPLE__)
-  r = kqueue();
+  r = pipe_init(&error_pipe_read, PIPE_BLOCKING, &error_pipe_write,
+                PIPE_BLOCKING);
   if (r < 0) {
-    return r;
+    goto cleanup;
   }
 
-  int queue = r;
+  struct stdio stdio = { HANDLE_INVALID, HANDLE_INVALID, HANDLE_INVALID };
 
-  struct kevent event;
-  EV_SET(&event, signal, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+  r = process_fork(&error_pipe_read, &error_pipe_write, stdio, process);
+  if (r < 0) {
+    goto cleanup;
+  }
 
-  r = kevent(queue, &event, 1, &event, 1, timeout);
-  // Translate `kevent` errors into Linux errno style equivalents.
   if (r == 0) {
+    struct timeval tv = {
+      .tv_sec = timeout / 1000,          // ms -> s
+      .tv_usec = (timeout % 1000) * 1000 // leftover ms -> us
+    };
+
+    // Close the error pipe before we sleep so the parent process can continue
+    // to the `waitpid` call in the parent process.
+    handle_destroy(error_pipe_write);
+
+    // `select` with no file descriptors can be used as a makeshift sleep
+    // function that can still be interrupted.
+    r = select(0, NULL, NULL, NULL, &tv);
+
+    _exit(r < 0 ? errno : 0);
+  }
+
+  pid_t timeout_pid = r;
+
+  r = waitpid(-process, &status, 0);
+
+  if (r != timeout_pid) {
+    // We didn't time out. Terminate the timeout process to make sure it exits.
+    PROTECT_SYSTEM_ERROR(process_terminate(timeout_pid));
+    PROTECT_SYSTEM_ERROR(waitpid(timeout_pid, NULL, 0));
+  }
+
+  if (r < 0) {
+    goto cleanup;
+  }
+
+  if (r == timeout_pid) {
+    // The timeout expired.
     r = -1;
     errno = EAGAIN;
-  } else if (r > 0 && event.flags & EV_ERROR) {
-    r = -1;
-    errno = (int) event.data;
-  }
-
-  handle_destroy(queue);
-
-  return r;
-#else
-  sigset_t set = { 0 };
-
-  r = SIGADDSET(&set, signal);
-  if (r < 0) {
-    return r;
-  }
-
-  return timeout == NULL ? sigwaitinfo(&set, NULL)
-                         : sigtimedwait(&set, NULL, timeout);
-#endif
-}
-
-int process_wait(pid_t *processes,
-                 size_t num_processes,
-                 unsigned int timeout,
-                 int *exit_status)
-{
-  assert(exit_status);
-
-  sigset_t chld_mask = { 0 };
-  sigset_t old_mask = { 0 };
-  bool signals_blocked = false;
-  int r = -1;
-
-  r = sigemptyset(&chld_mask);
-  if (r < 0) {
     goto cleanup;
   }
 
-  r = SIGADDSET(&chld_mask, SIGCHLD);
-  if (r < 0) {
-    goto cleanup;
-  }
-
-  // We block `SIGCHLD` first to avoid a race condition between `exit_check` and
-  // `signal_wait` where the child process is still running when `exit_check`
-  // returns but finishes before we call `signal_wait`. By blocking `SIGCHLD`
-  // before calling `exit_check`, the signal stays pending until `signal_wait`
-  // is called which processes the pending signal.
-  r = signal_mask(SIG_BLOCK, &chld_mask, &old_mask);
-  if (r < 0) {
-    goto cleanup;
-  }
-
-  signals_blocked = true;
-
-  struct timespec remaining = timespec_from_milliseconds(timeout);
-
-  while (true) {
-    // Check if any process in `processes` has finished.
-
-    r = exit_check(processes, num_processes, exit_status);
-    if (r >= 0 || errno != EAGAIN) {
-      goto cleanup;
-    }
-
-    // No process has finished, record the current time so we can calculate how
-    // much time has passed after `signal_wait` returns.
-
-    struct timespec before;
-    r = clock_gettime(CLOCK_REALTIME, &before);
-    if (r < 0) {
-      goto cleanup;
-    }
-
-    // Wait until a `SIGCHLD` signal occurs or the timeout expires.
-
-    r = signal_wait(SIGCHLD, timeout == REPROC_INFINITE ? NULL : &remaining);
-    if (r < 0) {
-      goto cleanup;
-    }
-
-    // A `SIGCHLD` signal occurred, update the remaining time before the timeout
-    // expires and repeat the loop.
-
-    struct timespec after;
-    r = clock_gettime(CLOCK_REALTIME, &after);
-    if (r < 0) {
-      goto cleanup;
-    }
-
-    struct timespec elapsed = timespec_subtract(after, before);
-    remaining = timespec_subtract(remaining, elapsed);
-  }
+  assert(r == process);
+  status = parse_exit_status(status);
 
 cleanup:
-  if (signals_blocked) {
-    PROTECT_SYSTEM_ERROR(signal_mask(SIG_SETMASK, &old_mask, NULL));
-  }
+  handle_destroy(error_pipe_read);
+  handle_destroy(error_pipe_write);
 
-  return error_unify(r, r);
+  return error_unify(r, status);
 }
 
 int process_terminate(pid_t process)

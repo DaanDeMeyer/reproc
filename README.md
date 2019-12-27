@@ -267,57 +267,20 @@ if (ec) {
 
 ## Multithreading
 
-On POSIX, reproc should not be used from multiple threads at the same time. On
-Windows, all operations on a child process should be done on the same thread
-that the process was started from. See the gotchas section from more
-information.
+Don't call the same operation on the same child process from more than one
+thread at the same time. For example: reading and writing to a child process
+from different threads is fine but waiting on the same child process from two
+different threads at the same time will result in issues.
 
 ## Gotchas
 
-- It is strongly recommended to block the `SIGCHLD` signal (POSIX) in all
-  threads started in the parent process.
+- (POSIX) It is strongly recommended to not call `waitpid` on pids of processes
+  started by reproc.
 
-  On POSIX, reproc implements waiting for processes to exit by catching pending
-  `SIGCHLD` signals. Because signals are only added to the pending signal queue
-  when they are blocked by every thread, `reproc_wait` will fail to notice a
-  child process exit if there are threads in the process that do not block
-  `SIGCHLD` since the signal will be delivered to that thread. Because of this,
-  it is strongly recommended to block the `SIGCHLD` signal in all threads
-  started by the parent process.
-
-- It is strongly recommended to have reproc manage all child processes in the
-  parent process.
-
-  On POSIX, even when the `SIGCHLD` signal is blocked in all threads, if two or
-  more threads call `reproc_wait` at the same time, only one thread will receive
-  any pending `SIGCHLD` signal. More generally, a pending `SIGCHLD` signal will
-  be delivered to one of all threads that are waiting for pending `SIGCHLD`
-  signals. As a result, any call to `reproc_wait` can block indefinitely if
-  there are other threads catching pending `SIGCHLD` signals at the same time.
-  Because of this, it is strongly recommended to only handle pending `SIGCHLD`
-  signals from a single thread. If it is still viable to use reproc with that
-  restriction, it follows that reproc should be responsible for catching all
-  `SIGCHLD` signals and from that statement it follows that reproc should start
-  all child processes in the parent process since reproc can only correctly
-  clean up child processes that were started by reproc itself.
-
-- It is strongly recommended to perform all operations on a child process on the
-  same thread that the child process was started from.
-
-  On Windows, reproc implements waiting for processes to exit by adding all the
-  processes to a job object and adding a completion port to the job object. If
-  we used a global completion port and job object, if two threads waited on
-  notifications from the completion port, only one thread would actually get a
-  notification and the other thread would remain blocked. To prevent this,
-  reproc uses thread-local job objects and completion ports. Using this
-  approach, multiple threads can wait for processes to exit at the same time. Of
-  course, since a child process is only added to the job object of the thread it
-  is started from, only the completion port on that thread will receive a
-  notification when that child process exits. When waiting on a child process
-  from a different thread than the one it was started from, reproc will wait
-  indefinitely since the child process was never added to the job object of that
-  thread and as a result the completion port of that thread will not receive a
-  notification when that child process exits.
+  reproc uses `waitpid` to wait until a process has exited. Unfortunately,
+  `waitpid` cannot be called twice on the same process. This means that
+  `reproc_wait` won't work correctly if `waitpid` has already been called on a
+  child process beforehand outside of reproc.
 
 - It is strongly recommended to make sure each child process actually exits
   using `reproc_wait` or `reproc_stop`.

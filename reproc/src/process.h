@@ -4,6 +4,12 @@
 
 #include <stddef.h>
 
+struct stdio {
+  handle in;
+  handle out;
+  handle err;
+};
+
 struct process_options {
   // If `NULL`, the child process inherits the environment of the current
   // process.
@@ -11,12 +17,7 @@ struct process_options {
   // If not `NULL`, the working directory of the child process is set to
   // `working_directory`.
   const char *working_directory;
-
-  struct {
-    handle in;
-    handle out;
-    handle err;
-  } redirect;
+  struct stdio redirect;
 };
 
 // Spawns a child process that executes the command stored in `argv`.
@@ -31,10 +32,7 @@ int process_create(handle *process,
 //
 // If `timeout` is `REPROC_INFINITE`, this function waits indefinitely for a
 // process to exit.
-int process_wait(handle *processes,
-                 size_t num_processes,
-                 unsigned int timeout,
-                 int *exit_status);
+int process_wait(handle process, unsigned int timeout);
 
 // Sends the `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) signal to the process
 // indicated by `process`.

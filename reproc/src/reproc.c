@@ -276,9 +276,14 @@ int reproc_wait(reproc_t *process, unsigned int timeout)
     return 0;
   }
 
-  r = process_wait(&process->handle, 1, timeout, &process->exit_status);
+  r = process_wait(process->handle, timeout);
+  if (r < 0) {
+    return r;
+  }
 
-  return r < 0 ? r : 0;
+  process->exit_status = r;
+
+  return 0;
 }
 
 bool reproc_running(reproc_t *process)

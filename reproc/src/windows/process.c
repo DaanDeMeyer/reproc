@@ -18,13 +18,7 @@ static const DWORD CREATION_FLAGS =
     CREATE_UNICODE_ENVIRONMENT |
     // Create each child with an extended STARTUPINFOEXW structure so we can
     // specify which handles should be inherited.
-    EXTENDED_STARTUPINFO_PRESENT |
-    // After starting the process using `CreateProcessW`, `process_create` can
-    // still fail to assign the process to the job object. We only want the
-    // process to start executing if `process_create` succeeds, so we create a
-    // suspended process to make sure no code in the child process is executed
-    // until we successfully assigned the process to the job object.
-    CREATE_SUSPENDED;
+    EXTENDED_STARTUPINFO_PRESENT;
 
 static SECURITY_ATTRIBUTES HANDLE_DO_NOT_INHERIT = {
   .nLength = sizeof(SECURITY_ATTRIBUTES),
@@ -33,26 +27,7 @@ static SECURITY_ATTRIBUTES HANDLE_DO_NOT_INHERIT = {
 };
 
 static const DWORD SIGKILL = 137;
-
-// To wait for any of multiple processes to exit on a single thread, we use a
-// job object combined with a completion port. After registering the completion
-// port with the job object, we can use `GetQueuedCompletionStatus` on the
-// completion port to receive a notification when a process assigned to the job
-// object exits. Because a process cannot be removed from a job object unless it
-// exits, we cannot create job objects as needed in `process_wait`. Instead, we
-// add each process to a single job object when it is created. The job object
-// and completion port are created when the first process is created in
-// `process_create` and are destroyed when the last process is destroyed in
-// `process_destroy`. We use thread-local job objects and completion ports
-// because if we used a global completion port, threads waiting simultaneously
-// on different processes could receive the notifications for the other thread's
-// processes, possibly leading to infinite waits even though the processes might
-// have exited since another thread 'stole' the notification. This approach has
-// the unfortunate side effect that a process cannot be waited on outside of the
-// thread where it was created.
-static THREAD_LOCAL unsigned long job_reference_count = 0;
-static THREAD_LOCAL HANDLE job_object = NULL;
-static THREAD_LOCAL HANDLE job_completion_port = NULL;
+static const DWORD SIGTERM = 143;
 
 // Argument escaping implementation is based on the following blog post:
 // https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
@@ -394,45 +369,7 @@ int process_create(HANDLE *process,
     goto cleanup;
   }
 
-  if (job_reference_count == 0) {
-    // `CreateJobObject` makes the handle uninheritable by default so we do not
-    // pass `DO_NOT_INHERIT` here.
-    job_object = CreateJobObjectA(NULL, NULL);
-    if (job_object == NULL) {
-      r = 0;
-      goto cleanup;
-    }
-
-    job_completion_port = CreateIoCompletionPort(HANDLE_INVALID, NULL, 0, 0);
-    if (job_completion_port == NULL) {
-      r = 0;
-      goto cleanup;
-    }
-
-    JOBOBJECT_ASSOCIATE_COMPLETION_PORT port_info = {
-      .CompletionPort = job_completion_port
-    };
-
-    r = SetInformationJobObject(job_object,
-                                JobObjectAssociateCompletionPortInformation,
-                                &port_info, sizeof(port_info));
-    if (r == 0) {
-      goto cleanup;
-    }
-  }
-
-  r = AssignProcessToJobObject(job_object, info.hProcess);
-  if (r == 0) {
-    goto cleanup;
-  }
-
-  r = ResumeThread(info.hThread) == 1;
-  if (r == 0) {
-    goto cleanup;
-  }
-
   *process = info.hProcess;
-  job_reference_count++;
 
 cleanup:
   free(command_line);
@@ -445,101 +382,44 @@ cleanup:
 
   SetErrorMode(previous_error_mode);
 
-  if (r == 0) {
-    if (info.hProcess != HANDLE_INVALID) {
-      // The process is guaranteed to be suspended if we get here so terminating
-      // it should be safe as it shouldn't be able to leak anything.
-      TerminateProcess(info.hProcess, SIGKILL);
-    }
-
-    handle_destroy(info.hProcess);
-
-    // `job_reference_count` is only incremented on success so we don't
-    // decrement here.
-    if (job_reference_count == 0) {
-      job_completion_port = handle_destroy(job_completion_port);
-      job_object = handle_destroy(job_object);
-    }
-  }
-
   return error_unify(r, 0);
 }
 
-int process_wait(HANDLE *processes,
-                 size_t num_processes,
-                 unsigned int timeout,
-                 int *exit_status)
+int process_wait(HANDLE process, unsigned int timeout)
 {
-  assert(exit_status);
-  assert(num_processes <= INT_MAX);
-
-  size_t completed = num_processes;
-  BOOL r = 0;
-
-  for (size_t i = 0; i < num_processes; i++) {
-    if (WaitForSingleObject(processes[i], 0) == WAIT_OBJECT_0) {
-      DWORD status = 0;
-      r = GetExitCodeProcess(processes[i], &status);
-      if (r == 0) {
-        goto cleanup;
-      }
-
-      assert(status <= INT_MAX);
-
-      completed = i;
-      *exit_status = (int) status;
-
-      goto cleanup;
-    }
-  }
-
-  unsigned int remaining = timeout;
-
-  while (completed == num_processes) {
-    unsigned long long before = GetTickCount64();
-
-    DWORD completion_code = 0;
-    unsigned long long completion_key = 0;
-    LPOVERLAPPED lpoverlapped = NULL;
-
-    r = GetQueuedCompletionStatus(job_completion_port, &completion_code,
-                                  &completion_key, &lpoverlapped,
-                                  timeout == INFINITE ? timeout : remaining);
-    if (r == 0) {
-      goto cleanup;
-    }
-
-    unsigned long long after = GetTickCount64();
-    unsigned long long elapsed = after - before;
-
-    remaining = elapsed >= remaining ? 0 : remaining - (unsigned int) elapsed;
-
-    if (completion_code != JOB_OBJECT_MSG_EXIT_PROCESS &&
-        completion_code != JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS) {
-      continue;
-    }
-
-    uintptr_t pid = (uintptr_t) lpoverlapped;
-
-    for (size_t i = 0; i < num_processes; i++) {
-      if (GetProcessId(processes[i]) == pid) {
-        completed = i;
-        break;
-      }
-    }
-  }
+  assert(process);
 
   DWORD status = 0;
-  r = GetExitCodeProcess(processes[completed], &status);
+  DWORD r = 0;
+
+  r = WaitForSingleObject(process, timeout);
+  if (r == WAIT_TIMEOUT) {
+    r = WAIT_FAILED;
+    SetLastError(WAIT_TIMEOUT);
+  }
+
+  if (r == WAIT_FAILED) {
+    r = 0;
+    goto cleanup;
+  }
+
+  r = (DWORD) GetExitCodeProcess(process, &status);
   if (r == 0) {
     goto cleanup;
   }
 
+  // `GenerateConsoleCtrlEvent` causes a process to exit with this exit code.
+  // Because `GenerateConsoleCtrlEvent` has roughly the same semantics as
+  // `SIGTERM`, we map its exit code to `SIGTERM`.
+  if (status == 3221225786) {
+    status = SIGTERM;
+  }
+
+  assert(r <= INT_MAX);
   assert(status <= INT_MAX);
-  *exit_status = (int) status;
 
 cleanup:
-  return error_unify(r, (int) completed);
+  return error_unify((int) r, (int) status);
 }
 
 int process_terminate(HANDLE process)
@@ -568,23 +448,5 @@ int process_kill(HANDLE process)
 
 HANDLE process_destroy(HANDLE process)
 {
-  if (process == HANDLE_INVALID || process == NULL) {
-    return HANDLE_INVALID;
-  }
-
-  assert(job_reference_count > 0);
-
-  if (WaitForSingleObject(process, 0) == WAIT_TIMEOUT) {
-    TerminateProcess(process, SIGKILL);
-  }
-
-  handle_destroy(process);
-
-  job_reference_count--;
-  if (job_reference_count == 0) {
-    job_completion_port = handle_destroy(job_completion_port);
-    job_object = handle_destroy(job_object);
-  }
-
-  return HANDLE_INVALID;
+  return handle_destroy(process);
 }
