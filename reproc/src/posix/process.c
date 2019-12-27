@@ -1,6 +1,7 @@
 #include <process.h>
 
 #include "error.h"
+#include "pipe.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -107,45 +108,6 @@ static char *path_prepend_cwd(const char *path)
   return cwd;
 }
 
-static int process_pipe(int *read, int *write)
-{
-  int pipefd[2] = { HANDLE_INVALID, HANDLE_INVALID };
-  int r = -1;
-
-#if defined(__APPLE__)
-  r = pipe(pipefd);
-  if (r < 0) {
-    goto cleanup;
-  }
-
-  r = fcntl(pipefd[0], F_SETFD, FD_CLOEXEC);
-  if (r < 0) {
-    goto cleanup;
-  }
-
-  r = fcntl(pipefd[1], F_SETFD, FD_CLOEXEC);
-  if (r < 0) {
-    goto cleanup;
-  }
-#else
-  r = pipe2(pipefd, O_CLOEXEC);
-  if (r < 0) {
-    goto cleanup;
-  }
-#endif
-
-  *read = pipefd[0];
-  *write = pipefd[1];
-
-cleanup:
-  if (r < 0) {
-    handle_destroy(pipefd[0]);
-    handle_destroy(pipefd[1]);
-  }
-
-  return r;
-}
-
 static int write_errno(int fd)
 {
   PROTECT_SYSTEM_ERROR(write(fd, &errno, sizeof(errno)));
@@ -222,6 +184,8 @@ cleanup:
   return r;
 }
 
+static const struct pipe_options PIPE_BLOCKING = { .nonblocking = false };
+
 int process_create(pid_t *process,
                    const char *const *argv,
                    struct process_options options)
@@ -236,7 +200,8 @@ int process_create(pid_t *process,
   ssize_t r = -1;
 
   // We create an error pipe to receive errors from the child process.
-  r = process_pipe(&error_pipe_read, &error_pipe_write);
+  r = pipe_init(&error_pipe_read, PIPE_BLOCKING, &error_pipe_write,
+                PIPE_BLOCKING);
   if (r < 0) {
     goto cleanup;
   }
@@ -333,7 +298,11 @@ int process_create(pid_t *process,
 
   // Wait until the child process closes the error pipe.
   int child_errno = 0;
-  r = read(error_pipe_read, &child_errno, sizeof(child_errno));
+  r = pipe_read(error_pipe_read, (uint8_t *) &child_errno, sizeof(child_errno));
+  if (r == -EPIPE) {
+    r = 0; // We expect the stream to be closed.
+  }
+
   if (r < 0) {
     goto cleanup;
   }
