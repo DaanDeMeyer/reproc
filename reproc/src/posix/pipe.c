@@ -1,6 +1,6 @@
 #include <pipe.h>
 
-#include <error.h>
+#include "error.h"
 
 #include <assert.h>
 #include <errno.h>

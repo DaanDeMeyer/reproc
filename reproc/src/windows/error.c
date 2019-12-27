@@ -1,6 +1,6 @@
 #include <reproc/reproc.h>
 
-#include <error.h>
+#include "error.h"
 
 #include <assert.h>
 #include <limits.h>

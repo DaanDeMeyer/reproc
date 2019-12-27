@@ -1,7 +1,7 @@
-#include <redirect.h>
+#include "redirect.h"
 
-#include <error.h>
-#include <pipe.h>
+#include "error.h"
+#include "pipe.h"
 
 #include <assert.h>
 #include <windows.h>

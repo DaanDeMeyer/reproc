@@ -1,11 +1,11 @@
 #include <reproc/reproc.h>
 
-#include <error.h>
-#include <handle.h>
-#include <macro.h>
-#include <pipe.h>
-#include <process.h>
-#include <redirect.h>
+#include "error.h"
+#include "handle.h"
+#include "macro.h"
+#include "pipe.h"
+#include "process.h"
+#include "redirect.h"
 
 #include <assert.h>
 #include <limits.h>
