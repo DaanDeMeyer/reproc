@@ -208,9 +208,12 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
   # Only use the headers from the repository when building. When installing we
   # want to use the install location of the headers (e.g. /usr/include) as the
   # include directory instead.
-  target_include_directories(${TARGET} PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+  target_include_directories(
+    ${TARGET}
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PRIVATE
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
   )
 
   # Adapted from https://codingnest.com/basic-cmake-part-2/.
