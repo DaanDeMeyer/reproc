@@ -69,9 +69,10 @@ std::error_code process::write(const uint8_t *buffer, size_t size) noexcept
   return error::from(r);
 }
 
-void process::close(stream stream) noexcept
+std::error_code process::close(stream stream) noexcept
 {
-  return reproc_close(process_.get(), static_cast<REPROC_STREAM>(stream));
+  int r = reproc_close(process_.get(), static_cast<REPROC_STREAM>(stream));
+  return error::from(r);
 }
 
 bool process::running() noexcept

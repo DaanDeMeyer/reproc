@@ -37,7 +37,10 @@ int main(void)
   // Close the stdin stream since we're not going to write any input to git.
   // While the example works perfectly without closing stdin we do it here to
   // show how `reproc_close` works.
-  reproc_close(process, REPROC_STREAM_IN);
+  r = reproc_close(process, REPROC_STREAM_IN);
+  if (r < 0) {
+    goto cleanup;
+  }
 
   // Read the entire output of the child process. I've found this pattern to be
   // the most readable when reading the entire output of a child process. The

@@ -11,8 +11,6 @@
 #include <limits.h>
 #include <stdlib.h>
 
-enum { REPROC_STATUS_NOT_STARTED = -1, REPROC_STATUS_RUNNING = -2 };
-
 struct reproc_t {
   int exit_status;
 
@@ -47,9 +45,15 @@ static int redirect(handle *parent,
       return redirect_discard(parent, child, (REDIRECT_STREAM) stream);
   }
 
-  assert(false);
-  return -1;
+  return REPROC_ERROR_INVALID_ARGUMENT;
 }
+
+#define assert_return(expression, r)                                           \
+  do {                                                                         \
+    if (!(expression)) {                                                       \
+      return (r);                                                              \
+    }                                                                          \
+  } while (false)
 
 reproc_t *reproc_new(void)
 {
@@ -58,7 +62,7 @@ reproc_t *reproc_new(void)
     return NULL;
   }
 
-  *process = (reproc_t){ .exit_status = REPROC_STATUS_NOT_STARTED,
+  *process = (reproc_t){ .exit_status = REPROC_ERROR_INVALID_ARGUMENT,
                          .handle = HANDLE_INVALID,
                          .in = HANDLE_INVALID,
                          .out = HANDLE_INVALID,
@@ -71,10 +75,11 @@ int reproc_start(reproc_t *process,
                  const char *const *argv,
                  reproc_options options)
 {
-  assert(process);
-  assert(process->exit_status == REPROC_STATUS_NOT_STARTED);
-  assert(argv);
-  assert(argv[0]);
+  assert_return(process, REPROC_ERROR_INVALID_ARGUMENT);
+  assert_return(process->exit_status == REPROC_ERROR_INVALID_ARGUMENT,
+                REPROC_ERROR_INVALID_ARGUMENT);
+  assert_return(argv, REPROC_ERROR_INVALID_ARGUMENT);
+  assert_return(argv[0], REPROC_ERROR_INVALID_ARGUMENT);
 
   handle child_in = HANDLE_INVALID;
   handle child_out = HANDLE_INVALID;
@@ -135,7 +140,7 @@ cleanup:
     process->out = handle_destroy(process->out);
     process->err = handle_destroy(process->err);
   } else {
-    process->exit_status = REPROC_STATUS_RUNNING;
+    process->exit_status = REPROC_ERROR_IN_PROGRESS;
   }
 
   return r;
@@ -146,9 +151,8 @@ int reproc_read(reproc_t *process,
                 uint8_t *buffer,
                 size_t size)
 {
-  assert(process);
-  assert(process->exit_status == REPROC_STATUS_RUNNING);
-  assert(buffer);
+  assert_return(process, REPROC_ERROR_INVALID_ARGUMENT);
+  assert_return(buffer, REPROC_ERROR_INVALID_ARGUMENT);
 
   handle pipes[2] = { process->err, process->out };
   int r = -1;
@@ -182,9 +186,8 @@ int reproc_drain(reproc_t *process,
                               void *context),
                  void *context)
 {
-  assert(process);
-  assert(process->exit_status == REPROC_STATUS_RUNNING);
-  assert(sink);
+  assert_return(process, REPROC_ERROR_INVALID_ARGUMENT);
+  assert_return(sink, REPROC_ERROR_INVALID_ARGUMENT);
 
   // A single call to `read` might contain multiple messages. By always calling
   // `sink` once with no data before reading, we give it the chance to process
@@ -216,10 +219,11 @@ int reproc_drain(reproc_t *process,
 
 int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 {
-  assert(process);
-  assert(process->in);
-  assert(process->exit_status == REPROC_STATUS_RUNNING);
-  assert(buffer);
+  assert_return(process, REPROC_ERROR_INVALID_ARGUMENT);
+  assert_return(process->in, REPROC_ERROR_INVALID_ARGUMENT);
+  assert_return(process->exit_status == REPROC_ERROR_IN_PROGRESS,
+                REPROC_ERROR_INVALID_ARGUMENT);
+  assert_return(buffer, REPROC_ERROR_INVALID_ARGUMENT);
 
   int r = -1;
 
@@ -239,33 +243,36 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
   return r < 0 ? r : 0;
 }
 
-void reproc_close(reproc_t *process, REPROC_STREAM stream)
+int reproc_close(reproc_t *process, REPROC_STREAM stream)
 {
-  assert(process);
-  assert(process->exit_status == REPROC_STATUS_RUNNING);
+  assert_return(process, REPROC_ERROR_INVALID_ARGUMENT);
+  assert_return(process->exit_status == REPROC_ERROR_IN_PROGRESS,
+                REPROC_ERROR_INVALID_ARGUMENT);
 
   switch (stream) {
     case REPROC_STREAM_IN:
       process->in = handle_destroy(process->in);
-      return;
+      break;
     case REPROC_STREAM_OUT:
       process->out = handle_destroy(process->out);
-      return;
+      break;
     case REPROC_STREAM_ERR:
       process->err = handle_destroy(process->err);
-      return;
+      break;
+    default:
+      return REPROC_ERROR_INVALID_ARGUMENT;
   }
 
-  assert(false);
+  return 0;
 }
 
 int reproc_wait(reproc_t *process, unsigned int timeout)
 {
-  assert(process);
+  assert_return(process, REPROC_ERROR_INVALID_ARGUMENT);
 
   int r = -1;
 
-  if (process->exit_status != REPROC_STATUS_RUNNING) {
+  if (process->exit_status != REPROC_ERROR_IN_PROGRESS) {
     return 0;
   }
 
@@ -276,14 +283,12 @@ int reproc_wait(reproc_t *process, unsigned int timeout)
 
 bool reproc_running(reproc_t *process)
 {
-  assert(process);
-
   return reproc_wait(process, 0) == REPROC_ERROR_WAIT_TIMEOUT;
 }
 
 int reproc_terminate(reproc_t *process)
 {
-  assert(process);
+  assert_return(process, REPROC_ERROR_INVALID_ARGUMENT);
 
   if (!reproc_running(process)) {
     return 0;
@@ -294,7 +299,7 @@ int reproc_terminate(reproc_t *process)
 
 int reproc_kill(reproc_t *process)
 {
-  assert(process);
+  assert_return(process, REPROC_ERROR_INVALID_ARGUMENT);
 
   if (!reproc_running(process)) {
     return 0;
@@ -305,7 +310,7 @@ int reproc_kill(reproc_t *process)
 
 int reproc_stop(reproc_t *process, reproc_stop_actions stop_actions)
 {
-  assert(process);
+  assert_return(process, REPROC_ERROR_INVALID_ARGUMENT);
 
   reproc_stop_action actions[3] = { stop_actions.first, stop_actions.second,
                                     stop_actions.third };
@@ -324,6 +329,8 @@ int reproc_stop(reproc_t *process, reproc_stop_actions stop_actions)
       case REPROC_STOP_KILL:
         r = reproc_kill(process);
         break;
+      default:
+        return REPROC_ERROR_INVALID_ARGUMENT;
     }
 
     // Stop if `reproc_terminate` or `reproc_kill` fail.
@@ -347,7 +354,7 @@ int reproc_exit_status(reproc_t *process)
 
 reproc_t *reproc_destroy(reproc_t *process)
 {
-  assert(process);
+  assert_return(process, NULL);
 
   reproc_stop(process, process->stop_actions);
 

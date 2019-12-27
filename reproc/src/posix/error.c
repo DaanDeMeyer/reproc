@@ -6,8 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+const int REPROC_ERROR_INVALID_ARGUMENT = -EINVAL;
 const int REPROC_ERROR_STREAM_CLOSED = -EPIPE;
 const int REPROC_ERROR_WAIT_TIMEOUT = -EAGAIN;
+const int REPROC_ERROR_IN_PROGRESS = -EINPROGRESS;
 
 int error_unify(int r, int success)
 {

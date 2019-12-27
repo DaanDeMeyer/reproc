@@ -122,7 +122,7 @@ public:
                                         size_t size) noexcept;
 
   /*! `reproc_close` */
-  REPROCXX_EXPORT void close(stream stream) noexcept;
+  REPROCXX_EXPORT std::error_code close(stream stream) noexcept;
 
   /*! `reproc_running` */
   REPROCXX_EXPORT bool running() noexcept;

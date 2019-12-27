@@ -23,7 +23,10 @@ int main(void)
     goto cleanup;
   }
 
-  reproc_close(process, REPROC_STREAM_IN);
+  r = reproc_close(process, REPROC_STREAM_IN);
+  if (r < 0) {
+    goto cleanup;
+  }
 
   // A sink function receives a single context parameter. `reproc_sink_string`
   // requires a `char **` with its value set to `NULL` to be passed to

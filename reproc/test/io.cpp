@@ -26,7 +26,8 @@ io(const char *mode, const std::string &input, const std::string &expected)
                    input.size());
   REQUIRE(r >= 0);
 
-  reproc_close(process, REPROC_STREAM_IN);
+  r = reproc_close(process, REPROC_STREAM_IN);
+  REQUIRE(r >= 0);
 
   char *output = nullptr;
   r = reproc_drain(process, reproc_sink_string, &output);

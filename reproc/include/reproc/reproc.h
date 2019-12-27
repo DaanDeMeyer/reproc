@@ -15,11 +15,15 @@ type and can be allocated and freed via `reproc_new` and `reproc_free`
 respectively. */
 typedef struct reproc_t reproc_t;
 
+/*! An invalid argument was passed to an API function */
+extern REPROC_EXPORT const int REPROC_ERROR_INVALID_ARGUMENT;
 /*! A timeout value passed to an API function expired. */
 extern REPROC_EXPORT const int REPROC_ERROR_WAIT_TIMEOUT;
 /*! The child process closed one of its streams (and in the case of
 stdout/stderr all of the data remaining in that stream has been read). */
 extern REPROC_EXPORT const int REPROC_ERROR_STREAM_CLOSED;
+/*! The process is already (or still) running. */
+extern REPROC_EXPORT const int REPROC_ERROR_IN_PROGRESS;
 
 /*! Used to tell reproc where to redirect the streams of the child process. */
 typedef enum {
@@ -206,7 +210,7 @@ This function is necessary when a child process reads from stdin until it is
 closed. After writing all the input to the child process using `reproc_write`,
 the standard input stream can be closed using this function.
 */
-REPROC_EXPORT void reproc_close(reproc_t *process, REPROC_STREAM stream);
+REPROC_EXPORT int reproc_close(reproc_t *process, REPROC_STREAM stream);
 
 /*!
 Waits `timeout` milliseconds for the child process to exit.
@@ -279,9 +283,13 @@ Actionable errors:
 REPROC_EXPORT int reproc_stop(reproc_t *process,
                               reproc_stop_actions stop_actions);
 
-/*! Returns the exit status of `process` if `process` has exited. Returns
-a negative value if `process` has not been started or if `process` is still
-running. */
+/*!
+Returns the exit status of `process`.
+
+Actionable errors:
+- `REPROC_ERROR_INVALID_ARGUMENT` (the process has not yet been started)
+- `REPROC_ERROR_IN_PROGRESS` (the process is still running)
+*/
 REPROC_EXPORT int reproc_exit_status(reproc_t *process);
 
 /*!
