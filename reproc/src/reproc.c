@@ -144,7 +144,7 @@ cleanup:
 int reproc_read(reproc_t *process,
                 REPROC_STREAM *stream,
                 uint8_t *buffer,
-                unsigned int size)
+                size_t size)
 {
   assert(process);
   assert(process->exit_status == REPROC_STATUS_RUNNING);
@@ -178,7 +178,7 @@ int reproc_read(reproc_t *process,
 int reproc_drain(reproc_t *process,
                  bool (*sink)(REPROC_STREAM stream,
                                 const uint8_t *buffer,
-                                unsigned int size,
+                                size_t size,
                                 void *context),
                  void *context)
 {
@@ -203,7 +203,7 @@ int reproc_drain(reproc_t *process,
       break;
     }
 
-    unsigned int bytes_read = (unsigned int) r;
+    size_t bytes_read = (size_t) r;
 
     // `sink` returns false to tell us to stop reading.
     if (!sink(stream, buffer, bytes_read, context)) {
@@ -214,7 +214,7 @@ int reproc_drain(reproc_t *process,
   return r == REPROC_ERROR_STREAM_CLOSED ? 0 : r;
 }
 
-int reproc_write(reproc_t *process, const uint8_t *buffer, unsigned int size)
+int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 {
   assert(process);
   assert(process->in);
@@ -229,7 +229,7 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, unsigned int size)
       break;
     }
 
-    unsigned int bytes_written = (unsigned int) r;
+    size_t bytes_written = (size_t) r;
 
     assert(bytes_written <= size);
     buffer += bytes_written;
@@ -311,7 +311,7 @@ int reproc_stop(reproc_t *process, reproc_stop_actions stop_actions)
                                     stop_actions.third };
   int r = -1;
 
-  for (unsigned int i = 0; i < ARRAY_SIZE(actions); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(actions); i++) {
     switch (actions[i].action) {
       case REPROC_STOP_NOOP:
         continue;

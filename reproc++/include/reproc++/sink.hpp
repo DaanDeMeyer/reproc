@@ -2,6 +2,7 @@
 
 #include <reproc++/reproc.hpp>
 
+#include <cassert>
 #include <iosfwd>
 #include <mutex>
 #include <ostream>
@@ -20,7 +21,7 @@ public:
       : out_(out), err_(err)
   {}
 
-  bool operator()(stream stream, const uint8_t *buffer, unsigned int size)
+  bool operator()(stream stream, const uint8_t *buffer, size_t size)
   {
     switch (stream) {
       case stream::out:
@@ -48,14 +49,19 @@ public:
       : out_(out), err_(err)
   {}
 
-  bool operator()(stream stream, const uint8_t *buffer, unsigned int size)
+  bool operator()(stream stream, const uint8_t *buffer, size_t size)
   {
+    assert(static_cast<uintmax_t>(size) <=
+           static_cast<uintmax_t>(std::numeric_limits<std::streamsize>::max()));
+
     switch (stream) {
       case stream::out:
-        out_.write(reinterpret_cast<const char *>(buffer), size);
+        out_.write(reinterpret_cast<const char *>(buffer),
+                   static_cast<std::streamsize>(size));
         break;
       case stream::err:
-        err_.write(reinterpret_cast<const char *>(buffer), size);
+        err_.write(reinterpret_cast<const char *>(buffer),
+                   static_cast<std::streamsize>(size));
         break;
       case stream::in:
         break;
@@ -68,8 +74,7 @@ public:
 /*! Discards all output. */
 class discard {
 public:
-  bool
-  operator()(stream stream, const uint8_t *buffer, unsigned int size) noexcept
+  bool operator()(stream stream, const uint8_t *buffer, size_t size) noexcept
   {
     (void) stream;
     (void) buffer;
@@ -90,7 +95,7 @@ public:
       : sink_(out, err), mutex_(mutex)
   {}
 
-  bool operator()(stream stream, const uint8_t *buffer, unsigned int size)
+  bool operator()(stream stream, const uint8_t *buffer, size_t size)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     return sink_(stream, buffer, size);

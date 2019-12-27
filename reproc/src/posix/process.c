@@ -387,13 +387,13 @@ static struct timespec timespec_subtract(struct timespec lhs,
 }
 
 static int exit_check(pid_t *processes,
-                      unsigned int num_processes,
+                      size_t num_processes,
                       int *exit_status)
 {
   assert(exit_status);
   assert(num_processes <= INT_MAX);
 
-  unsigned int i = 0;
+  size_t i = 0;
   int status = -1;
   int r = -1;
 
@@ -464,7 +464,7 @@ static int signal_wait(int signal, const struct timespec *timeout)
 }
 
 int process_wait(pid_t *processes,
-                 unsigned int num_processes,
+                 size_t num_processes,
                  unsigned int timeout,
                  int *exit_status)
 {

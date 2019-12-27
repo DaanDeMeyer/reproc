@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 namespace reproc {
 namespace detail {
 
@@ -33,7 +35,7 @@ public:
   ~array() noexcept
   {
     if (owned_) {
-      for (unsigned int i = 0; data_[i] != nullptr; i++) {
+      for (size_t i = 0; data_[i] != nullptr; i++) {
         delete[] data_[i];
       }
 

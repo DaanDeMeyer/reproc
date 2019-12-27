@@ -2,6 +2,8 @@
 
 #include <handle.h>
 
+#include <stddef.h>
+
 struct process_options {
   // If `NULL`, the child process inherits the environment of the current
   // process.
@@ -30,7 +32,7 @@ int process_create(handle *process,
 // If `timeout` is `REPROC_INFINITE`, this function waits indefinitely for a
 // process to exit.
 int process_wait(handle *processes,
-                 unsigned int num_processes,
+                 size_t num_processes,
                  unsigned int timeout,
                  int *exit_status);
 

@@ -39,13 +39,13 @@ The `drain` example shows how to use `reproc_sink_string`.
 */
 static bool reproc_sink_string(REPROC_STREAM stream,
                                const uint8_t *buffer,
-                               unsigned int size,
+                               size_t size,
                                void *context);
 
 /*! Discards the output of a process. */
 static bool reproc_sink_discard(REPROC_STREAM stream,
                                 const uint8_t *buffer,
-                                unsigned int size,
+                                size_t size,
                                 void *context);
 
 // We inline the sink implementations to avoid allocation/de-allocation issues
@@ -57,7 +57,7 @@ static bool reproc_sink_discard(REPROC_STREAM stream,
 
 static inline bool reproc_sink_string(REPROC_STREAM stream,
                                       const uint8_t *buffer,
-                                      unsigned int size,
+                                      size_t size,
                                       void *context)
 {
   (void) stream;
@@ -83,7 +83,7 @@ static inline bool reproc_sink_string(REPROC_STREAM stream,
 
 static inline bool reproc_sink_discard(REPROC_STREAM stream,
                                        const uint8_t *buffer,
-                                       unsigned int size,
+                                       size_t size,
                                        void *context)
 {
   (void) stream;

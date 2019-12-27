@@ -101,8 +101,8 @@ public:
 
   /*! `reproc_read` but returns a tuple of (stream read from, amount of bytes
   read, error_code) instead of taking output arguments by pointer. */
-  REPROCXX_EXPORT std::tuple<stream, unsigned int, std::error_code>
-  read(uint8_t *buffer, unsigned int size) noexcept;
+  REPROCXX_EXPORT std::tuple<stream, size_t, std::error_code>
+  read(uint8_t *buffer, size_t size) noexcept;
 
   /*!
   `reproc_drain` but takes a lambda as its argument instead of a function and
@@ -111,7 +111,7 @@ public:
   `sink` expects the following signature:
 
   ```c++
-  bool sink(stream stream, const uint8_t *buffer, unsigned int size);
+  bool sink(stream stream, const uint8_t *buffer, size_t size);
   ```
   */
   template <typename Sink>
@@ -119,7 +119,7 @@ public:
 
   /*! `reproc_write` */
   REPROCXX_EXPORT std::error_code write(const uint8_t *buffer,
-                                        unsigned int size) noexcept;
+                                        size_t size) noexcept;
 
   /*! `reproc_close` */
   REPROCXX_EXPORT void close(stream stream) noexcept;
@@ -165,7 +165,7 @@ std::error_code process::drain(Sink &&sink)
 
   while (true) {
     stream stream = {};
-    unsigned int bytes_read = 0;
+    size_t bytes_read = 0;
     std::tie(stream, bytes_read, ec) = read(buffer, sizeof(buffer));
     if (ec) {
       break;

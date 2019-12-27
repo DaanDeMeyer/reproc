@@ -22,10 +22,8 @@ io(const char *mode, const std::string &input, const std::string &expected)
   r = reproc_start(process, argv.data(), {});
   REQUIRE(r >= 0);
 
-  unsigned int size = static_cast<unsigned int>(input.size());
-
   r = reproc_write(process, reinterpret_cast<const uint8_t *>(input.data()),
-                   size);
+                   input.size());
   REQUIRE(r >= 0);
 
   reproc_close(process, REPROC_STREAM_IN);

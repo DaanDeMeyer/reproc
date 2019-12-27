@@ -81,7 +81,7 @@ cleanup:
   return error_unify(r, 0);
 }
 
-int pipe_read(int pipe, uint8_t *buffer, unsigned int size)
+int pipe_read(int pipe, uint8_t *buffer, size_t size)
 {
   assert(buffer);
 
@@ -99,7 +99,7 @@ int pipe_read(int pipe, uint8_t *buffer, unsigned int size)
 
 static const int POLL_INFINITE = -1;
 
-int pipe_write(int pipe, const uint8_t *buffer, unsigned int size)
+int pipe_write(int pipe, const uint8_t *buffer, size_t size)
 {
   assert(buffer);
 
@@ -120,12 +120,12 @@ cleanup:
   return error_unify((int) r, (int) r);
 }
 
-int pipe_wait(const handle *pipes, unsigned int num_pipes)
+int pipe_wait(const handle *pipes, size_t num_pipes)
 {
   assert(pipes);
   assert(num_pipes <= INT_MAX);
 
-  unsigned int i = 0;
+  size_t i = 0;
   int r = -1;
 
   struct pollfd *pollfds = calloc(num_pipes, sizeof(struct pollfd));
@@ -139,7 +139,7 @@ int pipe_wait(const handle *pipes, unsigned int num_pipes)
     pollfds[i].events = POLLIN;
   }
 
-  r = poll(pollfds, num_pipes, POLL_INFINITE);
+  r = poll(pollfds, (unsigned int) num_pipes, POLL_INFINITE);
   if (r < 0) {
     goto cleanup;
   }

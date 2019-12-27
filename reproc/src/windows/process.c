@@ -466,17 +466,17 @@ cleanup:
 }
 
 int process_wait(HANDLE *processes,
-                 unsigned int num_processes,
+                 size_t num_processes,
                  unsigned int timeout,
                  int *exit_status)
 {
   assert(exit_status);
   assert(num_processes <= INT_MAX);
 
-  unsigned int completed = num_processes;
+  size_t completed = num_processes;
   BOOL r = 0;
 
-  for (unsigned int i = 0; i < num_processes; i++) {
+  for (size_t i = 0; i < num_processes; i++) {
     if (WaitForSingleObject(processes[i], 0) == WAIT_OBJECT_0) {
       DWORD status = 0;
       r = GetExitCodeProcess(processes[i], &status);
@@ -521,7 +521,7 @@ int process_wait(HANDLE *processes,
 
     uintptr_t pid = (uintptr_t) lpoverlapped;
 
-    for (unsigned int i = 0; i < num_processes; i++) {
+    for (size_t i = 0; i < num_processes; i++) {
       if (GetProcessId(processes[i]) == pid) {
         completed = i;
         break;

@@ -55,7 +55,7 @@ int main(void)
     }
 
     // On success, `reproc_read` returns the amount of bytes read.
-    unsigned int bytes_read = (unsigned int) r;
+    size_t bytes_read = (size_t) r;
 
     // Increase the size of `output` to make sure it can hold the new output.
     // This is definitely not the most performant way to grow a buffer so keep

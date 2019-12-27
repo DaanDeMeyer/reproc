@@ -3,6 +3,7 @@
 #include <reproc/export.h>
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -157,7 +158,7 @@ Actionable errors:
 REPROC_EXPORT int reproc_read(reproc_t *process,
                               REPROC_STREAM *stream,
                               uint8_t *buffer,
-                              unsigned int size);
+                              size_t size);
 
 /*!
 Calls `reproc_read` on `stream` until `sink` returns false, an error occurs or
@@ -176,7 +177,7 @@ For examples of sinks, see `sink.h`.
 REPROC_EXPORT int reproc_drain(reproc_t *process,
                                bool (*sink)(REPROC_STREAM stream,
                                             const uint8_t *buffer,
-                                            unsigned int size,
+                                            size_t size,
                                             void *context),
                                void *context);
 
@@ -196,7 +197,7 @@ Actionable errors:
 - `REPROC_ERROR_STREAM_CLOSED`
 */
 REPROC_EXPORT int
-reproc_write(reproc_t *process, const uint8_t *buffer, unsigned int size);
+reproc_write(reproc_t *process, const uint8_t *buffer, size_t size);
 
 /*!
 Closes the stream endpoint of the parent process indicated by `stream`.
