@@ -484,6 +484,8 @@ int process_wait(HANDLE *processes,
         goto cleanup;
       }
 
+      assert(status <= INT_MAX);
+
       completed = i;
       *exit_status = (int) status;
 
@@ -533,6 +535,7 @@ int process_wait(HANDLE *processes,
     goto cleanup;
   }
 
+  assert(status <= INT_MAX);
   *exit_status = (int) status;
 
 cleanup:

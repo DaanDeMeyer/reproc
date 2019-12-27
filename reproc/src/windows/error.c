@@ -2,6 +2,7 @@
 
 #include <error.h>
 
+#include <limits.h>
 #include <stdlib.h>
 #include <windows.h>
 
@@ -12,6 +13,7 @@ const int REPROC_ERROR_WAIT_TIMEOUT = -WAIT_TIMEOUT;
 
 int error_unify(int r, int success)
 {
+  assert(GetLastError() <= INT_MAX);
   return r == 0 ? -(int) GetLastError() : success;
 }
 

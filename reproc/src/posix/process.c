@@ -232,7 +232,7 @@ int process_create(pid_t *process,
 
   int error_pipe_read = HANDLE_INVALID;
   int error_pipe_write = HANDLE_INVALID;
-  int child = HANDLE_INVALID;
+  pid_t child = HANDLE_INVALID;
   ssize_t r = -1;
 
   // We create an error pipe to receive errors from the child process.
@@ -324,6 +324,7 @@ int process_create(pid_t *process,
     _exit(write_errno(error_pipe_write));
   }
 
+  assert(r <= INT_MAX);
   child = (int) r;
 
   // Close the error pipe write end on the parent's side so `read` will return
