@@ -12,6 +12,7 @@ BraceWrapping:
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 Cpp11BracedListStyle: false
 IndentCaseLabels: true
+IndentPPDirectives: BeforeHash
 PenaltyBreakAssignment: 100
 PenaltyBreakBeforeFirstCallParameter: 100
 SpaceAfterCStyleCast: true

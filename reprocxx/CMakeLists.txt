@@ -1,12 +1,12 @@
-reproc_add_library(reproc++ CXX 11)
+reproc_add_library(reprocxx CXX 11)
 
-target_link_libraries(reproc++ PRIVATE
+target_link_libraries(reprocxx PRIVATE
   reproc
   $<$<BOOL:${REPROC_MULTITHREADED}>:Threads::Threads>
 )
 
 target_sources(
-  reproc++
+  reprocxx
   PRIVATE
     src/reproc.cpp
   INTERFACE
@@ -16,10 +16,10 @@ target_sources(
 )
 
 if(REPROC_EXAMPLES)
-  reproc_add_example(cmake-help CXX 11 reproc++)
-  reproc_add_example(forward CXX 11 reproc++)
+  reproc_add_example(cmake-help CXX 11 reprocxx)
+  reproc_add_example(forward CXX 11 reprocxx)
 
   if(REPROC_MULTITHREADED)
-    reproc_add_example(background CXX 11 reproc++ Threads::Threads)
+    reproc_add_example(background CXX 11 reprocxx Threads::Threads)
   endif()
 endif()

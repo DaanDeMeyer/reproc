@@ -191,36 +191,11 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
     )
   endif()
 
-  # A preprocesor macro cannot contain + so we replace it with x.
-  string(REPLACE + x EXPORT_MACRO_BASE ${TARGET})
-  string(TOUPPER ${EXPORT_MACRO_BASE} EXPORT_MACRO_BASE)
+  string(TOUPPER ${TARGET} TARGET_UPPER)
 
-  if(LANGUAGE STREQUAL C)
-    set(HEADER_EXT h)
-  else()
-    set(HEADER_EXT hpp)
-  endif()
-
-  # Generate export headers. We generate export headers using CMake since
-  # different export files are required depending on whether a library is shared
-  # or static and we can't determine whether a library is shared or static from
-  # the export header without requiring the user to add a #define which we want
-  # to avoid.
-  generate_export_header(
-    ${TARGET}
-    BASE_NAME ${EXPORT_MACRO_BASE}
-    EXPORT_FILE_NAME
-      ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}/export.${HEADER_EXT}
-  )
-
-  # `generate_export_header` generates `dllexport/dllimport` export macros for
-  # object libraries on Windows which leads to linker errors when using them.
-  # By defining `${EXPORT_MACRO_BASE}_STATIC_DEFINE`, we make sure the export
-  # macros expand to nothing.
-  if(REPROC_OBJECT_LIBRARIES AND (WIN32 OR CYGWIN))
-      target_compile_definitions(${TARGET} PUBLIC
-        ${EXPORT_MACRO_BASE}_STATIC_DEFINE
-      )
+  target_compile_definitions(${TARGET} PRIVATE ${TARGET_UPPER}_BUILDING)
+  if(REPROC_OBJECT_LIBRARIES OR NOT BUILD_SHARED_LIBS)
+    target_compile_definitions(${TARGET} PUBLIC ${TARGET_UPPER}_STATIC)
   endif()
 
   # Make sure we follow the popular naming convention for shared libraries on
@@ -236,7 +211,6 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
   target_include_directories(${TARGET} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
   )
 
   # Adapted from https://codingnest.com/basic-cmake-part-2/.
@@ -247,9 +221,7 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
     # Headers
 
     install(
-      DIRECTORY
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/${TARGET}
-        ${CMAKE_CURRENT_BINARY_DIR}/include/${TARGET}
+      DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/${TARGET}
       DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
       COMPONENT ${TARGET}-development
     )

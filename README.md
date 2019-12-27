@@ -71,7 +71,7 @@ add_subdirectory(<path-to-reproc>) # For example: add_subdirectory(external/repr
 CMake options can be specified before calling `add_subdirectory`:
 
 ```cmake
-set(REPROC++ ON)
+set(REPROCXX ON)
 add_subdirectory(<path-to-reproc>)
 ```
 
@@ -107,7 +107,7 @@ To find an installed version of reproc using CMake:
 
 ```cmake
 find_package(reproc) # Find reproc.
-find_package(reproc++) # Find reproc++.
+find_package(reprocxx) # Find reproc++.
 ```
 
 After building reproc as part of your project or finding a installed version of
@@ -115,7 +115,7 @@ reproc, you can link against it from within your CMakeLists.txt file as follows:
 
 ```cmake
 target_link_libraries(myapp reproc) # Link against reproc.
-target_link_libraries(myapp reproc++) # Link against reproc++.
+target_link_libraries(myapp reprocxx) # Link against reproc++.
 ```
 
 ## Dependencies
@@ -130,7 +130,7 @@ reproc's build can be configured using the following CMake options:
 
 ### User
 
-- `REPROC++`: Build reproc++ (default: `${REPROC_DEVELOP}`).
+- `REPROCXX`: Build reproc++ (default: `${REPROC_DEVELOP}`).
 - `REPROC_TEST`: Build tests (default: `${REPROC_DEVELOP}`).
 
   Run the tests by running the `test` binary which can be found in the build
@@ -191,7 +191,7 @@ reproc's build can be configured using the following CMake options:
 
 Each function and class is documented extensively in its header file. Examples
 can be found in the examples subdirectory of [reproc](reproc/examples) and
-[reproc++](reproc++/examples).
+[reproc++](reprocxx/examples).
 
 ## Error handling
 
@@ -275,7 +275,7 @@ Different threads can read from or write to different streams at the same time.
 This is a valid approach when you want to write to stdin and read from stdout in
 parallel.
 
-Look at the [background](reproc++/examples/background.cpp) example for more
+Look at the [background](reprocxx/examples/background.cpp) example for more
 information on how to work with reproc from multiple threads.
 
 ## Gotchas
