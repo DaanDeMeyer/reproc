@@ -15,20 +15,20 @@
 #include <unistd.h>
 
 #if defined(__APPLE__)
-#include <sys/event.h>
+  #include <sys/event.h>
 #endif
 
 #if defined(__APPLE__)
-#define EXECVPE execve
+  #define EXECVPE execve
 #else
-#define EXECVPE execvpe
+  #define EXECVPE execvpe
 #endif
 
 // https://github.com/neovim/neovim/pull/5243
 #if defined(__APPLE__) && defined(__GNUC__) && !defined(__clang__)
-#define SIGADDSET(set, signum) sigaddset((int *) (set), (signum))
+  #define SIGADDSET(set, signum) sigaddset((int *) (set), (signum))
 #else
-#define SIGADDSET(set, signum) sigaddset((set), (signum))
+  #define SIGADDSET(set, signum) sigaddset((set), (signum))
 #endif
 
 // Including the entire reproc.h header is overkill so we import only the
@@ -386,9 +386,7 @@ static struct timespec timespec_subtract(struct timespec lhs,
   return result;
 }
 
-static int exit_check(pid_t *processes,
-                      size_t num_processes,
-                      int *exit_status)
+static int exit_check(pid_t *processes, size_t num_processes, int *exit_status)
 {
   assert(exit_status);
   assert(num_processes <= INT_MAX);

@@ -1,10 +1,10 @@
 #include <stdio.h>
 
 #if defined(_WIN32)
-#include <direct.h>
-#define getcwd _getcwd
+  #include <direct.h>
+  #define getcwd _getcwd
 #else
-#include <unistd.h>
+  #include <unistd.h>
 #endif
 
 int main()

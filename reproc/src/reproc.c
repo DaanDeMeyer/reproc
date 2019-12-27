@@ -177,9 +177,9 @@ int reproc_read(reproc_t *process,
 
 int reproc_drain(reproc_t *process,
                  bool (*sink)(REPROC_STREAM stream,
-                                const uint8_t *buffer,
-                                size_t size,
-                                void *context),
+                              const uint8_t *buffer,
+                              size_t size,
+                              void *context),
                  void *context)
 {
   assert(process);

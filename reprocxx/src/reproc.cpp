@@ -50,8 +50,8 @@ std::error_code process::start(const arguments &arguments,
   return error::from(r);
 }
 
-std::tuple<stream, size_t, std::error_code>
-process::read(uint8_t *buffer, size_t size) noexcept
+std::tuple<stream, size_t, std::error_code> process::read(uint8_t *buffer,
+                                                          size_t size) noexcept
 {
   REPROC_STREAM stream = {};
 
@@ -63,8 +63,7 @@ process::read(uint8_t *buffer, size_t size) noexcept
   return { static_cast<enum stream>(stream), bytes_read, ec };
 }
 
-std::error_code process::write(const uint8_t *buffer,
-                               size_t size) noexcept
+std::error_code process::write(const uint8_t *buffer, size_t size) noexcept
 {
   int r = reproc_write(process_.get(), buffer, size);
   return error::from(r);
