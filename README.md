@@ -193,6 +193,9 @@ Each function and class is documented extensively in its header file. Examples
 can be found in the examples subdirectory of [reproc](reproc/examples) and
 [reproc++](reprocxx/examples).
 
+Be sure to read the gotchas section carefully to understand reproc's limitations
+before using it.
+
 ## Error handling
 
 On failure, Most functions in reproc's API return a negative `errno` (POSIX) or
@@ -264,38 +267,91 @@ if (ec) {
 
 ## Multithreading
 
-Guidelines for using a reproc child process from multiple threads:
-
-- Don't wait for or stop the same child process from multiple threads at the
-  same time.
-- Don't read from or write to the same stream of the same child process from
-  multiple threads at the same time.
-
-Different threads can read from or write to different streams at the same time.
-This is a valid approach when you want to write to stdin and read from stdout in
-parallel.
-
-Look at the [background](reprocxx/examples/background.cpp) example for more
-information on how to work with reproc from multiple threads.
+On POSIX, reproc should not be used from multiple threads at the same time. On
+Windows, all operations on a child process should be done on the same thread
+that the process was started from. See the gotchas section from more
+information.
 
 ## Gotchas
 
-- (POSIX) On POSIX a parent process is required to wait on a child process that
-  has exited (using `reproc_wait`) before all resources related to that process
-  can be released by the kernel. If the parent doesn't wait on a child process
-  after it exits, the child process becomes a
+- It is strongly recommended to block the `SIGCHLD` signal (POSIX) in all
+  threads started in the parent process.
+
+  On POSIX, reproc implements waiting for processes to exit by catching pending
+  `SIGCHLD` signals. Because signals are only added to the pending signal queue
+  when they are blocked by every thread, `reproc_wait` will fail to notice a
+  child process exit if there are threads in the process that do not block
+  `SIGCHLD` since the signal will be delivered to that thread. Because of this,
+  it is strongly recommended to block the `SIGCHLD` signal in all threads
+  started by the parent process.
+
+- It is strongly recommended to have reproc manage all child processes in the
+  parent process.
+
+  On POSIX, even when the `SIGCHLD` signal is blocked in all threads, if two or
+  more threads call `reproc_wait` at the same time, only one thread will receive
+  any pending `SIGCHLD` signal. More generally, a pending `SIGCHLD` signal will
+  be delivered to one of all threads that are waiting for pending `SIGCHLD`
+  signals. As a result, any call to `reproc_wait` can block indefinitely if
+  there are other threads catching pending `SIGCHLD` signals at the same time.
+  Because of this, it is strongly recommended to only handle pending `SIGCHLD`
+  signals from a single thread. If it is still viable to use reproc with that
+  restriction, it follows that reproc should be responsible for catching all
+  `SIGCHLD` signals and from that statement it follows that reproc should start
+  all child processes in the parent process since reproc can only correctly
+  clean up child processes that were started by reproc itself.
+
+- It is strongly recommended to perform all operations on a child process on the
+  same thread that the child process was started from.
+
+  On Windows, reproc implements waiting for processes to exit by adding all the
+  processes to a job object and adding a completion port to the job object. If
+  we used a global completion port and job object, if two threads waited on
+  notifications from the completion port, only one thread would actually get a
+  notification and the other thread would remain blocked. To prevent this,
+  reproc uses thread-local job objects and completion ports. Using this
+  approach, multiple threads can wait for processes to exit at the same time. Of
+  course, since a child process is only added to the job object of the thread it
+  is started from, only the completion port on that thread will receive a
+  notification when that child process exits. When waiting on a child process
+  from a different thread than the one it was started from, reproc will wait
+  indefinitely since the child process was never added to the job object of that
+  thread and as a result the completion port of that thread will not receive a
+  notification when that child process exits.
+
+- It is strongly recommended to make sure each child process actually exits
+  using `reproc_wait` or `reproc_stop`.
+
+  On POSIX, a parent process is required to wait on a child process that has
+  exited (using `reproc_wait`) before all resources related to that process can
+  be released by the kernel. If the parent doesn't wait on a child process after
+  it exits, the child process becomes a
   [zombie process](https://en.wikipedia.org/wiki/Zombie_process).
+
+- It is strongly recommend to try terminating a child process by waiting for it
+  to exit or by calling `reproc_terminate` before resorting to `reproc_kill`.
+
+  When using `reproc_kill` the child process does not receive a chance to
+  perform cleanup which could result in resources being leaked. Chief among
+  these leaks is that the child process will not be able to stop its own child
+  processes. Always try to let a child process exit normally by calling
+  `reproc_terminate` before calling `reproc_kill`. `reproc_stop` is a handy
+  helper function that can be used to perform multiple stop actions in a row
+  with timeouts inbetween.
+
+- It is strongly recommended to ignore the `SIGPIPE` signal in the parent
+  process.
+
+  On POSIX, writing to a closed stdin pipe of a child process will terminate the
+  parent process with the `SIGPIPE` signal by default. To avoid this, the
+  `SIGPIPE` signal has to be ignored in the parent process. If the `SIGPIPE`
+  signal is ignored `reproc_write` will return `REPROC_ERROR_STREAM_CLOSED` as
+  expected when writing to a closed stdin pipe.
 
 - While `reproc_terminate` allows the child process to perform cleanup it is up
   to the child process to correctly clean up after itself. reproc only sends a
   termination signal to the child process. The child process itself is
   responsible for cleaning up its own child processes and other resources.
-
-- When using `reproc_kill` the child process does not receive a chance to
-  perform cleanup which could result in resources being leaked. Chief among
-  these leaks is that the child process will not be able to stop its own child
-  processes. Always try to let a child process exit normally by calling
-  `reproc_terminate` before calling `reproc_kill`.
 
 - (Windows) `reproc_kill` is not guaranteed to kill a child process immediately
   on Windows. For more information, read the Remarks section in the
@@ -305,14 +361,3 @@ information on how to work with reproc from multiple threads.
 - While reproc tries its very best to avoid leaking file descriptors into child
   processes, there are scenarios where it cannot guarantee that no file
   descriptors will be leaked to child processes.
-
-- (POSIX) Writing to a closed stdin pipe of a child process will crash the
-  parent process with the `SIGPIPE` signal. To avoid this the `SIGPIPE` signal
-  has to be ignored in the parent process. If the `SIGPIPE` signal is ignored
-  `reproc_write` will return `REPROC_ERROR_STREAM_CLOSED` as expected when
-  writing to a closed stdin pipe.
-
-- (POSIX) Ignoring the `SIGCHLD` signal by setting its disposition to `SIG_IGN`
-  changes the behavior of the `waitpid` system call which will cause
-  `reproc_wait` to stop working as expected. Read the Notes section of the
-  `waitpid` man page for more information.
