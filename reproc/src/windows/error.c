@@ -15,7 +15,12 @@ const int REPROC_ETIMEDOUT = -WAIT_TIMEOUT;
 const int REPROC_EINPROGRESS = -WSAEINPROGRESS;
 const int REPROC_ENOMEM = ERROR_NOT_ENOUGH_MEMORY;
 
-int error_unify(int r, int success)
+int error_unify(int r)
+{
+  return error_unify_or_else(r, 0);
+}
+
+int error_unify_or_else(int r, int success)
 {
   assert(GetLastError() <= INT_MAX);
   return r == 0 ? -(int) GetLastError() : success;

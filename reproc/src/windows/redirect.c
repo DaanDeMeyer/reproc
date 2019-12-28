@@ -44,26 +44,23 @@ int redirect_inherit(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
 
   HANDLE *stream_handle = GetStdHandle(stream_id);
   if (stream_handle == INVALID_HANDLE_VALUE) {
-    goto cleanup;
+    return error_unify(r);
   }
 
   if (stream_handle == NULL) {
-    r = 0;
-    SetLastError(ERROR_BROKEN_PIPE);
-    goto cleanup;
+    return -ERROR_BROKEN_PIPE;
   }
 
   r = DuplicateHandle(GetCurrentProcess(), stream_handle, GetCurrentProcess(),
                       &handle, 0, true, DUPLICATE_SAME_ACCESS);
   if (r == 0) {
-    goto cleanup;
+    return error_unify(r);
   }
 
   *parent = HANDLE_INVALID;
   *child = handle;
 
-cleanup:
-  return error_unify(r, 0);
+  return 0;
 }
 
 int redirect_discard(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
@@ -78,15 +75,11 @@ int redirect_discard(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
                              (HANDLE) FILE_NO_TEMPLATE);
   if (handle == INVALID_HANDLE_VALUE) {
-    r = 0;
-    goto cleanup;
+    return error_unify(r);
   }
 
   *parent = HANDLE_INVALID;
   *child = handle;
 
-  r = 1;
-
-cleanup:
-  return error_unify(r, 0);
+  return 0;
 }

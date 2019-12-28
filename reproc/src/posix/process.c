@@ -331,7 +331,7 @@ cleanup:
   handle_destroy(error_pipe_read);
   handle_destroy(error_pipe_write);
 
-  return error_unify((int) r, 0);
+  return error_unify((int) r);
 }
 
 static int parse_status(int status)
@@ -352,7 +352,7 @@ int process_wait(pid_t process, unsigned int timeout)
       status = parse_status(status);
     }
 
-    return error_unify(r, status);
+    return error_unify_or_else(r, status);
   }
 
   int error_pipe_read = HANDLE_INVALID;
@@ -422,19 +422,19 @@ cleanup:
   handle_destroy(error_pipe_read);
   handle_destroy(error_pipe_write);
 
-  return error_unify(r, status);
+  return error_unify_or_else(r, status);
 }
 
 int process_terminate(pid_t process)
 {
   int r = kill(process, SIGTERM);
-  return error_unify(r, 0);
+  return error_unify(r);
 }
 
 int process_kill(pid_t process)
 {
   int r = kill(process, SIGKILL);
-  return error_unify(r, 0);
+  return error_unify(r);
 }
 
 pid_t process_destroy(pid_t process)

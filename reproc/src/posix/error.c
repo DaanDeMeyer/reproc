@@ -12,7 +12,12 @@ const int REPROC_ETIMEDOUT = -ETIMEDOUT;
 const int REPROC_EINPROGRESS = -EINPROGRESS;
 const int REPROC_ENOMEM = -ENOMEM;
 
-int error_unify(int r, int success)
+int error_unify(int r)
+{
+  return error_unify_or_else(r, 0);
+}
+
+int error_unify_or_else(int r, int success)
 {
   return r < 0 ? -errno : success;
 }

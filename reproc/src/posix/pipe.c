@@ -65,7 +65,7 @@ cleanup:
     handle_destroy(pipefd[1]);
   }
 
-  return error_unify(r, 0);
+  return error_unify(r);
 }
 
 int pipe_read(int pipe, uint8_t *buffer, size_t size)
@@ -81,7 +81,7 @@ int pipe_read(int pipe, uint8_t *buffer, size_t size)
     errno = EPIPE;
   }
 
-  return error_unify((int) r, (int) r);
+  return error_unify_or_else((int) r, (int) r);
 }
 
 int pipe_write(int pipe, const uint8_t *buffer, size_t size)
@@ -91,7 +91,7 @@ int pipe_write(int pipe, const uint8_t *buffer, size_t size)
   ssize_t r = write(pipe, buffer, size);
   assert(r <= INT_MAX);
 
-  return error_unify((int) r, (int) r);
+  return error_unify_or_else((int) r, (int) r);
 }
 
 static const int POLL_INFINITE = -1;
@@ -116,7 +116,7 @@ int pipe_wait(int out, int err, int *ready)
 
   int r = poll(pollfds, ARRAY_SIZE(pollfds), POLL_INFINITE);
   if (r < 0) {
-    return error_unify(r, 0);
+    return error_unify(r);
   }
 
   for (size_t i = 0; i < ARRAY_SIZE(pollfds); i++) {

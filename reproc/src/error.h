@@ -6,7 +6,7 @@
 #if defined(_WIN32)
   #define PROTECT_SYSTEM_ERROR                                                 \
     BOOL saved_result = r;                                                     \
-    DWORD saved_error = GetLastError()
+    DWORD saved_error = r == 0 ? GetLastError() : 0
 
   #define UNPROTECT_SYSTEM_ERROR                                               \
     do {                                                                       \
@@ -16,7 +16,7 @@
 #else
   #define PROTECT_SYSTEM_ERROR                                                 \
     int saved_result = r;                                                      \
-    int saved_error = errno
+    int saved_error = r == -1 ? errno : 0
 
   #define UNPROTECT_SYSTEM_ERROR                                               \
     do {                                                                       \
@@ -33,6 +33,8 @@
     assert((expression));                                                      \
   } while (0)
 
-int error_unify(int r, int success);
+int error_unify(int r);
+
+int error_unify_or_else(int r, int success);
 
 const char *error_string(int error);

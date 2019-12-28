@@ -83,7 +83,7 @@ cleanup:
     handle_destroy(pipe_handles[1]);
   }
 
-  return error_unify(r, 0);
+  return error_unify(r);
 }
 
 int pipe_read(HANDLE pipe, uint8_t *buffer, size_t size)
@@ -117,7 +117,7 @@ int pipe_read(HANDLE pipe, uint8_t *buffer, size_t size)
 cleanup:
   handle_destroy(overlapped.hEvent);
 
-  return error_unify(r, (int) bytes_read);
+  return error_unify_or_else(r, (int) bytes_read);
 }
 
 int pipe_write(HANDLE pipe, const uint8_t *buffer, size_t size)
@@ -151,7 +151,7 @@ int pipe_write(HANDLE pipe, const uint8_t *buffer, size_t size)
 cleanup:
   handle_destroy(overlapped.hEvent);
 
-  return error_unify(r, (int) bytes_written);
+  return error_unify_or_else(r, (int) bytes_written);
 }
 
 int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready)
@@ -216,8 +216,7 @@ int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready)
   r = 1;
 
 cleanup:;
-  // `GetLastError` will get overridden during cleanup so we save it.
-  DWORD system_error = r == 0 ? GetLastError() : 0;
+  PROTECT_SYSTEM_ERROR;
 
   for (size_t i = 0; i < ARRAY_SIZE(overlapped); i++) {
 
@@ -225,14 +224,10 @@ cleanup:;
     // completed.
 
     r = CancelIoEx(pipes[i], &overlapped[i]);
-    if (r == 0 && GetLastError() == ERROR_NOT_FOUND) {
-      r = 1;
-      continue;
-    }
+    assert_unused(r != 0 || GetLastError() == ERROR_NOT_FOUND);
 
-    if (r == 0) {
-      // An error occurred that we did not expect.
-      break;
+    if (r == 0 && GetLastError() == ERROR_NOT_FOUND) {
+      continue;
     }
 
     // `CancelIoEx` only requests cancellation. We use `GetOverlappedResult` to
@@ -240,27 +235,15 @@ cleanup:;
 
     DWORD bytes_transferred = 0;
     r = GetOverlappedResult(pipes[i], &overlapped[i], &bytes_transferred, true);
-    if (r == 0 && (GetLastError() == ERROR_OPERATION_ABORTED ||
-                   GetLastError() == ERROR_BROKEN_PIPE)) {
-      r = 1;
-    }
-
-    if (r == 0) {
-      // An error occurred that we did not expect.
-      break;
-    }
+    assert_unused(r != 0 || (GetLastError() == ERROR_OPERATION_ABORTED ||
+                             GetLastError() == ERROR_BROKEN_PIPE));
   }
+
+  UNPROTECT_SYSTEM_ERROR;
 
   for (size_t i = 0; i < ARRAY_SIZE(overlapped); i++) {
     handle_destroy(overlapped[i].hEvent);
   }
 
-  if (r > 0) {
-    // If no errors occurred during cleanup that we did not expect, reset the
-    // error variables to the values they had before we started cleanup.
-    r = system_error == 0;
-    SetLastError(system_error);
-  }
-
-  return error_unify(r, 0);
+  return error_unify(r);
 }

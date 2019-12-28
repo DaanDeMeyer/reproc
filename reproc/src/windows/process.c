@@ -382,7 +382,7 @@ cleanup:
 
   SetErrorMode(previous_error_mode);
 
-  return error_unify(r, 0);
+  return error_unify(r);
 }
 
 int process_wait(HANDLE process, unsigned int timeout)
@@ -419,7 +419,7 @@ int process_wait(HANDLE process, unsigned int timeout)
   assert(status <= INT_MAX);
 
 cleanup:
-  return error_unify((int) r, (int) status);
+  return error_unify_or_else((int) r, (int) status);
 }
 
 int process_terminate(HANDLE process)
@@ -431,7 +431,7 @@ int process_terminate(HANDLE process)
   // its own process group (which we did when starting the child process).
   BOOL r = GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, GetProcessId(process));
 
-  return error_unify(r, 0);
+  return error_unify(r);
 }
 
 int process_kill(HANDLE process)
@@ -443,7 +443,7 @@ int process_kill(HANDLE process)
   // systems.
   BOOL r = TerminateProcess(process, (DWORD) REPROC_SIGKILL);
 
-  return error_unify(r, 0);
+  return error_unify(r);
 }
 
 HANDLE process_destroy(HANDLE process)
