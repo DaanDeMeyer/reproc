@@ -70,6 +70,7 @@ cleanup:
 
 int pipe_read(int pipe, uint8_t *buffer, size_t size)
 {
+  assert(pipe != HANDLE_INVALID);
   assert(buffer);
 
   ssize_t r = read(pipe, buffer, size);
@@ -86,6 +87,7 @@ int pipe_read(int pipe, uint8_t *buffer, size_t size)
 
 int pipe_write(int pipe, const uint8_t *buffer, size_t size)
 {
+  assert(pipe != HANDLE_INVALID);
   assert(buffer);
 
   ssize_t r = write(pipe, buffer, size);
@@ -98,18 +100,9 @@ static const int POLL_INFINITE = -1;
 
 int pipe_wait(int out, int err, int *ready)
 {
-  assert(out);
-  assert(err);
-
-  if (out == HANDLE_INVALID && err == HANDLE_INVALID) {
-    return -EPIPE;
-  } else if (out == HANDLE_INVALID) {
-    *ready = err;
-    return 0;
-  } else if (err == HANDLE_INVALID) {
-    *ready = out;
-    return 0;
-  }
+  assert(out != HANDLE_INVALID);
+  assert(err != HANDLE_INVALID);
+  assert(ready);
 
   struct pollfd pollfds[2] = { { .fd = out, .events = POLLIN },
                                { .fd = err, .events = POLLIN } };

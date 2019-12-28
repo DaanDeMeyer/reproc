@@ -33,6 +33,13 @@
     assert((expression));                                                      \
   } while (0)
 
+#define assert_return(expression, r)                                           \
+  do {                                                                         \
+    if (!(expression)) {                                                       \
+      return (r);                                                              \
+    }                                                                          \
+  } while (false)
+
 int error_unify(int r);
 
 int error_unify_or_else(int r, int success);

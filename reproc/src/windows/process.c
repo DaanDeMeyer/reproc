@@ -160,6 +160,8 @@ static char *argv_join(const char *const *argv)
 
 static size_t environment_join_size(const char *const *environment)
 {
+  assert(environment);
+
   size_t joined_size = 1; // Count the null terminator.
   for (int i = 0; environment[i] != NULL; i++) {
     joined_size += strlen(environment[i]) + 1; // Count the null terminator.
@@ -270,6 +272,7 @@ int process_create(HANDLE *process,
 {
   assert(process);
   assert(argv);
+  assert(argv[0] != NULL);
 
   char *command_line = NULL;
   wchar_t *command_line_wstring = NULL;
@@ -279,11 +282,6 @@ int process_create(HANDLE *process,
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
   PROCESS_INFORMATION info = { HANDLE_INVALID, HANDLE_INVALID, 0, 0 };
   BOOL r = 0;
-
-  // Child processes inherit the error mode of their parents. To avoid child
-  // processes creating error dialogs we set our error mode to not create error
-  // dialogs temporarily which is inherited by the child process.
-  DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
 
   // Join `argv` to a whitespace delimited string as required by
   // `CreateProcessW`.
@@ -361,10 +359,18 @@ int process_create(HANDLE *process,
 
   LPSTARTUPINFOW startup_info_address = &extended_startup_info.StartupInfo;
 
+  // Child processes inherit the error mode of their parents. To avoid child
+  // processes creating error dialogs we set our error mode to not create error
+  // dialogs temporarily which is inherited by the child process.
+  DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+
   r = CreateProcessW(NULL, command_line_wstring, &HANDLE_DO_NOT_INHERIT,
                      &HANDLE_DO_NOT_INHERIT, true, CREATION_FLAGS,
                      environment_line_wstring, working_directory_wstring,
                      startup_info_address, &info);
+
+  SetErrorMode(previous_error_mode);
+
   if (r == 0) {
     goto cleanup;
   }
@@ -379,8 +385,6 @@ cleanup:
   free(working_directory_wstring);
   DeleteProcThreadAttributeList(attribute_list);
   handle_destroy(info.hThread);
-
-  SetErrorMode(previous_error_mode);
 
   return error_unify(r);
 }
@@ -424,7 +428,7 @@ cleanup:
 
 int process_terminate(HANDLE process)
 {
-  assert(process);
+  assert(process && process != HANDLE_INVALID);
 
   // `GenerateConsoleCtrlEvent` can only be called on a process group. To call
   // `GenerateConsoleCtrlEvent` on a single child process it has to be put in
@@ -436,7 +440,7 @@ int process_terminate(HANDLE process)
 
 int process_kill(HANDLE process)
 {
-  assert(process);
+  assert(process && process != HANDLE_INVALID);
 
   // We use 137 (`SIGKILL`) as the exit status because it is the same exit
   // status as a process that is stopped with the `SIGKILL` signal on POSIX

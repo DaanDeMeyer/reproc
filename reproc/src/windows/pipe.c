@@ -88,7 +88,7 @@ cleanup:
 
 int pipe_read(HANDLE pipe, uint8_t *buffer, size_t size)
 {
-  assert(pipe);
+  assert(pipe && pipe != HANDLE_INVALID);
   assert(buffer);
   assert(size <= UINT_MAX);
 
@@ -122,7 +122,7 @@ cleanup:
 
 int pipe_write(HANDLE pipe, const uint8_t *buffer, size_t size)
 {
-  assert(pipe);
+  assert(pipe && pipe != HANDLE_INVALID);
   assert(buffer);
   assert(size <= UINT_MAX);
 
@@ -156,15 +156,9 @@ cleanup:
 
 int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready)
 {
-  if (out == HANDLE_INVALID && err == HANDLE_INVALID) {
-    return -ERROR_BROKEN_PIPE;
-  } else if (out == HANDLE_INVALID) {
-    *ready = err;
-    return 0;
-  } else if (err == HANDLE_INVALID) {
-    *ready = out;
-    return 0;
-  }
+  assert(out && out != HANDLE_INVALID);
+  assert(err && err != HANDLE_INVALID);
+  assert(ready);
 
   HANDLE pipes[2] = { out, err };
   OVERLAPPED overlapped[2] = { { 0 }, { 0 } };

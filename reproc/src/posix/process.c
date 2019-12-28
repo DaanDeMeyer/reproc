@@ -42,6 +42,8 @@ static bool path_is_relative(const char *path)
 // indicate the error.
 static char *path_prepend_cwd(const char *path)
 {
+  assert(path);
+
   size_t path_size = strlen(path);
   size_t cwd_size = PATH_MAX;
 
@@ -92,6 +94,7 @@ static char *path_prepend_cwd(const char *path)
 
 static int write_errno(int fd)
 {
+  assert(fd != HANDLE_INVALID);
   (void) !write(fd, &errno, sizeof(errno));
   return 0;
 }
@@ -101,6 +104,11 @@ static pid_t process_fork(int *error_pipe_read,
                           struct stdio redirect,
                           pid_t group)
 {
+  assert(error_pipe_read);
+  assert(error_pipe_write);
+  assert(*error_pipe_read != HANDLE_INVALID);
+  assert(*error_pipe_write != HANDLE_INVALID);
+
   sigset_t old_mask = { 0 };
   sigset_t new_mask = { 0 };
   int r = -1;
@@ -269,9 +277,9 @@ int process_create(pid_t *process,
                    const char *const *argv,
                    struct process_options options)
 {
+  assert(process);
   assert(argv);
   assert(argv[0] != NULL);
-  assert(process);
 
   int error_pipe_read = HANDLE_INVALID;
   int error_pipe_write = HANDLE_INVALID;
@@ -341,6 +349,8 @@ static int parse_status(int status)
 
 int process_wait(pid_t process, unsigned int timeout)
 {
+  assert(process != HANDLE_INVALID);
+
   int status = 0;
   int r = -1;
 
@@ -427,12 +437,16 @@ cleanup:
 
 int process_terminate(pid_t process)
 {
+  assert(process != HANDLE_INVALID);
+
   int r = kill(process, SIGTERM);
   return error_unify(r);
 }
 
 int process_kill(pid_t process)
 {
+  assert(process != HANDLE_INVALID);
+
   int r = kill(process, SIGKILL);
   return error_unify(r);
 }

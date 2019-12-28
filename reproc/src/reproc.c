@@ -7,6 +7,7 @@
 #include "process.h"
 #include "redirect.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 struct reproc_t {
@@ -28,6 +29,9 @@ static int redirect(handle *parent,
                     REPROC_STREAM stream,
                     REPROC_REDIRECT type)
 {
+  assert(parent);
+  assert(child);
+
   switch (type) {
 
     case REPROC_REDIRECT_PIPE:
@@ -46,13 +50,6 @@ static int redirect(handle *parent,
 
   return REPROC_EINVAL;
 }
-
-#define assert_return(expression, r)                                           \
-  do {                                                                         \
-    if (!(expression)) {                                                       \
-      return (r);                                                              \
-    }                                                                          \
-  } while (false)
 
 reproc_t *reproc_new(void)
 {
@@ -156,9 +153,19 @@ int reproc_read(reproc_t *process,
   while (true) {
     // Get the first pipe that will have data available to be read.
     handle ready = HANDLE_INVALID;
-    r = pipe_wait(process->stdio.out, process->stdio.err, &ready);
-    if (r < 0) {
-      return r;
+
+    if (process->stdio.out == HANDLE_INVALID &&
+        process->stdio.err == HANDLE_INVALID) {
+      return REPROC_EPIPE;
+    } else if (process->stdio.out == HANDLE_INVALID) {
+      ready = process->stdio.err;
+    } else if (process->stdio.err == HANDLE_INVALID) {
+      ready = process->stdio.out;
+    } else {
+      r = pipe_wait(process->stdio.out, process->stdio.err, &ready);
+      if (r < 0) {
+        return r;
+      }
     }
 
     r = pipe_read(ready, buffer, size);
@@ -228,14 +235,21 @@ int reproc_drain(reproc_t *process,
 int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 {
   assert_return(process, REPROC_EINVAL);
-  assert_return(process->stdio.in, REPROC_EINVAL);
-  assert_return(process->status == STATUS_IN_PROGRESS, REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
+
+  if (process->stdio.in == HANDLE_INVALID) {
+    return REPROC_EPIPE;
+  }
 
   int r = -1;
 
   do {
     r = pipe_write(process->stdio.in, buffer, size);
+
+    if (r == REPROC_EPIPE) {
+      process->stdio.in = handle_destroy(process->stdio.in);
+    }
+
     if (r < 0) {
       break;
     }
@@ -252,7 +266,6 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 int reproc_close(reproc_t *process, REPROC_STREAM stream)
 {
   assert_return(process, REPROC_EINVAL);
-  assert_return(process->status == STATUS_IN_PROGRESS, REPROC_EINVAL);
 
   switch (stream) {
     case REPROC_STREAM_IN:
