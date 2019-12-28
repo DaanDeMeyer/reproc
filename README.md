@@ -193,9 +193,6 @@ Each function and class is documented extensively in its header file. Examples
 can be found in the examples subdirectory of [reproc](reproc/examples) and
 [reproc++](reprocxx/examples).
 
-Be sure to read the gotchas section carefully to understand reproc's limitations
-before using it.
-
 ## Error handling
 
 On failure, Most functions in reproc's API return a negative `errno` (POSIX) or
@@ -256,11 +253,6 @@ if (ec) {
 }
 ```
 
-**Note that matching against `std::errc::broken_pipe` currently doesn't work on
-Windows due to a bug in the MSVC STL. Use `reproc::error::broken_pipe` until the
-bug is fixed. See https://github.com/microsoft/STL/pull/406 for more
-information.**
-
 If needed, `std::error_code`'s can be converted to exceptions using
 `std::system_error`:
 
@@ -292,11 +284,10 @@ different threads at the same time will result in issues.
 - It is strongly recommended to make sure each child process actually exits
   using `reproc_wait` or `reproc_stop`.
 
-  On POSIX, a parent process is required to wait on a child process that has
-  exited (using `reproc_wait`) before all resources related to that process can
-  be released by the kernel. If the parent doesn't wait on a child process after
-  it exits, the child process becomes a
-  [zombie process](https://en.wikipedia.org/wiki/Zombie_process).
+  On POSIX, a child process that has exited is a zombie process until the parent
+  process waits on it using `waitpid`. A zombie process takes up resources and
+  can be seen as a resource leak so it is important to make sure all processes
+  exit correctly in a timely fashion.
 
 - It is strongly recommend to try terminating a child process by waiting for it
   to exit or by calling `reproc_terminate` before resorting to `reproc_kill`.
@@ -309,8 +300,8 @@ different threads at the same time will result in issues.
   helper function that can be used to perform multiple stop actions in a row
   with timeouts inbetween.
 
-- It is strongly recommended to ignore the `SIGPIPE` signal in the parent
-  process.
+- (POSIX) It is strongly recommended to ignore the `SIGPIPE` signal in the
+  parent process.
 
   On POSIX, writing to a closed stdin pipe of a child process will terminate the
   parent process with the `SIGPIPE` signal by default. To avoid this, the
@@ -327,7 +318,3 @@ different threads at the same time will result in issues.
   on Windows. For more information, read the Remarks section in the
   documentation of the Windows `TerminateProcess` function that reproc uses to
   kill child processes on Windows.
-
-- While reproc tries its very best to avoid leaking file descriptors into child
-  processes, there are scenarios where it cannot guarantee that no file
-  descriptors will be leaked to child processes.
