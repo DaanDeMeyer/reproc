@@ -14,12 +14,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#if defined(__APPLE__)
-  #define EXECVPE execve
-#else
-  #define EXECVPE execvpe
-#endif
-
 // Including the entire reproc.h header is overkill so we import only the
 // constant we need.
 extern const unsigned int REPROC_INFINITE;
@@ -318,16 +312,13 @@ int process_create(pid_t *process,
       }
     }
 
-    // The casts are safe since `execvp(e)` doesn't actually change the contents
-    // of `arguments` and `environment`.
-    char *const *arguments = (char *const *) argv;
-    char *const *environment = (char *const *) options.environment;
-
     if (options.environment != NULL) {
-      EXECVPE(program, arguments, environment);
-    } else {
-      execvp(program, arguments);
+      // `execvpe` is not standard POSIX so we overwrite `environ` instead.
+      extern char **environ; // NOLINT
+      environ = (char **) options.environment;
     }
+
+    execvp(program, (char *const *) argv);
 
     // We're guaranteed `execvp(e)` failed if this code is reached.
     _exit(write_errno(error_pipe_write));
