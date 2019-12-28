@@ -29,6 +29,5 @@ int pipe_write(handle pipe, const uint8_t *buffer, size_t size);
 // Block until one of the pipes in `pipes` has data available to read and return
 // its index in `pipes`.
 //
-// `REPROC_ERROR_STREAM_CLOSED` is returned if all pipes in `pipes` have been
-// closed.
+// `REPROC_EPIPE` is returned if all pipes in `pipes` have been closed.
 int pipe_wait(const handle *pipes, size_t num_pipes);

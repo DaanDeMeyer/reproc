@@ -23,15 +23,17 @@ namespace reproc {
 
 namespace error {
 
-/*! `REPROC_ERROR_WAIT_TIMEOUT` */
-constexpr std::errc wait_timeout = std::errc::resource_unavailable_try_again;
+/*! Because of a bug in the MSVC STL, we alias `std::errc::broken_pipe` in
+reproc++. For other errors, use `std::errc` to match against the
+`std::error_code`'s returned by reproc++. Use
+https://en.cppreference.com/w/cpp/error/errc to map reproc error codes to
+`std::errc` constants. */
 
-/*! `REPROC_ERROR_STREAM_CLOSED` */
 #if defined(_WIN32)
 // https://github.com/microsoft/STL/pull/406
-static const std::error_code stream_closed = { 109, std::system_category() };
+static const std::error_code broken_pipe = { 109, std::system_category() };
 #else
-constexpr std::errc stream_closed = std::errc::broken_pipe;
+constexpr std::errc broken_pipe = std::errc::broken_pipe;
 #endif
 
 } // namespace error
@@ -177,7 +179,7 @@ std::error_code process::drain(Sink &&sink)
     }
   }
 
-  return ec == error::stream_closed ? std::error_code() : ec;
+  return ec == error::broken_pipe ? std::error_code() : ec;
 }
 
 } // namespace reproc

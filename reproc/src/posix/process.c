@@ -399,7 +399,7 @@ int process_wait(pid_t process, unsigned int timeout)
   if (r == timeout_pid) {
     // The timeout expired.
     r = -1;
-    errno = EAGAIN;
+    errno = ETIMEDOUT;
     goto cleanup;
   }
 

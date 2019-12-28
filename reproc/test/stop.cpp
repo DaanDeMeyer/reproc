@@ -6,11 +6,13 @@
 
 TEST_CASE("stop")
 {
-  reproc_t *process = reproc_new();
+  int r = REPROC_ENOMEM;
 
-  int r = -1;
   INFO(-r);
-  INFO(reproc_error_string(r));
+  INFO(reproc_strerror(r));
+
+  reproc_t *process = reproc_new();
+  REQUIRE(process);
 
   std::array<const char *, 2> argv{ RESOURCE_DIRECTORY "/stop", nullptr };
 
@@ -18,7 +20,7 @@ TEST_CASE("stop")
   REQUIRE(r >= 0);
 
   r = reproc_wait(process, 50);
-  REQUIRE(r == REPROC_ERROR_WAIT_TIMEOUT);
+  REQUIRE(r == REPROC_ETIMEDOUT);
 
   SUBCASE("terminate")
   {

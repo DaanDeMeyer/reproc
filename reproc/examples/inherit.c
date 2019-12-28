@@ -15,12 +15,17 @@ int main(int argc, const char *argv[])
     return 1;
   }
 
-  reproc_t *process = reproc_new();
+  reproc_t *process = NULL;
+  int r = REPROC_ENOMEM;
+
+  process = reproc_new();
+  if (process == NULL) {
+    goto cleanup;
+  }
 
   reproc_options options = { .redirect = { .in = REPROC_REDIRECT_INHERIT,
                                            .out = REPROC_REDIRECT_INHERIT,
                                            .err = REPROC_REDIRECT_INHERIT } };
-  int r = -1;
 
   r = reproc_start(process, argv + 1, options);
   if (r < 0) {
@@ -38,7 +43,7 @@ cleanup:
   reproc_destroy(process);
 
   if (r < 0) {
-    fprintf(stderr, "%s\n", reproc_error_string(r));
+    fprintf(stderr, "%s\n", reproc_strerror(r));
   }
 
   return abs(r);

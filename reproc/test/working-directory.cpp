@@ -10,12 +10,13 @@
 
 TEST_CASE("working-directory")
 {
+  int r = REPROC_ENOMEM;
+
+  INFO(-r);
+  INFO(reproc_strerror(r));
+
   reproc_t *process = reproc_new();
   REQUIRE(process);
-
-  int r = -1;
-  INFO(-r);
-  INFO(reproc_error_string(r));
 
   const char *working_directory = RESOURCE_DIRECTORY;
   std::array<const char *, 2> argv{ RESOURCE_DIRECTORY "/working-directory",

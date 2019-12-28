@@ -11,12 +11,16 @@
 // information on how to use reproc.
 int main(void)
 {
-  reproc_t *process = reproc_new();
+  reproc_t *process = NULL;
+  char *output = NULL;
+  int r = REPROC_ENOMEM;
+
+  process = reproc_new();
+  if (process == NULL) {
+    goto cleanup;
+  }
 
   const char *argv[3] = { "git", "--help", NULL };
-
-  char *output = NULL;
-  int r = -1;
 
   r = reproc_start(process, argv, (reproc_options){ 0 });
   if (r < 0) {
@@ -60,7 +64,7 @@ cleanup:
   reproc_destroy(process);
 
   if (r < 0) {
-    fprintf(stderr, "%s\n", reproc_error_string(r));
+    fprintf(stderr, "%s\n", reproc_strerror(r));
   }
 
   return abs(r);

@@ -15,15 +15,19 @@ type and can be allocated and freed via `reproc_new` and `reproc_free`
 respectively. */
 typedef struct reproc_t reproc_t;
 
+/*! reproc error naming follows POSIX errno naming prefixed with `REPROC`. */
+
 /*! An invalid argument was passed to an API function */
-extern REPROC_EXPORT const int REPROC_ERROR_INVALID_ARGUMENT;
+extern REPROC_EXPORT const int REPROC_EINVAL;
 /*! A timeout value passed to an API function expired. */
-extern REPROC_EXPORT const int REPROC_ERROR_WAIT_TIMEOUT;
+extern REPROC_EXPORT const int REPROC_ETIMEDOUT;
 /*! The child process closed one of its streams (and in the case of
 stdout/stderr all of the data remaining in that stream has been read). */
-extern REPROC_EXPORT const int REPROC_ERROR_STREAM_CLOSED;
+extern REPROC_EXPORT const int REPROC_EPIPE;
 /*! The process is already (or still) running. */
-extern REPROC_EXPORT const int REPROC_ERROR_IN_PROGRESS;
+extern REPROC_EXPORT const int REPROC_EINPROGRESS;
+/*! A memory allocation failed. */
+extern REPROC_EXPORT const int REPROC_ENOMEM;
 
 /*! Used to tell reproc where to redirect the streams of the child process. */
 typedef enum {
@@ -157,7 +161,7 @@ were not specified as `REPROC_REDIRECT_PIPE` in the options passed to
 `reproc_start`.
 
 Actionable errors:
-- `REPROC_ERROR_STREAM_CLOSED`
+- `REPROC_EPIPE`
 */
 REPROC_EXPORT int reproc_read(reproc_t *process,
                               REPROC_STREAM *stream,
@@ -173,8 +177,8 @@ each read, along with `context`.
 `stream` set to `REPROC_STREAM_IN` to give the sink the chance to process all
 output from the previous call to `reproc_drain` one by one.
 
-Note that his function returns 0 instead of `REPROC_ERROR_STREAM_CLOSED` when
-both output streams of the child process are closed.
+Note that his function returns 0 instead of `REPROC_EPIPE` when both output
+streams of the child process are closed.
 
 For examples of sinks, see `sink.h`.
 */
@@ -190,15 +194,15 @@ Writes `size` bytes from `buffer` to the standard input (stdin) of the child
 process.
 
 (POSIX) By default, writing to a closed stdin pipe terminates the parent process
-with the `SIGPIPE` signal. `reproc_write` will only return
-`REPROC_ERROR_STREAM_CLOSED` if this signal is ignored by the parent process.
+with the `SIGPIPE` signal. `reproc_write` will only return `REPROC_EPIPE` if
+this signal is ignored by the parent process.
 
 It is undefined behaviour to call this function on a process whose stdin stream
 was not specified as `REPROC_REDIRECT_PIPE` in the options passed to
 `reproc_start`.
 
 Actionable errors:
-- `REPROC_ERROR_STREAM_CLOSED`
+- `REPROC_EPIPE`
 */
 REPROC_EXPORT int
 reproc_write(reproc_t *process, const uint8_t *buffer, size_t size);
@@ -223,7 +227,7 @@ If this function returns `REPROC_SUCCESS`, `process` has exited and its exit
 status can be retrieved with `reproc_exit_status`.
 
 Actionable errors:
-- `REPROC_ERROR_WAIT_TIMEOUT`
+- `REPROC_ETIMEDOUT`
 */
 REPROC_EXPORT int reproc_wait(reproc_t *process, unsigned int timeout);
 
@@ -278,7 +282,7 @@ If this function returns `REPROC_SUCCESS`, `process` has exited and its exit
 status can be retrieved with `reproc_exit_status`.
 
 Actionable errors:
-- `REPROC_ERROR_WAIT_TIMEOUT`
+- `REPROC_ETIMEDOUT`
 */
 REPROC_EXPORT int reproc_stop(reproc_t *process,
                               reproc_stop_actions stop_actions);
@@ -287,8 +291,8 @@ REPROC_EXPORT int reproc_stop(reproc_t *process,
 Returns the exit status of `process`.
 
 Actionable errors:
-- `REPROC_ERROR_INVALID_ARGUMENT` (the process has not yet been started)
-- `REPROC_ERROR_IN_PROGRESS` (the process is still running)
+- `REPROC_EINVAL` (the process has not yet been started)
+- `REPROC_EINPROGRESS` (the process is still running)
 */
 REPROC_EXPORT int reproc_exit_status(reproc_t *process);
 
@@ -311,7 +315,7 @@ caller.
 
 This function is not thread-safe.
 */
-REPROC_EXPORT const char *reproc_error_string(int error);
+REPROC_EXPORT const char *reproc_strerror(int error);
 
 #ifdef __cplusplus
 }

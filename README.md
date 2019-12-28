@@ -200,27 +200,32 @@ before using it.
 
 On failure, Most functions in reproc's API return a negative `errno` (POSIX) or
 `GetLastError` (Windows) style error code. For actionable errors, reproc
-provides constants (`REPROC_ERROR_WAIT_TIMEOUT`, `REPROC_ERROR_STREAM_CLOSED`,
-...) that can be used to match against the error without having to write
-platform-specific code. To get a string representation of an error, pass it to
-`reproc_error_string`.
+provides constants (`REPROC_ETIMEDOUT`, `REPROC_EPIPE`, ...) that can be used to
+match against the error without having to write platform-specific code. To get a
+string representation of an error, pass it to `reproc_strerror`.
 
 ```c
-reproc_t *process = reproc_new();
+reproc_t *process = NULL;
+int r = REPROC_ENOMEM;
 
-int r = reproc_start(...);
+process = reproc_new();
+if (process == NULL) {
+  goto cleanup;
+}
+
+r = reproc_start(...);
 if (r < 0) {
   goto cleanup;
 }
 
 r = reproc_write(...)
-if (r == REPROC_ERROR_STREAM_CLOSED) {
+if (r == REPROC_EPIPE) {
   goto cleanup;
 }
 
 cleanup:
 if (r < 0) {
-  printf("%s\n", reproc_error_string(r));
+  printf("%s\n", reproc_strerror(r));
 }
 
 return abs(r);
@@ -229,8 +234,8 @@ return abs(r);
 reproc++'s API integrates with the C++ standard library error codes mechanism
 (`std::error_code` and `std::error_condition`). Most methods in reproc++'s API
 return `std::error_code` values that contain the actual system error that
-occurred. You can test against these error codes using the `std::errc` error
-condition enum:
+occurred. You can test against these error codes using values from the
+`std::errc` enum:
 
 ```c++
 reproc::process;
@@ -251,8 +256,10 @@ if (ec) {
 }
 ```
 
-reproc++ also provides aliases for relevant `std::errc` constants that are named
-similarly to the error constants in reproc.
+**Note that matching against `std::errc::broken_pipe` currently doesn't work on
+Windows due to a bug in the MSVC STL. Use `reproc::error::broken_pipe` until the
+bug is fixed. See https://github.com/microsoft/STL/pull/406 for more
+information.**
 
 If needed, `std::error_code`'s can be converted to exceptions using
 `std::system_error`:
@@ -308,8 +315,8 @@ different threads at the same time will result in issues.
   On POSIX, writing to a closed stdin pipe of a child process will terminate the
   parent process with the `SIGPIPE` signal by default. To avoid this, the
   `SIGPIPE` signal has to be ignored in the parent process. If the `SIGPIPE`
-  signal is ignored `reproc_write` will return `REPROC_ERROR_STREAM_CLOSED` as
-  expected when writing to a closed stdin pipe.
+  signal is ignored `reproc_write` will return `REPROC_EPIPE` as expected when
+  writing to a closed stdin pipe.
 
 - While `reproc_terminate` allows the child process to perform cleanup it is up
   to the child process to correctly clean up after itself. reproc only sends a

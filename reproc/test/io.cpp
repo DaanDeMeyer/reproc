@@ -9,12 +9,13 @@
 static void
 io(const char *mode, const std::string &input, const std::string &expected)
 {
+  int r = REPROC_ENOMEM;
+
+  INFO(-r);
+  INFO(reproc_strerror(r));
+
   reproc_t *process = reproc_new();
   REQUIRE(process);
-
-  int r = -1;
-  INFO(-r);
-  INFO(reproc_error_string(r));
 
   std::array<const char *, 3> argv = { RESOURCE_DIRECTORY "/io", mode,
                                        nullptr };

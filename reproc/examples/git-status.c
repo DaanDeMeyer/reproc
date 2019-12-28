@@ -9,15 +9,19 @@
 int main(void)
 {
   // `reproc_t` stores necessary information between calls to reproc's API.
-  reproc_t *process = reproc_new();
+  reproc_t *process = NULL;
+  char *output = NULL;
+  size_t size = 0;
+  int r = REPROC_ENOMEM;
+
+  process = reproc_new();
+  if (process == NULL) {
+    goto cleanup;
+  }
 
   // `argv` must start with the name (or path) of the program to execute and
   // must end with a `NULL` value.
   const char *argv[3] = { "git", "status", NULL };
-
-  char *output = NULL;
-  size_t size = 0;
-  int r = -1;
 
   // `reproc_start` takes a child process instance (`reproc_t`), argv and
   // a set of options including the working directory and environment of the
@@ -28,8 +32,8 @@ int main(void)
 
   // On failure, reproc's API functions return a negative `errno` (POSIX) or
   // `GetLastError` (Windows) style error code. To check against common error
-  // codes, reproc provides cross platform constants such as
-  // `REPROC_ERROR_STREAM_CLOSED` and `REPROC_ERROR_WAIT_TIMEOUT`.
+  // codes, reproc provides cross platform constants such as `REPROC_EPIPE` and
+  // `REPROC_ETIMEDOUT`.
   if (r < 0) {
     goto cleanup;
   }
@@ -80,7 +84,7 @@ int main(void)
 
   // Check that the while loop stopped because the output stream of the child
   // process was closed and not because of any other error.
-  if (r != REPROC_ERROR_STREAM_CLOSED) {
+  if (r != REPROC_EPIPE) {
     goto cleanup;
   }
 
@@ -106,7 +110,7 @@ cleanup:
   reproc_destroy(process);
 
   if (r < 0) {
-    fprintf(stderr, "%s\n", reproc_error_string(r));
+    fprintf(stderr, "%s\n", reproc_strerror(r));
   }
 
   return abs(r);
