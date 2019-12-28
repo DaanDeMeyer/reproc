@@ -38,6 +38,13 @@ constexpr std::errc broken_pipe = std::errc::broken_pipe;
 
 } // namespace error
 
+namespace signal {
+
+REPROCXX_EXPORT extern const int kill;
+REPROCXX_EXPORT extern const int terminate;
+
+} // namespace signal
+
 using milliseconds = std::chrono::duration<unsigned int, std::milli>;
 
 /*! `REPROC_REDIRECT` */
@@ -126,11 +133,9 @@ public:
   /*! `reproc_close` */
   REPROCXX_EXPORT std::error_code close(stream stream) noexcept;
 
-  /*! `reproc_running` */
-  REPROCXX_EXPORT bool running() noexcept;
-
   /*! `reproc_wait` */
-  REPROCXX_EXPORT std::error_code wait(milliseconds timeout) noexcept;
+  REPROCXX_EXPORT std::pair<int, std::error_code>
+  wait(milliseconds timeout) noexcept;
 
   /*! `reproc_terminate` */
   REPROCXX_EXPORT std::error_code terminate() noexcept;
@@ -139,10 +144,8 @@ public:
   REPROCXX_EXPORT std::error_code kill() noexcept;
 
   /*! `reproc_stop` */
-  REPROCXX_EXPORT std::error_code stop(stop_actions stop_actions) noexcept;
-
-  /*! `reproc_exit_status` */
-  REPROCXX_EXPORT int exit_status() noexcept;
+  REPROCXX_EXPORT std::pair<int, std::error_code>
+  stop(stop_actions stop_actions) noexcept;
 
 private:
   std::unique_ptr<reproc_t, void (*)(reproc_t *)> process_;

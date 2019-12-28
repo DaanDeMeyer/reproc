@@ -27,8 +27,7 @@ TEST_CASE("overflow")
   REQUIRE(output != nullptr);
 
   r = reproc_wait(process, REPROC_INFINITE);
-  REQUIRE(r >= 0);
-  REQUIRE(reproc_exit_status(process) == 0);
+  REQUIRE(r == 0);
 
   reproc_destroy(process);
 

@@ -340,11 +340,6 @@ cleanup:
   return error_unify((int) r, 0);
 }
 
-static int parse_exit_status(int status)
-{
-  return WIFEXITED(status) ? WEXITSTATUS(status) : WTERMSIG(status);
-}
-
 int process_wait(pid_t process, unsigned int timeout)
 {
   int error_pipe_read = HANDLE_INVALID;
@@ -404,7 +399,8 @@ int process_wait(pid_t process, unsigned int timeout)
   }
 
   assert(r == process);
-  status = parse_exit_status(status);
+  status = WIFEXITED(status) ? WEXITSTATUS(status)
+                             : WTERMSIG(status) + UINT8_MAX;
 
 cleanup:
   handle_destroy(error_pipe_read);

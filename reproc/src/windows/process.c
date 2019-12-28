@@ -8,6 +8,9 @@
 #include <stdlib.h>
 #include <windows.h>
 
+extern const int REPROC_SIGKILL;
+extern const int REPROC_SIGTERM;
+
 static const DWORD CREATION_FLAGS =
     // Create each child process in a new process group so we don't send
     // `CTRL-BREAK` signals to more than one child process in
@@ -25,9 +28,6 @@ static SECURITY_ATTRIBUTES HANDLE_DO_NOT_INHERIT = {
   .bInheritHandle = false,
   .lpSecurityDescriptor = NULL
 };
-
-static const DWORD SIGKILL = 137;
-static const DWORD SIGTERM = 143;
 
 // Argument escaping implementation is based on the following blog post:
 // https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
@@ -412,7 +412,7 @@ int process_wait(HANDLE process, unsigned int timeout)
   // Because `GenerateConsoleCtrlEvent` has roughly the same semantics as
   // `SIGTERM`, we map its exit code to `SIGTERM`.
   if (status == 3221225786) {
-    status = SIGTERM;
+    status = (DWORD) REPROC_SIGTERM;
   }
 
   assert(r <= INT_MAX);
@@ -441,7 +441,7 @@ int process_kill(HANDLE process)
   // We use 137 (`SIGKILL`) as the exit status because it is the same exit
   // status as a process that is stopped with the `SIGKILL` signal on POSIX
   // systems.
-  BOOL r = TerminateProcess(process, SIGKILL);
+  BOOL r = TerminateProcess(process, (DWORD) REPROC_SIGKILL);
 
   return error_unify(r, 0);
 }

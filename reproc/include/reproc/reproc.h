@@ -24,10 +24,16 @@ REPROC_EXPORT extern const int REPROC_ETIMEDOUT;
 /*! The child process closed one of its streams (and in the case of
 stdout/stderr all of the data remaining in that stream has been read). */
 REPROC_EXPORT extern const int REPROC_EPIPE;
-/*! The process is already (or still) running. */
-REPROC_EXPORT extern const int REPROC_EINPROGRESS;
 /*! A memory allocation failed. */
 REPROC_EXPORT extern const int REPROC_ENOMEM;
+
+/*! Signal exit status constants. */
+
+REPROC_EXPORT extern const int REPROC_SIGKILL;
+REPROC_EXPORT extern const int REPROC_SIGTERM;
+
+/*! Tells a function that takes a timeout value to wait indefinitely. */
+REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
 
 /*! Used to tell reproc where to redirect the streams of the child process. */
 typedef enum {
@@ -113,9 +119,6 @@ typedef enum {
   /*! stderr */
   REPROC_STREAM_ERR
 } REPROC_STREAM;
-
-/*! Tells a function that takes a timeout value to wait indefinitely. */
-REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
 
 /* Allocate a new `reproc_t` instance on the heap. */
 REPROC_EXPORT reproc_t *reproc_new(void);
@@ -217,22 +220,18 @@ the standard input stream can be closed using this function.
 REPROC_EXPORT int reproc_close(reproc_t *process, REPROC_STREAM stream);
 
 /*!
-Waits `timeout` milliseconds for the child process to exit.
+Waits `timeout` milliseconds for the child process to exit. If the child process
+has already exited or exits within the given timeout, its exit status is
+returned.
 
 If `timeout` is 0 the function will only check if the child process is still
 running without waiting. If `timeout` is `REPROC_INFINITE` the function will
 wait indefinitely for the child process to exit.
 
-If this function returns `REPROC_SUCCESS`, `process` has exited and its exit
-status can be retrieved with `reproc_exit_status`.
-
 Actionable errors:
 - `REPROC_ETIMEDOUT`
 */
 REPROC_EXPORT int reproc_wait(reproc_t *process, unsigned int timeout);
-
-/*! Returns `true` if `process` is still running, `false` otherwise. */
-REPROC_EXPORT bool reproc_running(reproc_t *process);
 
 /*!
 Sends the `SIGTERM` signal (POSIX) or the `CTRL-BREAK` signal (Windows) to the
@@ -278,23 +277,14 @@ execute the corresponding function to stop the process. The second element of
 each pair tells `reproc_stop` how long to wait after executing the function
 indicated by the first element.
 
-If this function returns `REPROC_SUCCESS`, `process` has exited and its exit
-status can be retrieved with `reproc_exit_status`.
+If the child process has already exited or exits during the execution of
+`reproc_stop`, its exit status is returned.
 
 Actionable errors:
 - `REPROC_ETIMEDOUT`
 */
 REPROC_EXPORT int reproc_stop(reproc_t *process,
                               reproc_stop_actions stop_actions);
-
-/*!
-Returns the exit status of `process`.
-
-Actionable errors:
-- `REPROC_EINVAL` (the process has not yet been started)
-- `REPROC_EINPROGRESS` (the process is still running)
-*/
-REPROC_EXPORT int reproc_exit_status(reproc_t *process);
 
 /*!
 Release all resources associated with `process` including the memory allocated

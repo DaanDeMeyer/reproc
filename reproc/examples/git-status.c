@@ -98,8 +98,6 @@ int main(void)
     goto cleanup;
   }
 
-  r = reproc_exit_status(process);
-
 cleanup:
   free(output);
 

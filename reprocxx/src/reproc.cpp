@@ -4,6 +4,15 @@
 
 namespace reproc {
 
+namespace signal {
+
+const int kill = REPROC_SIGKILL;
+const int terminate = REPROC_SIGTERM;
+
+} // namespace signal
+
+const milliseconds infinite = milliseconds(REPROC_INFINITE);
+
 namespace error {
 
 static std::error_code from(int r)
@@ -22,8 +31,6 @@ static reproc_stop_actions reproc_stop_actions_from(stop_actions stop_actions)
            { static_cast<REPROC_STOP>(stop_actions.third.action),
              stop_actions.third.timeout.count() } };
 }
-
-const milliseconds infinite = milliseconds(0xFFFFFFFF);
 
 auto deleter = [](reproc_t *process) { reproc_destroy(process); };
 
@@ -56,11 +63,9 @@ std::tuple<stream, size_t, std::error_code> process::read(uint8_t *buffer,
   REPROC_STREAM stream = {};
 
   int r = reproc_read(process_.get(), &stream, buffer, size);
-
-  size_t bytes_read = r < 0 ? 0 : static_cast<size_t>(r);
   std::error_code ec = r < 0 ? error::from(r) : std::error_code();
 
-  return { static_cast<enum stream>(stream), bytes_read, ec };
+  return { static_cast<enum stream>(stream), r, ec };
 }
 
 std::error_code process::write(const uint8_t *buffer, size_t size) noexcept
@@ -75,15 +80,10 @@ std::error_code process::close(stream stream) noexcept
   return error::from(r);
 }
 
-bool process::running() noexcept
-{
-  return reproc_running(process_.get());
-}
-
-std::error_code process::wait(milliseconds timeout) noexcept
+std::pair<int, std::error_code> process::wait(milliseconds timeout) noexcept
 {
   int r = reproc_wait(process_.get(), timeout.count());
-  return error::from(r);
+  return { r, error::from(r) };
 }
 
 std::error_code process::terminate() noexcept
@@ -98,15 +98,11 @@ std::error_code process::kill() noexcept
   return error::from(r);
 }
 
-std::error_code process::stop(stop_actions stop_actions) noexcept
+std::pair<int, std::error_code>
+process::stop(stop_actions stop_actions) noexcept
 {
   int r = reproc_stop(process_.get(), reproc_stop_actions_from(stop_actions));
-  return error::from(r);
-}
-
-int process::exit_status() noexcept
-{
-  return reproc_exit_status(process_.get());
+  return { r, error::from(r) };
 }
 
 } // namespace reproc

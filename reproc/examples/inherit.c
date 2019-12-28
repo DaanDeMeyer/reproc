@@ -37,8 +37,6 @@ int main(int argc, const char *argv[])
     goto cleanup;
   }
 
-  r = reproc_exit_status(process);
-
 cleanup:
   reproc_destroy(process);
 

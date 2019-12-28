@@ -25,16 +25,15 @@ TEST_CASE("environment")
   options.environment = envp.data();
 
   r = reproc_start(process, argv.data(), options);
-  REQUIRE(r >= 0);
+  REQUIRE(r == 0);
 
   char *output = nullptr;
   r = reproc_drain(process, reproc_sink_string, &output);
-  REQUIRE(r >= 0);
+  REQUIRE(r == 0);
   REQUIRE(output != nullptr);
 
   r = reproc_wait(process, REPROC_INFINITE);
-  REQUIRE(r >= 0);
-  REQUIRE(reproc_exit_status(process) == 0);
+  REQUIRE(r == 0);
 
   reproc_destroy(process);
 

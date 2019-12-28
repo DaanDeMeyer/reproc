@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 struct reproc_t {
-  int exit_status;
+  int status;
 
   handle handle;
   handle in;
@@ -21,6 +21,11 @@ struct reproc_t {
 
   reproc_stop_actions stop_actions;
 };
+
+enum { STATUS_NOT_STARTED = -2, STATUS_IN_PROGRESS = -1 };
+
+const int REPROC_SIGKILL = UINT8_MAX + 9;
+const int REPROC_SIGTERM = UINT8_MAX + 15;
 
 const unsigned int REPROC_INFINITE = 0xFFFFFFFF; // == `INFINITE` on Windows
 
@@ -62,7 +67,7 @@ reproc_t *reproc_new(void)
     return NULL;
   }
 
-  *process = (reproc_t){ .exit_status = REPROC_EINVAL,
+  *process = (reproc_t){ .status = STATUS_NOT_STARTED,
                          .handle = HANDLE_INVALID,
                          .in = HANDLE_INVALID,
                          .out = HANDLE_INVALID,
@@ -76,7 +81,7 @@ int reproc_start(reproc_t *process,
                  reproc_options options)
 {
   assert_return(process, REPROC_EINVAL);
-  assert_return(process->exit_status == REPROC_EINVAL, REPROC_EINVAL);
+  assert_return(process->status == STATUS_NOT_STARTED, REPROC_EINVAL);
   assert_return(argv, REPROC_EINVAL);
   assert_return(argv[0], REPROC_EINVAL);
 
@@ -139,7 +144,7 @@ cleanup:
     process->out = handle_destroy(process->out);
     process->err = handle_destroy(process->err);
   } else {
-    process->exit_status = REPROC_EINPROGRESS;
+    process->status = STATUS_IN_PROGRESS;
   }
 
   return r;
@@ -220,7 +225,7 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 {
   assert_return(process, REPROC_EINVAL);
   assert_return(process->in, REPROC_EINVAL);
-  assert_return(process->exit_status == REPROC_EINPROGRESS, REPROC_EINVAL);
+  assert_return(process->status == STATUS_IN_PROGRESS, REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
 
   int r = -1;
@@ -244,7 +249,7 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 int reproc_close(reproc_t *process, REPROC_STREAM stream)
 {
   assert_return(process, REPROC_EINVAL);
-  assert_return(process->exit_status == REPROC_EINPROGRESS, REPROC_EINVAL);
+  assert_return(process->status == STATUS_IN_PROGRESS, REPROC_EINVAL);
 
   switch (stream) {
     case REPROC_STREAM_IN:
@@ -266,35 +271,34 @@ int reproc_close(reproc_t *process, REPROC_STREAM stream)
 int reproc_wait(reproc_t *process, unsigned int timeout)
 {
   assert_return(process, REPROC_EINVAL);
+  assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
 
   int r = -1;
 
-  if (process->exit_status != REPROC_EINPROGRESS) {
-    return 0;
+  if (process->status >= 0) {
+    return process->status;
   }
+
+  assert(process->status == STATUS_IN_PROGRESS);
 
   r = process_wait(process->handle, timeout);
   if (r < 0) {
     return r;
   }
 
-  process->exit_status = r;
-
-  return 0;
-}
-
-bool reproc_running(reproc_t *process)
-{
-  return reproc_wait(process, 0) == REPROC_ETIMEDOUT;
+  return process->status = r;
 }
 
 int reproc_terminate(reproc_t *process)
 {
   assert_return(process, REPROC_EINVAL);
+  assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
 
-  if (!reproc_running(process)) {
+  if (process->status >= 0) {
     return 0;
   }
+
+  assert(process->status == STATUS_IN_PROGRESS);
 
   return process_terminate(process->handle);
 }
@@ -302,10 +306,13 @@ int reproc_terminate(reproc_t *process)
 int reproc_kill(reproc_t *process)
 {
   assert_return(process, REPROC_EINVAL);
+  assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
 
-  if (!reproc_running(process)) {
+  if (process->status >= 0) {
     return 0;
   }
+
+  assert(process->status == STATUS_IN_PROGRESS);
 
   return process_kill(process->handle);
 }
@@ -313,6 +320,7 @@ int reproc_kill(reproc_t *process)
 int reproc_stop(reproc_t *process, reproc_stop_actions stop_actions)
 {
   assert_return(process, REPROC_EINVAL);
+  assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
 
   reproc_stop_action actions[3] = { stop_actions.first, stop_actions.second,
                                     stop_actions.third };
@@ -349,16 +357,13 @@ int reproc_stop(reproc_t *process, reproc_stop_actions stop_actions)
   return r;
 }
 
-int reproc_exit_status(reproc_t *process)
-{
-  return process->exit_status;
-}
-
 reproc_t *reproc_destroy(reproc_t *process)
 {
   assert_return(process, NULL);
 
-  reproc_stop(process, process->stop_actions);
+  if (process->status == STATUS_IN_PROGRESS) {
+    reproc_stop(process, process->stop_actions);
+  }
 
   process->handle = process_destroy(process->handle);
   process->in = handle_destroy(process->in);

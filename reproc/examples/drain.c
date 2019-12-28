@@ -54,8 +54,6 @@ int main(void)
     goto cleanup;
   }
 
-  r = reproc_exit_status(process);
-
 cleanup:
   // `output` always points to valid memory or is set to `NULL` by
   // `reproc_sink_string` so it's always safe to call `free` on it.

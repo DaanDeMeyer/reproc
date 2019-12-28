@@ -79,10 +79,11 @@ int main(int argc, char *argv[])
     return fail(ec);
   }
 
-  ec = process.stop(stop_actions);
+  int status = 0;
+  std::tie(status, ec) = process.stop(stop_actions);
   if (ec) {
     return fail(ec);
   }
 
-  return process.exit_status();
+  return status;
 }

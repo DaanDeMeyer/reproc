@@ -62,10 +62,11 @@ int main()
   // usually makes sense to explicitly wait for the process to exit and check
   // its exit status.
 
-  ec = process.wait(reproc::infinite);
+  int status = 0;
+  std::tie(status, ec) = process.wait(reproc::infinite);
   if (ec) {
     return fail(ec);
   }
 
-  return process.exit_status();
+  return status;
 }

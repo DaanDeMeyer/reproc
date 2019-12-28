@@ -26,9 +26,8 @@ int process_create(handle *process,
                    const char *const *argv,
                    struct process_options options);
 
-// Waits `timeout` milliseconds for any process in `processes` to exit. If a
-// process exits within the configured timeout, its index in `processes` is
-// returned and its exit status is stored in `exit_status`.
+// Waits `timeout` milliseconds for `process` to exit. If `process` exits within
+// the configured timeout, its exit status is returned.
 //
 // If `timeout` is `REPROC_INFINITE`, this function waits indefinitely for a
 // process to exit.

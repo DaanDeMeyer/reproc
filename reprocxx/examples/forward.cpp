@@ -74,10 +74,12 @@ int main(int argc, char *argv[])
   // `reproc::wait` with a timeout of ten seconds to give the process time to
   // exit on its own before sending `SIGTERM`.
   stop_actions.first = { reproc::stop::wait, reproc::milliseconds(10000) };
-  ec = process.stop(stop_actions);
+
+  int status = 0;
+  std::tie(status, ec) = process.stop(stop_actions);
   if (ec) {
     return fail(ec);
   }
 
-  return process.exit_status();
+  return status;
 }

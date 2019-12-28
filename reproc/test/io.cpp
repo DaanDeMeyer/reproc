@@ -21,25 +21,24 @@ io(const char *mode, const std::string &input, const std::string &expected)
                                        nullptr };
 
   r = reproc_start(process, argv.data(), {});
-  REQUIRE(r >= 0);
+  REQUIRE(r == 0);
 
   r = reproc_write(process, reinterpret_cast<const uint8_t *>(input.data()),
                    input.size());
-  REQUIRE(r >= 0);
+  REQUIRE(r == 0);
 
   r = reproc_close(process, REPROC_STREAM_IN);
-  REQUIRE(r >= 0);
+  REQUIRE(r == 0);
 
   char *output = nullptr;
   r = reproc_drain(process, reproc_sink_string, &output);
-  REQUIRE(r >= 0);
+  REQUIRE(r == 0);
   REQUIRE(output != nullptr);
 
   REQUIRE_EQ(output, expected);
 
   r = reproc_wait(process, REPROC_INFINITE);
-  REQUIRE(r >= 0);
-  REQUIRE(reproc_exit_status(process) == 0);
+  REQUIRE(r == 0);
 
   reproc_destroy(process);
 

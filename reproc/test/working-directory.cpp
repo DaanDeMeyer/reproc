@@ -26,18 +26,17 @@ TEST_CASE("working-directory")
   options.working_directory = working_directory;
 
   r = reproc_start(process, argv.data(), options);
-  REQUIRE(r >= 0);
+  REQUIRE(r == 0);
 
   char *output = nullptr;
   r = reproc_drain(process, reproc_sink_string, &output);
-  REQUIRE(r >= 0);
+  REQUIRE(r == 0);
 
   std::replace(output, output + strlen(output), '\\', '/');
   REQUIRE(std::string(output) == RESOURCE_DIRECTORY);
 
   r = reproc_wait(process, REPROC_INFINITE);
-  REQUIRE(r >= 0);
-  REQUIRE(reproc_exit_status(process) == 0);
+  REQUIRE(r == 0);
 
   reproc_destroy(process);
 
