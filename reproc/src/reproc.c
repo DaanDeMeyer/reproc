@@ -10,13 +10,9 @@
 #include <stdlib.h>
 
 struct reproc_t {
-  int status;
-
   handle handle;
-  handle in;
-  handle out;
-  handle err;
-
+  struct stdio stdio;
+  int status;
   reproc_stop_actions stop_actions;
 };
 
@@ -65,11 +61,11 @@ reproc_t *reproc_new(void)
     return NULL;
   }
 
-  *process = (reproc_t){ .status = STATUS_NOT_STARTED,
-                         .handle = HANDLE_INVALID,
-                         .in = HANDLE_INVALID,
-                         .out = HANDLE_INVALID,
-                         .err = HANDLE_INVALID };
+  *process = (reproc_t){ .handle = HANDLE_INVALID,
+                         .stdio = { .in = HANDLE_INVALID,
+                                    .out = HANDLE_INVALID,
+                                    .err = HANDLE_INVALID },
+                         .status = STATUS_NOT_STARTED };
 
   return process;
 }
@@ -83,24 +79,23 @@ int reproc_start(reproc_t *process,
   assert_return(argv, REPROC_EINVAL);
   assert_return(argv[0], REPROC_EINVAL);
 
-  handle child_in = HANDLE_INVALID;
-  handle child_out = HANDLE_INVALID;
-  handle child_err = HANDLE_INVALID;
+  struct stdio child = { HANDLE_INVALID, HANDLE_INVALID, HANDLE_INVALID };
 
   int r = -1;
 
-  r = redirect(&process->in, &child_in, REPROC_STREAM_IN, options.redirect.in);
+  r = redirect(&process->stdio.in, &child.in, REPROC_STREAM_IN,
+               options.redirect.in);
   if (r < 0) {
     goto cleanup;
   }
 
-  r = redirect(&process->out, &child_out, REPROC_STREAM_OUT,
+  r = redirect(&process->stdio.out, &child.out, REPROC_STREAM_OUT,
                options.redirect.out);
   if (r < 0) {
     goto cleanup;
   }
 
-  r = redirect(&process->err, &child_err, REPROC_STREAM_ERR,
+  r = redirect(&process->stdio.err, &child.err, REPROC_STREAM_ERR,
                options.redirect.err);
   if (r < 0) {
     goto cleanup;
@@ -109,7 +104,7 @@ int reproc_start(reproc_t *process,
   struct process_options process_options = {
     .environment = options.environment,
     .working_directory = options.working_directory,
-    .redirect = { .in = child_in, .out = child_out, .err = child_err }
+    .redirect = child
   };
 
   r = process_create(&process->handle, argv, process_options);
@@ -132,15 +127,15 @@ cleanup:
   // Either an error has ocurred or the child pipe endpoints have been copied to
   // the stdin/stdout/stderr streams of the child process. Either way, they can
   // be safely closed in the parent process.
-  handle_destroy(child_in);
-  handle_destroy(child_out);
-  handle_destroy(child_err);
+  handle_destroy(child.in);
+  handle_destroy(child.out);
+  handle_destroy(child.err);
 
   if (r < 0) {
     process->handle = process_destroy(process->handle);
-    process->in = handle_destroy(process->in);
-    process->out = handle_destroy(process->out);
-    process->err = handle_destroy(process->err);
+    process->stdio.in = handle_destroy(process->stdio.in);
+    process->stdio.out = handle_destroy(process->stdio.out);
+    process->stdio.err = handle_destroy(process->stdio.err);
   } else {
     process->status = STATUS_IN_PROGRESS;
   }
@@ -156,7 +151,7 @@ int reproc_read(reproc_t *process,
   assert_return(process, REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
 
-  handle pipes[2] = { process->err, process->out };
+  handle pipes[2] = { process->stdio.err, process->stdio.out };
   int r = -1;
 
   r = pipe_wait(pipes, ARRAY_SIZE(pipes));
@@ -174,8 +169,8 @@ int reproc_read(reproc_t *process,
   int bytes_read = r;
 
   if (stream) {
-    *stream = pipes[ready] == process->out ? REPROC_STREAM_OUT
-                                           : REPROC_STREAM_ERR;
+    *stream = pipes[ready] == process->stdio.out ? REPROC_STREAM_OUT
+                                                 : REPROC_STREAM_ERR;
   }
 
   return bytes_read;
@@ -222,14 +217,14 @@ int reproc_drain(reproc_t *process,
 int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 {
   assert_return(process, REPROC_EINVAL);
-  assert_return(process->in, REPROC_EINVAL);
+  assert_return(process->stdio.in, REPROC_EINVAL);
   assert_return(process->status == STATUS_IN_PROGRESS, REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
 
   int r = -1;
 
   do {
-    r = pipe_write(process->in, buffer, size);
+    r = pipe_write(process->stdio.in, buffer, size);
     if (r < 0) {
       break;
     }
@@ -250,13 +245,13 @@ int reproc_close(reproc_t *process, REPROC_STREAM stream)
 
   switch (stream) {
     case REPROC_STREAM_IN:
-      process->in = handle_destroy(process->in);
+      process->stdio.in = handle_destroy(process->stdio.in);
       break;
     case REPROC_STREAM_OUT:
-      process->out = handle_destroy(process->out);
+      process->stdio.out = handle_destroy(process->stdio.out);
       break;
     case REPROC_STREAM_ERR:
-      process->err = handle_destroy(process->err);
+      process->stdio.err = handle_destroy(process->stdio.err);
       break;
     default:
       return REPROC_EINVAL;
@@ -357,9 +352,9 @@ reproc_t *reproc_destroy(reproc_t *process)
   }
 
   process->handle = process_destroy(process->handle);
-  process->in = handle_destroy(process->in);
-  process->out = handle_destroy(process->out);
-  process->err = handle_destroy(process->err);
+  process->stdio.in = handle_destroy(process->stdio.in);
+  process->stdio.out = handle_destroy(process->stdio.out);
+  process->stdio.err = handle_destroy(process->stdio.err);
 
   free(process);
   return NULL;
