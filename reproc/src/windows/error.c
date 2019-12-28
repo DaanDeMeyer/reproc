@@ -23,7 +23,7 @@ int error_unify(int r)
 int error_unify_or_else(int r, int success)
 {
   assert(GetLastError() <= INT_MAX);
-  return r == 0 ? -(int) GetLastError() : success;
+  return r < 0 ? r : r == 0 ? -(int) GetLastError() : success;
 }
 
 const char *error_string(int error)

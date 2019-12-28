@@ -20,12 +20,16 @@ extern const unsigned int REPROC_INFINITE;
 
 static int signal_mask(int how, const sigset_t *newmask, sigset_t *oldmask)
 {
+  int r = -1;
+
 #if defined(REPROC_MULTITHREADED)
-  errno = pthread_sigmask(how, newmask, oldmask);
-  return errno == 0 ? 0 : -1;
+  // `pthread_sigmask` returns positive errno values so we negate them.
+  r = -pthread_sigmask(how, newmask, oldmask);
 #else
-  return sigprocmask(how, newmask, oldmask);
+  r = sigprocmask(how, newmask, oldmask);
 #endif
+
+  return error_unify(r);
 }
 
 // Returns true if the null-terminated string indicated by `path` is a relative
@@ -118,12 +122,12 @@ static pid_t process_fork(int *error_pipe_read,
 
   r = sigfillset(&new_mask);
   if (r < 0) {
-    return r;
+    return error_unify(r);
   }
 
   r = signal_mask(SIG_SETMASK, &new_mask, &old_mask);
   if (r < 0) {
-    return r;
+    return error_unify(r);
   }
 
   r = fork();
@@ -137,7 +141,7 @@ static pid_t process_fork(int *error_pipe_read,
 
     UNPROTECT_SYSTEM_ERROR;
 
-    return r;
+    return error_unify(r);
   }
 
   if (r > 0) {
@@ -168,14 +172,14 @@ static pid_t process_fork(int *error_pipe_read,
       if (r >= 0) {
         // If the child writes to the error pipe and exits, we're certain the
         // child process exited on its own and we can report the error as usual.
-        r = -1;
-        errno = child_errno;
+        r = -child_errno;
       }
     }
 
     *error_pipe_read = handle_destroy(*error_pipe_read);
 
-    return r;
+    // On success, `r` holds the child process pid.
+    return error_unify_or_else(r, r);
   }
 
   // Child process
@@ -283,7 +287,7 @@ int process_create(pid_t *process,
 
   int error_pipe_read = HANDLE_INVALID;
   int error_pipe_write = HANDLE_INVALID;
-  ssize_t r = -1;
+  int r = -1;
 
   // We create an error pipe to receive errors from the child process.
   r = pipe_init(&error_pipe_read, PIPE_BLOCKING, &error_pipe_write,
@@ -328,18 +332,17 @@ int process_create(pid_t *process,
 
     execvp(program, (char *const *) argv);
 
-    // We're guaranteed `execvp(e)` failed if this code is reached.
+    // We're guaranteed `execvp` failed if this code is reached.
     _exit(write_errno(error_pipe_write));
   }
 
-  assert(r <= INT_MAX);
-  *process = (int) r;
+  *process = r;
 
 cleanup:
   handle_destroy(error_pipe_read);
   handle_destroy(error_pipe_write);
 
-  return error_unify((int) r);
+  return error_unify(r);
 }
 
 static int parse_status(int status)
@@ -420,8 +423,7 @@ int process_wait(pid_t process, unsigned int timeout)
 
   if (r == timeout_pid) {
     // The timeout expired.
-    r = -1;
-    errno = ETIMEDOUT;
+    r = -ETIMEDOUT;
     goto cleanup;
   }
 

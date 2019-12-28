@@ -13,7 +13,7 @@ HANDLE handle_destroy(HANDLE handle)
     return HANDLE_INVALID;
   }
 
-  BOOL r = 0;
+  int r = 0;
 
   PROTECT_SYSTEM_ERROR;
 

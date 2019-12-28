@@ -40,7 +40,7 @@ int redirect_inherit(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
                         : stream == REDIRECT_STREAM_OUT ? STD_OUTPUT_HANDLE
                                                         : STD_ERROR_HANDLE;
   HANDLE handle = HANDLE_INVALID;
-  BOOL r = 0;
+  int r = 0;
 
   HANDLE *stream_handle = GetStdHandle(stream_id);
   if (stream_handle == INVALID_HANDLE_VALUE) {
@@ -69,7 +69,7 @@ int redirect_discard(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
   assert(child);
 
   DWORD mode = stream == REDIRECT_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
-  BOOL r = 0;
+  int r = 0;
 
   HANDLE handle = CreateFile(DEVNULL, mode, FILE_NO_SHARE, &INHERIT_HANDLE,
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,

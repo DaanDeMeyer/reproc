@@ -232,7 +232,7 @@ handle_inherit_list_create(HANDLE *handles, size_t num_handles)
 {
   assert(handles);
 
-  BOOL r = 0;
+  int r = 0;
 
   // Get the required size for `attribute_list`.
   SIZE_T attribute_list_size = 0;
@@ -281,13 +281,12 @@ int process_create(HANDLE *process,
   wchar_t *working_directory_wstring = NULL;
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
   PROCESS_INFORMATION info = { HANDLE_INVALID, HANDLE_INVALID, 0, 0 };
-  BOOL r = 0;
+  int r = 0;
 
   // Join `argv` to a whitespace delimited string as required by
   // `CreateProcessW`.
   command_line = argv_join(argv);
   if (command_line == NULL) {
-    r = 0;
     goto cleanup;
   }
 
@@ -295,7 +294,6 @@ int process_create(HANDLE *process,
   command_line_wstring = string_to_wstring(command_line,
                                            strlen(command_line) + 1);
   if (command_line_wstring == NULL) {
-    r = 0;
     goto cleanup;
   }
 
@@ -303,14 +301,12 @@ int process_create(HANDLE *process,
   if (options.environment != NULL) {
     environment_line = environment_join(options.environment);
     if (environment_line == NULL) {
-      r = 0;
       goto cleanup;
     }
 
     size_t joined_size = environment_join_size(options.environment);
     environment_line_wstring = string_to_wstring(environment_line, joined_size);
     if (environment_line_wstring == NULL) {
-      r = 0;
       goto cleanup;
     }
   }
@@ -321,7 +317,6 @@ int process_create(HANDLE *process,
     working_directory_wstring = string_to_wstring(options.working_directory,
                                                   working_directory_size);
     if (working_directory_wstring == NULL) {
-      r = 0;
       goto cleanup;
     }
   }
@@ -337,7 +332,6 @@ int process_create(HANDLE *process,
                         options.redirect.err };
   attribute_list = handle_inherit_list_create(inherit, ARRAY_SIZE(inherit));
   if (attribute_list == NULL) {
-    r = 0;
     goto cleanup;
   }
 
@@ -393,23 +387,21 @@ int process_wait(HANDLE process, unsigned int timeout)
 {
   assert(process);
 
-  DWORD status = 0;
-  DWORD r = 0;
+  int r = 0;
 
-  r = WaitForSingleObject(process, timeout);
+  r = (int) WaitForSingleObject(process, timeout);
   if (r == WAIT_TIMEOUT) {
-    r = WAIT_FAILED;
-    SetLastError(WAIT_TIMEOUT);
+    return -WAIT_TIMEOUT;
   }
 
-  if (r == WAIT_FAILED) {
-    r = 0;
-    goto cleanup;
+  if ((DWORD) r == WAIT_FAILED) {
+    return error_unify(0);
   }
 
-  r = (DWORD) GetExitCodeProcess(process, &status);
+  DWORD status = 0;
+  r = GetExitCodeProcess(process, &status);
   if (r == 0) {
-    goto cleanup;
+    return error_unify(r);
   }
 
   // `GenerateConsoleCtrlEvent` causes a process to exit with this exit code.
@@ -419,11 +411,8 @@ int process_wait(HANDLE process, unsigned int timeout)
     status = (DWORD) REPROC_SIGTERM;
   }
 
-  assert(r <= INT_MAX);
   assert(status <= INT_MAX);
-
-cleanup:
-  return error_unify_or_else((int) r, (int) status);
+  return (int) status;
 }
 
 int process_terminate(HANDLE process)

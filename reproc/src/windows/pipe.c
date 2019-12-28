@@ -46,7 +46,7 @@ int pipe_init(HANDLE *read,
   SECURITY_ATTRIBUTES security = { .nLength = sizeof(SECURITY_ATTRIBUTES),
                                    .lpSecurityDescriptor = NULL,
                                    .bInheritHandle = read_options.inherit };
-  BOOL r = 0;
+  int r = 0;
 
   sprintf(name, "\\\\.\\Pipe\\RemoteExeAnon.%08lx.%08lx.%08lx",
           GetCurrentProcessId(), GetCurrentThreadId(), pipe_serial_number++);
@@ -57,7 +57,6 @@ int pipe_init(HANDLE *read,
                                      PIPE_BUFFER_SIZE, PIPE_NO_TIMEOUT,
                                      &security);
   if (pipe_handles[0] == INVALID_HANDLE_VALUE) {
-    r = 0;
     goto cleanup;
   }
 
@@ -68,7 +67,6 @@ int pipe_init(HANDLE *read,
                                 FILE_ATTRIBUTE_NORMAL | write_mode,
                                 (HANDLE) FILE_NO_TEMPLATE);
   if (pipe_handles[1] == INVALID_HANDLE_VALUE) {
-    r = 0;
     goto cleanup;
   }
 
@@ -93,12 +91,11 @@ int pipe_read(HANDLE pipe, uint8_t *buffer, size_t size)
   assert(size <= UINT_MAX);
 
   DWORD bytes_read = 0;
-  BOOL r = 0;
+  int r = 0;
 
   OVERLAPPED overlapped = { 0 };
   overlapped.hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false, NULL);
   if (overlapped.hEvent == NULL) {
-    r = 0;
     goto cleanup;
   }
 
@@ -127,12 +124,11 @@ int pipe_write(HANDLE pipe, const uint8_t *buffer, size_t size)
   assert(size <= UINT_MAX);
 
   DWORD bytes_written = 0;
-  BOOL r = 0;
+  int r = 0;
 
   OVERLAPPED overlapped = { 0 };
   overlapped.hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false, NULL);
   if (overlapped.hEvent == NULL) {
-    r = 0;
     goto cleanup;
   }
 
@@ -163,7 +159,7 @@ int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready)
   HANDLE pipes[2] = { out, err };
   OVERLAPPED overlapped[2] = { { 0 }, { 0 } };
   HANDLE events[2] = { HANDLE_INVALID, HANDLE_INVALID };
-  BOOL r = 0;
+  int r = 0;
 
   // We emulate POSIX `poll` by issuing overlapped zero-sized reads and waiting
   // for the first one to complete. This approach is inspired by the CPython

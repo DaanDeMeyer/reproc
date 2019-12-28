@@ -77,10 +77,7 @@ int pipe_read(int pipe, uint8_t *buffer, size_t size)
   assert(r <= INT_MAX);
 
   // `read` returns 0 to indicate the other end of the pipe was closed.
-  if (r == 0) {
-    r = -1;
-    errno = EPIPE;
-  }
+  r = r == 0 ? -EPIPE : r;
 
   return error_unify_or_else((int) r, (int) r);
 }

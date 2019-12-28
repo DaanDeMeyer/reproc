@@ -19,7 +19,7 @@ int error_unify(int r)
 
 int error_unify_or_else(int r, int success)
 {
-  return r < 0 ? -errno : success;
+  return r < -1 ? r : r == -1 ? -errno : success;
 }
 
 const char *error_string(int error)

@@ -34,8 +34,7 @@ int redirect_inherit(int *parent, int *child, REDIRECT_STREAM stream)
 
   r = fileno(file);
   if (r < 0) {
-    errno = errno == EBADF ? -EPIPE : -errno;
-    return error_unify(r);
+    return error_unify(errno == EBADF ? -EPIPE : -errno);
   }
 
   int fd = r;
