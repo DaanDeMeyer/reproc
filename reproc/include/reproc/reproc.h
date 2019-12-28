@@ -18,16 +18,16 @@ typedef struct reproc_t reproc_t;
 /*! reproc error naming follows POSIX errno naming prefixed with `REPROC`. */
 
 /*! An invalid argument was passed to an API function */
-extern REPROC_EXPORT const int REPROC_EINVAL;
+REPROC_EXPORT extern const int REPROC_EINVAL;
 /*! A timeout value passed to an API function expired. */
-extern REPROC_EXPORT const int REPROC_ETIMEDOUT;
+REPROC_EXPORT extern const int REPROC_ETIMEDOUT;
 /*! The child process closed one of its streams (and in the case of
 stdout/stderr all of the data remaining in that stream has been read). */
-extern REPROC_EXPORT const int REPROC_EPIPE;
+REPROC_EXPORT extern const int REPROC_EPIPE;
 /*! The process is already (or still) running. */
-extern REPROC_EXPORT const int REPROC_EINPROGRESS;
+REPROC_EXPORT extern const int REPROC_EINPROGRESS;
 /*! A memory allocation failed. */
-extern REPROC_EXPORT const int REPROC_ENOMEM;
+REPROC_EXPORT extern const int REPROC_ENOMEM;
 
 /*! Used to tell reproc where to redirect the streams of the child process. */
 typedef enum {
@@ -115,7 +115,7 @@ typedef enum {
 } REPROC_STREAM;
 
 /*! Tells a function that takes a timeout value to wait indefinitely. */
-extern REPROC_EXPORT const unsigned int REPROC_INFINITE;
+REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
 
 /* Allocate a new `reproc_t` instance on the heap. */
 REPROC_EXPORT reproc_t *reproc_new(void);
