@@ -154,39 +154,29 @@ cleanup:
   return error_unify(r, (int) bytes_written);
 }
 
-int pipe_wait(const handle *pipes, size_t num_pipes)
+int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready)
 {
-  assert(num_pipes <= UINT_MAX);
+  if (out == HANDLE_INVALID && err == HANDLE_INVALID) {
+    return -ERROR_BROKEN_PIPE;
+  } else if (out == HANDLE_INVALID) {
+    *ready = err;
+    return 0;
+  } else if (err == HANDLE_INVALID) {
+    *ready = out;
+    return 0;
+  }
 
-  OVERLAPPED *overlapped = NULL;
-  HANDLE *events = NULL;
-  DWORD num_reads = 0;
-  int ready = -1;
+  HANDLE pipes[2] = { out, err };
+  OVERLAPPED overlapped[2] = { { 0 }, { 0 } };
+  HANDLE events[2] = { HANDLE_INVALID, HANDLE_INVALID };
   BOOL r = 0;
-
-  // `BOOL` is either 0 or 1 even though it is defined as `int` so all casts of
-  // functions returning `BOOL` to `DWORD` in this function are safe.
-
-  overlapped = calloc(num_pipes, sizeof(OVERLAPPED));
-  if (overlapped == NULL) {
-    r = 0;
-    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    goto cleanup;
-  }
-
-  events = calloc(num_pipes, sizeof(HANDLE));
-  if (events == NULL) {
-    r = 0;
-    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    goto cleanup;
-  }
 
   // We emulate POSIX `poll` by issuing overlapped zero-sized reads and waiting
   // for the first one to complete. This approach is inspired by the CPython
   // multiprocessing module `wait` implementation:
   // https://github.com/python/cpython/blob/10ecbadb799ddf3393d1fc80119a3db14724d381/Lib/multiprocessing/connection.py#L826
 
-  for (size_t i = 0; i < num_pipes; i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(overlapped); i++) {
     overlapped[i].hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false,
                                        NULL);
     if (overlapped[i].hEvent == NULL) {
@@ -195,26 +185,22 @@ int pipe_wait(const handle *pipes, size_t num_pipes)
     }
 
     r = ReadFile(pipes[i], (uint8_t[]){ 0 }, 0, NULL, &overlapped[i]);
-    if (r == 0 && GetLastError() != ERROR_IO_PENDING &&
-        GetLastError() != ERROR_BROKEN_PIPE) {
+    if (r != 0 || GetLastError() == ERROR_BROKEN_PIPE) {
+      // The read succeeded or we got a broken pipe error. Either way, we know
+      // the pipe is ready to be processed further.
+      r = 1;
+      *ready = pipes[i];
       goto cleanup;
     }
 
-    if (r != 0 || GetLastError() == ERROR_IO_PENDING) {
-      num_reads++;
+    if (GetLastError() != ERROR_IO_PENDING) {
+      goto cleanup;
     }
 
     events[i] = overlapped[i].hEvent;
   }
 
-  if (num_reads == 0) {
-    // All streams have been closed.
-    r = 0;
-    SetLastError(ERROR_BROKEN_PIPE);
-    goto cleanup;
-  }
-
-  DWORD result = WaitForMultipleObjects((DWORD) num_pipes, events, false,
+  DWORD result = WaitForMultipleObjects(ARRAY_SIZE(events), events, false,
                                         INFINITE);
   // We don't expect `WAIT_ABANDONED_0` or `WAIT_TIMEOUT` to be valid here.
   assert(result < WAIT_ABANDONED_0);
@@ -225,24 +211,15 @@ int pipe_wait(const handle *pipes, size_t num_pipes)
     goto cleanup;
   }
 
-  assert(result < num_pipes && result <= INT_MAX);
-
   // Map the signaled event back to its corresponding handle.
-  ready = (int) result;
+  *ready = pipes[result];
   r = 1;
 
-cleanup:
-  // If a memory allocation failed, we don't have to do any other cleanup.
-  if (overlapped == NULL || events == NULL) {
-    free(overlapped);
-    free(events);
-    return error_unify(r, 0);
-  }
-
+cleanup:;
   // `GetLastError` will get overridden during cleanup so we save it.
   DWORD system_error = r == 0 ? GetLastError() : 0;
 
-  for (size_t i = 0; i < num_pipes; i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(overlapped); i++) {
 
     // Cancel any remaining zero-sized reads that we queued if they have not yet
     // completed.
@@ -274,12 +251,9 @@ cleanup:
     }
   }
 
-  for (size_t i = 0; i < num_pipes; i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(overlapped); i++) {
     handle_destroy(overlapped[i].hEvent);
   }
-
-  free(overlapped);
-  free(events);
 
   if (r > 0) {
     // If no errors occurred during cleanup that we did not expect, reset the
@@ -288,5 +262,5 @@ cleanup:
     SetLastError(system_error);
   }
 
-  return error_unify(r, ready);
+  return error_unify(r, 0);
 }

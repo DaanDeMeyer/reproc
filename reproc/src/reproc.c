@@ -151,29 +151,40 @@ int reproc_read(reproc_t *process,
   assert_return(process, REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
 
-  handle pipes[2] = { process->stdio.err, process->stdio.out };
   int r = -1;
 
-  r = pipe_wait(pipes, ARRAY_SIZE(pipes));
-  if (r < 0) {
-    return r;
+  while (true) {
+    // Get the first pipe that will have data available to be read.
+    handle ready = HANDLE_INVALID;
+    r = pipe_wait(process->stdio.out, process->stdio.err, &ready);
+    if (r < 0) {
+      return r;
+    }
+
+    r = pipe_read(ready, buffer, size);
+    if (r >= 0) {
+      if (stream) {
+        *stream = ready == process->stdio.out ? REPROC_STREAM_OUT
+                                              : REPROC_STREAM_ERR;
+      }
+
+      break;
+    }
+
+    if (r < 0 && r != REPROC_EPIPE) {
+      return r;
+    }
+
+    // If the pipe was closed, destroy its handle and try waiting again.
+
+    if (ready == process->stdio.out) {
+      process->stdio.out = handle_destroy(process->stdio.out);
+    } else {
+      process->stdio.err = handle_destroy(process->stdio.err);
+    }
   }
 
-  int ready = r;
-
-  r = pipe_read(pipes[ready], buffer, size);
-  if (r < 0) {
-    return r;
-  }
-
-  int bytes_read = r;
-
-  if (stream) {
-    *stream = pipes[ready] == process->stdio.out ? REPROC_STREAM_OUT
-                                                 : REPROC_STREAM_ERR;
-  }
-
-  return bytes_read;
+  return r; // bytes read
 }
 
 int reproc_drain(reproc_t *process,

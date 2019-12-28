@@ -10,8 +10,7 @@
 
 static const char *DEVNULL = "/dev/null";
 
-static const struct pipe_options CHILD_OPTIONS = { .nonblocking = false };
-static const struct pipe_options PARENT_OPTIONS = { .nonblocking = true };
+static const struct pipe_options PIPE_OPTIONS = { 0 };
 
 int redirect_pipe(int *parent, int *child, REDIRECT_STREAM stream)
 {
@@ -19,8 +18,8 @@ int redirect_pipe(int *parent, int *child, REDIRECT_STREAM stream)
   assert(child);
 
   return stream == REDIRECT_STREAM_IN
-             ? pipe_init(child, CHILD_OPTIONS, parent, PARENT_OPTIONS)
-             : pipe_init(parent, PARENT_OPTIONS, child, CHILD_OPTIONS);
+             ? pipe_init(child, PIPE_OPTIONS, parent, PIPE_OPTIONS)
+             : pipe_init(parent, PIPE_OPTIONS, child, PIPE_OPTIONS);
 }
 
 int redirect_inherit(int *parent, int *child, REDIRECT_STREAM stream)

@@ -30,4 +30,4 @@ int pipe_write(handle pipe, const uint8_t *buffer, size_t size);
 // its index in `pipes`.
 //
 // `REPROC_EPIPE` is returned if all pipes in `pipes` have been closed.
-int pipe_wait(const handle *pipes, size_t num_pipes);
+int pipe_wait(handle out, handle err, handle *ready);

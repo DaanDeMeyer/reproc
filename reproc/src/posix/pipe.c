@@ -1,6 +1,7 @@
 #include <pipe.h>
 
 #include "error.h"
+#include "macro.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -83,69 +84,49 @@ int pipe_read(int pipe, uint8_t *buffer, size_t size)
   return error_unify((int) r, (int) r);
 }
 
-static const int POLL_INFINITE = -1;
-
 int pipe_write(int pipe, const uint8_t *buffer, size_t size)
 {
   assert(buffer);
 
-  struct pollfd pollfd = { .fd = pipe, .events = POLLOUT };
-  ssize_t r = -1;
-
-  r = poll(&pollfd, 1, POLL_INFINITE);
-  if (r < 0) {
-    goto cleanup;
-  }
-
-  assert(pollfd.revents & POLLOUT || pollfd.revents & POLLERR);
-
-  r = write(pipe, buffer, size);
+  ssize_t r = write(pipe, buffer, size);
   assert(r <= INT_MAX);
 
-cleanup:
   return error_unify((int) r, (int) r);
 }
 
-int pipe_wait(const handle *pipes, size_t num_pipes)
+static const int POLL_INFINITE = -1;
+
+int pipe_wait(int out, int err, int *ready)
 {
-  assert(pipes);
-  assert(num_pipes <= INT_MAX);
+  assert(out);
+  assert(err);
 
-  size_t i = 0;
-  int r = -1;
-
-  struct pollfd *pollfds = calloc(num_pipes, sizeof(struct pollfd));
-  if (pollfds == NULL) {
-    r = -1;
-    goto cleanup;
+  if (out == HANDLE_INVALID && err == HANDLE_INVALID) {
+    return -EPIPE;
+  } else if (out == HANDLE_INVALID) {
+    *ready = err;
+    return 0;
+  } else if (err == HANDLE_INVALID) {
+    *ready = out;
+    return 0;
   }
 
-  for (i = 0; i < num_pipes; i++) {
-    pollfds[i].fd = pipes[i];
-    pollfds[i].events = POLLIN;
-  }
+  struct pollfd pollfds[2] = { { .fd = out, .events = POLLIN },
+                               { .fd = err, .events = POLLIN } };
 
-  r = poll(pollfds, (unsigned int) num_pipes, POLL_INFINITE);
+  int r = poll(pollfds, ARRAY_SIZE(pollfds), POLL_INFINITE);
   if (r < 0) {
-    goto cleanup;
+    return error_unify(r, 0);
   }
 
-  for (i = 0; i < num_pipes; i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(pollfds); i++) {
     struct pollfd pollfd = pollfds[i];
 
-    if (pollfd.revents & POLLIN || pollfd.revents & POLLERR) {
-      r = (int) i;
+    if (pollfd.revents > 0) {
+      *ready = pollfd.fd;
       break;
     }
   }
 
-  if (i == num_pipes) {
-    r = -1;
-    errno = EPIPE;
-  }
-
-cleanup:
-  free(pollfds);
-
-  return error_unify(r, r);
+  return 0;
 }
