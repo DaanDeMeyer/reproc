@@ -21,22 +21,8 @@ exposing reproc's API when using reproc++ all the other structs, enums and
 constants of reproc have a replacement in reproc++ as well. */
 namespace reproc {
 
-namespace error {
-
-/*! Because of a bug in the MSVC STL, we alias `std::errc::broken_pipe` in
-reproc++. For other errors, use `std::errc` to match against the
-`std::error_code`'s returned by reproc++. Use
-https://en.cppreference.com/w/cpp/error/errc to map reproc error codes to
-`std::errc` constants. */
-
-#if defined(_WIN32)
-// https://github.com/microsoft/STL/pull/406
-static const std::error_code broken_pipe = { 109, std::system_category() };
-#else
-constexpr std::errc broken_pipe = std::errc::broken_pipe;
-#endif
-
-} // namespace error
+// Conversion from reproc to errc: https://en.cppreference.com/w/cpp/error/errc
+using error = std::errc;
 
 namespace signal {
 
