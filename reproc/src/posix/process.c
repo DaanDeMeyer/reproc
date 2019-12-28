@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -126,40 +127,53 @@ static pid_t process_fork(int *error_pipe_read,
   r = fork();
   if (r < 0) {
     // `fork` error.
-    PROTECT_SYSTEM_ERROR(signal_mask(SIG_SETMASK, &old_mask, NULL));
+
+    PROTECT_SYSTEM_ERROR;
+
+    r = signal_mask(SIG_SETMASK, &old_mask, NULL);
+    assert_unused(r == 0);
+
+    UNPROTECT_SYSTEM_ERROR;
+
     return r;
   }
 
   if (r > 0) {
     // Parent process
 
-    int child = r;
-
     // From now on, the child process might have started so we don't report
     // errors from `signal_mask` and `pipe_read`. This puts the responsibility
     // for cleaning up the process in the hands of the user from now on.
 
-    PROTECT_SYSTEM_ERROR(signal_mask(SIG_SETMASK, &old_mask, NULL));
+    PROTECT_SYSTEM_ERROR;
+
+    r = signal_mask(SIG_SETMASK, &old_mask, NULL);
+    assert_unused(r == 0);
 
     // Close the error pipe write end on the parent's side so `read` will return
     // when it is closed on the child side as well.
     *error_pipe_write = handle_destroy(*error_pipe_write);
 
     int child_errno = 0;
-    PROTECT_SYSTEM_ERROR(pipe_read(*error_pipe_read, (uint8_t *) &child_errno,
-                                   sizeof(child_errno)));
+    r = pipe_read(*error_pipe_read, (uint8_t *) &child_errno,
+                  sizeof(child_errno));
+    assert_unused(r == -EPIPE || r > 0);
+
+    UNPROTECT_SYSTEM_ERROR;
 
     if (child_errno > 0) {
-      // If the child writes to the error pipe, we're certain the child process
-      // exited on its own and we can report the error as usual.
-      PROTECT_SYSTEM_ERROR(waitpid(child, NULL, 0));
-      r = -1;
-      errno = child_errno;
+      r = waitpid(r, NULL, 0);
+      if (r >= 0) {
+        // If the child writes to the error pipe and exits, we're certain the
+        // child process exited on its own and we can report the error as usual.
+        r = -1;
+        errno = child_errno;
+      }
     }
 
     *error_pipe_read = handle_destroy(*error_pipe_read);
 
-    return r < 0 ? r : child;
+    return r;
   }
 
   // Child process
@@ -238,11 +252,14 @@ static pid_t process_fork(int *error_pipe_read,
       continue;
     }
 
-    // We ignore `close` errors since we try to close every file descriptor
-    // including invalid ones and `close` sets `errno` when an invalid file
-    // descriptor is passed.
-    handle_destroy(i);
+    // Check if `i` is a valid file descriptor before trying to close it.
+    r = fcntl(i, F_GETFD);
+    if (r >= 0) {
+      handle_destroy(i);
+    }
   }
+
+  r = 0;
 
 cleanup:
   if (r < 0) {
@@ -326,12 +343,29 @@ cleanup:
   return error_unify((int) r, 0);
 }
 
+static int parse_status(int status)
+{
+  return WIFEXITED(status) ? WEXITSTATUS(status) : WTERMSIG(status) + UINT8_MAX;
+}
+
 int process_wait(pid_t process, unsigned int timeout)
 {
-  int error_pipe_read = HANDLE_INVALID;
-  int error_pipe_write = HANDLE_INVALID;
   int status = 0;
   int r = -1;
+
+  if (timeout == 0 || timeout == REPROC_INFINITE) {
+    r = waitpid(process, &status, timeout == 0 ? WNOHANG : 0);
+
+    if (r >= 0) {
+      assert(r == process);
+      status = parse_status(status);
+    }
+
+    return error_unify(r, status);
+  }
+
+  int error_pipe_read = HANDLE_INVALID;
+  int error_pipe_write = HANDLE_INVALID;
 
   r = pipe_init(&error_pipe_read, PIPE_BLOCKING, &error_pipe_write,
                 PIPE_BLOCKING);
@@ -369,8 +403,14 @@ int process_wait(pid_t process, unsigned int timeout)
 
   if (r != timeout_pid) {
     // We didn't time out. Terminate the timeout process to make sure it exits.
-    PROTECT_SYSTEM_ERROR(process_terminate(timeout_pid));
-    PROTECT_SYSTEM_ERROR(waitpid(timeout_pid, NULL, 0));
+    PROTECT_SYSTEM_ERROR;
+
+    r = process_terminate(timeout_pid);
+    assert_unused(r == 0);
+    r = waitpid(timeout_pid, NULL, 0);
+    assert_unused(r == timeout_pid);
+
+    UNPROTECT_SYSTEM_ERROR;
   }
 
   if (r < 0) {
@@ -385,8 +425,7 @@ int process_wait(pid_t process, unsigned int timeout)
   }
 
   assert(r == process);
-  status = WIFEXITED(status) ? WEXITSTATUS(status)
-                             : WTERMSIG(status) + UINT8_MAX;
+  status = parse_status(status);
 
 cleanup:
   handle_destroy(error_pipe_read);
