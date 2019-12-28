@@ -13,7 +13,7 @@ const int terminate = REPROC_SIGTERM;
 
 const milliseconds infinite = milliseconds(REPROC_INFINITE);
 
-static std::error_code error_from(int r)
+static std::error_code error_code_from(int r)
 {
   if (r >= 0) {
     return {};
@@ -60,7 +60,7 @@ std::error_code process::start(const arguments &arguments,
   };
 
   int r = reproc_start(process_.get(), arguments.data(), reproc_options);
-  return error_from(r);
+  return error_code_from(r);
 }
 
 std::tuple<stream, size_t, std::error_code> process::read(uint8_t *buffer,
@@ -68,44 +68,44 @@ std::tuple<stream, size_t, std::error_code> process::read(uint8_t *buffer,
 {
   REPROC_STREAM stream = {};
   int r = reproc_read(process_.get(), &stream, buffer, size);
-  return { static_cast<enum stream>(stream), r, error_from(r) };
+  return { static_cast<enum stream>(stream), r, error_code_from(r) };
 }
 
 std::error_code process::write(const uint8_t *buffer, size_t size) noexcept
 {
   int r = reproc_write(process_.get(), buffer, size);
-  return error_from(r);
+  return error_code_from(r);
 }
 
 std::error_code process::close(stream stream) noexcept
 {
   int r = reproc_close(process_.get(), static_cast<REPROC_STREAM>(stream));
-  return error_from(r);
+  return error_code_from(r);
 }
 
 std::pair<int, std::error_code> process::wait(milliseconds timeout) noexcept
 {
   int r = reproc_wait(process_.get(), timeout.count());
-  return { r, error_from(r) };
+  return { r, error_code_from(r) };
 }
 
 std::error_code process::terminate() noexcept
 {
   int r = reproc_terminate(process_.get());
-  return error_from(r);
+  return error_code_from(r);
 }
 
 std::error_code process::kill() noexcept
 {
   int r = reproc_kill(process_.get());
-  return error_from(r);
+  return error_code_from(r);
 }
 
 std::pair<int, std::error_code>
 process::stop(stop_actions stop_actions) noexcept
 {
   int r = reproc_stop(process_.get(), reproc_stop_actions_from(stop_actions));
-  return { r, error_from(r) };
+  return { r, error_code_from(r) };
 }
 
 } // namespace reproc
