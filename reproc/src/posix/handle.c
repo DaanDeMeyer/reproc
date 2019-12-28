@@ -2,7 +2,6 @@
 
 #include "error.h"
 
-#include <assert.h>
 #include <errno.h>
 #include <unistd.h>
 

@@ -6,31 +6,17 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
-#include <time.h>
 #include <unistd.h>
-
-#if defined(__APPLE__)
-  #include <sys/event.h>
-#endif
 
 #if defined(__APPLE__)
   #define EXECVPE execve
 #else
   #define EXECVPE execvpe
-#endif
-
-// https://github.com/neovim/neovim/pull/5243
-#if defined(__APPLE__) && defined(__GNUC__) && !defined(__clang__)
-  #define SIGADDSET(set, signum) sigaddset((int *) (set), (signum))
-#else
-  #define SIGADDSET(set, signum) sigaddset((set), (signum))
 #endif
 
 // Including the entire reproc.h header is overkill so we import only the

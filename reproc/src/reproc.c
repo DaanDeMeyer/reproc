@@ -7,8 +7,6 @@
 #include "process.h"
 #include "redirect.h"
 
-#include <assert.h>
-#include <limits.h>
 #include <stdlib.h>
 
 struct reproc_t {
@@ -238,7 +236,6 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 
     size_t bytes_written = (size_t) r;
 
-    assert(bytes_written <= size);
     buffer += bytes_written;
     size -= bytes_written;
   } while (size != 0);
@@ -279,8 +276,6 @@ int reproc_wait(reproc_t *process, unsigned int timeout)
     return process->status;
   }
 
-  assert(process->status == STATUS_IN_PROGRESS);
-
   r = process_wait(process->handle, timeout);
   if (r < 0) {
     return r;
@@ -298,8 +293,6 @@ int reproc_terminate(reproc_t *process)
     return 0;
   }
 
-  assert(process->status == STATUS_IN_PROGRESS);
-
   return process_terminate(process->handle);
 }
 
@@ -311,8 +304,6 @@ int reproc_kill(reproc_t *process)
   if (process->status >= 0) {
     return 0;
   }
-
-  assert(process->status == STATUS_IN_PROGRESS);
 
   return process_kill(process->handle);
 }

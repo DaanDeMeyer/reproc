@@ -2,7 +2,6 @@
 
 #include "error.h"
 
-#include <assert.h>
 #include <windows.h>
 
 const HANDLE HANDLE_INVALID = INVALID_HANDLE_VALUE; // NOLINT
