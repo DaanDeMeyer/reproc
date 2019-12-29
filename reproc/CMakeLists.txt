@@ -24,10 +24,6 @@ target_compile_definitions(reproc PRIVATE
     _WIN32_WINNT=_WIN32_WINNT_VISTA
     NTDDI_VERSION=NTDDI_VISTA
   >
-  $<$<PLATFORM_ID:Linux>:
-    # Needed for `pipe2` and `execvpe`.
-    _GNU_SOURCE
-  >
 )
 
 if(REPROC_TEST)

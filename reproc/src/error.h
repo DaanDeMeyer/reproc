@@ -33,6 +33,7 @@
     assert((expression));                                                      \
   } while (0)
 
+// Returns `r` if `expression` is false.
 #define assert_return(expression, r)                                           \
   do {                                                                         \
     if (!(expression)) {                                                       \
@@ -40,8 +41,15 @@
     }                                                                          \
   } while (false)
 
+// Returns a common representation of platform-specific errors. In practice, the
+// value of `errno` or `GetLastError` is negated and returned if `r` indicates
+// an error occurred (`r < 0` on Linux and `r == 0` on Windows).
+//
+// Returns 0 if no error occurred. If `r` has already been passed through
+// `error_unify` before, it is returned unmodified.
 int error_unify(int r);
 
+// `error_unify` but returns `success` if no error occurred.
 int error_unify_or_else(int r, int success);
 
 const char *error_string(int error);

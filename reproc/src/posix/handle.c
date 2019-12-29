@@ -18,7 +18,6 @@ int handle_destroy(int handle)
 
   PROTECT_SYSTEM_ERROR;
 
-  // Avoid `close` errors overriding other system errors.
   r = close(handle);
   assert_unused(r == 0);
 

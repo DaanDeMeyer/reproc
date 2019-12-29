@@ -37,15 +37,13 @@ int redirect_inherit(int *parent, int *child, REDIRECT_STREAM stream)
     return error_unify(errno == EBADF ? -EPIPE : -errno);
   }
 
-  int fd = r;
-
-  r = fcntl(fd, F_DUPFD_CLOEXEC, 0);
+  r = fcntl(r, F_DUPFD_CLOEXEC, 0);
   if (r < 0) {
     return error_unify(r);
   }
 
   *parent = HANDLE_INVALID;
-  *child = fd;
+  *child = r; // `r` contains the duplicated file descriptor.
 
   return 0;
 }
@@ -62,10 +60,8 @@ int redirect_discard(int *parent, int *child, REDIRECT_STREAM stream)
     return error_unify(r);
   }
 
-  int fd = r;
-
   *parent = HANDLE_INVALID;
-  *child = fd;
+  *child = r;
 
   return 0;
 }

@@ -17,6 +17,9 @@ struct process_options {
   // If not `NULL`, the working directory of the child process is set to
   // `working_directory`.
   const char *working_directory;
+  // The standard streams of the child process are redirected to the handles in
+  // `redirect`. If a handle is `HANDLE_INVALID`, the corresponding child
+  // process standard stream is closed.
   struct stdio redirect;
 };
 

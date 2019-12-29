@@ -305,8 +305,6 @@ REPROC_EXPORT reproc_t *reproc_destroy(reproc_t *process);
 /*!
 Returns a string describing `error`. This string must not be modified by the
 caller.
-
-This function is not thread-safe.
 */
 REPROC_EXPORT const char *reproc_strerror(int error);
 

@@ -371,18 +371,18 @@ int process_wait(pid_t process, unsigned int timeout)
   }
 
   if (r == 0) {
-    struct timeval tv = {
+    // Close the error pipe before we sleep so the parent process can continue
+    // to the `waitpid` call.
+    handle_destroy(error_pipe_write);
+
+    struct timeval timeval = {
       .tv_sec = timeout / 1000,          // ms -> s
       .tv_usec = (timeout % 1000) * 1000 // leftover ms -> us
     };
 
-    // Close the error pipe before we sleep so the parent process can continue
-    // to the `waitpid` call in the parent process.
-    handle_destroy(error_pipe_write);
-
     // `select` with no file descriptors can be used as a makeshift sleep
     // function that can still be interrupted.
-    r = select(0, NULL, NULL, NULL, &tv);
+    r = select(0, NULL, NULL, NULL, &timeval);
 
     _exit(r < 0 ? errno : 0);
   }

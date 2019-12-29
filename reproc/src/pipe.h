@@ -18,16 +18,14 @@ int pipe_init(handle *read,
               handle *write,
               struct pipe_options write_options);
 
-// Reads up to `size` bytes into `buffer` from the pipe indicated by `handle`
-// and returns the amount of bytes read.
+// Reads up to `size` bytes into `buffer` from the pipe indicated by `pipe` and
+// returns the amount of bytes read.
 int pipe_read(handle pipe, uint8_t *buffer, size_t size);
 
-// Writes up to `size` bytes from `buffer` to the pipe indicated by `handle`
-// and returns the amount of bytes written.
+// Writes up to `size` bytes from `buffer` to the pipe indicated by `pipe` and
+// returns the amount of bytes written.
 int pipe_write(handle pipe, const uint8_t *buffer, size_t size);
 
-// Block until one of the pipes in `pipes` has data available to read and return
-// its index in `pipes`.
-//
-// `REPROC_EPIPE` is returned if all pipes in `pipes` have been closed.
+// Stores the value of the first of `out` and `ready` that will have data
+// available to read in `ready`.
 int pipe_wait(handle out, handle err, handle *ready);
