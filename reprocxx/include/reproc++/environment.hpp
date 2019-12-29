@@ -7,8 +7,8 @@ namespace reproc {
 
 class environment : public detail::array {
 public:
-  environment(const char *const *environment = nullptr) // NOLINT
-      : detail::array(environment, false)
+  environment(const char *const *envp = nullptr) // NOLINT
+      : detail::array(envp, false)
   {}
 
   /*!
@@ -43,7 +43,7 @@ const char *const *environment::from(const Environment &environment)
   using value_size_type =
       typename Environment::value_type::second_type::size_type;
 
-  const char **data = new const char *[environment.size() + 1];
+  const char **envp = new const char *[environment.size() + 1];
   std::size_t current = 0;
 
   for (const auto &entry : environment) {
@@ -52,10 +52,9 @@ const char *const *environment::from(const Environment &environment)
 
     // We add 2 to the size to reserve space for the '=' sign and the null
     // terminator at the end of the string.
-    name_size_type size = name.size() + value.size() + 2;
-    char *string = new char[size];
+    char *string = new char[name.size() + value.size() + 2];
 
-    data[current++] = string;
+    envp[current++] = string;
 
     for (name_size_type i = 0; i < name.size(); i++) {
       *string++ = name[i];
@@ -70,9 +69,9 @@ const char *const *environment::from(const Environment &environment)
     *string = '\0';
   }
 
-  data[current] = nullptr;
+  envp[current] = nullptr;
 
-  return data;
+  return envp;
 }
 
 }

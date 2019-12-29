@@ -7,8 +7,8 @@ namespace reproc {
 
 class arguments : public detail::array {
 public:
-  arguments(const char *const *arguments) // NOLINT
-      : detail::array(arguments, false)
+  arguments(const char *const *argv) // NOLINT
+      : detail::array(argv, false)
   {}
 
   /*!
@@ -36,13 +36,13 @@ const char *const *arguments::from(const Arguments &arguments)
 {
   using size_type = typename Arguments::value_type::size_type;
 
-  const char **data = new const char *[arguments.size() + 1];
+  const char **argv = new const char *[arguments.size() + 1];
   std::size_t current = 0;
 
   for (const auto &argument : arguments) {
     char *string = new char[argument.size() + 1];
 
-    data[current++] = string;
+    argv[current++] = string;
 
     for (size_type i = 0; i < argument.size(); i++) {
       *string++ = argument[i];
@@ -51,9 +51,9 @@ const char *const *arguments::from(const Arguments &arguments)
     *string = '\0';
   }
 
-  data[current] = nullptr;
+  argv[current] = nullptr;
 
-  return data;
+  return argv;
 }
 
 }
