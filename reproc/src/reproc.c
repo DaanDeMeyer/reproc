@@ -32,23 +32,32 @@ static int redirect(handle *parent,
   assert(parent);
   assert(child);
 
+  int r = -1;
+
   switch (type) {
 
     case REPROC_REDIRECT_PIPE:
-      return redirect_pipe(parent, child, (REDIRECT_STREAM) stream);
+      r = redirect_pipe(parent, child, (REDIRECT_STREAM) stream);
+      break;
 
     case REPROC_REDIRECT_INHERIT:;
-      int r = redirect_inherit(parent, child, (REDIRECT_STREAM) stream);
+      r = redirect_inherit(parent, child, (REDIRECT_STREAM) stream);
       // Discard if the corresponding parent stream is closed.
-      return r == REPROC_EPIPE
-                 ? redirect_discard(parent, child, (REDIRECT_STREAM) stream)
-                 : r;
+      r == REPROC_EPIPE
+          ? redirect_discard(parent, child, (REDIRECT_STREAM) stream)
+          : r;
+      break;
 
     case REPROC_REDIRECT_DISCARD:
-      return redirect_discard(parent, child, (REDIRECT_STREAM) stream);
+      r = redirect_discard(parent, child, (REDIRECT_STREAM) stream);
+      break;
+
+    default:
+      r = REPROC_EINVAL;
+      break;
   }
 
-  return REPROC_EINVAL;
+  return r;
 }
 
 reproc_t *reproc_new(void)

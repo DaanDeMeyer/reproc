@@ -4,6 +4,7 @@
 #include <reproc++/environment.hpp>
 #include <reproc++/export.hpp>
 
+#include <array>
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -151,19 +152,19 @@ std::error_code process::drain(Sink &&sink)
     return {};
   }
 
-  uint8_t buffer[4096]; // NOLINT
+  std::array<uint8_t, 4096> buffer = {};
   std::error_code ec;
 
   while (true) {
     stream stream = {};
     size_t bytes_read = 0;
-    std::tie(stream, bytes_read, ec) = read(buffer, sizeof(buffer));
+    std::tie(stream, bytes_read, ec) = read(buffer.data(), buffer.size());
     if (ec) {
       break;
     }
 
     // `sink` returns false to tell us to stop reading.
-    if (!sink(stream, buffer, bytes_read)) {
+    if (!sink(stream, buffer.data(), bytes_read)) {
       break;
     }
   }

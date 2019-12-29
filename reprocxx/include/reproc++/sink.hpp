@@ -2,7 +2,6 @@
 
 #include <reproc++/reproc.hpp>
 
-#include <cassert>
 #include <iosfwd>
 #include <mutex>
 #include <ostream>
@@ -51,9 +50,6 @@ public:
 
   bool operator()(stream stream, const uint8_t *buffer, size_t size)
   {
-    assert(static_cast<uintmax_t>(size) <=
-           static_cast<uintmax_t>(std::numeric_limits<std::streamsize>::max()));
-
     switch (stream) {
       case stream::out:
         out_.write(reinterpret_cast<const char *>(buffer),
