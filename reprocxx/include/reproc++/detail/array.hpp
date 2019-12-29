@@ -49,5 +49,5 @@ public:
   }
 };
 
-} // namespace detail
-} // namespace reproc
+}
+}

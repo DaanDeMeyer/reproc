@@ -16,13 +16,14 @@
 struct reproc_t;
 
 /*! The `reproc` namespace wraps all reproc++ declarations. `process` wraps
-reproc's API inside a C++ class. `error` improves on `REPROC_ERROR` by
-integrating with C++'s `std::error_code` error handling mechanism. To avoid
-exposing reproc's API when using reproc++ all the other structs, enums and
-constants of reproc have a replacement in reproc++ as well. */
+reproc's API inside a C++ class. To avoid exposing reproc's API when using
+reproc++ all structs, enums and constants of reproc have a replacement in
+reproc++. Only differences in behaviour compared to reproc are documented. Refer
+to reproc.h and the examples for general information on how to use reproc. */
 namespace reproc {
 
-// Conversion from reproc to errc: https://en.cppreference.com/w/cpp/error/errc
+/*! Conversion from reproc `errno` constants to `std::errc` constants:
+https://en.cppreference.com/w/cpp/error/errc */
 using error = std::errc;
 
 namespace signal {
@@ -30,30 +31,27 @@ namespace signal {
 REPROCXX_EXPORT extern const int kill;
 REPROCXX_EXPORT extern const int terminate;
 
-} // namespace signal
+}
 
+/*! Timeout values are passed as `reproc::milliseconds` instead of `unsigned
+int` in reproc++. */
 using milliseconds = std::chrono::duration<unsigned int, std::milli>;
 
-/*! `REPROC_REDIRECT` */
 enum class redirect { pipe, inherit, discard };
 
-/*! `REPROC_STOP` */
 enum class stop { noop, wait, terminate, kill };
 
-/*! `REPROC_STOP_ACTION` */
 struct stop_action {
   stop action;
   milliseconds timeout;
 };
 
-/*! `REPROC_STOP_ACTIONS` */
 struct stop_actions {
   stop_action first;
   stop_action second;
   stop_action third;
 };
 
-/*! `reproc_options` */
 struct options {
   /*! Implicitly converts from any STL container of string pairs to the
   environment format expected by `reproc_start`. */
@@ -69,10 +67,8 @@ struct options {
   struct stop_actions stop_actions = {};
 };
 
-/*! `REPROC_STREAM` */
 enum class stream { in, out, err };
 
-/*! `REPROC_INFINITE` */
 REPROCXX_EXPORT extern const milliseconds infinite;
 
 /*! Improves on reproc's API by adding RAII and changing the API of some
@@ -80,10 +76,7 @@ functions to be more idiomatic C++. */
 class process {
 
 public:
-  /*! `reproc_new` */
   REPROCXX_EXPORT process();
-
-  /*! `reproc_destroy` */
   REPROCXX_EXPORT ~process() noexcept;
 
   // Enforce unique ownership of child processes.
@@ -95,8 +88,7 @@ public:
   REPROCXX_EXPORT std::error_code start(const arguments &arguments,
                                         const options &options = {}) noexcept;
 
-  /*! `reproc_read` but returns a tuple of (stream read from, amount of bytes
-  read, error_code) instead of taking output arguments by pointer. */
+  /*! `reproc_read` but returns a tuple of (stream, bytes read, error). */
   REPROCXX_EXPORT std::tuple<stream, size_t, std::error_code>
   read(uint8_t *buffer, size_t size) noexcept;
 
@@ -113,24 +105,20 @@ public:
   template <typename Sink>
   std::error_code drain(Sink &&sink);
 
-  /*! `reproc_write` */
   REPROCXX_EXPORT std::error_code write(const uint8_t *buffer,
                                         size_t size) noexcept;
 
-  /*! `reproc_close` */
   REPROCXX_EXPORT std::error_code close(stream stream) noexcept;
 
-  /*! `reproc_wait` */
+  /*! `reproc_wait` but returns a pair of (status, error). */
   REPROCXX_EXPORT std::pair<int, std::error_code>
   wait(milliseconds timeout) noexcept;
 
-  /*! `reproc_terminate` */
   REPROCXX_EXPORT std::error_code terminate() noexcept;
 
-  /*! `reproc_kill` */
   REPROCXX_EXPORT std::error_code kill() noexcept;
 
-  /*! `reproc_stop` */
+  /*! `reproc_stop` but returns a pair of (status, error). */
   REPROCXX_EXPORT std::pair<int, std::error_code>
   stop(stop_actions stop_actions) noexcept;
 
@@ -172,4 +160,4 @@ std::error_code process::drain(Sink &&sink)
   return ec == error::broken_pipe ? std::error_code() : ec;
 }
 
-} // namespace reproc
+}

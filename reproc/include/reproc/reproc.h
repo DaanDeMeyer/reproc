@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 /*! Used to store information about a child process. `reproc_t` is an opaque
-type and can be allocated and freed via `reproc_new` and `reproc_free`
+type and can be allocated and released via `reproc_new` and `reproc_destroy`
 respectively. */
 typedef struct reproc_t reproc_t;
 
@@ -34,6 +34,16 @@ REPROC_EXPORT extern const int REPROC_SIGTERM;
 
 /*! Tells a function that takes a timeout value to wait indefinitely. */
 REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
+
+/*! Stream identifiers used to indicate which stream to act on. */
+typedef enum {
+  /*! stdin */
+  REPROC_STREAM_IN,
+  /*! stdout */
+  REPROC_STREAM_OUT,
+  /*! stderr */
+  REPROC_STREAM_ERR
+} REPROC_STREAM;
 
 /*! Used to tell reproc where to redirect the streams of the child process. */
 typedef enum {
@@ -110,17 +120,7 @@ typedef struct reproc_options {
   reproc_stop_actions stop_actions;
 } reproc_options;
 
-/*! Stream identifiers used to indicate which stream to act on. */
-typedef enum {
-  /*! stdin */
-  REPROC_STREAM_IN,
-  /*! stdout */
-  REPROC_STREAM_OUT,
-  /*! stderr */
-  REPROC_STREAM_ERR
-} REPROC_STREAM;
-
-/* Allocate a new `reproc_t` instance on the heap. */
+/*! Allocate a new `reproc_t` instance on the heap. */
 REPROC_EXPORT reproc_t *reproc_new(void);
 
 /*!
@@ -159,9 +159,8 @@ stderr stream and returns the amount of bytes read.
 If `stream` is not `NULL`, it is used to store the stream that was
 read from (`REPROC_STREAM_OUT` or `REPROC_STREAM_ERR`).
 
-It is undefined behaviour to call this function on child process streams that
-were not specified as `REPROC_REDIRECT_PIPE` in the options passed to
-`reproc_start`.
+If both streams are closed by the child process or weren't opened with
+`REPROC_REDIRECT_PIPE`, this function returns `REPROC_EPIPE`.
 
 Actionable errors:
 - `REPROC_EPIPE`
@@ -172,9 +171,8 @@ REPROC_EXPORT int reproc_read(reproc_t *process,
                               size_t size);
 
 /*!
-Calls `reproc_read` on `stream` until `sink` returns false, an error occurs or
-both the stdout and stderr streams are closed. `sink` receives the output after
-each read, along with `context`.
+Calls `reproc_read` on `stream` until `reproc_read` returns an error or `sink`
+returns false. `sink` receives the output after each read, along with `context`.
 
 `reproc_drain` always starts by calling `sink` once with an empty buffer and
 `stream` set to `REPROC_STREAM_IN` to give the sink the chance to process all
@@ -200,9 +198,9 @@ process.
 with the `SIGPIPE` signal. `reproc_write` will only return `REPROC_EPIPE` if
 this signal is ignored by the parent process.
 
-It is undefined behaviour to call this function on a process whose stdin stream
-was not specified as `REPROC_REDIRECT_PIPE` in the options passed to
-`reproc_start`.
+This function can only be used if the standard input of the child process was
+redirected to a pipe by using `REPROC_REDIRECT_PIPE` for the standard input in
+the redirect options passed to `reproc_start`.
 
 Actionable errors:
 - `REPROC_EPIPE`
@@ -211,7 +209,7 @@ REPROC_EXPORT int
 reproc_write(reproc_t *process, const uint8_t *buffer, size_t size);
 
 /*!
-Closes the stream endpoint of the parent process indicated by `stream`.
+Closes the child process standard stream indicated by `stream`.
 
 This function is necessary when a child process reads from stdin until it is
 closed. After writing all the input to the child process using `reproc_write`,
@@ -224,8 +222,8 @@ Waits `timeout` milliseconds for the child process to exit. If the child process
 has already exited or exits within the given timeout, its exit status is
 returned.
 
-If `timeout` is 0 the function will only check if the child process is still
-running without waiting. If `timeout` is `REPROC_INFINITE` the function will
+If `timeout` is 0, the function will only check if the child process is still
+running without waiting. If `timeout` is `REPROC_INFINITE`, the function will
 wait indefinitely for the child process to exit.
 
 Actionable errors:
@@ -235,7 +233,7 @@ REPROC_EXPORT int reproc_wait(reproc_t *process, unsigned int timeout);
 
 /*!
 Sends the `SIGTERM` signal (POSIX) or the `CTRL-BREAK` signal (Windows) to the
-child process. Remember that successfull calls to `reproc_wait` and
+child process. Remember that successful calls to `reproc_wait` and
 `reproc_destroy` are required to make sure the child process is completely
 cleaned up.
 */
@@ -243,7 +241,7 @@ REPROC_EXPORT int reproc_terminate(reproc_t *process);
 
 /*!
 Sends the `SIGKILL` signal to the child process (POSIX) or calls
-`TerminateProcess` (Windows) on the child process. Remember that successfull
+`TerminateProcess` (Windows) on the child process. Remember that successful
 calls to `reproc_wait` and `reproc_destroy` are required to make sure the child
 process is completely cleaned up.
 */
@@ -271,14 +269,18 @@ REPROC_ERROR error = reproc_stop(process,
 Call `reproc_wait`, `reproc_terminate` and `reproc_kill` directly if you need
 extra logic such as logging between calls.
 
-(`c1`,`t1`), (`c2`,`t2`) and (`c3`,`t3`) are pairs that instruct `reproc_stop`
-how to stop a process. The first element of each pair instructs `reproc_stop` to
-execute the corresponding function to stop the process. The second element of
-each pair tells `reproc_stop` how long to wait after executing the function
+`stop_actions` can contain up to three stop actions that instruct this function
+how the child process should be stopped. The first element of each stop action
+specifies which action should be called on the child process. The second element
+of each stop actions specifies how long to wait after executing the operation
 indicated by the first element.
 
-If the child process has already exited or exits during the execution of
-`reproc_stop`, its exit status is returned.
+Note that when a stop action specifies `REPROC_STOP_WAIT`, the function will
+just wait for the specified timeout instead of performing an action to stop the
+child process.
+
+If the child process has already exited or exits during the execution of this
+function, its exit status is returned.
 
 Actionable errors:
 - `REPROC_ETIMEDOUT`
@@ -292,8 +294,9 @@ by `reproc_new`. Calling this function before a succesfull call to `reproc_wait`
 can result in resource leaks.
 
 Does not nothing if `process` is an invalid `reproc_t` instance and always
-returns an invalid `reproc_t` instance (`NULL`). By assiging the result of
-`reproc_destroy`, it can be safely called multiple times on the same instance.
+returns an invalid `reproc_t` instance (`NULL`). By assigning the result of
+`reproc_destroy` to the instance being destroyed, it can be safely called
+multiple times on the same instance.
 
 Example: `process = reproc_destroy(process)`.
 */

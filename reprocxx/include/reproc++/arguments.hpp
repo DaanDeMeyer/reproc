@@ -12,9 +12,9 @@ public:
   {}
 
   /*!
-  `Arguments` must be a `Container` containing `SequenceContainer` containing
-  characters. Examples of types that satisfy this requirement are
-  `std::vector<std::string>` and `std::array<std::string>`.
+  `Arguments` must be iterable as a sequence of strings. Examples of types that
+  satisfy this requirement are `std::vector<std::string>` and
+  `std::array<std::string>`.
 
   `arguments` has the same restrictions as `argv` in `reproc_start` except
   that it should not end with `NULL` (`start` allocates a new array which
@@ -56,4 +56,4 @@ const char *const *arguments::from(const Arguments &arguments)
   return data;
 }
 
-} // namespace reproc
+}

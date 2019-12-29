@@ -12,10 +12,9 @@ public:
   {}
 
   /*!
-  `Environment` must be a `Container` containing `pair` of `SequenceContainer`
-  containing characters. Examples of types that satisfy this requirement are
-  `std::vector<std::pair<std::string, std::string>>` and
-  `std::map<std::string, std::string>`.
+  `Environment` must be iterable as a sequence of string pairs. Examples of
+  types that satisfy this requirement are `std::vector<std::pair<std::string,
+  std::string>>` and `std::map<std::string, std::string>`.
 
   The pairs in `environment` represent the environment variables of the child
   process and are converted to the right format before being passed as the
@@ -76,4 +75,4 @@ const char *const *environment::from(const Environment &environment)
   return data;
 }
 
-} // namespace reproc
+}

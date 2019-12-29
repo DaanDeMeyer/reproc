@@ -82,6 +82,7 @@ public:
 
 namespace thread_safe {
 
+/*! `sink::string` but locks the given mutex before appending to the string. */
 class string {
   sink::string sink_;
   std::mutex &mutex_;
@@ -98,7 +99,7 @@ public:
   }
 };
 
-} // namespace thread_safe
+}
 
-} // namespace sink
-} // namespace reproc
+}
+}

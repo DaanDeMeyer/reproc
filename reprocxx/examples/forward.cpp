@@ -31,8 +31,8 @@ int main(int argc, char *argv[])
   // that a child process is always stopped correctly when its corresponding
   // `process` instance is destroyed.
   //
-  // Any program can be started with forward so we make sure the process is
-  // cleaned up correctly by specifying `reproc::terminate` which sends
+  // Any program can be started with forward so we make sure the child process
+  // is cleaned up correctly by specifying `reproc::terminate` which sends
   // `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) and waits five seconds. We also
   // add the `reproc::kill` flag which sends `SIGKILL` (POSIX) or calls
   // `TerminateProcess` (Windows) if the process hasn't exited after five
@@ -40,8 +40,7 @@ int main(int argc, char *argv[])
   //
   // If the `stop_actions` struct passed to `process::start` is
   // default-initialized, the `process` destructor will wait indefinitely for
-  // the child process to exit. The timout values are maximum wait times. If the
-  // process exits earlier the destructor will return immediately.
+  // the child process to exit.
   //
   // Note that C++14 has chrono literals which allows
   // `reproc::milliseconds(5000)` to be replaced with `5000ms`.

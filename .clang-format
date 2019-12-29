@@ -11,6 +11,7 @@ BraceWrapping:
   SplitEmptyRecord: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 Cpp11BracedListStyle: false
+FixNamespaceComments: false
 IndentCaseLabels: true
 IndentPPDirectives: BeforeHash
 PenaltyBreakAssignment: 100

@@ -18,10 +18,12 @@ Checks:
 -fuchsia-default-arguments-declarations,
 -fuchsia-overloaded-operator,
 -fuchsia-statically-constructed-objects,
+-google-readability-namespace-comments,
 -google-runtime-references,
 -hicpp-signed-bitwise,
 -hicpp-special-member-functions,
 -llvm-header-guard,
+-llvm-namespace-comment,
 -modernize-use-trailing-return-type,
 -readability-else-after-return,
 -readability-magic-numbers

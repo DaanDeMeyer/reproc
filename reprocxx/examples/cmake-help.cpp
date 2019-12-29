@@ -15,10 +15,10 @@ int main()
 {
   reproc::process process;
 
-  // The `process::start` method works with any container containing strings and
-  // takes care of converting the vector into the array of null-terminated
-  // strings expected by `reproc_start` (including adding the `NULL` value at
-  // the end of the array).
+  // The `process::start` method works with any container of strings and takes
+  // care of converting the vector into the array of null-terminated strings
+  // expected by `reproc_start` (including adding the `NULL` value at the end of
+  // the array).
   std::array<std::string, 2> argv = { "cmake", "--help" };
 
   // reproc++ uses error codes to report errors. If exceptions are preferred,
@@ -50,7 +50,7 @@ int main()
 
   std::cout << output << std::flush;
 
-  // It's easy to define your own sinks as well. Take a look at `sink.cpp` in
+  // It's easy to define your own sinks as well. Take a look at `sink.hpp` in
   // the repository to see how `sink::string` and other sinks are implemented.
   // The documentation of `process::drain` also provides more information on the
   // requirements a sink should fulfill.

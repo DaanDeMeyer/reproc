@@ -9,7 +9,7 @@ namespace signal {
 const int kill = REPROC_SIGKILL;
 const int terminate = REPROC_SIGTERM;
 
-} // namespace signal
+}
 
 const milliseconds infinite = milliseconds(REPROC_INFINITE);
 
@@ -41,7 +41,6 @@ static reproc_stop_actions reproc_stop_actions_from(stop_actions stop_actions)
 auto deleter = [](reproc_t *process) { reproc_destroy(process); };
 
 process::process() : process_(reproc_new(), deleter) {}
-
 process::~process() noexcept = default;
 
 process::process(process &&other) noexcept = default;
@@ -108,4 +107,4 @@ process::stop(stop_actions stop_actions) noexcept
   return { r, error_code_from(r) };
 }
 
-} // namespace reproc
+}
