@@ -1,11 +1,6 @@
 reproc_add_library(reproc C 99)
 
-if(REPROC_MULTITHREADED)
-  target_compile_definitions(reproc PRIVATE REPROC_MULTITHREADED)
-  target_link_libraries(reproc PRIVATE Threads::Threads)
-endif()
-
-target_sources(reproc PRIVATE src/reproc.c)
+target_link_libraries(reproc PRIVATE Threads::Threads)
 
 if(UNIX)
   set(REPROC_PLATFORM posix)
@@ -19,6 +14,7 @@ target_sources(reproc PRIVATE
   src/${REPROC_PLATFORM}/pipe.c
   src/${REPROC_PLATFORM}/process.c
   src/${REPROC_PLATFORM}/redirect.c
+  src/reproc.c
 )
 
 target_compile_definitions(reproc PRIVATE

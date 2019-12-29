@@ -25,12 +25,6 @@ option(REPROCXX "Build reproc++." ${REPROC_DEVELOP})
 option(REPROC_TEST "Build tests." ${REPROC_DEVELOP})
 option(REPROC_EXAMPLES "Build examples." ${REPROC_DEVELOP})
 
-option(
-  REPROC_MULTITHREADED
-  "Use `pthread_sigmask` and link against the system's thread library"
-  ON
-)
-
 if(REPROCXX OR REPROC_TEST)
   enable_language(CXX)
 endif()
@@ -61,6 +55,9 @@ if(REPROC_TEST)
   target_link_libraries(reproc-test PRIVATE doctest)
   set_target_properties(reproc-test PROPERTIES OUTPUT_NAME test)
 endif()
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
 add_subdirectory(reproc)
 if(REPROCXX)
