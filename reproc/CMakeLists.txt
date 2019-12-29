@@ -1,4 +1,4 @@
-reproc_add_library(reproc C 99)
+reproc_add_library(reproc C)
 
 target_link_libraries(reproc PRIVATE Threads::Threads)
 
@@ -32,34 +32,44 @@ target_compile_definitions(reproc PRIVATE
 
 if(REPROC_TEST)
   function(reproc_add_test TARGET)
-    target_sources(reproc-test PRIVATE test/${TARGET}.cpp)
+    add_executable(reproc-test-${TARGET} test/${TARGET}.c)
 
-    add_executable(reproc-${TARGET})
+    reproc_add_common(
+      reproc-test-${TARGET} C
+      OUTPUT_DIRECTORY test
+      OUTPUT_NAME ${TARGET}
+    )
 
-    reproc_add_common(reproc-${TARGET} C 99 resources)
-    target_sources(reproc-${TARGET} PRIVATE resources/${TARGET}.c)
-    set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
+    target_link_libraries(reproc-test-${TARGET} PRIVATE reproc)
+    target_compile_definitions(reproc-test-${TARGET} PRIVATE
+      RESOURCE_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/resources"
+    )
 
-    # Build the helper executable as part of reproc-test build.
-    add_dependencies(reproc-test reproc-${TARGET})
+    add_test(NAME ${TARGET} COMMAND reproc-test-${TARGET})
+    set_tests_properties(${TARGET} PROPERTIES FIXTURES_REQUIRED build)
+
+    add_executable(reproc-resource-${TARGET} resources/${TARGET}.c)
+
+    reproc_add_common(
+      reproc-resource-${TARGET} C
+      OUTPUT_DIRECTORY resources
+      OUTPUT_NAME ${TARGET}
+    )
+
+    # Make sure the test resource is available when running the test.
+    add_dependencies(reproc-test-${TARGET} reproc-resource-${TARGET})
   endfunction()
 
-  # Helper binaries required by reproc's tests.
   reproc_add_test(argv)
   reproc_add_test(environment)
   reproc_add_test(io)
   reproc_add_test(overflow)
   reproc_add_test(stop)
   reproc_add_test(working-directory)
-
-  target_link_libraries(reproc-test PRIVATE reproc)
-  target_compile_definitions(reproc-test PRIVATE
-    RESOURCE_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/resources"
-  )
 endif()
 
 if(REPROC_EXAMPLES)
-  reproc_add_example(drain C 99 reproc)
-  reproc_add_example(git-status C 99 reproc)
-  reproc_add_example(inherit C 99 reproc)
+  reproc_add_example(drain C reproc)
+  reproc_add_example(git-status C reproc)
+  reproc_add_example(inherit C reproc)
 endif()

@@ -25,35 +25,12 @@ option(REPROCXX "Build reproc++." ${REPROC_DEVELOP})
 option(REPROC_TEST "Build tests." ${REPROC_DEVELOP})
 option(REPROC_EXAMPLES "Build examples." ${REPROC_DEVELOP})
 
-if(REPROCXX OR REPROC_TEST)
+if(REPROCXX)
   enable_language(CXX)
 endif()
 
-include(cmake/external.cmake)
-
 if(REPROC_TEST)
-  # reproc uses the doctest testing framework. All tests are grouped inside a
-  # single executable. Use `target_sources(reproc-test PRIVATE <file>)` to add
-  # new tests. Tests are executed by building the `test` target or running the
-  # tests executable from within the build directory.
-
-  # Generate the doctest implementation file.
-  file(
-    GENERATE
-    OUTPUT ${PROJECT_BINARY_DIR}/doctest/impl.cpp
-    CONTENT
-      "
-      #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-      #define DOCTEST_CONFIG_NO_POSIX_SIGNALS
-      #include <doctest.h>
-      "
-  )
-
-  add_executable(reproc-test ${PROJECT_BINARY_DIR}/doctest/impl.cpp)
-
-  reproc_add_common(reproc-test CXX 11 "")
-  target_link_libraries(reproc-test PRIVATE doctest)
-  set_target_properties(reproc-test PROPERTIES OUTPUT_NAME test)
+  enable_testing()
 endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)

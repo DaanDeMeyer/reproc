@@ -74,20 +74,26 @@ endif()
 
 ### Functions ###
 
-function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
+function(reproc_add_common TARGET LANGUAGE)
+  cmake_parse_arguments(ARG "" "OUTPUT_DIRECTORY;OUTPUT_NAME" "" ${ARGN})
+
   if(LANGUAGE STREQUAL C)
-    target_compile_features(${TARGET} PUBLIC c_std_${STANDARD})
+    target_compile_features(${TARGET} PUBLIC c_std_99)
   else()
-    target_compile_features(${TARGET} PUBLIC cxx_std_${STANDARD})
+    target_compile_features(${TARGET} PUBLIC cxx_std_11)
   endif()
 
-  set_target_properties(${TARGET} PROPERTIES
-    # `OUTPUT_DIRECTORY` can be empty so we quote it to always have a valid
-    # directory.
-    RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
-    ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
-    LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIRECTORY}"
-  )
+  if(DEFINED ARG_OUTPUT_DIRECTORY)
+    set_target_properties(${TARGET} PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY ${ARG_OUTPUT_DIRECTORY}
+      ARCHIVE_OUTPUT_DIRECTORY ${ARG_OUTPUT_DIRECTORY}
+      LIBRARY_OUTPUT_DIRECTORY ${ARG_OUTPUT_DIRECTORY}
+    )
+  endif()
+
+  if(DEFINED ARG_OUTPUT_NAME)
+    set_property(TARGET ${TARGET} PROPERTY OUTPUT_NAME ${ARG_OUTPUT_NAME})
+  endif()
 
   if(REPROC_TIDY AND REPROC_TIDY_PROGRAM)
     set_target_properties(${TARGET} PROPERTIES
@@ -120,11 +126,9 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
         target_compile_options(${TARGET} PRIVATE /W4)
       endif()
 
-      if(NOT STANDARD STREQUAL 90)
-        # MSVC reports non-constant initializers as a nonstandard extension but
-        # they've been standardized in C99 so we disable it if we're targeting at
-        # least C99.
-        target_compile_options(${TARGET} PRIVATE /wd4204)
+      if(LANGUAGE STREQUAL C)
+        # Disable MSVC warnings that flag C99 features as non-standard.
+        target_compile_options(${TARGET} PRIVATE /wd4204 /wd4221)
       endif()
     else()
       target_compile_options(${TARGET} PRIVATE
@@ -168,14 +172,15 @@ function(reproc_add_common TARGET LANGUAGE STANDARD OUTPUT_DIRECTORY)
   endif()
 endfunction()
 
-function(reproc_add_library TARGET LANGUAGE STANDARD)
+function(reproc_add_library TARGET LANGUAGE)
   if(REPROC_OBJECT_LIBRARIES)
     add_library(${TARGET} OBJECT)
   else()
     add_library(${TARGET})
   endif()
 
-  reproc_add_common(${TARGET} ${LANGUAGE} ${STANDARD} lib)
+  reproc_add_common(${TARGET} ${LANGUAGE} OUTPUT_DIRECTORY lib)
+
   # Enable -fvisibility=hidden and -fvisibility-inlines-hidden (if applicable).
   set_target_properties(${TARGET} PROPERTIES
     ${LANGUAGE}_VISIBILITY_PRESET hidden
@@ -300,7 +305,7 @@ function(reproc_add_library TARGET LANGUAGE STANDARD)
   endif()
 endfunction()
 
-function(reproc_add_example TARGET LANGUAGE STANDARD)
+function(reproc_add_example TARGET LANGUAGE)
   add_executable(reproc-${TARGET})
 
   if(LANGUAGE STREQUAL C)
@@ -309,10 +314,14 @@ function(reproc_add_example TARGET LANGUAGE STANDARD)
     set(SOURCE_EXT cpp)
   endif()
 
-  reproc_add_common(reproc-${TARGET} ${LANGUAGE} ${STANDARD} examples)
+  reproc_add_common(
+    reproc-${TARGET} ${LANGUAGE}
+    OUTPUT_DIRECTORY examples
+    OUTPUT_NAME ${TARGET}
+  )
+
   target_sources(reproc-${TARGET} PRIVATE examples/${TARGET}.${SOURCE_EXT})
   target_link_libraries(reproc-${TARGET} PRIVATE ${ARGN})
-  set_target_properties(reproc-${TARGET} PROPERTIES OUTPUT_NAME ${TARGET})
 
   if(LANGUAGE STREQUAL C AND REPROC_SANITIZERS)
     set_target_properties(reproc-${TARGET} PROPERTIES

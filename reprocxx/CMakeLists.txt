@@ -1,4 +1,4 @@
-reproc_add_library(reprocxx CXX 11)
+reproc_add_library(reprocxx CXX)
 
 target_link_libraries(reprocxx PRIVATE reproc Threads::Threads)
 
@@ -13,7 +13,7 @@ target_sources(
 )
 
 if(REPROC_EXAMPLES)
-  reproc_add_example(cmake-help CXX 11 reprocxx)
-  reproc_add_example(forward CXX 11 reprocxx)
-  reproc_add_example(background CXX 11 reprocxx Threads::Threads)
+  reproc_add_example(cmake-help CXX reprocxx)
+  reproc_add_example(forward CXX reprocxx)
+  reproc_add_example(background CXX reprocxx Threads::Threads)
 endif()

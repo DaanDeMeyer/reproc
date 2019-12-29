@@ -152,7 +152,7 @@ jobs:
         run: cmake --build build
 
       - name: Test
-        run: build/test
+        run: cmake --build build --target test
 
       # Aside from running the tests we also make sure the examples don't crash
       # or return a non-zero exit code. Because Github Actions only checks the
