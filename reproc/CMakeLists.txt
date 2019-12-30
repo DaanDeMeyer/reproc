@@ -1,6 +1,9 @@
 reproc_add_library(reproc C)
 
-target_link_libraries(reproc PRIVATE Threads::Threads)
+if(REPROC_MULTITHREADED)
+  target_compile_definitions(reproc PRIVATE REPROC_MULTITHREADED)
+  target_link_libraries(reproc PRIVATE Threads::Threads)
+endif()
 
 if(UNIX)
   set(REPROC_PLATFORM posix)

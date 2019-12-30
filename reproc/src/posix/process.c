@@ -18,6 +18,20 @@
 // constant we need.
 extern const unsigned int REPROC_INFINITE;
 
+static int signal_mask(int how, const sigset_t *newmask, sigset_t *oldmask)
+{
+  int r = -1;
+
+#if defined(REPROC_MULTITHREADED)
+  // `pthread_sigmask` returns positive errno values so we negate them.
+  r = -pthread_sigmask(how, newmask, oldmask);
+#else
+  r = sigprocmask(how, newmask, oldmask);
+#endif
+
+  return error_unify(r);
+}
+
 // Returns true if the null-terminated string indicated by `path` is a relative
 // path. A path is relative if any character except the first is a forward slash
 // ('/').
@@ -111,7 +125,7 @@ static pid_t process_fork(int *error_pipe_read,
     return error_unify(r);
   }
 
-  r = -pthread_sigmask(SIG_SETMASK, &new_mask, &old_mask);
+  r = signal_mask(SIG_SETMASK, &new_mask, &old_mask);
   if (r < 0) {
     return error_unify(r);
   }
@@ -122,7 +136,7 @@ static pid_t process_fork(int *error_pipe_read,
 
     PROTECT_SYSTEM_ERROR;
 
-    r = -pthread_sigmask(SIG_SETMASK, &new_mask, &old_mask);
+    r = signal_mask(SIG_SETMASK, &new_mask, &old_mask);
     assert_unused(r == 0);
 
     UNPROTECT_SYSTEM_ERROR;
@@ -139,7 +153,7 @@ static pid_t process_fork(int *error_pipe_read,
 
     PROTECT_SYSTEM_ERROR;
 
-    r = -pthread_sigmask(SIG_SETMASK, &new_mask, &old_mask);
+    r = signal_mask(SIG_SETMASK, &new_mask, &old_mask);
     assert_unused(r == 0);
 
     // Close the error pipe write end on the parent's side so `read` will return
@@ -199,7 +213,7 @@ static pid_t process_fork(int *error_pipe_read,
     goto cleanup;
   }
 
-  r = -pthread_sigmask(SIG_SETMASK, &new_mask, &old_mask);
+  r = signal_mask(SIG_SETMASK, &new_mask, &old_mask);
   if (r < 0) {
     goto cleanup;
   }
