@@ -1,7 +1,5 @@
-#define _GNU_SOURCE // Make sure we get `pipe2` on Linux.
-#include <fcntl.h>
-#include <unistd.h>
-#undef _GNU_SOURCE
+// Make sure we get `pipe2` on Linux.
+#define _GNU_SOURCE
 
 #include <pipe.h>
 
@@ -10,9 +8,11 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <poll.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 int pipe_init(int *read,
               struct pipe_options read_options,
