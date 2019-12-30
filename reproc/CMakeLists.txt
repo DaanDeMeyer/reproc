@@ -5,10 +5,10 @@ if(REPROC_MULTITHREADED)
   target_link_libraries(reproc PRIVATE Threads::Threads)
 endif()
 
-if(UNIX)
-  set(REPROC_PLATFORM posix)
-elseif(WIN32)
+if(WIN32)
   set(REPROC_PLATFORM windows)
+else()
+  set(REPROC_PLATFORM posix)
 endif()
 
 target_sources(reproc PRIVATE
