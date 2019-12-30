@@ -1,5 +1,4 @@
-# 3.13 is needed for `target_link_options`.
-cmake_minimum_required(VERSION 3.13...3.16)
+cmake_minimum_required(VERSION 3.12...3.16)
 
 # TODO: Remove once CMake 3.17 is released.
 if(CMAKE_GENERATOR MATCHES "Unix Makefiles|Ninja")

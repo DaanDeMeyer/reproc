@@ -118,8 +118,6 @@ function(reproc_add_common TARGET LANGUAGE)
 
       target_compile_definitions(${TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS)
 
-      target_link_options(${TARGET} PRIVATE /nologo)
-
       if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.15.0)
         # CMake 3.15 does not add /W3 to the compiler flags by default anymore
         # so we add /W4 instead.
@@ -167,7 +165,7 @@ function(reproc_add_common TARGET LANGUAGE)
         -fno-omit-frame-pointer
       )
 
-      target_link_options(${TARGET} PRIVATE -fsanitize=address,undefined)
+      target_link_libraries(${TARGET} PRIVATE -fsanitize=address,undefined)
     endif()
   endif()
 endfunction()

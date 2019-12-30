@@ -43,7 +43,7 @@ either make an issue or ask questions directly in the reproc
 
 ## Installation
 
-**Note: Building reproc requires CMake 3.13 or higher.**
+**Note: Building reproc requires CMake 3.12 or higher.**
 
 There are multiple ways to get reproc into your project. One way is to build
 reproc as part of your project using CMake. To do this, we first have to get the
