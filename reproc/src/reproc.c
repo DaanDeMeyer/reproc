@@ -43,9 +43,9 @@ static int redirect(handle *parent,
     case REPROC_REDIRECT_INHERIT:;
       r = redirect_inherit(parent, child, (REDIRECT_STREAM) stream);
       // Discard if the corresponding parent stream is closed.
-      r == REPROC_EPIPE
-          ? redirect_discard(parent, child, (REDIRECT_STREAM) stream)
-          : r;
+      r = r == REPROC_EPIPE
+              ? redirect_discard(parent, child, (REDIRECT_STREAM) stream)
+              : r;
       break;
 
     case REPROC_REDIRECT_DISCARD:
@@ -187,7 +187,7 @@ int reproc_read(reproc_t *process,
       break;
     }
 
-    if (r < 0 && r != REPROC_EPIPE) {
+    if (r != REPROC_EPIPE) {
       return r;
     }
 
