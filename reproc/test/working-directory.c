@@ -13,8 +13,7 @@ static void replace(char *string, char old, char new)
 
 int main(void)
 {
-  char *output = NULL;
-  int r = REPROC_ENOMEM;
+  int r = -1;
 
   reproc_t *process = reproc_new();
   assert(process);
@@ -25,6 +24,7 @@ int main(void)
                    (reproc_options){ .working_directory = RESOURCE_DIRECTORY });
   assert(r == 0);
 
+  char *output = NULL;
   r = reproc_drain(process, reproc_sink_string, &output);
   assert(r == 0);
 

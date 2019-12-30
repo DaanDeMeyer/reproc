@@ -6,8 +6,7 @@
 
 int main(void)
 {
-  char *output = NULL;
-  int r = REPROC_ENOMEM;
+  int r = -1;
 
   reproc_t *process = reproc_new();
   assert(process);
@@ -18,6 +17,7 @@ int main(void)
   r = reproc_start(process, argv, (reproc_options){ 0 });
   assert(r == 0);
 
+  char *output = NULL;
   r = reproc_drain(process, reproc_sink_string, &output);
   assert(r == 0);
   assert(output != NULL);

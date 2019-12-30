@@ -6,8 +6,7 @@
 
 static int io(const char *mode, const char *input, const char *expected)
 {
-  char *output = NULL;
-  int r = REPROC_ENOMEM;
+  int r = -1;
 
   reproc_t *process = reproc_new();
   assert(process);
@@ -23,6 +22,7 @@ static int io(const char *mode, const char *input, const char *expected)
   r = reproc_close(process, REPROC_STREAM_IN);
   assert(r == 0);
 
+  char *output = NULL;
   r = reproc_drain(process, reproc_sink_string, &output);
   assert(r == 0);
   assert(output != NULL);

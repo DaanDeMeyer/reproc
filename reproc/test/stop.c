@@ -5,7 +5,7 @@
 
 static int stop(REPROC_STOP action, int status)
 {
-  int r = REPROC_ENOMEM;
+  int r = -1;
 
   reproc_t *process = reproc_new();
   assert(process);
