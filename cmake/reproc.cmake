@@ -181,26 +181,29 @@ function(reproc_add_library TARGET LANGUAGE)
 
   reproc_add_common(${TARGET} ${LANGUAGE} OUTPUT_DIRECTORY lib)
 
-  # Enable -fvisibility=hidden and -fvisibility-inlines-hidden (if applicable).
-  set_target_properties(${TARGET} PROPERTIES
-    ${LANGUAGE}_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN true
-  )
-
-  # clang-tidy errors with error: unknown argument: '-fno-keep-inline-dllexport'
-  # when enabling `VISIBILITY_INLINES_HIDDEN` on MinGW so we disable it when
-  # running clang-tidy on MinGW.
-  if(MINGW AND REPROC_TIDY)
+  if(BUILD_SHARED_LIBS AND NOT REPROC_OBJECT_LIBRARIES)
+    # Enable -fvisibility=hidden and -fvisibility-inlines-hidden.
     set_target_properties(${TARGET} PROPERTIES
-      VISIBILITY_INLINES_HIDDEN false
+      ${LANGUAGE}_VISIBILITY_PRESET hidden
+      VISIBILITY_INLINES_HIDDEN true
     )
-  endif()
 
-  string(TOUPPER ${TARGET} TARGET_UPPER)
+    # clang-tidy errors with: unknown argument: '-fno-keep-inline-dllexport'
+    # when enabling `VISIBILITY_INLINES_HIDDEN` on MinGW so we disable it when
+    # running clang-tidy on MinGW.
+    if(MINGW AND REPROC_TIDY)
+      set_property(TARGET ${TARGET} PROPERTY VISIBILITY_INLINES_HIDDEN false)
+    endif()
 
-  target_compile_definitions(${TARGET} PRIVATE ${TARGET_UPPER}_BUILDING)
-  if(REPROC_OBJECT_LIBRARIES OR NOT BUILD_SHARED_LIBS)
-    target_compile_definitions(${TARGET} PUBLIC ${TARGET_UPPER}_STATIC)
+    # Disable CMake's default export definition.
+    set_property(TARGET ${TARGET} PROPERTY DEFINE_SYMBOL "")
+
+    string(TOUPPER ${TARGET} TARGET_UPPER)
+
+    target_compile_definitions(${TARGET} PUBLIC ${TARGET_UPPER}_SHARED)
+    if(WIN32)
+      target_compile_definitions(${TARGET} PRIVATE ${TARGET_UPPER}_BUILDING)
+    endif()
   endif()
 
   # Make sure we follow the popular naming convention for shared libraries on
