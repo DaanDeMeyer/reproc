@@ -213,7 +213,7 @@ cleanup:;
     // Cancel any remaining zero-sized reads that we queued if they have not yet
     // completed.
 
-    r = CancelIoEx(pipes[i], &overlapped[i]);
+    r = CancelIo(pipes[i]);
     assert_unused(r != 0 || GetLastError() == ERROR_NOT_FOUND);
 
     if (r == 0 && GetLastError() == ERROR_NOT_FOUND) {

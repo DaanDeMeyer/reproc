@@ -20,15 +20,6 @@ target_sources(reproc PRIVATE
   src/reproc.c
 )
 
-target_compile_definitions(reproc PRIVATE
-  $<$<PLATFORM_ID:Windows>:
-    WIN32_LEAN_AND_MEAN
-    # Needed for `WC_ERR_INVALID_CHARS` and `InitializeProcThreadAttributeList`.
-    _WIN32_WINNT=_WIN32_WINNT_VISTA
-    NTDDI_VERSION=NTDDI_VISTA
-  >
-)
-
 if(REPROC_TEST)
   function(reproc_add_test TARGET)
     add_executable(reproc-test-${TARGET} test/${TARGET}.c)
