@@ -118,6 +118,10 @@ target_link_libraries(myapp reproc) # Link against reproc.
 target_link_libraries(myapp reprocxx) # Link against reproc++.
 ```
 
+From Meson 0.53.0 onwards, reproc can be included as a CMake subproject in Meson
+build scripts. See https://mesonbuild.com/CMake-module.html for more
+information.
+
 ## Dependencies
 
 By default, reproc has a single dependency on pthreads on POSIX systems.
