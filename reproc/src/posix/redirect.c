@@ -8,8 +8,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-static const char *DEVNULL = "/dev/null";
-
 static const struct pipe_options PIPE_OPTIONS = { 0 };
 
 int redirect_pipe(int *parent, int *child, REDIRECT_STREAM stream)
@@ -34,7 +32,8 @@ int redirect_inherit(int *parent, int *child, REDIRECT_STREAM stream)
 
   r = fileno(file);
   if (r < 0) {
-    return error_unify(errno == EBADF ? -EPIPE : -errno);
+    errno = errno == EBADF ? EPIPE : errno;
+    return error_unify(r);
   }
 
   r = fcntl(r, F_DUPFD_CLOEXEC, 0);
@@ -55,7 +54,7 @@ int redirect_discard(int *parent, int *child, REDIRECT_STREAM stream)
 
   int mode = stream == REDIRECT_STREAM_IN ? O_RDONLY : O_WRONLY;
 
-  int r = open(DEVNULL, mode | O_CLOEXEC);
+  int r = open("/dev/null", mode | O_CLOEXEC);
   if (r < 0) {
     return error_unify(r);
   }
