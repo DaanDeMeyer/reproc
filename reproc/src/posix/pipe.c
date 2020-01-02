@@ -1,7 +1,7 @@
 // Make sure we get `pipe2` on Linux.
 #define _GNU_SOURCE
 
-#include <pipe.h>
+#include "pipe.h"
 
 #include "error.h"
 #include "macro.h"
@@ -11,7 +11,6 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <poll.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 int pipe_init(int *read,

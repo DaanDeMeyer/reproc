@@ -6,7 +6,6 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <windows.h>
 
 enum {

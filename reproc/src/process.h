@@ -2,8 +2,6 @@
 
 #include "handle.h"
 
-#include <stddef.h>
-
 struct stdio {
   handle in;
   handle out;
