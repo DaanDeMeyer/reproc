@@ -2,12 +2,26 @@
 
 ## 10.0.0
 
-### General
+### reproc
 
-- Only define `_GNU_SOURCE` on Linux.
+- Remove `reproc_parse`.
 
-- Always try to read from both stdout and stderr in `reproc_read` to avoid
-  deadlocks and indicate which stream `reproc_read` actually read from.
+  Instead of checking for `REPROC_EPIPE` (previously
+  `REPROC_ERROR_STREAM_CLOSED`), simply check if the given parser has a full
+  message available. If it doesn't, the output streams closed unexpectedly.
+
+- Remove `reproc_running` and `reproc_exit_status`.
+
+  When calling `reproc_running`, it would wait with a zero timeout if the
+  process was still running and check if the wait timed out. However, a call to
+  wait can fail for other reasons as well which were all ignored by
+  `reproc_running`. Instead of `reproc_running`, A call to `reproc_wait` with a
+  timeout of zero should be used to check if a process is still running.
+  `reproc_wait` now also returns the exit status if the process exits or has
+  already exited which removes the need for `reproc_exit_status`.
+
+- Read from both stdout and stderr in `reproc_read` to avoid deadlocks and
+  indicate which stream `reproc_read` was read from.
 
   Previously, users would indicate the stream they wanted to read from when
   calling `reproc_read`. However, this lead to issues with programs that write
@@ -28,48 +42,242 @@
   depending on which stream it read from.
 
   If both streams have been closed by the child process, `reproc_read` returns
-  `REPROC_STREAM_CLOSED`.
+  `REPROC_EPIPE`.
 
-  Because of the changes to `reproc_read`, `reproc_parse` and `reproc_drain` now
-  read from both stdout and stderr and indicate the stream that was read from to
-  the given sink/parse function.
+  Because of the changes to `reproc_read`, `reproc_drain` now also reads from
+  both stdout and stderr and indicates the stream that was read from to the
+  given sink function via an extra argument passed to the sink.
 
-  The same changes applied to `reproc_read`, `reproc_parse` and `reproc_drain`
-  were applied to `process::read`, `process::parse` and `process::drain`.
+- Read the output of both stdout and stderr into a single contiguous
+  null-terminated string in `reproc_sink_string`.
 
-- Remove `REPROC_ERROR_PARTIAL_WRITE` error and the `bytes_written` parameter of
-  `reproc_write`.
+- Remove the `bytes_written` parameter of `reproc_write`.
 
-  `reproc_write` now writes to stdin until `size` bytes have been written to the
-  standard input of the child process. Partial writes do not have to be handled
-  by users anymore and are instead handled by reproc internally.
+  `reproc_write` now always writes `size` bytes to the standard input of the
+  child process. Partial writes do not have to be handled by users anymore and
+  are instead handled by reproc internally.
 
-  The same changes applied to `reproc_write` and `REPROC_ERROR` were applied to
-  `process::write` and `reproc::error` in reproc++.
+- Define `_GNU_SOURCE` and `_WIN32_WINNT` only in the implementation files that
+  need them.
 
-### reproc
+  This helps keep track of where we're using functionality that requires extra
+  definitions and makes building reproc in all kinds of build systems simpler as
+  the compiler invocations to build reproc get smaller as a result.
 
-- `reproc_sink_string` now reads the output of both stdout and stderr into a
-  single contiguous null-terminated string.
+- Change the error handling in the public API to return negative `errno` (POSIX)
+  or `GetLastError` (Windows) style values. `REPROC_ERROR` is replaced by extern
+  constants that are assigned the correct error value based on the platform
+  reproc is built for. Instead of returning `REPROC_ERROR`, most functions in
+  reproc's API now return `int` when they can fail. Because system errors are
+  now returned directly, there's no need anymore for `REPROC_ERROR` and
+  `reproc_error_system` and they has been removed.
 
-- Rename `reproc_system_error` to `reproc_error_system`.
-- Rename `reproc_strerror` to `reproc_error_string`.
+  Error handling before 10.0.0:
 
-  The new names are more consistent with the rest of reproc's naming style. For
-  example, each sink function is prefixed with `reproc_sink` so it makes sense
-  to prefix each error function with `reproc_error`. Furthermore, the enum value
-  indicating a system error is named `REPROC_ERROR_SYSTEM` so it's more
-  consistent to have a lowercase function of the same name to retrieve the
-  actual system error than a function named `reproc_system_error`.
+  ```c
+  REPROC_ERROR error = reproc_start(...);
+  if (error) {
+    goto cleanup;
+  }
+
+  cleanup:
+  if (error) {
+    fprintf(stderr, "%s", reproc_strerror(error));
+  }
+  ```
+
+  Error handling from 10.0.0 onwards:
+
+  ```c
+  int r = reproc_start(...);
+  if (r < 0) {
+    goto cleanup;
+  }
+
+  cleanup:
+  if (r < 0) {
+    fprintf(stderr, "%s", reproc_strerror(r));
+  }
+  ```
+
+- Hide the internals of `reproc_t`.
+
+  Instances of `reproc_t` are now allocated on the heap by calling `reproc_new`.
+  `reproc_destroy` releases the memory allocated by `reproc_new`.
+
+- Take optional arguments via the `reproc_options` struct in `reproc_start`.
+
+  When using designated initializers, calls to `reproc_start` are now much more
+  readable than before. Using a struct also makes it much easier to set all
+  options to their default values (`reproc_options options = { 0 };`). Finally,
+  we can add more options in further releases without requiring existing users
+  to change their code.
+
+- Support redirecting the child process standard streams to `/dev/null` (POSIX)
+  or `NUL` (Windows) in `reproc_start` via the `redirect` field in
+  `reproc_options`.
+
+  This is especially useful when you're not interested in the output of a child
+  process as redirecting to `/dev/null` doesn't require regularly flushing the
+  output pipes of the process to prevent deadlocks as is the case when
+  redirecting to pipes.
+
+- Support redirecting the child process standard streams to the parent process
+  standard streams in `reproc_starŧ` via the `redirect` field in
+  `reproc_options`.
+
+  This is useful when you want to interleave child process output with the
+  parent process output.
+
+- Modify `reproc_start` and `reproc_destroy` to work like the reproc++ `process`
+  class constructor and destructor.
+
+  The `stop_actions` field in `reproc_options` can be used to define up to three
+  stop actions that are executed when `reproc_destroy` is called if the child
+  process is still running. If no explicit stop actions are given,
+  `reproc_destroy` defaults to waiting indefinitely for the child process to
+  exit.
+
+- Return the amount of bytes read from `reproc_read` if it succeeds.
+
+  This is made possible by the new error handling scheme. Because errors are all
+  negative values, we can use the positive range of an `int` as the normal
+  return value if no errors occur.
+
+- Return the exit status from `reproc_wait` and `reproc_stop` if they succeed.
+
+  Same reasoning as above. If the child process has already exited,
+  `reproc_wait` and `reproc_stop` simply returns the exit status again.
+
+- Do nothing when `NULL` is passed to `reproc_destroy` and always return `NULL`
+  from `reproc_destroy`.
+
+  This allows `reproc_destroy` to be safely called on the same instance multiple
+  times when assigning the result of `reproc_destroy` to the same instance
+  (`process = reproc_destroy(process)`).
+
+- Take stop actions via the `reproc_stop_actions` struct in `reproc_stop`.
+
+  This makes it easier to store stop action configurations both in and outside
+  of reproc.
+
+- Add 256 to signal exit codes returned by `reproc_wait` and `reproc_stop`.
+
+  This prevents conflicts with normal exit codes.
+
+- Add `REPROC_SIGTERM` and `REPROC_SIGKILL` constants to match against signal
+  exit codes.
+
+  These also work on Windows and correspond to the exit codes returned by
+  sending the `CTRL-BREAK` signal and calling `TerminateProcess` respectively.
+
+- Rename `REPROC_CLEANUP` to `REPROC_STOP`.
+
+  Naming the enum after the function it is passed to (`reproc_stop`) is simpler
+  than using a different name.
+
+- Inline the `reproc_sink_string` and `reproc_sink_discard` implementations in
+  the sink.h header.
+
+  This avoids issues with allocating across module (DLL) boundaries on Windows.
+
+- Rewrite tests in C using CTest and `assert` and remove doctest.
+
+  Doctest is a great library but we don't really lose anything major by
+  replacing it with CTest and asserts. On the other hand, we lose a dependency,
+  don't need to download stuff from CMake anymore and tests compile
+  significantly faster.
+
+- Return `REPROC_EINVAL` from public API functions when passed invalid
+  arguments.
+
+- Make `reproc_strerror` thread-safe.
 
 ### reproc++
 
-- The `string` and `ostream` sinks now take separate `out` and `err` arguments
-  in their constructors that receive output from the stdout and stderr streams
-  of the child process respectively.
+- Remove `process::parse`, `process::exit_status` and `process::running`.
+
+  Consequence of the equivalents in reproc being removed.
+
+- Take separate `out` and `err` arguments in the `sink::string` and
+  `sink::ostream` constructors that receive output from the stdout and stderr
+  streams of the child process respectively.
 
   To combine the output from the stdout and stderr streams, simply pass the same
   `string` or `ostream` to both the `out` and `err` arguments.
+
+- Modify `process::read` to return a tuple of the stream read from, the amount
+  of bytes read and an error code. The stream read from and amount of bytes read
+  are only valid if `process::read` succeeds.
+
+  `std::tie` can be used pre-C++17 to assign the tuple's contents to separate
+  variables.
+
+- Modify `process::wait` and `process::stop` to return a pair of exit status and
+  error code. The exit status is only valid if `process::wait` or
+  `process::stop` succeeds.
+
+- Alias `reproc::error` to `std::errc`.
+
+  As OS errors are now used everywhere, we can simply use `std::errc` for all
+  error handling instead of defining our own error code.
+
+- Add `signal::terminate` and `signal::kill` constants.
+
+  These are aliases for `REPROC_SIGTERM` and `REPROC_SIGKILL` respectively.
+
+- Inline all sink implementations in sink.hpp.
+
+- Add `sink::thread_safe::string` which is a thread-safe version of
+  `sink::string`.
+
+### CMake
+
+- Drop required CMake version to CMake 3.12.
+- Add CMake 3.16 as a supported CMake version.
+- Build reproc++ with `-pthread` when `REPROC_MULTITHREADED` is enabled.
+
+  See https://github.com/DaanDeMeyer/reproc/issues/24 for more information.
+
+- Add `REPROC_WARNINGS` option (default: `OFF`) to build with compiler warnings.
+- Add `REPROC_DEVELOP` option (default: `OFF`) which enables a lot of options to
+  simplify developing reproc.
+
+  By default, most of reproc's CMake options are disabled to make including
+  reproc in other projects as simple as possible. However, when working on
+  reproc, we usually wants most options enabled instead. To make enabling all
+  options simpler, `REPROC_DEVELOP` was added from which most other options take
+  their default value. As a result, enabling `REPROC_DEVELOP` enables all
+  options related to developing reproc. Additionally, `REPROC_DEVELOP` takes its
+  initial value from an environment variable of the same name so it can be set
+  once and always take effect whenever running CMake on reproc's source tree.
+
+- Add `REPROC_OBJECT_LIBRARIES` option to build CMake object libraries.
+
+  In CMake, linking a library against a static library doesn't actually copy the
+  object files from the static library into the library. Instead, both static
+  libraries have to be installed and depended on by the final executable. By
+  using CMake object libraries, the object files are copied into the depending
+  static library and no extra artifacts are produced.
+
+- Enable `REPROC_INSTALL` by default unless `REPROC_OBJECT_LIBRARIES` is
+  enabled.
+
+  As `REPROC_OBJECT_LIBRARIES` can now be used to depend on reproc without
+  generating extra artifacts, we assume that users not using
+  `REPROC_OBJECT_LIBRARIES` will want to install the produced artifacts.
+
+- Rename reproc++ to reprocxx inside the CMake build files.
+
+  This was done to allow using reproc as a Meson subproject. Meson doesn't
+  accept the '+' character in target names so we use 'x' instead.
+
+- Modify the export headers so that the only extra define necessary is
+  `REPROC_SHARED` when using reproc as a shared library on Windows.
+
+  Naturally, this define is added as a CMake usage requirement and doesn't have
+  to be worried about when using reproc via `add_subdirectory` or
+  `find_package`.
 
 ## 9.0.0
 
