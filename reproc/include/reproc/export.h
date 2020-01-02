@@ -12,7 +12,7 @@
       #define REPROC_EXPORT
     #endif
   #else
-    #ifdef REPROC_SHARED
+    #ifdef REPROC_BUILDING
       #define REPROC_EXPORT __attribute__((visibility("default")))
     #else
       #define REPROC_EXPORT

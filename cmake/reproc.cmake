@@ -198,9 +198,9 @@ function(reproc_add_library TARGET LANGUAGE)
 
     string(TOUPPER ${TARGET} TARGET_UPPER)
 
-    target_compile_definitions(${TARGET} PUBLIC ${TARGET_UPPER}_SHARED)
+    target_compile_definitions(${TARGET} PRIVATE ${TARGET_UPPER}_BUILDING)
     if(WIN32)
-      target_compile_definitions(${TARGET} PRIVATE ${TARGET_UPPER}_BUILDING)
+      target_compile_definitions(${TARGET} PUBLIC ${TARGET_UPPER}_SHARED)
     endif()
   endif()
 

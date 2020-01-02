@@ -12,7 +12,7 @@
       #define REPROCXX_EXPORT
     #endif
   #else
-    #ifdef REPROCXX_SHARED
+    #ifdef REPROCXX_BUILDING
       #define REPROCXX_EXPORT __attribute__((visibility("default")))
     #else
       #define REPROCXX_EXPORT
