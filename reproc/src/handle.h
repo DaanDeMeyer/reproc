@@ -10,7 +10,7 @@ typedef void *handle;
 typedef int handle;
 #endif
 
-extern const handle HANDLE_INVALID; // NOLINT
+extern const handle HANDLE_INVALID;
 
 // Closes `handle` if it is not an invalid handle and returns an invalid handle.
 // Does not overwrite the last system error if an error occurs while closing

@@ -9,7 +9,7 @@
 
 int main()
 {
-  char working_directory[8096]; // NOLINT
+  char working_directory[8096];
 
   if (getcwd(working_directory, sizeof(working_directory)) == NULL) {
     return 1;
