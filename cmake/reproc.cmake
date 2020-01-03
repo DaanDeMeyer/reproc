@@ -230,7 +230,7 @@ function(reproc_add_library TARGET LANGUAGE)
     # Headers
 
     install(
-      DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/${TARGET}
+      DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
       DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
       COMPONENT ${TARGET}-development
     )
