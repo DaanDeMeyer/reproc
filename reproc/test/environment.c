@@ -18,7 +18,8 @@ int main(void)
   assert(r == 0);
 
   char *output = NULL;
-  r = reproc_drain(process, reproc_sink_string, &output);
+  reproc_sink sink = { reproc_sink_string, &output };
+  r = reproc_drain(process, &sink, &sink);
   assert(r == 0);
   assert(output != NULL);
 

@@ -55,10 +55,10 @@ int main(int argc, char *argv[])
   auto drain_async = std::async(std::launch::async, [&process, &output,
                                                      &mutex]() {
     // `sink::thread_safe::string` locks a given mutex before appending to the
-    // given string(s), allowing working with the string(s) across multiple
-    // threads if the mutex is locked in the other threads as well.
-    reproc::sink::thread_safe::string sink(output, output, mutex);
-    return process.drain(sink);
+    // given string, allowing working with the string across multiple threads if
+    // the mutex is locked in the other threads as well.
+    reproc::sink::thread_safe::string sink(output, mutex);
+    return process.drain(sink, sink);
   });
 
   // Show new output every 2 seconds.

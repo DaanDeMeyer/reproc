@@ -37,7 +37,8 @@ int main(void)
   // `reproc_drain` along with `reproc_sink_string`. If a sink function needs
   // more than one parameter, simply store the parameters in a struct and pass
   // the address of the struct as the `context` parameter.
-  r = reproc_drain(process, reproc_sink_string, &output);
+  reproc_sink sink = { reproc_sink_string, &output };
+  r = reproc_drain(process, &sink, &sink);
   if (r < 0) {
     goto cleanup;
   }

@@ -10,59 +10,33 @@
 namespace reproc {
 namespace sink {
 
-/*! Reads all output into `out`. */
+/*! Reads all output into `string`. */
 class string {
-  std::string &out_;
-  std::string &err_;
+  std::string &string_;
 
 public:
-  explicit string(std::string &out, std::string &err) noexcept
-      : out_(out), err_(err)
-  {}
+  explicit string(std::string &string) noexcept : string_(string) {}
 
   bool operator()(stream stream, const uint8_t *buffer, size_t size)
   {
-    switch (stream) {
-      case stream::out:
-        out_.append(reinterpret_cast<const char *>(buffer), size);
-        break;
-      case stream::err:
-        err_.append(reinterpret_cast<const char *>(buffer), size);
-        break;
-      case stream::in:
-        break;
-    }
-
+    (void) stream;
+    string_.append(reinterpret_cast<const char *>(buffer), size);
     return true;
   }
 };
 
-/*! Forwards all output to `out`. */
+/*! Forwards all output to `ostream`. */
 class ostream {
-  std::ostream &out_;
-  std::ostream &err_;
+  std::ostream &ostream_;
 
 public:
-  explicit ostream(std::ostream &out, std::ostream &err) noexcept
-
-      : out_(out), err_(err)
-  {}
+  explicit ostream(std::ostream &ostream) noexcept : ostream_(ostream) {}
 
   bool operator()(stream stream, const uint8_t *buffer, size_t size)
   {
-    switch (stream) {
-      case stream::out:
-        out_.write(reinterpret_cast<const char *>(buffer),
+    (void) stream;
+    ostream_.write(reinterpret_cast<const char *>(buffer),
                    static_cast<std::streamsize>(size));
-        break;
-      case stream::err:
-        err_.write(reinterpret_cast<const char *>(buffer),
-                   static_cast<std::streamsize>(size));
-        break;
-      case stream::in:
-        break;
-    }
-
     return true;
   }
 };
@@ -82,14 +56,14 @@ public:
 
 namespace thread_safe {
 
-/*! `sink::string` but locks the given mutex before appending to the string. */
+/*! `sink::string` but locks the given mutex before invoking the sink. */
 class string {
   sink::string sink_;
   std::mutex &mutex_;
 
 public:
-  string(std::string &out, std::string &err, std::mutex &mutex) noexcept
-      : sink_(out, err), mutex_(mutex)
+  string(std::string &string, std::mutex &mutex) noexcept
+      : sink_(string), mutex_(mutex)
   {}
 
   bool operator()(stream stream, const uint8_t *buffer, size_t size)

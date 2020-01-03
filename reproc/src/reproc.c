@@ -203,20 +203,18 @@ int reproc_read(reproc_t *process,
   return r; // bytes read
 }
 
-int reproc_drain(reproc_t *process,
-                 bool (*sink)(REPROC_STREAM stream,
-                              const uint8_t *buffer,
-                              size_t size,
-                              void *context),
-                 void *context)
+int reproc_drain(reproc_t *process, reproc_sink *out, reproc_sink *err)
 {
   assert_return(process, REPROC_EINVAL);
-  assert_return(sink, REPROC_EINVAL);
+
+  const uint8_t initial = 0;
 
   // A single call to `read` might contain multiple messages. By always calling
-  // `sink` once with no data before reading, we give it the chance to process
-  // all previous output one by one before reading from the child process again.
-  if (!sink(REPROC_STREAM_IN, (uint8_t[]){ 0 }, 0, context)) {
+  // both sinks once with no data before reading, we give them the chance to
+  // process all previous output one by one before reading from the child
+  // process again.
+  if ((out && !out->function(REPROC_STREAM_IN, &initial, 0, out->context)) ||
+      (err && !err->function(REPROC_STREAM_IN, &initial, 0, err->context))) {
     return 0;
   }
 
@@ -232,8 +230,10 @@ int reproc_drain(reproc_t *process,
 
     size_t bytes_read = (size_t) r;
 
+    reproc_sink *sink = stream == REPROC_STREAM_OUT ? out : err;
+
     // `sink` returns false to tell us to stop reading.
-    if (!sink(stream, buffer, bytes_read, context)) {
+    if (sink && !sink->function(stream, buffer, bytes_read, sink->context)) {
       break;
     }
   }

@@ -193,6 +193,13 @@
 
 - Make `reproc_strerror` thread-safe.
 
+- Make `reproc_drain` take a separate sink for each output stream. Sinks are now
+  passed via the `reproc_sink` type.
+
+  Using separate sinks for both output streams allows for a lot more
+  flexibility. To use a single sink for both output streams, simply pass the
+  same sink to both the `out` and `err` arguments of `reproc_drain`.
+
 ### reproc++
 
 - Remove `process::parse`, `process::exit_status` and `process::running`.
@@ -230,6 +237,12 @@
 
 - Add `sink::thread_safe::string` which is a thread-safe version of
   `sink::string`.
+
+- Make `process::drain` take a separate sink for each output stream.
+
+  Same reasoning as `reproc_drain`.
+
+- Modify all included sinks to support the new `process::drain` behaviour.
 
 ### CMake
 

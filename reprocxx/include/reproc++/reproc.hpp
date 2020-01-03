@@ -96,6 +96,9 @@ public:
   `reproc_drain` but takes a lambda as its argument instead of a function and
   context pointer.
 
+  Unlike `reproc_drain`, it is not possible to pass `NULL` sinks to this method.
+  Instead, use `sink::discard` which has the same effect.
+
   `sink` expects the following signature:
 
   ```c++
@@ -103,7 +106,7 @@ public:
   ```
   */
   template <typename Sink>
-  std::error_code drain(Sink &&sink);
+  std::error_code drain(Sink &&out, Sink &&err);
 
   REPROCXX_EXPORT std::error_code write(const uint8_t *buffer,
                                         size_t size) noexcept;
@@ -127,16 +130,14 @@ private:
 };
 
 template <typename Sink>
-std::error_code process::drain(Sink &&sink)
+std::error_code process::drain(Sink &&out, Sink &&err)
 {
-  // We can't use compound literals in C++ to pass the initial value to `sink`
-  // so we use a constexpr value instead.
   static constexpr uint8_t initial = 0;
 
   // A single call to `read` might contain multiple messages. By always calling
-  // `sink` once with no data before reading, we give it the chance to process
-  // all previous output before reading from the child process again.
-  if (!sink(stream::in, &initial, 0)) {
+  // both sinks once with no data before reading, we give them the chance to
+  // process all previous output before reading from the child process again.
+  if (!out(stream::in, &initial, 0) || !err(stream::in, &initial, 0)) {
     return {};
   }
 
@@ -150,6 +151,8 @@ std::error_code process::drain(Sink &&sink)
     if (ec) {
       break;
     }
+
+    auto &sink = stream == stream::out ? out : err;
 
     // `sink` returns false to tell us to stop reading.
     if (!sink(stream, buffer.data(), bytes_read)) {
