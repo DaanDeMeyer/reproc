@@ -3,7 +3,7 @@
 #undef NDEBUG
 #include <assert.h>
 
-static int stop(REPROC_STOP action, int status)
+static void stop(REPROC_STOP action, int status)
 {
   int r = -1;
 
@@ -22,14 +22,10 @@ static int stop(REPROC_STOP action, int status)
   assert(r == status);
 
   reproc_destroy(process);
-
-  return 0;
 }
 
 int main(void)
 {
   stop(REPROC_STOP_TERMINATE, REPROC_SIGTERM);
   stop(REPROC_STOP_KILL, REPROC_SIGKILL);
-
-  return 0;
 }

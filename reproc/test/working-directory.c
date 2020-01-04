@@ -38,6 +38,4 @@ int main(void)
 
   reproc_destroy(process);
   reproc_free(output);
-
-  return 0;
 }

@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <string.h>
 
-static int io(const char *mode, const char *input, const char *expected)
+static void io(const char *mode, const char *input, const char *expected)
 {
   int r = -1;
 
@@ -36,11 +36,9 @@ static int io(const char *mode, const char *input, const char *expected)
 
   reproc_destroy(process);
   reproc_free(output);
-
-  return 0;
 }
 
-static int timeout(void)
+static void timeout(void)
 {
   int r = -1;
 
@@ -63,8 +61,6 @@ static int timeout(void)
   assert(r == REPROC_EPIPE);
 
   reproc_destroy(process);
-
-  return 0;
 }
 
 #define MESSAGE "reproc stands for REdirected PROCess"
@@ -76,6 +72,4 @@ int main(void)
   io("both", MESSAGE, MESSAGE MESSAGE);
 
   timeout();
-
-  return 0;
 }
