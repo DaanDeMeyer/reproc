@@ -183,6 +183,8 @@
   don't need to download stuff from CMake anymore and tests compile
   significantly faster.
 
+  Tests are now executed by running `cmake --build build --target test`.
+
 - Return `REPROC_EINVAL` from public API functions when passed invalid
   arguments.
 

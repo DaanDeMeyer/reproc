@@ -97,6 +97,14 @@ cmake --build build
 cmake --install build
 ```
 
+Enable the `REPROC_TEST` option and build the `test` target to run the tests:
+
+```sh
+cmake -B build -DREPROC_TEST=ON
+cmake --build build
+cmake --build build --target test
+```
+
 After installing reproc your build system will have to find it. reproc provides
 both CMake config files and pkg-config files to simplify finding a reproc
 installation using CMake and pkg-config respectively. Note that reproc and
