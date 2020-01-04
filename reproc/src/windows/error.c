@@ -49,8 +49,8 @@ const char *error_string(int error)
 
   static THREAD_LOCAL char string[ERROR_STRING_MAX_SIZE];
 
-  r = WideCharToMultiByte(CP_UTF8, 0, wstring, -1, string,
-                          ARRAY_SIZE(string), NULL, NULL);
+  r = WideCharToMultiByte(CP_UTF8, 0, wstring, -1, string, ARRAY_SIZE(string),
+                          NULL, NULL);
 
   free(wstring);
 

@@ -3,6 +3,7 @@ BasedOnStyle: LLVM
 ---
 Language: Cpp
 AlwaysBreakTemplateDeclarations: Yes
+AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortFunctionsOnASingleLine: Empty
 BinPackParameters: false
 BreakBeforeBraces: Custom

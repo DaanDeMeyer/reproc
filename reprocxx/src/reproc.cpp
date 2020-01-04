@@ -28,14 +28,14 @@ static std::error_code error_code_from(int r)
   return { -r, std::system_category() };
 }
 
-static reproc_stop_actions reproc_stop_actions_from(stop_actions stop_actions)
+static reproc_stop_actions reproc_stop_actions_from(stop_actions stop)
 {
-  return { { static_cast<REPROC_STOP>(stop_actions.first.action),
-             stop_actions.first.timeout.count() },
-           { static_cast<REPROC_STOP>(stop_actions.second.action),
-             stop_actions.second.timeout.count() },
-           { static_cast<REPROC_STOP>(stop_actions.third.action),
-             stop_actions.third.timeout.count() } };
+  return {
+    { static_cast<REPROC_STOP>(stop.first.action), stop.first.timeout.count() },
+    { static_cast<REPROC_STOP>(stop.second.action),
+      stop.second.timeout.count() },
+    { static_cast<REPROC_STOP>(stop.third.action), stop.third.timeout.count() }
+  };
 }
 
 auto deleter = [](reproc_t *process) { reproc_destroy(process); };
@@ -55,7 +55,7 @@ std::error_code process::start(const arguments &arguments,
     { static_cast<REPROC_REDIRECT>(options.redirect.in),
       static_cast<REPROC_REDIRECT>(options.redirect.out),
       static_cast<REPROC_REDIRECT>(options.redirect.err) },
-    reproc_stop_actions_from(options.stop_actions)
+    reproc_stop_actions_from(options.stop)
   };
 
   int r = reproc_start(process_.get(), arguments.data(), reproc_options);
@@ -105,10 +105,9 @@ std::error_code process::kill() noexcept
   return error_code_from(r);
 }
 
-std::pair<int, std::error_code>
-process::stop(stop_actions stop_actions) noexcept
+std::pair<int, std::error_code> process::stop(stop_actions stop) noexcept
 {
-  int r = reproc_stop(process_.get(), reproc_stop_actions_from(stop_actions));
+  int r = reproc_stop(process_.get(), reproc_stop_actions_from(stop));
   return { r, error_code_from(r) };
 }
 

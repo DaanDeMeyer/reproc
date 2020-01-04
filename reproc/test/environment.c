@@ -15,7 +15,7 @@ int main(void)
   const char *argv[2] = { RESOURCE_DIRECTORY "/environment", NULL };
   const char *envp[3] = { "IP=127.0.0.1", "PORT=8080", NULL };
 
-  r = reproc_start(process, argv, (reproc_options) { .environment = envp });
+  r = reproc_start(process, argv, (reproc_options){ .environment = envp });
   assert(r == 0);
 
   char *output = NULL;

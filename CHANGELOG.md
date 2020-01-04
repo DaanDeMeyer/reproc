@@ -211,6 +211,8 @@
 
 - Use `int` to represent timeout values.
 
+- Renamed `stop_actions` field of `reproc_options` to `stop`.
+
 ### reproc++
 
 - Remove `process::parse`, `process::exit_status` and `process::running`.
@@ -263,6 +265,8 @@
   `reproc::drain`.
 
   They still default to waiting indefinitely which matches their old behaviour.
+
+- Renamed `stop_actions` field of `reproc::options` to `stop`.
 
 ### CMake
 

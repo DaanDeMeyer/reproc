@@ -44,14 +44,14 @@ int main(int argc, char *argv[])
   //
   // Note that C++14 has chrono literals which allows
   // `reproc::milliseconds(5000)` to be replaced with `5000ms`.
-  reproc::stop_actions stop_actions = {
+  reproc::stop_actions stop = {
     { reproc::stop::noop, reproc::milliseconds(0) },
     { reproc::stop::terminate, reproc::milliseconds(5000) },
     { reproc::stop::kill, reproc::milliseconds(2000) }
   };
 
   reproc::options options;
-  options.stop_actions = stop_actions;
+  options.stop = stop;
 
   // We have the child process inherit the parent's standard streams so the
   // child process reads directly from the stdin and writes directly to the
@@ -72,10 +72,10 @@ int main(int argc, char *argv[])
   // Call `process::stop` manually so we can access the exit status. We add
   // `reproc::wait` with a timeout of ten seconds to give the process time to
   // exit on its own before sending `SIGTERM`.
-  stop_actions.first = { reproc::stop::wait, reproc::milliseconds(10000) };
+  options.stop.first = { reproc::stop::wait, reproc::milliseconds(10000) };
 
   int status = 0;
-  std::tie(status, ec) = process.stop(stop_actions);
+  std::tie(status, ec) = process.stop(options.stop);
   if (ec) {
     return fail(ec);
   }

@@ -64,7 +64,7 @@ struct options {
     redirect err;
   } redirect = {};
 
-  struct stop_actions stop_actions = {};
+  struct stop_actions stop = {};
 };
 
 enum class stream { in, out, err };
@@ -114,7 +114,7 @@ public:
 
   /*! `reproc_stop` but returns a pair of (status, error). */
   REPROCXX_EXPORT std::pair<int, std::error_code>
-  stop(stop_actions stop_actions) noexcept;
+  stop(stop_actions stop) noexcept;
 
 private:
   std::unique_ptr<reproc_t, void (*)(reproc_t *)> process_;

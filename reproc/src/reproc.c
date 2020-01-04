@@ -14,7 +14,7 @@ struct reproc_t {
   handle handle;
   struct stdio stdio;
   int status;
-  reproc_stop_actions stop_actions;
+  reproc_stop_actions stop;
 };
 
 enum { STATUS_NOT_STARTED = -2, STATUS_IN_PROGRESS = -1 };
@@ -118,15 +118,15 @@ int reproc_start(reproc_t *process,
     goto cleanup;
   }
 
-  process->stop_actions = options.stop_actions;
+  process->stop = options.stop;
 
-  bool is_noop = process->stop_actions.first.action == REPROC_STOP_NOOP &&
-                 process->stop_actions.second.action == REPROC_STOP_NOOP &&
-                 process->stop_actions.third.action == REPROC_STOP_NOOP;
+  bool is_noop = process->stop.first.action == REPROC_STOP_NOOP &&
+                 process->stop.second.action == REPROC_STOP_NOOP &&
+                 process->stop.third.action == REPROC_STOP_NOOP;
 
   if (is_noop) {
-    process->stop_actions.first.action = REPROC_STOP_WAIT;
-    process->stop_actions.first.timeout = REPROC_INFINITE;
+    process->stop.first.action = REPROC_STOP_WAIT;
+    process->stop.first.timeout = REPROC_INFINITE;
   }
 
 cleanup:
@@ -293,13 +293,12 @@ int reproc_kill(reproc_t *process)
   return process_kill(process->handle);
 }
 
-int reproc_stop(reproc_t *process, reproc_stop_actions stop_actions)
+int reproc_stop(reproc_t *process, reproc_stop_actions stop)
 {
   assert_return(process, REPROC_EINVAL);
   assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
 
-  reproc_stop_action actions[3] = { stop_actions.first, stop_actions.second,
-                                    stop_actions.third };
+  reproc_stop_action actions[3] = { stop.first, stop.second, stop.third };
   int r = -1;
 
   for (size_t i = 0; i < ARRAY_SIZE(actions); i++) {
@@ -338,7 +337,7 @@ reproc_t *reproc_destroy(reproc_t *process)
   assert_return(process, NULL);
 
   if (process->status == STATUS_IN_PROGRESS) {
-    reproc_stop(process, process->stop_actions);
+    reproc_stop(process, process->stop);
   }
 
   process->handle = process_destroy(process->handle);

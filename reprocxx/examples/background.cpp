@@ -28,14 +28,14 @@ int main(int argc, char *argv[])
 
   reproc::process process;
 
-  reproc::stop_actions stop_actions = {
+  reproc::stop_actions stop = {
     { reproc::stop::terminate, reproc::milliseconds(5000) },
     { reproc::stop::kill, reproc::milliseconds(2000) },
     {}
   };
 
   reproc::options options;
-  options.stop_actions = stop_actions;
+  options.stop = stop;
 
   std::error_code ec = process.start(argv + 1, options);
 
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
   }
 
   int status = 0;
-  std::tie(status, ec) = process.stop(stop_actions);
+  std::tie(status, ec) = process.stop(options.stop);
   if (ec) {
     return fail(ec);
   }

@@ -13,7 +13,7 @@ int main(void)
 
   const char *argv[2] = { RESOURCE_DIRECTORY "/overflow", NULL };
 
-  r = reproc_start(process, argv, (reproc_options) { 0 });
+  r = reproc_start(process, argv, (reproc_options){ 0 });
   assert(r >= 0);
 
   char *output = NULL;
