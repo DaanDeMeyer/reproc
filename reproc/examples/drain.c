@@ -38,7 +38,7 @@ int main(void)
   // more than one parameter, simply store the parameters in a struct and pass
   // the address of the struct as the `context` parameter.
   reproc_sink sink = { reproc_sink_string, &output };
-  r = reproc_drain(process, &sink, &sink);
+  r = reproc_drain(process, &sink, &sink, REPROC_INFINITE);
   if (r < 0) {
     goto cleanup;
   }

@@ -33,7 +33,7 @@ REPROC_EXPORT extern const int REPROC_SIGKILL;
 REPROC_EXPORT extern const int REPROC_SIGTERM;
 
 /*! Tells a function that takes a timeout value to wait indefinitely. */
-REPROC_EXPORT extern const unsigned int REPROC_INFINITE;
+REPROC_EXPORT extern const int REPROC_INFINITE;
 
 /*! Stream identifiers used to indicate which stream to act on. */
 typedef enum {
@@ -69,7 +69,7 @@ typedef enum {
 
 typedef struct reproc_stop_action {
   REPROC_STOP action;
-  unsigned int timeout;
+  int timeout;
 } reproc_stop_action;
 
 typedef struct reproc_stop_actions {
@@ -170,16 +170,22 @@ stderr stream and returns the amount of bytes read.
 If `stream` is not `NULL`, it is used to store the stream that was
 read from (`REPROC_STREAM_OUT` or `REPROC_STREAM_ERR`).
 
+If no output stream is closed or read from within the given timeout, this
+function returns `REPROC_ETIMEDOUT`. If one of the output streams is closed,
+`timeout` is reset before waiting again for the other stream.
+
 If both streams are closed by the child process or weren't opened with
 `REPROC_REDIRECT_PIPE`, this function returns `REPROC_EPIPE`.
 
 Actionable errors:
 - `REPROC_EPIPE`
+- `REPROC_ETIMEDOUT`
 */
 REPROC_EXPORT int reproc_read(reproc_t *process,
                               REPROC_STREAM *stream,
                               uint8_t *buffer,
-                              size_t size);
+                              size_t size,
+                              int timeout);
 
 /*!
 Calls `reproc_read` on `stream` until `reproc_read` returns an error or one of
@@ -194,17 +200,29 @@ discarded.
 `stream` set to `REPROC_STREAM_IN` to give each sink the chance to process all
 output from the previous call to `reproc_drain` one by one.
 
+Each call to `reproc_read` is passed the given timeout. If a call to
+`reproc_read` times out, this function returns `REPROC_ETIMEDOUT`.
+
 Note that his function returns 0 instead of `REPROC_EPIPE` when both output
 streams of the child process are closed.
 
 For examples of sinks, see `sink.h`.
+
+Actionable errors:
+- `REPROC_ETIMEDOUT`
 */
-REPROC_EXPORT int
-reproc_drain(reproc_t *process, reproc_sink *out, reproc_sink *err);
+REPROC_EXPORT int reproc_drain(reproc_t *process,
+                               reproc_sink *out,
+                               reproc_sink *err,
+                               int timeout);
 
 /*!
 Writes `size` bytes from `buffer` to the standard input (stdin) of the child
 process.
+
+If no data can be written within the given timeout, this function returns
+`REPROC_ETIMEDOUT`. After writing some data, `timeout` is reset before trying to
+write again.
 
 (POSIX) By default, writing to a closed stdin pipe terminates the parent process
 with the `SIGPIPE` signal. `reproc_write` will only return `REPROC_EPIPE` if
@@ -216,9 +234,12 @@ the redirect options passed to `reproc_start`.
 
 Actionable errors:
 - `REPROC_EPIPE`
+- `REPROC_ETIMEDOUT`
 */
-REPROC_EXPORT int
-reproc_write(reproc_t *process, const uint8_t *buffer, size_t size);
+REPROC_EXPORT int reproc_write(reproc_t *process,
+                               const uint8_t *buffer,
+                               size_t size,
+                               int timeout);
 
 /*!
 Closes the child process standard stream indicated by `stream`.
@@ -241,7 +262,7 @@ wait indefinitely for the child process to exit.
 Actionable errors:
 - `REPROC_ETIMEDOUT`
 */
-REPROC_EXPORT int reproc_wait(reproc_t *process, unsigned int timeout);
+REPROC_EXPORT int reproc_wait(reproc_t *process, int timeout);
 
 /*!
 Sends the `SIGTERM` signal (POSIX) or the `CTRL-BREAK` signal (Windows) to the

@@ -22,7 +22,7 @@ enum { STATUS_NOT_STARTED = -2, STATUS_IN_PROGRESS = -1 };
 const int REPROC_SIGKILL = UINT8_MAX + 9;
 const int REPROC_SIGTERM = UINT8_MAX + 15;
 
-const unsigned int REPROC_INFINITE = 0xFFFFFFFF; // == `INFINITE` on Windows
+const int REPROC_INFINITE = -1;
 
 static int redirect(handle *parent,
                     handle *child,
@@ -152,7 +152,8 @@ cleanup:
 int reproc_read(reproc_t *process,
                 REPROC_STREAM *stream,
                 uint8_t *buffer,
-                size_t size)
+                size_t size,
+                int timeout)
 {
   assert_return(process, REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
@@ -163,18 +164,9 @@ int reproc_read(reproc_t *process,
     // Get the first pipe that will have data available to be read.
     handle ready = HANDLE_INVALID;
 
-    if (process->stdio.out == HANDLE_INVALID &&
-        process->stdio.err == HANDLE_INVALID) {
-      return REPROC_EPIPE;
-    } else if (process->stdio.out == HANDLE_INVALID) {
-      ready = process->stdio.err;
-    } else if (process->stdio.err == HANDLE_INVALID) {
-      ready = process->stdio.out;
-    } else {
-      r = pipe_wait(process->stdio.out, process->stdio.err, &ready);
-      if (r < 0) {
-        return r;
-      }
+    r = pipe_wait(process->stdio.out, process->stdio.err, &ready, timeout);
+    if (r < 0) {
+      return r;
     }
 
     r = pipe_read(ready, buffer, size);
@@ -203,7 +195,10 @@ int reproc_read(reproc_t *process,
   return r; // bytes read
 }
 
-int reproc_drain(reproc_t *process, reproc_sink *out, reproc_sink *err)
+int reproc_drain(reproc_t *process,
+                 reproc_sink *out,
+                 reproc_sink *err,
+                 int timeout)
 {
   assert_return(process, REPROC_EINVAL);
 
@@ -223,7 +218,7 @@ int reproc_drain(reproc_t *process, reproc_sink *out, reproc_sink *err)
 
   while (true) {
     REPROC_STREAM stream = { 0 };
-    r = reproc_read(process, &stream, buffer, ARRAY_SIZE(buffer));
+    r = reproc_read(process, &stream, buffer, ARRAY_SIZE(buffer), timeout);
     if (r < 0) {
       break;
     }
@@ -241,7 +236,10 @@ int reproc_drain(reproc_t *process, reproc_sink *out, reproc_sink *err)
   return r == REPROC_EPIPE ? 0 : r;
 }
 
-int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
+int reproc_write(reproc_t *process,
+                 const uint8_t *buffer,
+                 size_t size,
+                 int timeout)
 {
   assert_return(process, REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
@@ -253,7 +251,7 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
   int r = -1;
 
   do {
-    r = pipe_write(process->stdio.in, buffer, size);
+    r = pipe_write(process->stdio.in, buffer, size, timeout);
 
     if (r == REPROC_EPIPE) {
       process->stdio.in = handle_destroy(process->stdio.in);
@@ -293,7 +291,7 @@ int reproc_close(reproc_t *process, REPROC_STREAM stream)
   return 0;
 }
 
-int reproc_wait(reproc_t *process, unsigned int timeout)
+int reproc_wait(reproc_t *process, int timeout)
 {
   assert_return(process, REPROC_EINVAL);
   assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);

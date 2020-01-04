@@ -386,13 +386,14 @@ cleanup:
   return error_unify(r);
 }
 
-int process_wait(HANDLE process, unsigned int timeout)
+int process_wait(HANDLE process, int timeout)
 {
   assert(process);
 
   int r = 0;
 
-  r = (int) WaitForSingleObject(process, timeout);
+  r = (int) WaitForSingleObject(process,
+                                timeout < 0 ? INFINITE : (DWORD) timeout);
   if (r == WAIT_TIMEOUT) {
     return -WAIT_TIMEOUT;
   }

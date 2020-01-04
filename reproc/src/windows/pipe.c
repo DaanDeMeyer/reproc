@@ -93,30 +93,22 @@ int pipe_read(HANDLE pipe, uint8_t *buffer, size_t size)
   int r = 0;
 
   OVERLAPPED overlapped = { 0 };
-  overlapped.hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false, NULL);
-  if (overlapped.hEvent == NULL) {
-    goto cleanup;
-  }
-
   r = ReadFile(pipe, buffer, (DWORD) size, NULL, &overlapped);
   if (r == 0 && GetLastError() != ERROR_IO_PENDING) {
-    goto cleanup;
+    return error_unify(r);
   }
 
-  r = GetOverlappedResult(pipe, &overlapped, &bytes_read, true);
+  r = GetOverlappedResultEx(pipe, &overlapped, &bytes_read, INFINITE, false);
   if (r == 0) {
-    goto cleanup;
+    return error_unify(r);
   }
 
   assert(bytes_read <= INT_MAX);
 
-cleanup:
-  handle_destroy(overlapped.hEvent);
-
   return error_unify_or_else(r, (int) bytes_read);
 }
 
-int pipe_write(HANDLE pipe, const uint8_t *buffer, size_t size)
+int pipe_write(HANDLE pipe, const uint8_t *buffer, size_t size, int timeout)
 {
   assert(pipe && pipe != HANDLE_INVALID);
   assert(buffer);
@@ -126,38 +118,58 @@ int pipe_write(HANDLE pipe, const uint8_t *buffer, size_t size)
   int r = 0;
 
   OVERLAPPED overlapped = { 0 };
-  overlapped.hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false, NULL);
-  if (overlapped.hEvent == NULL) {
-    goto cleanup;
-  }
-
   r = WriteFile(pipe, buffer, (DWORD) size, NULL, &overlapped);
   if (r == 0 && GetLastError() != ERROR_IO_PENDING) {
-    goto cleanup;
+    return error_unify(r);
   }
 
-  r = GetOverlappedResult(pipe, &overlapped, &bytes_written, true);
+  r = GetOverlappedResultEx(pipe, &overlapped, &bytes_written,
+                            timeout < 0 ? INFINITE : (DWORD) timeout, false);
+  if (r == 0 && GetLastError() != WAIT_TIMEOUT) {
+    return error_unify(r);
+  }
+
   if (r == 0) {
-    goto cleanup;
+    // The timeout expired. Cancel the ongoing write.
+    r = CancelIo(pipe);
+    assert_unused(r != 0);
+
+    // Check if the write was actually cancelled.
+    r = GetOverlappedResult(pipe, &overlapped, &bytes_written, true);
+
+    // The write might have completed before it was cancelled so only error if
+    // the operation was actually aborted.
+    if (r == 0 && GetLastError() == ERROR_OPERATION_ABORTED) {
+      r = -WAIT_TIMEOUT;
+    }
   }
 
   assert(bytes_written <= INT_MAX);
 
-cleanup:
-  handle_destroy(overlapped.hEvent);
-
   return error_unify_or_else(r, (int) bytes_written);
 }
 
-int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready)
+int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready, int timeout)
 {
-  assert(out && out != HANDLE_INVALID);
-  assert(err && err != HANDLE_INVALID);
   assert(ready);
 
-  HANDLE pipes[2] = { out, err };
-  OVERLAPPED overlapped[2] = { { 0 }, { 0 } };
-  HANDLE events[2] = { HANDLE_INVALID, HANDLE_INVALID };
+  HANDLE pipes[2] = { HANDLE_INVALID, HANDLE_INVALID };
+  DWORD num_pipes = 0;
+
+  if (out != HANDLE_INVALID) {
+    pipes[num_pipes++] = out;
+  }
+
+  if (err != HANDLE_INVALID) {
+    pipes[num_pipes++] = err;
+  }
+
+  if (num_pipes == 0) {
+    return -ERROR_BROKEN_PIPE;
+  }
+
+  OVERLAPPED overlapped[ARRAY_SIZE(pipes)] = { { 0 }, { 0 } };
+  HANDLE events[ARRAY_SIZE(pipes)] = { HANDLE_INVALID, HANDLE_INVALID };
   int r = 0;
 
   // We emulate POSIX `poll` by issuing overlapped zero-sized reads and waiting
@@ -165,7 +177,7 @@ int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready)
   // multiprocessing module `wait` implementation:
   // https://github.com/python/cpython/blob/10ecbadb799ddf3393d1fc80119a3db14724d381/Lib/multiprocessing/connection.py#L826
 
-  for (size_t i = 0; i < ARRAY_SIZE(overlapped); i++) {
+  for (size_t i = 0; i < num_pipes; i++) {
     overlapped[i].hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false,
                                        NULL);
     if (overlapped[i].hEvent == NULL) {
@@ -189,11 +201,16 @@ int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready)
     events[i] = overlapped[i].hEvent;
   }
 
-  DWORD result = WaitForMultipleObjects(ARRAY_SIZE(events), events, false,
-                                        INFINITE);
-  // We don't expect `WAIT_ABANDONED_0` or `WAIT_TIMEOUT` to be valid here.
-  assert(result < WAIT_ABANDONED_0);
-  assert(result != WAIT_TIMEOUT);
+  DWORD result = WaitForMultipleObjects(num_pipes, events, false,
+                                        timeout < 0 ? INFINITE
+                                                    : (DWORD) timeout);
+  // We don't expect `WAIT_ABANDONED_0` to be valid here.
+  assert(result != WAIT_ABANDONED_0);
+
+  if (result == WAIT_TIMEOUT) {
+    r = -WAIT_TIMEOUT;
+    goto cleanup;
+  }
 
   if (result == WAIT_FAILED) {
     r = 0;
@@ -204,13 +221,16 @@ int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready)
   *ready = pipes[result];
   r = 1;
 
-cleanup:;
-  PROTECT_SYSTEM_ERROR;
-
-  for (size_t i = 0; i < ARRAY_SIZE(overlapped); i++) {
-
+cleanup:
+  for (size_t i = 0; i < num_pipes; i++) {
     // Cancel any remaining zero-sized reads that we queued if they have not yet
     // completed.
+
+    if (events[i] == HANDLE_INVALID) {
+      continue;
+    }
+
+    PROTECT_SYSTEM_ERROR;
 
     r = CancelIo(pipes[i]);
     assert_unused(r != 0 || GetLastError() == ERROR_NOT_FOUND);
@@ -226,11 +246,11 @@ cleanup:;
     r = GetOverlappedResult(pipes[i], &overlapped[i], &bytes_transferred, true);
     assert_unused(r != 0 || (GetLastError() == ERROR_OPERATION_ABORTED ||
                              GetLastError() == ERROR_BROKEN_PIPE));
+
+    UNPROTECT_SYSTEM_ERROR;
   }
 
-  UNPROTECT_SYSTEM_ERROR;
-
-  for (size_t i = 0; i < ARRAY_SIZE(overlapped); i++) {
+  for (size_t i = 0; i < num_pipes; i++) {
     handle_destroy(overlapped[i].hEvent);
   }
 

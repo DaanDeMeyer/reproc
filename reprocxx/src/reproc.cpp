@@ -59,20 +59,25 @@ std::error_code process::start(const arguments &arguments,
   };
 
   int r = reproc_start(process_.get(), arguments.data(), reproc_options);
+
   return error_code_from(r);
 }
 
-std::tuple<stream, size_t, std::error_code> process::read(uint8_t *buffer,
-                                                          size_t size) noexcept
+std::tuple<stream, size_t, std::error_code>
+process::read(uint8_t *buffer,
+              size_t size,
+              reproc::milliseconds timeout) noexcept
 {
   REPROC_STREAM stream = {};
-  int r = reproc_read(process_.get(), &stream, buffer, size);
+  int r = reproc_read(process_.get(), &stream, buffer, size, timeout.count());
   return { static_cast<enum stream>(stream), r, error_code_from(r) };
 }
 
-std::error_code process::write(const uint8_t *buffer, size_t size) noexcept
+std::error_code process::write(const uint8_t *buffer,
+                               size_t size,
+                               reproc::milliseconds timeout) noexcept
 {
-  int r = reproc_write(process_.get(), buffer, size);
+  int r = reproc_write(process_.get(), buffer, size, timeout.count());
   return error_code_from(r);
 }
 

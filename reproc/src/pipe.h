@@ -24,8 +24,10 @@ int pipe_read(handle pipe, uint8_t *buffer, size_t size);
 
 // Writes up to `size` bytes from `buffer` to the pipe indicated by `pipe` and
 // returns the amount of bytes written.
-int pipe_write(handle pipe, const uint8_t *buffer, size_t size);
+int pipe_write(handle pipe, const uint8_t *buffer, size_t size, int timeout);
 
 // Stores the value of the first of `out` and `ready` that will have data
 // available to read in `ready`.
-int pipe_wait(handle out, handle err, handle *ready);
+//
+// Returns `REPROC_EPIPE` if both `out` and `err` are invalid handles.
+int pipe_wait(handle out, handle err, handle *ready, int timeout);

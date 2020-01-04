@@ -32,7 +32,7 @@ int process_create(handle *process,
 //
 // If `timeout` is `REPROC_INFINITE`, this function waits indefinitely for a
 // process to exit.
-int process_wait(handle process, unsigned int timeout);
+int process_wait(handle process, int timeout);
 
 // Sends the `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) signal to the process
 // indicated by `process`.

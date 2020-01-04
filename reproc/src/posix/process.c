@@ -14,10 +14,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-// Including the entire reproc.h header is overkill so we import only the
-// constant we need.
-extern const unsigned int REPROC_INFINITE;
-
 static int signal_mask(int how, const sigset_t *newmask, sigset_t *oldmask)
 {
   int r = -1;
@@ -350,14 +346,14 @@ static int parse_status(int status)
   return WIFEXITED(status) ? WEXITSTATUS(status) : WTERMSIG(status) + UINT8_MAX;
 }
 
-int process_wait(pid_t process, unsigned int timeout)
+int process_wait(pid_t process, int timeout)
 {
   assert(process != HANDLE_INVALID);
 
   int status = 0;
   int r = -1;
 
-  if (timeout == 0 || timeout == REPROC_INFINITE) {
+  if (timeout <= 0) {
     r = waitpid(process, &status, timeout == 0 ? WNOHANG : 0);
 
     if (r >= 0) {

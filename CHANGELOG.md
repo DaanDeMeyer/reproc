@@ -200,6 +200,12 @@
   flexibility. To use a single sink for both output streams, simply pass the
   same sink to both the `out` and `err` arguments of `reproc_drain`.
 
+- Support passing timeouts to `reproc_read`, `reproc_write` and `reproc_drain`.
+
+  Pass `REPROC_INFINITE` as the timeout to retain the old behaviour.
+
+- Use `int` to represent timeout values.
+
 ### reproc++
 
 - Remove `process::parse`, `process::exit_status` and `process::running`.
@@ -243,6 +249,11 @@
   Same reasoning as `reproc_drain`.
 
 - Modify all included sinks to support the new `process::drain` behaviour.
+
+- Support passing timeouts to `process::read`, `process::write` and
+  `process::drain`.
+
+  The methods default to waiting indefinitely which matches their old behaviour.
 
 ### CMake
 

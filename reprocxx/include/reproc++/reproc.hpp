@@ -33,9 +33,9 @@ REPROCXX_EXPORT extern const int terminate;
 
 }
 
-/*! Timeout values are passed as `reproc::milliseconds` instead of `unsigned
-int` in reproc++. */
-using milliseconds = std::chrono::duration<unsigned int, std::milli>;
+/*! Timeout values are passed as `reproc::milliseconds` instead of `int` in
+reproc++. */
+using milliseconds = std::chrono::duration<int, std::milli>;
 
 enum class redirect { pipe, inherit, discard };
 
@@ -88,13 +88,16 @@ public:
   REPROCXX_EXPORT std::error_code start(const arguments &arguments,
                                         const options &options = {}) noexcept;
 
-  /*! `reproc_read` but returns a tuple of (stream, bytes read, error). */
+  /*! `reproc_read` but returns a tuple of (stream, bytes read, error) and
+  defaults to waiting indefinitely for each read to complete.*/
   REPROCXX_EXPORT std::tuple<stream, size_t, std::error_code>
-  read(uint8_t *buffer, size_t size) noexcept;
+  read(uint8_t *buffer,
+       size_t size,
+       reproc::milliseconds timeout = reproc::infinite) noexcept;
 
   /*!
   `reproc_drain` but takes a lambda as its argument instead of a function and
-  context pointer.
+  context pointer. Defaults to waiting indefinitely for each read to complete.
 
   Unlike `reproc_drain`, it is not possible to pass `NULL` sinks to this method.
   Instead, use `sink::discard` which has the same effect.
@@ -106,10 +109,16 @@ public:
   ```
   */
   template <typename Sink>
-  std::error_code drain(Sink &&out, Sink &&err);
+  std::error_code drain(Sink &&out,
+                        Sink &&err,
+                        reproc::milliseconds timeout = reproc::infinite);
 
-  REPROCXX_EXPORT std::error_code write(const uint8_t *buffer,
-                                        size_t size) noexcept;
+  /*! reproc_write` but defaults to waiting indefinitely for each write to
+  complete. */
+  REPROCXX_EXPORT std::error_code
+  write(const uint8_t *buffer,
+        size_t size,
+        reproc::milliseconds timeout = reproc::infinite) noexcept;
 
   REPROCXX_EXPORT std::error_code close(stream stream) noexcept;
 
@@ -130,7 +139,8 @@ private:
 };
 
 template <typename Sink>
-std::error_code process::drain(Sink &&out, Sink &&err)
+std::error_code
+process::drain(Sink &&out, Sink &&err, reproc::milliseconds timeout)
 {
   static constexpr uint8_t initial = 0;
 
@@ -147,7 +157,8 @@ std::error_code process::drain(Sink &&out, Sink &&err)
   while (true) {
     stream stream = {};
     size_t bytes_read = 0;
-    std::tie(stream, bytes_read, ec) = read(buffer.data(), buffer.size());
+    std::tie(stream, bytes_read, ec) = read(buffer.data(), buffer.size(),
+                                            timeout);
     if (ec) {
       break;
     }
