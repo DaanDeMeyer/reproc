@@ -18,6 +18,7 @@ target_sources(reproc PRIVATE
   src/${REPROC_PLATFORM}/process.c
   src/${REPROC_PLATFORM}/redirect.c
   src/reproc.c
+  src/sink.c
 )
 
 if(REPROC_TEST)

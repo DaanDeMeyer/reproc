@@ -32,13 +32,14 @@ int main(void)
     goto cleanup;
   }
 
-  // A sink function receives a single context parameter. `reproc_sink_string`
-  // requires a `char **` with its value set to `NULL` to be passed to
-  // `reproc_drain` along with `reproc_sink_string`. If a sink function needs
-  // more than one parameter, simply store the parameters in a struct and pass
-  // the address of the struct as the `context` parameter.
-  reproc_sink sink = { reproc_sink_string, &output };
-  r = reproc_drain(process, &sink, &sink, REPROC_INFINITE);
+  // `reproc_drain` reads from a child process and passes the output to the
+  // given sinks. A sink consists of a function pointer and a context pointer
+  // which is always passed to the function. reproc provides several built-in
+  // sinks such as `reproc_sink_string` which stores all provided output in the
+  // given string. Passing the same sink to both output streams makes sure the
+  // output from both streams is combined into a single string.
+  reproc_sink sink = reproc_sink_string(&output);
+  r = reproc_drain(process, sink, sink, REPROC_INFINITE);
   if (r < 0) {
     goto cleanup;
   }
@@ -56,10 +57,8 @@ int main(void)
   }
 
 cleanup:
-  // `output` always points to valid memory or is set to `NULL` by
-  // `reproc_sink_string` so it's always safe to call `free` on it.
-  free(output);
-
+  // Memory allocated by `reproc_sink_string` must be freed with `reproc_free`.
+  reproc_free(output);
   reproc_destroy(process);
 
   if (r < 0) {

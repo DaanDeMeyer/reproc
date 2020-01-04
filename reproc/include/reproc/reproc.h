@@ -120,17 +120,6 @@ typedef struct reproc_options {
   reproc_stop_actions stop_actions;
 } reproc_options;
 
-/*! Used by `reproc_drain` to provide data to the caller. Each time data is
-read, `function` is called with `context`. See `reproc_drain` and the `drain`
-example for more information .*/
-typedef struct reproc_sink {
-  bool (*function)(REPROC_STREAM stream,
-                   const uint8_t *buffer,
-                   size_t size,
-                   void *context);
-  void *context;
-} reproc_sink;
-
 /*! Allocate a new `reproc_t` instance on the heap. */
 REPROC_EXPORT reproc_t *reproc_new(void);
 
@@ -186,35 +175,6 @@ REPROC_EXPORT int reproc_read(reproc_t *process,
                               uint8_t *buffer,
                               size_t size,
                               int timeout);
-
-/*!
-Calls `reproc_read` on `stream` until `reproc_read` returns an error or one of
-the sinks returns false. The `out` and `err` sinks receive the output from
-stdout and stderr respectively. The same sink may be passed to both `out` and
-`err`.
-
-If `out` or `err` are `NULL`, all output on the corresponding stream is
-discarded.
-
-`reproc_drain` always starts by calling both sinks once with an empty buffer and
-`stream` set to `REPROC_STREAM_IN` to give each sink the chance to process all
-output from the previous call to `reproc_drain` one by one.
-
-Each call to `reproc_read` is passed the given timeout. If a call to
-`reproc_read` times out, this function returns `REPROC_ETIMEDOUT`.
-
-Note that his function returns 0 instead of `REPROC_EPIPE` when both output
-streams of the child process are closed.
-
-For examples of sinks, see `sink.h`.
-
-Actionable errors:
-- `REPROC_ETIMEDOUT`
-*/
-REPROC_EXPORT int reproc_drain(reproc_t *process,
-                               reproc_sink *out,
-                               reproc_sink *err,
-                               int timeout);
 
 /*!
 Writes `size` bytes from `buffer` to the standard input (stdin) of the child

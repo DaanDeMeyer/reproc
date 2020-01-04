@@ -95,24 +95,6 @@ public:
        size_t size,
        reproc::milliseconds timeout = reproc::infinite) noexcept;
 
-  /*!
-  `reproc_drain` but takes a lambda as its argument instead of a function and
-  context pointer. Defaults to waiting indefinitely for each read to complete.
-
-  Unlike `reproc_drain`, it is not possible to pass `NULL` sinks to this method.
-  Instead, use `sink::discard` which has the same effect.
-
-  `sink` expects the following signature:
-
-  ```c++
-  bool sink(stream stream, const uint8_t *buffer, size_t size);
-  ```
-  */
-  template <typename Sink>
-  std::error_code drain(Sink &&out,
-                        Sink &&err,
-                        reproc::milliseconds timeout = reproc::infinite);
-
   /*! reproc_write` but defaults to waiting indefinitely for each write to
   complete. */
   REPROCXX_EXPORT std::error_code
@@ -137,41 +119,5 @@ public:
 private:
   std::unique_ptr<reproc_t, void (*)(reproc_t *)> process_;
 };
-
-template <typename Sink>
-std::error_code
-process::drain(Sink &&out, Sink &&err, reproc::milliseconds timeout)
-{
-  static constexpr uint8_t initial = 0;
-
-  // A single call to `read` might contain multiple messages. By always calling
-  // both sinks once with no data before reading, we give them the chance to
-  // process all previous output before reading from the child process again.
-  if (!out(stream::in, &initial, 0) || !err(stream::in, &initial, 0)) {
-    return {};
-  }
-
-  std::array<uint8_t, 4096> buffer = {};
-  std::error_code ec;
-
-  while (true) {
-    stream stream = {};
-    size_t bytes_read = 0;
-    std::tie(stream, bytes_read, ec) = read(buffer.data(), buffer.size(),
-                                            timeout);
-    if (ec) {
-      break;
-    }
-
-    auto &sink = stream == stream::out ? out : err;
-
-    // `sink` returns false to tell us to stop reading.
-    if (!sink(stream, buffer.data(), bytes_read)) {
-      break;
-    }
-  }
-
-  return ec == error::broken_pipe ? std::error_code() : ec;
-}
 
 }

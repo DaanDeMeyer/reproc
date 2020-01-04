@@ -176,11 +176,6 @@
   Naming the enum after the function it is passed to (`reproc_stop`) is simpler
   than using a different name.
 
-- Inline the `reproc_sink_string` and `reproc_sink_discard` implementations in
-  the sink.h header.
-
-  This avoids issues with allocating across module (DLL) boundaries on Windows.
-
 - Rewrite tests in C using CTest and `assert` and remove doctest.
 
   Doctest is a great library but we don't really lose anything major by
@@ -193,12 +188,22 @@
 
 - Make `reproc_strerror` thread-safe.
 
+- Move `reproc_drain` to sink.h.
+
 - Make `reproc_drain` take a separate sink for each output stream. Sinks are now
   passed via the `reproc_sink` type.
 
   Using separate sinks for both output streams allows for a lot more
   flexibility. To use a single sink for both output streams, simply pass the
   same sink to both the `out` and `err` arguments of `reproc_drain`.
+
+- Turn `reproc_sink_string` and `reproc_sink_discard` into functions that return
+  sinks and hide the actual functions in sink.c.
+
+- Add `reproc_free` to sink.h which must be used to free memory allocated by
+  `reproc_sink_string`.
+
+  This avoids issues with allocating across module (DLL) boundaries on Windows.
 
 - Support passing timeouts to `reproc_read`, `reproc_write` and `reproc_drain`.
 
@@ -244,16 +249,20 @@
 - Add `sink::thread_safe::string` which is a thread-safe version of
   `sink::string`.
 
-- Make `process::drain` take a separate sink for each output stream.
+- Move `process::drain` out of the `process` class and move it to sink.hpp.
+
+  `process.drain(...)` becomes `reproc::drain(process, ...)`.
+
+- Make `reproc::drain` take a separate sink for each output stream.
 
   Same reasoning as `reproc_drain`.
 
-- Modify all included sinks to support the new `process::drain` behaviour.
+- Modify all included sinks to support the new `reproc::drain` behaviour.
 
 - Support passing timeouts to `process::read`, `process::write` and
-  `process::drain`.
+  `reproc::drain`.
 
-  The methods default to waiting indefinitely which matches their old behaviour.
+  They still default to waiting indefinitely which matches their old behaviour.
 
 ### CMake
 

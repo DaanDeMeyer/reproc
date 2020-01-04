@@ -3,6 +3,7 @@
 
 #undef NDEBUG
 #include <assert.h>
+#include <string.h>
 
 static int io(const char *mode, const char *input, const char *expected)
 {
@@ -23,8 +24,8 @@ static int io(const char *mode, const char *input, const char *expected)
   assert(r == 0);
 
   char *output = NULL;
-  reproc_sink sink = { reproc_sink_string, &output };
-  r = reproc_drain(process, &sink, &sink, REPROC_INFINITE);
+  reproc_sink sink = reproc_sink_string(&output);
+  r = reproc_drain(process, sink, sink, REPROC_INFINITE);
   assert(r == 0);
   assert(output != NULL);
 
@@ -34,7 +35,7 @@ static int io(const char *mode, const char *input, const char *expected)
   assert(r == 0);
 
   reproc_destroy(process);
-  free(output);
+  reproc_free(output);
 
   return 0;
 }

@@ -8,6 +8,55 @@
 #include <string>
 
 namespace reproc {
+
+/*!
+`reproc_drain` but takes lambdas as sinks and defaults to waiting indefinitely
+for each read to complete.
+
+`out` and `err` expect the following signature:
+
+```c++
+bool sink(stream stream, const uint8_t *buffer, size_t size);
+```
+*/
+template <typename Out, typename Err>
+std::error_code drain(process &process,
+                      Out &&out,
+                      Err &&err,
+                      reproc::milliseconds timeout = reproc::infinite)
+{
+  static constexpr uint8_t initial = 0;
+
+  // A single call to `read` might contain multiple messages. By always calling
+  // both sinks once with no data before reading, we give them the chance to
+  // process all previous output before reading from the child process again.
+  if (!out(stream::in, &initial, 0) || !err(stream::in, &initial, 0)) {
+    return {};
+  }
+
+  std::array<uint8_t, 4096> buffer = {};
+  std::error_code ec;
+
+  while (true) {
+    stream stream = {};
+    size_t bytes_read = 0;
+    std::tie(stream, bytes_read, ec) = process.read(buffer.data(),
+                                                    buffer.size(), timeout);
+    if (ec) {
+      break;
+    }
+
+    auto &sink = stream == stream::out ? out : err;
+
+    // `sink` returns false to tell us to stop reading.
+    if (!sink(stream, buffer.data(), bytes_read)) {
+      break;
+    }
+  }
+
+  return ec == error::broken_pipe ? std::error_code() : ec;
+}
+
 namespace sink {
 
 /*! Reads all output into `string`. */

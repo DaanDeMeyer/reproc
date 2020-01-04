@@ -3,6 +3,7 @@
 
 #undef NDEBUG
 #include <assert.h>
+#include <string.h>
 
 int main(void)
 {
@@ -18,8 +19,8 @@ int main(void)
   assert(r == 0);
 
   char *output = NULL;
-  reproc_sink sink = { reproc_sink_string, &output };
-  r = reproc_drain(process, &sink, &sink, REPROC_INFINITE);
+  reproc_sink sink = reproc_sink_string(&output);
+  r = reproc_drain(process, sink, sink, REPROC_INFINITE);
   assert(r == 0);
   assert(output != NULL);
 
@@ -40,7 +41,7 @@ int main(void)
   assert(*current == '\0');
 
   reproc_destroy(process);
-  free(output);
+  reproc_free(output);
 
   return 0;
 }

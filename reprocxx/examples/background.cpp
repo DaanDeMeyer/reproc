@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     // given string, allowing working with the string across multiple threads if
     // the mutex is locked in the other threads as well.
     reproc::sink::thread_safe::string sink(output, mutex);
-    return process.drain(sink, sink);
+    return reproc::drain(process, sink, sink);
   });
 
   // Show new output every 2 seconds.

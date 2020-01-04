@@ -36,15 +36,15 @@ int main()
     return fail(ec);
   }
 
-  // `process::drain` reads from the stdout and stderr streams of the child
-  // process until both are closed or an error occurs. Providing it with a
-  // string sink for a specific stream makes it store all output of that stream
-  // in the string passed to the string sink. Passing the same sink to both the
-  // `out` and `err` arguments of `process::drain` causes the stdout and stderr
-  // output to get stored in the same string.
+  // `reproc::drain` reads from the stdout and stderr streams of `process` until
+  // both are closed or an error occurs. Providing it with a string sink for a
+  // specific stream makes it store all output of that stream in the string
+  // passed to the string sink. Passing the same sink to both the `out` and
+  // `err` arguments of `reproc::drain` causes the stdout and stderr output to
+  // get stored in the same string.
   std::string output;
   reproc::sink::string sink(output);
-  ec = process.drain(sink, sink);
+  ec = reproc::drain(process, sink, sink);
   if (ec) {
     return fail(ec);
   }
@@ -53,7 +53,7 @@ int main()
 
   // It's easy to define your own sinks as well. Take a look at `sink.hpp` in
   // the repository to see how `sink::string` and other sinks are implemented.
-  // The documentation of `process::drain` also provides more information on the
+  // The documentation of `reproc::drain` also provides more information on the
   // requirements a sink should fulfill.
 
   // By default, The `process` destructor waits indefinitely for the child
