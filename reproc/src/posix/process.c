@@ -273,9 +273,9 @@ finish:
 
 static const struct pipe_options PIPE_BLOCKING = { .nonblocking = false };
 
-int process_create(pid_t *process,
-                   const char *const *argv,
-                   struct process_options options)
+int process_start(pid_t *process,
+                  const char *const *argv,
+                  struct process_options options)
 {
   assert(process);
   assert(argv);

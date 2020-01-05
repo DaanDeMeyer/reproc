@@ -113,7 +113,7 @@ int reproc_start(reproc_t *process,
     .redirect = child
   };
 
-  r = process_create(&process->handle, argv, process_options);
+  r = process_start(&process->handle, argv, process_options);
   if (r < 0) {
     goto finish;
   }

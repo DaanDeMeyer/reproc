@@ -269,9 +269,9 @@ handle_inherit_list_create(HANDLE *handles, size_t num_handles)
   return attribute_list;
 }
 
-int process_create(HANDLE *process,
-                   const char *const *argv,
-                   struct process_options options)
+int process_start(HANDLE *process,
+                  const char *const *argv,
+                  struct process_options options)
 {
   assert(process);
   assert(argv);

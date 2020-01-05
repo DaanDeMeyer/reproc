@@ -23,9 +23,9 @@ struct process_options {
 
 // Spawns a child process that executes the command stored in `argv`.
 // The process handle of the new child process is assigned to `process`.
-int process_create(handle *process,
-                   const char *const *argv,
-                   struct process_options options);
+int process_start(handle *process,
+                  const char *const *argv,
+                  struct process_options options);
 
 // Waits `timeout` milliseconds for `process` to exit. If `process` exits within
 // the configured timeout, its exit status is returned.
