@@ -158,12 +158,11 @@ int reproc_read(reproc_t *process,
   assert_return(process, REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
 
+  handle ready = HANDLE_INVALID;
   int r = -1;
 
   while (true) {
     // Get the first pipe that will have data available to be read.
-    handle ready = HANDLE_INVALID;
-
     r = pipe_wait(process->stdio.out, process->stdio.err, &ready, timeout);
     if (r < 0) {
       return r;
@@ -171,11 +170,6 @@ int reproc_read(reproc_t *process,
 
     r = pipe_read(ready, buffer, size);
     if (r >= 0) {
-      if (stream) {
-        *stream = ready == process->stdio.out ? REPROC_STREAM_OUT
-                                              : REPROC_STREAM_ERR;
-      }
-
       break;
     }
 
@@ -190,6 +184,11 @@ int reproc_read(reproc_t *process,
     } else {
       process->stdio.err = handle_destroy(process->stdio.err);
     }
+  }
+
+  if (stream) {
+    *stream = ready == process->stdio.out ? REPROC_STREAM_OUT
+                                          : REPROC_STREAM_ERR;
   }
 
   return r; // bytes read
