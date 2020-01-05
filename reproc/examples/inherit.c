@@ -22,12 +22,7 @@ int main(int argc, const char *argv[])
   if (process == NULL) {
     goto finish;
   }
-
-  reproc_options options = { .redirect = { .in = REPROC_REDIRECT_INHERIT,
-                                           .out = REPROC_REDIRECT_INHERIT,
-                                           .err = REPROC_REDIRECT_INHERIT } };
-
-  r = reproc_start(process, argv + 1, options);
+  r = reproc_start(process, argv + 1, (reproc_options) { .inherit = true });
   if (r < 0) {
     goto finish;
   }

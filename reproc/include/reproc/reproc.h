@@ -104,6 +104,8 @@ typedef struct reproc_options {
   By default each stream is redirected to a pipe which can be written to (stdin)
   or read from (stdout/stderr) using `reproc_write` and `reproc_read`
   respectively.
+
+  If `inherit` or `discard` are set, this option may not be set.
   */
   struct {
     REPROC_REDIRECT in;
@@ -125,6 +127,16 @@ typedef struct reproc_options {
   indefinitely for any I/O to complete.
   */
   int timeout;
+  /*!
+  Shorthand for setting all members of `redirect` to `REPROC_REDIRECT_INHERIT`.
+  If `discard` or `redirect` are set, this option may not be set.
+  */
+  bool inherit;
+  /*!
+  Shorthand for setting all members of `redirect` to `REPROC_REDIRECT_DISCARD`.
+  If `inherit` or `redirect` are set, this option may not be set.
+  */
+  bool discard;
 } reproc_options;
 
 /*! Allocate a new `reproc_t` instance on the heap. */

@@ -25,6 +25,51 @@ const int REPROC_SIGTERM = UINT8_MAX + 15;
 
 const int REPROC_INFINITE = -1;
 
+static int parse_options(reproc_options *options)
+{
+  assert(options);
+
+  if (options->redirect.in || options->redirect.out || options->redirect.err) {
+    assert_return(!options->inherit, REPROC_EINVAL);
+    assert_return(!options->discard, REPROC_EINVAL);
+  }
+
+  if (options->inherit) {
+    assert_return(options->redirect.in == 0, REPROC_EINVAL);
+    assert_return(options->redirect.out == 0, REPROC_EINVAL);
+    assert_return(options->redirect.err == 0, REPROC_EINVAL);
+    assert_return(!options->discard, REPROC_EINVAL);
+
+    options->redirect.in = REPROC_REDIRECT_INHERIT;
+    options->redirect.out = REPROC_REDIRECT_INHERIT;
+    options->redirect.err = REPROC_REDIRECT_INHERIT;
+  }
+
+  if (options->discard) {
+    assert_return(options->redirect.in == 0, REPROC_EINVAL);
+    assert_return(options->redirect.out == 0, REPROC_EINVAL);
+    assert_return(options->redirect.err == 0, REPROC_EINVAL);
+    assert_return(!options->inherit, REPROC_EINVAL);
+
+    options->redirect.in = REPROC_REDIRECT_DISCARD;
+    options->redirect.out = REPROC_REDIRECT_DISCARD;
+    options->redirect.err = REPROC_REDIRECT_DISCARD;
+  }
+
+  options->timeout = options->timeout == 0 ? REPROC_INFINITE : options->timeout;
+
+  bool is_noop = options->stop.first.action == REPROC_STOP_NOOP &&
+                 options->stop.second.action == REPROC_STOP_NOOP &&
+                 options->stop.third.action == REPROC_STOP_NOOP;
+
+  if (is_noop) {
+    options->stop.first.action = REPROC_STOP_WAIT;
+    options->stop.first.timeout = REPROC_INFINITE;
+  }
+
+  return 0;
+}
+
 static int redirect(handle *parent,
                     handle *child,
                     REPROC_STREAM stream,
@@ -91,6 +136,11 @@ int reproc_start(reproc_t *process,
 
   int r = -1;
 
+  r = parse_options(&options);
+  if (r < 0) {
+    return r;
+  }
+
   r = redirect(&process->stdio.in, &child.in, REPROC_STREAM_IN,
                options.redirect.in);
   if (r < 0) {
@@ -120,17 +170,8 @@ int reproc_start(reproc_t *process,
     goto finish;
   }
 
-  process->timeout = options.timeout == 0 ? REPROC_INFINITE : options.timeout;
+  process->timeout = options.timeout;
   process->stop = options.stop;
-
-  bool is_noop = process->stop.first.action == REPROC_STOP_NOOP &&
-                 process->stop.second.action == REPROC_STOP_NOOP &&
-                 process->stop.third.action == REPROC_STOP_NOOP;
-
-  if (is_noop) {
-    process->stop.first.action = REPROC_STOP_WAIT;
-    process->stop.first.timeout = REPROC_INFINITE;
-  }
 
 finish:
   // Either an error has ocurred or the child pipe endpoints have been copied to

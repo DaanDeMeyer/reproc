@@ -67,8 +67,9 @@ struct options {
   } redirect = {};
 
   struct stop_actions stop = {};
-
   reproc::milliseconds timeout = reproc::infinite;
+  bool inherit = false;
+  bool discard = false;
 };
 
 enum class stream { in, out, err };

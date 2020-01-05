@@ -56,7 +56,9 @@ std::error_code process::start(const arguments &arguments,
       static_cast<REPROC_REDIRECT>(options.redirect.out),
       static_cast<REPROC_REDIRECT>(options.redirect.err) },
     reproc_stop_actions_from(options.stop),
-    options.timeout.count()
+    options.timeout.count(),
+    options.inherit,
+    options.discard
   };
 
   int r = reproc_start(process_.get(), arguments.data(), reproc_options);

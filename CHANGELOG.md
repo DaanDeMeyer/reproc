@@ -1,5 +1,19 @@
 # Changelog
 
+## 10.1.0
+
+### reproc
+
+- Add `inherit` and `discard` options as shorthands to set all members of the
+  `redirect` options to `REPROC_REDIRECT_INHERIT` and `REPROC_REDIRECT_DISCARD`
+  respectively.
+
+### reproc++
+
+- Add `inherit` and `discard` options as shorthands to set all members of the
+  `redirect` options to `reproc::redirect::inherit` and
+  `reproc::redirect::discard` respectively.
+
 ## 10.0.3
 
 ### reproc
