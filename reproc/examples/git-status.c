@@ -56,7 +56,7 @@ int main(void)
     // stdout and stderr output in the same string, we pass `NULL` since we
     // don't need to know which stream was read from.
     uint8_t buffer[4096];
-    r = reproc_read(process, NULL, buffer, sizeof(buffer), REPROC_INFINITE);
+    r = reproc_read(process, NULL, buffer, sizeof(buffer));
     if (r < 0) {
       break;
     }

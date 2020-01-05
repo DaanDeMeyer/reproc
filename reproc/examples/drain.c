@@ -39,7 +39,7 @@ int main(void)
   // given string. Passing the same sink to both output streams makes sure the
   // output from both streams is combined into a single string.
   reproc_sink sink = reproc_sink_string(&output);
-  r = reproc_drain(process, sink, sink, REPROC_INFINITE);
+  r = reproc_drain(process, sink, sink);
   if (r < 0) {
     goto finish;
   }

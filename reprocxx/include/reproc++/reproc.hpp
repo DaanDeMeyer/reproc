@@ -37,6 +37,8 @@ REPROCXX_EXPORT extern const int terminate;
 reproc++. */
 using milliseconds = std::chrono::duration<int, std::milli>;
 
+REPROCXX_EXPORT extern const milliseconds infinite;
+
 enum class redirect { pipe, inherit, discard };
 
 enum class stop { noop, wait, terminate, kill };
@@ -65,11 +67,11 @@ struct options {
   } redirect = {};
 
   struct stop_actions stop = {};
+
+  reproc::milliseconds timeout = reproc::infinite;
 };
 
 enum class stream { in, out, err };
-
-REPROCXX_EXPORT extern const milliseconds infinite;
 
 /*! Improves on reproc's API by adding RAII and changing the API of some
 functions to be more idiomatic C++. */
@@ -91,16 +93,12 @@ public:
   /*! `reproc_read` but returns a tuple of (stream, bytes read, error) and
   defaults to waiting indefinitely for each read to complete.*/
   REPROCXX_EXPORT std::tuple<stream, size_t, std::error_code>
-  read(uint8_t *buffer,
-       size_t size,
-       reproc::milliseconds timeout = reproc::infinite) noexcept;
+  read(uint8_t *buffer, size_t size) noexcept;
 
   /*! reproc_write` but defaults to waiting indefinitely for each write to
   complete. */
-  REPROCXX_EXPORT std::error_code
-  write(const uint8_t *buffer,
-        size_t size,
-        reproc::milliseconds timeout = reproc::infinite) noexcept;
+  REPROCXX_EXPORT std::error_code write(const uint8_t *buffer,
+                                        size_t size) noexcept;
 
   REPROCXX_EXPORT std::error_code close(stream stream) noexcept;
 

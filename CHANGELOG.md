@@ -1,5 +1,17 @@
 # Changelog
 
+## 10.0.1
+
+### reproc
+
+- Pass `timeout` once via `reproc_options` instead of passing it via
+  `reproc_read`, `reproc_write` and `reproc_drain`.
+
+### reproc++
+
+- Pass `timeout` once via `reproc::options` instead of passing it via
+  `process::read`, `process::write` and `reproc::drain`.
+
 ## 10.0.0
 
 ### reproc

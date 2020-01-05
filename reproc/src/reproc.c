@@ -15,6 +15,7 @@ struct reproc_t {
   struct stdio stdio;
   int status;
   reproc_stop_actions stop;
+  int timeout;
 };
 
 enum { STATUS_NOT_STARTED = -2, STATUS_IN_PROGRESS = -1 };
@@ -71,7 +72,8 @@ reproc_t *reproc_new(void)
                          .stdio = { .in = HANDLE_INVALID,
                                     .out = HANDLE_INVALID,
                                     .err = HANDLE_INVALID },
-                         .status = STATUS_NOT_STARTED };
+                         .status = STATUS_NOT_STARTED,
+                         .timeout = REPROC_INFINITE };
 
   return process;
 }
@@ -118,6 +120,7 @@ int reproc_start(reproc_t *process,
     goto finish;
   }
 
+  process->timeout = options.timeout == 0 ? REPROC_INFINITE : options.timeout;
   process->stop = options.stop;
 
   bool is_noop = process->stop.first.action == REPROC_STOP_NOOP &&
@@ -152,8 +155,7 @@ finish:
 int reproc_read(reproc_t *process,
                 REPROC_STREAM *stream,
                 uint8_t *buffer,
-                size_t size,
-                int timeout)
+                size_t size)
 {
   assert_return(process, REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
@@ -163,7 +165,8 @@ int reproc_read(reproc_t *process,
 
   while (true) {
     // Get the first pipe that will have data available to be read.
-    r = pipe_wait(process->stdio.out, process->stdio.err, &ready, timeout);
+    r = pipe_wait(process->stdio.out, process->stdio.err, &ready,
+                  process->timeout);
     if (r < 0) {
       return r;
     }
@@ -194,10 +197,7 @@ int reproc_read(reproc_t *process,
   return r; // bytes read
 }
 
-int reproc_write(reproc_t *process,
-                 const uint8_t *buffer,
-                 size_t size,
-                 int timeout)
+int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 {
   assert_return(process, REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
@@ -209,7 +209,7 @@ int reproc_write(reproc_t *process,
   int r = -1;
 
   do {
-    r = pipe_write(process->stdio.in, buffer, size, timeout);
+    r = pipe_write(process->stdio.in, buffer, size, process->timeout);
 
     if (r == REPROC_EPIPE) {
       process->stdio.in = handle_destroy(process->stdio.in);

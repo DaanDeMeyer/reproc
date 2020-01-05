@@ -20,10 +20,7 @@ bool sink(stream stream, const uint8_t *buffer, size_t size);
 ```
 */
 template <typename Out, typename Err>
-std::error_code drain(process &process,
-                      Out &&out,
-                      Err &&err,
-                      reproc::milliseconds timeout = reproc::infinite)
+std::error_code drain(process &process, Out &&out, Err &&err)
 {
   static constexpr uint8_t initial = 0;
 
@@ -41,7 +38,7 @@ std::error_code drain(process &process,
     stream stream = {};
     size_t bytes_read = 0;
     std::tie(stream, bytes_read, ec) = process.read(buffer.data(),
-                                                    buffer.size(), timeout);
+                                                    buffer.size());
     if (ec) {
       break;
     }

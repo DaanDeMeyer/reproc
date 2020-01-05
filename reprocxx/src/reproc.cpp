@@ -55,7 +55,8 @@ std::error_code process::start(const arguments &arguments,
     { static_cast<REPROC_REDIRECT>(options.redirect.in),
       static_cast<REPROC_REDIRECT>(options.redirect.out),
       static_cast<REPROC_REDIRECT>(options.redirect.err) },
-    reproc_stop_actions_from(options.stop)
+    reproc_stop_actions_from(options.stop),
+    options.timeout.count()
   };
 
   int r = reproc_start(process_.get(), arguments.data(), reproc_options);
@@ -63,21 +64,17 @@ std::error_code process::start(const arguments &arguments,
   return error_code_from(r);
 }
 
-std::tuple<stream, size_t, std::error_code>
-process::read(uint8_t *buffer,
-              size_t size,
-              reproc::milliseconds timeout) noexcept
+std::tuple<stream, size_t, std::error_code> process::read(uint8_t *buffer,
+                                                          size_t size) noexcept
 {
   REPROC_STREAM stream = {};
-  int r = reproc_read(process_.get(), &stream, buffer, size, timeout.count());
+  int r = reproc_read(process_.get(), &stream, buffer, size);
   return { static_cast<enum stream>(stream), r, error_code_from(r) };
 }
 
-std::error_code process::write(const uint8_t *buffer,
-                               size_t size,
-                               reproc::milliseconds timeout) noexcept
+std::error_code process::write(const uint8_t *buffer, size_t size) noexcept
 {
-  int r = reproc_write(process_.get(), buffer, size, timeout.count());
+  int r = reproc_write(process_.get(), buffer, size);
   return error_code_from(r);
 }
 

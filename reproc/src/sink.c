@@ -6,10 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int reproc_drain(reproc_t *process,
-                 reproc_sink out,
-                 reproc_sink err,
-                 int timeout)
+int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
 {
   assert_return(process, REPROC_EINVAL);
   assert_return(out.function, REPROC_EINVAL);
@@ -31,7 +28,7 @@ int reproc_drain(reproc_t *process,
 
   while (true) {
     REPROC_STREAM stream = { 0 };
-    r = reproc_read(process, &stream, buffer, ARRAY_SIZE(buffer), timeout);
+    r = reproc_read(process, &stream, buffer, ARRAY_SIZE(buffer));
     if (r < 0) {
       break;
     }

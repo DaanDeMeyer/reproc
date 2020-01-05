@@ -26,9 +26,6 @@ stdout and stderr respectively. The same sink may be passed to both `out` and
 `stream` set to `REPROC_STREAM_IN` to give each sink the chance to process all
 output from the previous call to `reproc_drain` one by one.
 
-Each call to `reproc_read` is passed the given timeout. If a call to
-`reproc_read` times out, this function returns `REPROC_ETIMEDOUT`.
-
 Note that his function returns 0 instead of `REPROC_EPIPE` when both output
 streams of the child process are closed.
 
@@ -38,7 +35,7 @@ Actionable errors:
 - `REPROC_ETIMEDOUT`
 */
 REPROC_EXPORT int
-reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err, int timeout);
+reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err);
 
 /*!
 Stores the output (both stdout and stderr) of a process in `output`.

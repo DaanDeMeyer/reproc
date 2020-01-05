@@ -17,7 +17,7 @@ static void io(const char *mode, const char *input, const char *expected)
   r = reproc_start(process, argv, (reproc_options){ 0 });
   assert(r == 0);
 
-  r = reproc_write(process, (uint8_t *) input, strlen(input), REPROC_INFINITE);
+  r = reproc_write(process, (uint8_t *) input, strlen(input));
   assert(r == 0);
 
   r = reproc_close(process, REPROC_STREAM_IN);
@@ -25,7 +25,7 @@ static void io(const char *mode, const char *input, const char *expected)
 
   char *output = NULL;
   reproc_sink sink = reproc_sink_string(&output);
-  r = reproc_drain(process, sink, sink, REPROC_INFINITE);
+  r = reproc_drain(process, sink, sink);
   assert(r == 0);
   assert(output != NULL);
 
@@ -47,17 +47,17 @@ static void timeout(void)
 
   const char *argv[3] = { RESOURCE_DIRECTORY "/io", "stdout", NULL };
 
-  r = reproc_start(process, argv, (reproc_options){ 0 });
+  r = reproc_start(process, argv, (reproc_options){ .timeout = 200 });
   assert(r == 0);
 
   uint8_t buffer = 0;
-  r = reproc_read(process, NULL, &buffer, sizeof(buffer), 200);
+  r = reproc_read(process, NULL, &buffer, sizeof(buffer));
   assert(r == REPROC_ETIMEDOUT);
 
   r = reproc_close(process, REPROC_STREAM_IN);
   assert(r == 0);
 
-  r = reproc_read(process, NULL, &buffer, sizeof(buffer), REPROC_INFINITE);
+  r = reproc_read(process, NULL, &buffer, sizeof(buffer));
   assert(r == REPROC_EPIPE);
 
   reproc_destroy(process);

@@ -118,6 +118,13 @@ typedef struct reproc_options {
   waiting indefinitely for the child process to exit.
   */
   reproc_stop_actions stop;
+  /*!
+  Maximum time to wait for `reproc_read` or `reproc_write` to complete.
+
+  When `timeout` is zero, `reproc_read` and `reproc_write` will wait
+  indefinitely for any I/O to complete.
+  */
+  int timeout;
 } reproc_options;
 
 /*! Allocate a new `reproc_t` instance on the heap. */
@@ -159,10 +166,6 @@ stderr stream and returns the amount of bytes read.
 If `stream` is not `NULL`, it is used to store the stream that was
 read from (`REPROC_STREAM_OUT` or `REPROC_STREAM_ERR`).
 
-If no output stream is closed or read from within the given timeout, this
-function returns `REPROC_ETIMEDOUT`. If one of the output streams is closed,
-`timeout` is reset before waiting again for the other stream.
-
 If both streams are closed by the child process or weren't opened with
 `REPROC_REDIRECT_PIPE`, this function returns `REPROC_EPIPE`.
 
@@ -173,16 +176,11 @@ Actionable errors:
 REPROC_EXPORT int reproc_read(reproc_t *process,
                               REPROC_STREAM *stream,
                               uint8_t *buffer,
-                              size_t size,
-                              int timeout);
+                              size_t size);
 
 /*!
 Writes `size` bytes from `buffer` to the standard input (stdin) of the child
 process.
-
-If no data can be written within the given timeout, this function returns
-`REPROC_ETIMEDOUT`. After writing some data, `timeout` is reset before trying to
-write again.
 
 (POSIX) By default, writing to a closed stdin pipe terminates the parent process
 with the `SIGPIPE` signal. `reproc_write` will only return `REPROC_EPIPE` if
@@ -196,10 +194,8 @@ Actionable errors:
 - `REPROC_EPIPE`
 - `REPROC_ETIMEDOUT`
 */
-REPROC_EXPORT int reproc_write(reproc_t *process,
-                               const uint8_t *buffer,
-                               size_t size,
-                               int timeout);
+REPROC_EXPORT int
+reproc_write(reproc_t *process, const uint8_t *buffer, size_t size);
 
 /*!
 Closes the child process standard stream indicated by `stream`.
