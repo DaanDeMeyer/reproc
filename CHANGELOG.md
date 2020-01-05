@@ -77,10 +77,10 @@
   ```c
   REPROC_ERROR error = reproc_start(...);
   if (error) {
-    goto cleanup;
+    goto finish;
   }
 
-  cleanup:
+  finish:
   if (error) {
     fprintf(stderr, "%s", reproc_strerror(error));
   }
@@ -91,10 +91,10 @@
   ```c
   int r = reproc_start(...);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
-  cleanup:
+  finish:
   if (r < 0) {
     fprintf(stderr, "%s", reproc_strerror(r));
   }

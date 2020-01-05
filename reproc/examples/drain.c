@@ -17,19 +17,19 @@ int main(void)
 
   process = reproc_new();
   if (process == NULL) {
-    goto cleanup;
+    goto finish;
   }
 
   const char *argv[3] = { "git", "--help", NULL };
 
   r = reproc_start(process, argv, (reproc_options){ 0 });
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   r = reproc_close(process, REPROC_STREAM_IN);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   // `reproc_drain` reads from a child process and passes the output to the
@@ -41,22 +41,22 @@ int main(void)
   reproc_sink sink = reproc_sink_string(&output);
   r = reproc_drain(process, sink, sink, REPROC_INFINITE);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   if (output == NULL) {
     fprintf(stderr, "Failed to allocate memory for output\n");
-    goto cleanup;
+    goto finish;
   }
 
   printf("%s", output);
 
   r = reproc_wait(process, REPROC_INFINITE);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
-cleanup:
+finish:
   // Memory allocated by `reproc_sink_string` must be freed with `reproc_free`.
   reproc_free(output);
   reproc_destroy(process);

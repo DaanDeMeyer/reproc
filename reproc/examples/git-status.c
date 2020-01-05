@@ -16,7 +16,7 @@ int main(void)
 
   process = reproc_new();
   if (process == NULL) {
-    goto cleanup;
+    goto finish;
   }
 
   // `argv` must start with the name (or path) of the program to execute and
@@ -35,7 +35,7 @@ int main(void)
   // codes, reproc provides cross platform constants such as `REPROC_EPIPE` and
   // `REPROC_ETIMEDOUT`.
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   // Close the stdin stream since we're not going to write any input to git.
@@ -43,7 +43,7 @@ int main(void)
   // show how `reproc_close` works.
   r = reproc_close(process, REPROC_STREAM_IN);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   // Read the entire output of the child process. I've found this pattern to be
@@ -71,7 +71,7 @@ int main(void)
     char *result = realloc(output, size + bytes_read + 1);
     if (result == NULL) {
       fprintf(stderr, "Failed to allocate memory for output\n");
-      goto cleanup;
+      goto finish;
     } else {
       output = result;
     }
@@ -85,7 +85,7 @@ int main(void)
   // Check that the while loop stopped because the output stream of the child
   // process was closed and not because of any other error.
   if (r != REPROC_EPIPE) {
-    goto cleanup;
+    goto finish;
   }
 
   printf("%s", output);
@@ -95,10 +95,10 @@ int main(void)
   // the parent process explicitly waits for it after it has exited.
   r = reproc_wait(process, REPROC_INFINITE);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
-cleanup:
+finish:
   free(output);
 
   // Clean up all the resources allocated to the child process (including the

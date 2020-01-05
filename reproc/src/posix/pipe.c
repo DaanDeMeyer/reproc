@@ -27,41 +27,41 @@ int pipe_init(int *read,
 #if defined(__APPLE__)
   r = pipe(pipefd);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   r = fcntl(pipefd[0], F_SETFD, FD_CLOEXEC);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   r = fcntl(pipefd[1], F_SETFD, FD_CLOEXEC);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 #else
   // `pipe2` with `O_CLOEXEC` avoids the race condition between `pipe` and
   // `fcntl`.
   r = pipe2(pipefd, O_CLOEXEC);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 #endif
 
   r = fcntl(pipefd[0], F_SETFL, read_options.nonblocking ? O_NONBLOCK : 0);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   r = fcntl(pipefd[1], F_SETFL, write_options.nonblocking ? O_NONBLOCK : 0);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   *read = pipefd[0];
   *write = pipefd[1];
 
-cleanup:
+finish:
   if (r < 0) {
     handle_destroy(pipefd[0]);
     handle_destroy(pipefd[1]);

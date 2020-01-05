@@ -20,7 +20,7 @@ int main(int argc, const char *argv[])
 
   process = reproc_new();
   if (process == NULL) {
-    goto cleanup;
+    goto finish;
   }
 
   reproc_options options = { .redirect = { .in = REPROC_REDIRECT_INHERIT,
@@ -29,15 +29,15 @@ int main(int argc, const char *argv[])
 
   r = reproc_start(process, argv + 1, options);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   r = reproc_wait(process, REPROC_INFINITE);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
-cleanup:
+finish:
   reproc_destroy(process);
 
   if (r < 0) {

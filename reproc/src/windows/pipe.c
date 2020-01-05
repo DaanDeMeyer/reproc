@@ -56,7 +56,7 @@ int pipe_init(HANDLE *read,
                                      PIPE_BUFFER_SIZE, PIPE_NO_TIMEOUT,
                                      &security);
   if (pipe_handles[0] == INVALID_HANDLE_VALUE) {
-    goto cleanup;
+    goto finish;
   }
 
   security.bInheritHandle = write_options.inherit;
@@ -66,7 +66,7 @@ int pipe_init(HANDLE *read,
                                 FILE_ATTRIBUTE_NORMAL | write_mode,
                                 (HANDLE) FILE_NO_TEMPLATE);
   if (pipe_handles[1] == INVALID_HANDLE_VALUE) {
-    goto cleanup;
+    goto finish;
   }
 
   *read = pipe_handles[0];
@@ -74,7 +74,7 @@ int pipe_init(HANDLE *read,
 
   r = 1;
 
-cleanup:
+finish:
   if (r == 0) {
     handle_destroy(pipe_handles[0]);
     handle_destroy(pipe_handles[1]);
@@ -182,7 +182,7 @@ int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready, int timeout)
                                        NULL);
     if (overlapped[i].hEvent == NULL) {
       r = 0;
-      goto cleanup;
+      goto finish;
     }
 
     r = ReadFile(pipes[i], (uint8_t[]){ 0 }, 0, NULL, &overlapped[i]);
@@ -191,11 +191,11 @@ int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready, int timeout)
       // the pipe is ready to be processed further.
       r = 1;
       *ready = pipes[i];
-      goto cleanup;
+      goto finish;
     }
 
     if (GetLastError() != ERROR_IO_PENDING) {
-      goto cleanup;
+      goto finish;
     }
 
     events[i] = overlapped[i].hEvent;
@@ -209,19 +209,19 @@ int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready, int timeout)
 
   if (result == WAIT_TIMEOUT) {
     r = -WAIT_TIMEOUT;
-    goto cleanup;
+    goto finish;
   }
 
   if (result == WAIT_FAILED) {
     r = 0;
-    goto cleanup;
+    goto finish;
   }
 
   // Map the signaled event back to its corresponding handle.
   *ready = pipes[result];
   r = 1;
 
-cleanup:
+finish:
   for (size_t i = 0; i < num_pipes; i++) {
     // Cancel any remaining zero-sized reads that we queued if they have not yet
     // completed.

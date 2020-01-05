@@ -205,20 +205,20 @@ int r = REPROC_ENOMEM;
 
 process = reproc_new();
 if (process == NULL) {
-  goto cleanup;
+  goto finish;
 }
 
 r = reproc_start(...);
 if (r < 0) {
-  goto cleanup;
+  goto finish;
 }
 
 r = reproc_write(...)
 if (r == REPROC_EPIPE) {
-  goto cleanup;
+  goto finish;
 }
 
-cleanup:
+finish:
 if (r < 0) {
   printf("%s\n", reproc_strerror(r));
 }

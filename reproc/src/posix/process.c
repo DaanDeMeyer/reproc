@@ -189,13 +189,13 @@ static pid_t process_fork(int *error_pipe_read,
 
   r = sigemptyset(&action.sa_mask);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   for (int i = 0; i < NSIG; i++) {
     r = sigaction(i, &action, NULL);
     if (r < 0 && errno != EINVAL) {
-      goto cleanup;
+      goto finish;
     }
   }
 
@@ -206,17 +206,17 @@ static pid_t process_fork(int *error_pipe_read,
 
   r = sigemptyset(&new_mask);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   r = signal_mask(SIG_SETMASK, &new_mask, &old_mask);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   r = setpgid(0, group);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   // Redirect stdin, stdout and stderr.
@@ -228,7 +228,7 @@ static pid_t process_fork(int *error_pipe_read,
     if (vec[i] != HANDLE_INVALID) {
       r = dup2(vec[i], stdio[i]);
       if (r < 0) {
-        goto cleanup;
+        goto finish;
       }
     } else {
       handle_destroy(stdio[i]);
@@ -237,7 +237,7 @@ static pid_t process_fork(int *error_pipe_read,
 
   int max_fd = (int) sysconf(_SC_OPEN_MAX);
   if (max_fd < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   // Not all file descriptors might have been created with the `FD_CLOEXEC`
@@ -263,7 +263,7 @@ static pid_t process_fork(int *error_pipe_read,
 
   r = 0;
 
-cleanup:
+finish:
   if (r < 0) {
     _exit(write_errno(*error_pipe_write));
   }
@@ -289,14 +289,14 @@ int process_create(pid_t *process,
   r = pipe_init(&error_pipe_read, PIPE_BLOCKING, &error_pipe_write,
                 PIPE_BLOCKING);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   // Put the child process in its own process group so we can use `waitpid` to
   // wait on both the child process and a timeout process at the same time.
   r = process_fork(&error_pipe_read, &error_pipe_write, options.redirect, 0);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   if (r == 0) {
@@ -334,7 +334,7 @@ int process_create(pid_t *process,
 
   *process = r;
 
-cleanup:
+finish:
   handle_destroy(error_pipe_read);
   handle_destroy(error_pipe_write);
 
@@ -370,14 +370,14 @@ int process_wait(pid_t process, int timeout)
   r = pipe_init(&error_pipe_read, PIPE_BLOCKING, &error_pipe_write,
                 PIPE_BLOCKING);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   struct stdio stdio = { HANDLE_INVALID, HANDLE_INVALID, HANDLE_INVALID };
 
   r = process_fork(&error_pipe_read, &error_pipe_write, stdio, process);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   if (r == 0) {
@@ -414,19 +414,19 @@ int process_wait(pid_t process, int timeout)
   }
 
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   if (r == timeout_pid) {
     // The timeout expired.
     r = -ETIMEDOUT;
-    goto cleanup;
+    goto finish;
   }
 
   assert(r == process);
   status = parse_status(status);
 
-cleanup:
+finish:
   handle_destroy(error_pipe_read);
   handle_destroy(error_pipe_write);
 

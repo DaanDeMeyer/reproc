@@ -92,19 +92,19 @@ int reproc_start(reproc_t *process,
   r = redirect(&process->stdio.in, &child.in, REPROC_STREAM_IN,
                options.redirect.in);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   r = redirect(&process->stdio.out, &child.out, REPROC_STREAM_OUT,
                options.redirect.out);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   r = redirect(&process->stdio.err, &child.err, REPROC_STREAM_ERR,
                options.redirect.err);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   struct process_options process_options = {
@@ -115,7 +115,7 @@ int reproc_start(reproc_t *process,
 
   r = process_create(&process->handle, argv, process_options);
   if (r < 0) {
-    goto cleanup;
+    goto finish;
   }
 
   process->stop = options.stop;
@@ -129,7 +129,7 @@ int reproc_start(reproc_t *process,
     process->stop.first.timeout = REPROC_INFINITE;
   }
 
-cleanup:
+finish:
   // Either an error has ocurred or the child pipe endpoints have been copied to
   // the stdin/stdout/stderr streams of the child process. Either way, they can
   // be safely closed in the parent process.

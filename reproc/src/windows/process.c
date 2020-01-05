@@ -290,27 +290,27 @@ int process_create(HANDLE *process,
   // `CreateProcessW`.
   command_line = argv_join(argv);
   if (command_line == NULL) {
-    goto cleanup;
+    goto finish;
   }
 
   // Convert UTF-8 to UTF-16 as required by `CreateProcessW`.
   command_line_wstring = string_to_wstring(command_line,
                                            strlen(command_line) + 1);
   if (command_line_wstring == NULL) {
-    goto cleanup;
+    goto finish;
   }
 
   // Idem for `environment` if it isn't `NULL`.
   if (options.environment != NULL) {
     environment_line = environment_join(options.environment);
     if (environment_line == NULL) {
-      goto cleanup;
+      goto finish;
     }
 
     size_t joined_size = environment_join_size(options.environment);
     environment_line_wstring = string_to_wstring(environment_line, joined_size);
     if (environment_line_wstring == NULL) {
-      goto cleanup;
+      goto finish;
     }
   }
 
@@ -320,7 +320,7 @@ int process_create(HANDLE *process,
     working_directory_wstring = string_to_wstring(options.working_directory,
                                                   working_directory_size);
     if (working_directory_wstring == NULL) {
-      goto cleanup;
+      goto finish;
     }
   }
 
@@ -335,7 +335,7 @@ int process_create(HANDLE *process,
                         options.redirect.err };
   attribute_list = handle_inherit_list_create(inherit, ARRAY_SIZE(inherit));
   if (attribute_list == NULL) {
-    goto cleanup;
+    goto finish;
   }
 
   STARTUPINFOEXW extended_startup_info = {
@@ -369,12 +369,12 @@ int process_create(HANDLE *process,
   SetErrorMode(previous_error_mode);
 
   if (r == 0) {
-    goto cleanup;
+    goto finish;
   }
 
   *process = info.hProcess;
 
-cleanup:
+finish:
   free(command_line);
   free(command_line_wstring);
   free(environment_line);
