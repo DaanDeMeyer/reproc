@@ -200,7 +200,12 @@ int reproc_read(reproc_t *process,
 int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 {
   assert_return(process, REPROC_EINVAL);
-  assert_return(buffer, REPROC_EINVAL);
+  // Allow `NULL` buffers but only if `size == 0`.
+  assert_return(buffer != NULL || size == 0, REPROC_EINVAL);
+
+  if (buffer == NULL && size == 0) {
+    return 0;
+  }
 
   if (process->stdio.in == HANDLE_INVALID) {
     return REPROC_EPIPE;
