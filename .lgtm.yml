@@ -1,0 +1,11 @@
+extraction:
+  cpp:
+    configure:
+      # TODO: Enable `REPROC_OBJECT_LIBRARIES` once CMake 3.14 is available.
+      command: >
+        cmake
+        -DCMAKE_BUILD_TYPE=Release
+        -DREPROCXX=ON
+        -DREPROC_TEST=ON
+        -DREPROC_EXAMPLES=ON
+        ./
