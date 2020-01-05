@@ -11,7 +11,7 @@ endif()
 
 project(
   reproc
-  VERSION 10.0.0
+  VERSION 10.0.2
   DESCRIPTION "Cross-platform C99/C++11 process library"
   HOMEPAGE_URL "https://github.com/DaanDeMeyer/reproc"
   LANGUAGES C

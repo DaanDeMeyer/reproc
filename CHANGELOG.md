@@ -1,5 +1,9 @@
 # Changelog
 
+## 10.0.2
+
+- Update CMake project version.
+
 ## 10.0.1
 
 ### reproc
