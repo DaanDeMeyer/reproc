@@ -164,6 +164,9 @@ reproc's build can be configured using the following CMake options:
   using object libraries, reproc's object files are included directly into the
   consuming library and no extra installation is necessary.
 
+  **Note: reproc's object libraries will only link correctly from CMake 3.14
+  onwards.**
+
 - `REPROC_INSTALL`: Generate installation rules (default: `ON` unless
   `REPROC_OBJECT_LIBRARIES` is enabled).
 - `REPROC_INSTALL_CMAKECONFIGDIR`: CMake config files installation directory
