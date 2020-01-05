@@ -186,9 +186,11 @@ process.
 with the `SIGPIPE` signal. `reproc_write` will only return `REPROC_EPIPE` if
 this signal is ignored by the parent process.
 
-This function can only be used if the standard input of the child process was
-redirected to a pipe by using `REPROC_REDIRECT_PIPE` for the standard input in
-the redirect options passed to `reproc_start`.
+if `buffer` is `NULL` and `size` is zero, this function returns 0.
+
+If the standard input of the child process wasn't opened with
+`REPROC_REDIRECT_PIPE`, this function returns `REPROC_EPIPE` unless `buffer` is
+`NULL` and `size` is zero.
 
 Actionable errors:
 - `REPROC_EPIPE`
