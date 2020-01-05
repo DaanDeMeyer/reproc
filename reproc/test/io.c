@@ -1,8 +1,8 @@
+#include "assert.h"
+
 #include <reproc/reproc.h>
 #include <reproc/sink.h>
 
-#undef NDEBUG
-#include <assert.h>
 #include <string.h>
 
 static void io(const char *mode, const char *input, const char *expected)

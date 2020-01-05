@@ -1,8 +1,8 @@
+#include "assert.h"
+
 #include <reproc/reproc.h>
 #include <reproc/sink.h>
 
-#undef NDEBUG
-#include <assert.h>
 #include <string.h>
 
 int main(void)

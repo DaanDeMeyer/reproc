@@ -1,7 +1,6 @@
-#include <reproc/reproc.h>
+#include "assert.h"
 
-#undef NDEBUG
-#include <assert.h>
+#include <reproc/reproc.h>
 
 static void stop(REPROC_STOP action, int status)
 {
