@@ -76,7 +76,9 @@ static int parse_options(reproc_options *options)
 
   if (is_noop) {
     options->stop.first.action = REPROC_STOP_WAIT;
-    options->stop.first.timeout = REPROC_INFINITE;
+    options->stop.first.timeout = REPROC_DEADLINE;
+    options->stop.second.action = REPROC_STOP_TERMINATE;
+    options->stop.second.timeout = REPROC_INFINITE;
   }
 
   return 0;
