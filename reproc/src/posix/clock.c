@@ -1,0 +1,16 @@
+#include "clock.h"
+
+#include "error.h"
+
+#include <assert.h>
+#include <time.h>
+
+int64_t reproc_now(void)
+{
+  struct timespec timespec = { 0 };
+
+  int r = clock_gettime(CLOCK_REALTIME, &timespec);
+  assert_unused(r == 0);
+
+  return timespec.tv_sec * 1000 + timespec.tv_nsec / 1000000;
+}

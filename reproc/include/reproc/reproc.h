@@ -34,6 +34,9 @@ REPROC_EXPORT extern const int REPROC_SIGTERM;
 
 /*! Tells a function that takes a timeout value to wait indefinitely. */
 REPROC_EXPORT extern const int REPROC_INFINITE;
+/*! Tells `reproc_wait` to wait until the deadline passed to `reproc_start`
+expires. */
+REPROC_EXPORT extern const int REPROC_DEADLINE;
 
 /*! Stream identifiers used to indicate which stream to act on. */
 typedef enum {
@@ -121,12 +124,22 @@ typedef struct reproc_options {
   */
   reproc_stop_actions stop;
   /*!
-  Maximum time to wait for `reproc_read` or `reproc_write` to complete.
+  Maximum duration in milliseconds to wait for a single `reproc_read` or
+  `reproc_write` operation to complete. If the timeout expires, the call to
+  `reproc_read` or `reproc_write` returns `REPROC_ETIMEDOUT`.
 
   When `timeout` is zero, `reproc_read` and `reproc_write` will wait
   indefinitely for any I/O to complete.
   */
   int timeout;
+  /*!
+  Maximum allowed duration in milliseconds the process is allowed to run in
+  milliseconds. If the deadline is exceeded, Any ongoing and future calls to
+  `reproc_read` and `reproc_write` return `REPROC_ETIMEDOUT`.
+
+  When `deadline` is zero, no deadline is set for the process.
+  */
+  int deadline;
   /*!
   Shorthand for setting all members of `redirect` to `REPROC_REDIRECT_INHERIT`.
   If `discard` or `redirect` are set, this option may not be set.

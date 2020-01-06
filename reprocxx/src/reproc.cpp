@@ -12,6 +12,7 @@ const int terminate = REPROC_SIGTERM;
 }
 
 const milliseconds infinite = milliseconds(REPROC_INFINITE);
+const milliseconds deadline = milliseconds(REPROC_DEADLINE);
 
 static std::error_code error_code_from(int r)
 {
@@ -57,6 +58,7 @@ std::error_code process::start(const arguments &arguments,
       static_cast<REPROC_REDIRECT>(options.redirect.err) },
     reproc_stop_actions_from(options.stop),
     options.timeout.count(),
+    options.deadline.count(),
     options.inherit,
     options.discard,
     { options.input.data(), options.input.size() }

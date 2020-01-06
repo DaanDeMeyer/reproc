@@ -12,6 +12,7 @@ else()
 endif()
 
 target_sources(reproc PRIVATE
+  src/${REPROC_PLATFORM}/clock.c
   src/${REPROC_PLATFORM}/error.c
   src/${REPROC_PLATFORM}/handle.c
   src/${REPROC_PLATFORM}/pipe.c

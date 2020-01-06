@@ -1,5 +1,6 @@
 #include <reproc/reproc.h>
 
+#include "clock.h"
 #include "error.h"
 #include "handle.h"
 #include "macro.h"
@@ -16,6 +17,7 @@ struct reproc_t {
   int status;
   reproc_stop_actions stop;
   int timeout;
+  int64_t deadline;
 };
 
 enum { STATUS_NOT_STARTED = -2, STATUS_IN_PROGRESS = -1 };
@@ -24,6 +26,7 @@ const int REPROC_SIGKILL = UINT8_MAX + 9;
 const int REPROC_SIGTERM = UINT8_MAX + 15;
 
 const int REPROC_INFINITE = -1;
+const int REPROC_DEADLINE = -2;
 
 static int parse_options(reproc_options *options)
 {
@@ -63,6 +66,9 @@ static int parse_options(reproc_options *options)
   }
 
   options->timeout = options->timeout == 0 ? REPROC_INFINITE : options->timeout;
+
+  options->deadline = options->deadline == 0 ? REPROC_INFINITE
+                                             : options->deadline;
 
   bool is_noop = options->stop.first.action == REPROC_STOP_NOOP &&
                  options->stop.second.action == REPROC_STOP_NOOP &&
@@ -112,6 +118,33 @@ static int redirect(handle *parent,
   return r;
 }
 
+static int expiry(int timeout, int64_t deadline)
+{
+  if (timeout == REPROC_INFINITE && deadline == REPROC_INFINITE) {
+    return REPROC_INFINITE;
+  }
+
+  if (deadline == REPROC_INFINITE) {
+    return timeout;
+  }
+
+  int64_t now = reproc_now();
+
+  if (now >= deadline) {
+    return 0;
+  }
+
+  // `deadline` exceeds `reproc_now` by at most a full `int` so the cast is
+  // safe.
+  int remaining = (int) (deadline - now);
+
+  if (timeout == REPROC_INFINITE) {
+    return remaining;
+  }
+
+  return MIN(timeout, remaining);
+}
+
 reproc_t *reproc_new(void)
 {
   reproc_t *process = malloc(sizeof(reproc_t));
@@ -124,7 +157,8 @@ reproc_t *reproc_new(void)
                                     .out = HANDLE_INVALID,
                                     .err = HANDLE_INVALID },
                          .status = STATUS_NOT_STARTED,
-                         .timeout = REPROC_INFINITE };
+                         .timeout = REPROC_INFINITE,
+                         .deadline = REPROC_INFINITE };
 
   return process;
 }
@@ -189,8 +223,11 @@ int reproc_start(reproc_t *process,
     goto finish;
   }
 
-  process->timeout = options.timeout;
   process->stop = options.stop;
+  process->timeout = options.timeout;
+  process->deadline = options.deadline == REPROC_INFINITE
+                          ? REPROC_INFINITE
+                          : reproc_now() + options.deadline;
 
 finish:
   // Either an error has ocurred or the child pipe endpoints have been copied to
@@ -224,9 +261,13 @@ int reproc_read(reproc_t *process,
   int r = -1;
 
   while (true) {
+    int timeout = expiry(process->timeout, process->deadline);
+    if (timeout == 0) {
+      return REPROC_ETIMEDOUT;
+    }
+
     // Get the first pipe that will have data available to be read.
-    r = pipe_wait(process->stdio.out, process->stdio.err, &ready,
-                  process->timeout);
+    r = pipe_wait(process->stdio.out, process->stdio.err, &ready, timeout);
     if (r < 0) {
       return r;
     }
@@ -274,7 +315,12 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
   int r = -1;
 
   do {
-    r = pipe_write(process->stdio.in, buffer, size, process->timeout);
+    int timeout = expiry(process->timeout, process->deadline);
+    if (timeout == 0) {
+      return REPROC_ETIMEDOUT;
+    }
+
+    r = pipe_write(process->stdio.in, buffer, size, timeout);
 
     if (r == REPROC_EPIPE) {
       process->stdio.in = handle_destroy(process->stdio.in);
@@ -324,6 +370,12 @@ int reproc_wait(reproc_t *process, int timeout)
   if (process->status >= 0) {
     return process->status;
   }
+
+  timeout = timeout == REPROC_DEADLINE
+                // If the deadline has expired, `expiry` returns 0 which means
+                // we'll only check if the process is still running.
+                ? expiry(REPROC_INFINITE, process->deadline)
+                : timeout;
 
   r = process_wait(process->handle, timeout);
   if (r < 0) {

@@ -39,6 +39,7 @@ reproc++. */
 using milliseconds = std::chrono::duration<int, std::milli>;
 
 REPROCXX_EXPORT extern const milliseconds infinite;
+REPROCXX_EXPORT extern const milliseconds deadline;
 
 enum class redirect { pipe, inherit, discard };
 
@@ -68,7 +69,8 @@ struct options {
   } redirect = {};
 
   struct stop_actions stop = {};
-  reproc::milliseconds timeout = reproc::infinite;
+  reproc::milliseconds timeout = reproc::milliseconds(0);
+  reproc::milliseconds deadline = reproc::milliseconds(0);
   bool inherit = false;
   bool discard = false;
   /*! Implicitly converts from string literals to the pointer size pair expected
