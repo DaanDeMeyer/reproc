@@ -361,6 +361,10 @@ int process_wait(pid_t process, int timeout)
       status = parse_status(status);
     }
 
+    if (r == 0) {
+      r = -ETIMEDOUT;
+    }
+
     return error_unify_or_else(r, status);
   }
 
