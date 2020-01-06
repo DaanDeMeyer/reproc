@@ -241,10 +241,10 @@ int reproc_read(reproc_t *process,
 int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 {
   assert_return(process, REPROC_EINVAL);
-  // Allow `NULL` buffers but only if `size == 0`.
-  assert_return(buffer != NULL || size == 0, REPROC_EINVAL);
 
-  if (buffer == NULL && size == 0) {
+  if (buffer == NULL) {
+    // Allow `NULL` buffers but only if `size == 0`.
+    assert_return(size == 0, REPROC_EINVAL);
     return 0;
   }
 
