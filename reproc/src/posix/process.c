@@ -356,7 +356,7 @@ int process_wait(pid_t process, int timeout)
   if (timeout <= 0) {
     r = waitpid(process, &status, timeout == 0 ? WNOHANG : 0);
 
-    if (r >= 0) {
+    if (r > 0) {
       assert(r == process);
       status = parse_status(status);
     }
