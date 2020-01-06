@@ -1,5 +1,15 @@
 # Changelog
 
+## 10.0.3
+
+### reproc
+
+- Fixed issue where `reproc_wait` would assert when invoked with a timeout of
+  zero on POSIX.
+
+- Fixed issue where `reproc_wait` would not return `REPROC_ETIMEDOUT` when
+  invoked with a timeout of zero on POSIX.
+
 ## 10.0.2
 
 - Update CMake project version.
