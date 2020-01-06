@@ -56,6 +56,12 @@ static int parse_options(reproc_options *options)
     options->redirect.err = REPROC_REDIRECT_DISCARD;
   }
 
+  if (options->input.data != NULL || options->input.size > 0) {
+    assert_return(options->input.data != NULL, REPROC_EINVAL);
+    assert_return(options->input.size > 0, REPROC_EINVAL);
+    assert_return(options->redirect.in == 0, REPROC_EINVAL);
+  }
+
   options->timeout = options->timeout == 0 ? REPROC_INFINITE : options->timeout;
 
   bool is_noop = options->stop.first.action == REPROC_STOP_NOOP &&
@@ -157,6 +163,19 @@ int reproc_start(reproc_t *process,
                options.redirect.err);
   if (r < 0) {
     goto finish;
+  }
+
+  if (options.input.data != NULL) {
+    // `reproc_write` only needs the child process stdin pipe to be initialized.
+    r = reproc_write(process, options.input.data, options.input.size);
+    if (r < 0) {
+      goto finish;
+    }
+
+    r = reproc_close(process, REPROC_STREAM_IN);
+    if (r < 0) {
+      goto finish;
+    }
   }
 
   struct process_options process_options = {

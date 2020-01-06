@@ -3,6 +3,7 @@
 #include <reproc++/arguments.hpp>
 #include <reproc++/environment.hpp>
 #include <reproc++/export.hpp>
+#include <reproc++/input.hpp>
 
 #include <array>
 #include <chrono>
@@ -70,6 +71,9 @@ struct options {
   reproc::milliseconds timeout = reproc::infinite;
   bool inherit = false;
   bool discard = false;
+  /*! Implicitly converts from string literals to the pointer size pair expected
+  by `reproc_start`. */
+  class input input;
 };
 
 enum class stream { in, out, err };

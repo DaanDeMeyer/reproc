@@ -137,6 +137,20 @@ typedef struct reproc_options {
   If `inherit` or `redirect` are set, this option may not be set.
   */
   bool discard;
+  /*!
+  `input` is written to the stdin pipe before the child process is started.
+
+  Because `input` is written to the stdin pipe before the process starts,
+  `input.size` must be smaller than the system's default pipe size (64KB).
+
+  If `input` is set, the stdin pipe is closed after `input` is written to it.
+
+  If `redirect.in` is set, this option may not be set.
+  */
+  struct {
+    const uint8_t *data;
+    size_t size;
+  } input;
 } reproc_options;
 
 /*! Allocate a new `reproc_t` instance on the heap. */

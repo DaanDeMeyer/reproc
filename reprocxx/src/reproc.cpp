@@ -58,7 +58,8 @@ std::error_code process::start(const arguments &arguments,
     reproc_stop_actions_from(options.stop),
     options.timeout.count(),
     options.inherit,
-    options.discard
+    options.discard,
+    { options.input.data(), options.input.size() }
   };
 
   int r = reproc_start(process_.get(), arguments.data(), reproc_options);
