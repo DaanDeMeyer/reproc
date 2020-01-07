@@ -30,14 +30,14 @@ std::error_code drain(process &process, Out &&out, Err &&err)
     return {};
   }
 
-  std::array<uint8_t, 4096> buffer = {};
+  static constexpr size_t BUFFER_SIZE = 4096;
+  uint8_t buffer[BUFFER_SIZE] = {};
   std::error_code ec;
 
   while (true) {
     stream stream = {};
     size_t bytes_read = 0;
-    std::tie(stream, bytes_read, ec) = process.read(buffer.data(),
-                                                    buffer.size());
+    std::tie(stream, bytes_read, ec) = process.read(buffer, BUFFER_SIZE);
     if (ec) {
       break;
     }
@@ -45,7 +45,7 @@ std::error_code drain(process &process, Out &&out, Err &&err)
     auto &sink = stream == stream::out ? out : err;
 
     // `sink` returns false to tell us to stop reading.
-    if (!sink(stream, buffer.data(), bytes_read)) {
+    if (!sink(stream, buffer, bytes_read)) {
       break;
     }
   }
