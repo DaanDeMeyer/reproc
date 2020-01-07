@@ -2,7 +2,6 @@
 
 #include <reproc++/reproc.hpp>
 
-#include <iosfwd>
 #include <mutex>
 #include <ostream>
 #include <string>

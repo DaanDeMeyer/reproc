@@ -5,7 +5,6 @@
 #include <reproc++/export.hpp>
 #include <reproc++/input.hpp>
 
-#include <array>
 #include <chrono>
 #include <cstdint>
 #include <memory>
