@@ -95,6 +95,8 @@ reproc_sink reproc_sink_discard(void)
   return (reproc_sink){ sink_discard, NULL };
 }
 
+const reproc_sink REPROC_SINK_NULL = { sink_discard, NULL };
+
 void *reproc_free(void *ptr)
 {
   assert_return(ptr, NULL);

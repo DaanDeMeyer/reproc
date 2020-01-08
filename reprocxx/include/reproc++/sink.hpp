@@ -99,6 +99,8 @@ public:
   }
 };
 
+constexpr discard null = discard();
+
 namespace thread_safe {
 
 /*! `sink::string` but locks the given mutex before invoking the sink. */

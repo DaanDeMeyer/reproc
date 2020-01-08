@@ -16,6 +16,10 @@ typedef struct reproc_sink {
   void *context;
 } reproc_sink;
 
+/*! Pass `REPROC_SINK_NULL` as the sink for output streams that have not been
+redirected to a pipe. */
+REPROC_EXPORT extern const reproc_sink REPROC_SINK_NULL;
+
 /*!
 Calls `reproc_read` on `stream` until `reproc_read` returns an error or one of
 the sinks returns false. The `out` and `err` sinks receive the output from
