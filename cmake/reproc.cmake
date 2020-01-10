@@ -306,8 +306,8 @@ function(reproc_add_library TARGET LANGUAGE)
   endif()
 endfunction()
 
-function(reproc_add_example TARGET LANGUAGE)
-  add_executable(reproc-${TARGET})
+function(reproc_add_example TARGET EXAMPLE LANGUAGE)
+  add_executable(${TARGET}-${EXAMPLE})
 
   if(LANGUAGE STREQUAL C)
     set(SOURCE_EXT c)
@@ -316,16 +316,16 @@ function(reproc_add_example TARGET LANGUAGE)
   endif()
 
   reproc_add_common(
-    reproc-${TARGET} ${LANGUAGE}
+    ${TARGET}-${EXAMPLE} ${LANGUAGE}
     OUTPUT_DIRECTORY examples
-    OUTPUT_NAME ${TARGET}
+    OUTPUT_NAME ${EXAMPLE}
   )
 
-  target_sources(reproc-${TARGET} PRIVATE examples/${TARGET}.${SOURCE_EXT})
-  target_link_libraries(reproc-${TARGET} PRIVATE ${ARGN})
+  target_sources(${TARGET}-${EXAMPLE} PRIVATE examples/${EXAMPLE}.${SOURCE_EXT})
+  target_link_libraries(${TARGET}-${EXAMPLE} PRIVATE ${TARGET} ${ARGN})
 
   if(LANGUAGE STREQUAL C AND REPROC_SANITIZERS)
-    set_target_properties(reproc-${TARGET} PROPERTIES
+    set_target_properties(${TARGET}-${EXAMPLE} PROPERTIES
       # Hack to avoid UBSan undefined reference errors.
       LINKER_LANGUAGE CXX
     )
