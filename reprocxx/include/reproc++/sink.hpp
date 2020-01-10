@@ -89,7 +89,8 @@ public:
 /*! Discards all output. */
 class discard {
 public:
-  bool operator()(stream stream, const uint8_t *buffer, size_t size) noexcept
+  bool operator()(stream stream, const uint8_t *buffer, size_t size) const
+      noexcept
   {
     (void) stream;
     (void) buffer;
