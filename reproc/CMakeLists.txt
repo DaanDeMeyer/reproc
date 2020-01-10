@@ -20,6 +20,7 @@ target_sources(reproc PRIVATE
   src/${REPROC_PLATFORM}/redirect.c
   src/reproc.c
   src/sink.c
+  src/run.c
 )
 
 if(REPROC_TEST)
@@ -64,4 +65,5 @@ if(REPROC_EXAMPLES)
   reproc_add_example(reproc drain C)
   reproc_add_example(reproc git-status C)
   reproc_add_example(reproc inherit C)
+  reproc_add_example(reproc run C)
 endif()

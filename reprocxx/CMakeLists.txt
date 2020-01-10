@@ -18,6 +18,7 @@ target_sources(
 if(REPROC_EXAMPLES)
   reproc_add_example(reprocxx cmake-help CXX)
   reproc_add_example(reprocxx forward CXX)
+  reproc_add_example(reprocxx run CXX)
 
   if(REPROC_MULTITHREADED)
     reproc_add_example(reprocxx background CXX Threads::Threads)
