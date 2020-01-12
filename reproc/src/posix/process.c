@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -93,6 +94,25 @@ static char *path_prepend_cwd(const char *path)
 }
 
 static const struct pipe_options PIPE_BLOCKING = { .nonblocking = false };
+static const int MAX_FD_LIMIT = 1024 * 1024;
+
+static int get_max_fd(void)
+{
+  struct rlimit limit = { 0 };
+
+  int r = getrlimit(RLIMIT_NOFILE, &limit);
+  if (r < 0) {
+    return error_unify(r);
+  }
+
+  rlim_t soft = limit.rlim_cur;
+
+  if (soft == RLIM_INFINITY || soft > INT_MAX) {
+    return INT_MAX;
+  }
+
+  return (int) (soft - 1);
+}
 
 static bool fd_in_set(int fd, const int *fd_set, size_t size)
 {
@@ -234,8 +254,14 @@ static pid_t process_fork(int *except, size_t num_except)
   // flag so we manually close all file descriptors to prevent file descriptors
   // leaking into the child process.
 
-  int max_fd = (int) sysconf(_SC_OPEN_MAX);
+  int max_fd = get_max_fd();
   if (max_fd < 0) {
+    goto finish;
+  }
+
+  if (max_fd > MAX_FD_LIMIT) {
+    // Refuse to try to close too many file descriptors.
+    r = -EMFILE;
     goto finish;
   }
 
