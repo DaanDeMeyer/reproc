@@ -39,7 +39,6 @@ if(REPROC_TEST)
     )
 
     add_test(NAME ${TARGET} COMMAND reproc-test-${TARGET})
-    set_tests_properties(${TARGET} PROPERTIES FIXTURES_REQUIRED build)
 
     add_executable(reproc-resource-${TARGET} resources/${TARGET}.c)
 
