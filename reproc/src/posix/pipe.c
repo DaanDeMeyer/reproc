@@ -75,13 +75,12 @@ int pipe_read(int pipe, uint8_t *buffer, size_t size)
   assert(pipe != HANDLE_INVALID);
   assert(buffer);
 
-  ssize_t r = read(pipe, buffer, size);
-  assert(r <= INT_MAX);
+  int r = (int) read(pipe, buffer, size);
 
   // `read` returns 0 to indicate the other end of the pipe was closed.
   r = r == 0 ? -EPIPE : r;
 
-  return error_unify_or_else((int) r, (int) r);
+  return error_unify_or_else(r, r);
 }
 
 int pipe_write(int pipe, const uint8_t *buffer, size_t size, int timeout)
