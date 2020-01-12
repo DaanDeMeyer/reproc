@@ -22,6 +22,11 @@ struct process_options {
 };
 
 // Spawns a child process that executes the command stored in `argv`.
+//
+// If `argv` is `NULL` on POSIX, `exec` is not called after fork and this
+// function returns 0 in the child process and > 0 in the parent process. On
+// Windows, if `argv` is `NULL`, an error is returned.
+//
 // The process handle of the new child process is assigned to `process`.
 int process_start(handle *process,
                   const char *const *argv,

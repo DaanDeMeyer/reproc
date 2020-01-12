@@ -274,7 +274,11 @@ int process_start(HANDLE *process,
                   struct process_options options)
 {
   assert(process);
-  assert(argv);
+
+  if (argv == NULL) {
+    return -ERROR_CALL_NOT_IMPLEMENTED;
+  }
+
   assert(argv[0] != NULL);
 
   char *command_line = NULL;
@@ -383,7 +387,7 @@ finish:
   DeleteProcThreadAttributeList(attribute_list);
   handle_destroy(info.hThread);
 
-  return error_unify(r);
+  return error_unify_or_else(r, 1);
 }
 
 int process_wait(HANDLE process, int timeout)

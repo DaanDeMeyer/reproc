@@ -164,6 +164,18 @@ typedef struct reproc_options {
     const uint8_t *data;
     size_t size;
   } input;
+  /*!
+  This option can only be used on POSIX systems. If enabled on Windows, an error
+  will be returned.
+
+  If `fork` is enabled, `reproc_start` forks a child process and returns 0 in
+  the child process and > 0 in the parent process. In the child process, only
+  `reproc_destroy` may be called on the `reproc_t` instance to free its
+  associated memory.
+
+  When `fork` is enabled. `argv` must be `NULL` when calling `reproc_start`.
+  */
+  bool fork;
 } reproc_options;
 
 /*! Allocate a new `reproc_t` instance on the heap. */

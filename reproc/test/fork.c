@@ -3,7 +3,10 @@
 #include <reproc/reproc.h>
 #include <reproc/sink.h>
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 int main(void)
 {
@@ -12,11 +15,15 @@ int main(void)
   reproc_t *process = reproc_new();
   assert(process);
 
-  const char *argv[4] = { RESOURCE_DIRECTORY "/argv", "\"argument 1\"",
-                          "\"argument 2\"", NULL };
-
-  r = reproc_start(process, argv, (reproc_options){ 0 });
+  r = reproc_start(process, NULL, (reproc_options){ .fork = true });
   assert(r >= 0);
+
+  static const char *message = "reproc stands for REdirected PROCess!";
+
+  if (r == 0) {
+    r = (int) write(STDOUT_FILENO, message, strlen(message));
+    _exit(r < 0 ? EXIT_FAILURE : EXIT_SUCCESS);
+  }
 
   char *output = NULL;
   reproc_sink sink = reproc_sink_string(&output);
@@ -24,21 +31,10 @@ int main(void)
   assert(r == 0);
   assert(output != NULL);
 
+  assert(strcmp(message, output) == 0);
+
   r = reproc_wait(process, REPROC_INFINITE);
   assert(r == 0);
-
-  const char *current = output;
-
-  for (size_t i = 0; i < 3; i++) {
-    size_t size = strlen(argv[i]);
-
-    assert(strlen(current) >= size);
-    assert(memcmp(current, argv[i], size) == 0);
-
-    current += size;
-  }
-
-  assert(*current == '\0');
 
   reproc_destroy(process);
   reproc_free(output);

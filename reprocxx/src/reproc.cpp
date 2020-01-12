@@ -39,6 +39,22 @@ static reproc_stop_actions reproc_stop_actions_from(stop_actions stop)
   };
 }
 
+static reproc_options reproc_options_from(const options &options, bool fork)
+{
+  return { options.environment.data(),
+           options.working_directory,
+           { static_cast<REPROC_REDIRECT>(options.redirect.in),
+             static_cast<REPROC_REDIRECT>(options.redirect.out),
+             static_cast<REPROC_REDIRECT>(options.redirect.err) },
+           reproc_stop_actions_from(options.stop),
+           options.timeout.count(),
+           options.deadline.count(),
+           options.inherit,
+           options.discard,
+           { options.input.data(), options.input.size() },
+           fork };
+}
+
 auto deleter = [](reproc_t *process) { reproc_destroy(process); };
 
 process::process() : process_(reproc_new(), deleter) {}
@@ -50,23 +66,16 @@ process &process::operator=(process &&other) noexcept = default;
 std::error_code process::start(const arguments &arguments,
                                const options &options) noexcept
 {
-  reproc_options reproc_options = {
-    options.environment.data(),
-    options.working_directory,
-    { static_cast<REPROC_REDIRECT>(options.redirect.in),
-      static_cast<REPROC_REDIRECT>(options.redirect.out),
-      static_cast<REPROC_REDIRECT>(options.redirect.err) },
-    reproc_stop_actions_from(options.stop),
-    options.timeout.count(),
-    options.deadline.count(),
-    options.inherit,
-    options.discard,
-    { options.input.data(), options.input.size() }
-  };
-
+  reproc_options reproc_options = reproc_options_from(options, false);
   int r = reproc_start(process_.get(), arguments.data(), reproc_options);
-
   return error_code_from(r);
+}
+
+std::pair<bool, std::error_code> process::fork(const options &options) noexcept
+{
+  reproc_options reproc_options = reproc_options_from(options, true);
+  int r = reproc_start(process_.get(), nullptr, reproc_options);
+  return { r == 0, error_code_from(r) };
 }
 
 std::tuple<stream, size_t, std::error_code> process::read(uint8_t *buffer,

@@ -40,16 +40,18 @@ if(REPROC_TEST)
 
     add_test(NAME ${TARGET} COMMAND reproc-test-${TARGET})
 
-    add_executable(reproc-resource-${TARGET} resources/${TARGET}.c)
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/resources/${TARGET}.c)
+      add_executable(reproc-resource-${TARGET} resources/${TARGET}.c)
 
-    reproc_add_common(
-      reproc-resource-${TARGET} C
-      OUTPUT_DIRECTORY resources
-      OUTPUT_NAME ${TARGET}
-    )
+      reproc_add_common(
+        reproc-resource-${TARGET} C
+        OUTPUT_DIRECTORY resources
+        OUTPUT_NAME ${TARGET}
+      )
 
-    # Make sure the test resource is available when running the test.
-    add_dependencies(reproc-test-${TARGET} reproc-resource-${TARGET})
+      # Make sure the test resource is available when running the test.
+      add_dependencies(reproc-test-${TARGET} reproc-resource-${TARGET})
+    endif()
   endfunction()
 
   reproc_add_test(argv)
@@ -58,6 +60,10 @@ if(REPROC_TEST)
   reproc_add_test(overflow)
   reproc_add_test(stop)
   reproc_add_test(working-directory)
+
+  if(UNIX)
+    reproc_add_test(fork)
+  endif()
 endif()
 
 if(REPROC_EXAMPLES)

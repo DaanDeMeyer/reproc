@@ -125,7 +125,7 @@ static bool fd_in_set(int fd, const int *fd_set, size_t size)
   return false;
 }
 
-static pid_t process_fork(int *except, size_t num_except)
+static pid_t process_fork(const int *except, size_t num_except)
 {
   struct {
     sigset_t old;
@@ -301,8 +301,10 @@ int process_start(pid_t *process,
                   struct process_options options)
 {
   assert(process);
-  assert(argv);
-  assert(argv[0] != NULL);
+
+  if (argv != NULL) {
+    assert(argv[0] != NULL);
+  }
 
   struct {
     int read;
@@ -317,21 +319,23 @@ int process_start(pid_t *process,
     goto finish;
   }
 
-  // We prepend the parent working directory to `program` if it is a
-  // relative path so that it will always be searched for relative to the
-  // parent working directory even after executing `chdir`.
-  program = options.working_directory && path_is_relative(argv[0])
-                ? path_prepend_cwd(argv[0])
-                : strdup(argv[0]);
-  if (program == NULL) {
-    r = -1;
-    goto finish;
+  if (argv != NULL) {
+    // We prepend the parent working directory to `program` if it is a
+    // relative path so that it will always be searched for relative to the
+    // parent working directory even after executing `chdir`.
+    program = options.working_directory && path_is_relative(argv[0])
+                  ? path_prepend_cwd(argv[0])
+                  : strdup(argv[0]);
+    if (program == NULL) {
+      r = -1;
+      goto finish;
+    }
   }
 
-  int vec[3] = { options.redirect.in, options.redirect.out,
-                 options.redirect.err };
+  int except[5] = { options.redirect.in, options.redirect.out,
+                    options.redirect.err, pipe.read, pipe.write };
 
-  r = process_fork(vec, ARRAY_SIZE(vec));
+  r = process_fork(except, ARRAY_SIZE(except));
   if (r < 0) {
     goto finish;
   }
@@ -341,40 +345,55 @@ int process_start(pid_t *process,
     // `process_wait`.
     r = setpgid(0, 0);
     if (r < 0) {
-      goto end;
+      goto child;
     }
 
     // Redirect stdin, stdout and stderr.
 
-    for (size_t i = 0; i < ARRAY_SIZE(vec); i++) {
+    int redirect[3] = { options.redirect.in, options.redirect.out,
+                        options.redirect.err };
+
+    for (size_t i = 0; i < ARRAY_SIZE(redirect); i++) {
       // `i` corresponds to the standard stream we need to redirect.
-      r = dup2(vec[i], (int) i);
+      r = dup2(redirect[i], (int) i);
       if (r < 0) {
-        goto end;
+        goto child;
       }
     }
 
     if (options.working_directory != NULL) {
       r = chdir(options.working_directory);
       if (r < 0) {
-        goto end;
+        goto child;
       }
     }
 
     if (options.environment != NULL) {
-      // `execvpe` is not standard POSIX so we overwrite `environ` instead.
+      // `environ` is carried over calls to `exec`.
       extern char **environ; // NOLINT
       environ = (char **) options.environment;
     }
 
-    r = execvp(program, (char *const *) argv);
+    if (argv != NULL) {
+      assert(program);
 
-  end:
-    if (r < 0) {
-      (void) !write(pipe.write, &errno, sizeof(errno));
+      r = execvp(program, (char *const *) argv);
+      if (r < 0) {
+        goto child;
+      }
     }
 
-    _exit(r < 0 ? EXIT_FAILURE : EXIT_SUCCESS);
+  child:
+    if (r < 0) {
+      (void) !write(pipe.write, &errno, sizeof(errno));
+      _exit(EXIT_FAILURE);
+    }
+
+    handle_destroy(pipe.read);
+    handle_destroy(pipe.write);
+    free(program);
+
+    return 0;
   }
 
   pid_t child = r;
@@ -407,7 +426,7 @@ finish:
   handle_destroy(pipe.write);
   free(program);
 
-  return error_unify(r);
+  return error_unify_or_else(r, 1);
 }
 
 static int parse_status(int status)

@@ -20,7 +20,7 @@ struct reproc_t {
   int64_t deadline;
 };
 
-enum { STATUS_NOT_STARTED = -2, STATUS_IN_PROGRESS = -1 };
+enum { STATUS_NOT_STARTED = -1, STATUS_IN_PROGRESS = -2, STATUS_IN_CHILD = -3 };
 
 const int REPROC_SIGKILL = UINT8_MAX + 9;
 const int REPROC_SIGTERM = UINT8_MAX + 15;
@@ -28,7 +28,7 @@ const int REPROC_SIGTERM = UINT8_MAX + 15;
 const int REPROC_INFINITE = -1;
 const int REPROC_DEADLINE = -2;
 
-static int parse_options(reproc_options *options)
+static int parse_options(const char *const *argv, reproc_options *options)
 {
   assert(options);
 
@@ -63,6 +63,13 @@ static int parse_options(reproc_options *options)
     assert_return(options->input.data != NULL, REPROC_EINVAL);
     assert_return(options->input.size > 0, REPROC_EINVAL);
     assert_return(options->redirect.in == 0, REPROC_EINVAL);
+  }
+
+  if (options->fork) {
+    assert_return(argv == NULL, REPROC_EINVAL);
+  } else {
+    assert_return(argv != NULL, REPROC_EINVAL);
+    assert_return(argv[0] != NULL, REPROC_EINVAL);
   }
 
   options->timeout = options->timeout == 0 ? REPROC_INFINITE : options->timeout;
@@ -171,14 +178,11 @@ int reproc_start(reproc_t *process,
 {
   assert_return(process, REPROC_EINVAL);
   assert_return(process->status == STATUS_NOT_STARTED, REPROC_EINVAL);
-  assert_return(argv, REPROC_EINVAL);
-  assert_return(argv[0], REPROC_EINVAL);
 
   struct stdio child = { HANDLE_INVALID, HANDLE_INVALID, HANDLE_INVALID };
-
   int r = -1;
 
-  r = parse_options(&options);
+  r = parse_options(argv, &options);
   if (r < 0) {
     return r;
   }
@@ -225,16 +229,18 @@ int reproc_start(reproc_t *process,
     goto finish;
   }
 
-  process->stop = options.stop;
-  process->timeout = options.timeout;
-  process->deadline = options.deadline == REPROC_INFINITE
-                          ? REPROC_INFINITE
-                          : reproc_now() + options.deadline;
+  if (r > 0) {
+    process->stop = options.stop;
+    process->timeout = options.timeout;
+    process->deadline = options.deadline == REPROC_INFINITE
+                            ? REPROC_INFINITE
+                            : reproc_now() + options.deadline;
+  }
 
 finish:
   // Either an error has ocurred or the child pipe endpoints have been copied to
   // the stdin/stdout/stderr streams of the child process. Either way, they can
-  // be safely closed in the parent process.
+  // be safely closed.
   handle_destroy(child.in);
   handle_destroy(child.out);
   handle_destroy(child.err);
@@ -244,6 +250,13 @@ finish:
     process->stdio.in = handle_destroy(process->stdio.in);
     process->stdio.out = handle_destroy(process->stdio.out);
     process->stdio.err = handle_destroy(process->stdio.err);
+  } else if (r == 0) {
+    process->handle = HANDLE_INVALID;
+    // `process_start` has already taken care of closing the handles for us.
+    process->stdio.in = HANDLE_INVALID;
+    process->stdio.out = HANDLE_INVALID;
+    process->stdio.err = HANDLE_INVALID;
+    process->status = STATUS_IN_CHILD;
   } else {
     process->status = STATUS_IN_PROGRESS;
   }
@@ -257,6 +270,7 @@ int reproc_read(reproc_t *process,
                 size_t size)
 {
   assert_return(process, REPROC_EINVAL);
+  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
 
   handle ready = HANDLE_INVALID;
@@ -303,6 +317,7 @@ int reproc_read(reproc_t *process,
 int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 {
   assert_return(process, REPROC_EINVAL);
+  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
 
   if (buffer == NULL) {
     // Allow `NULL` buffers but only if `size == 0`.
@@ -344,6 +359,7 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 int reproc_close(reproc_t *process, REPROC_STREAM stream)
 {
   assert_return(process, REPROC_EINVAL);
+  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
 
   switch (stream) {
     case REPROC_STREAM_IN:
@@ -365,6 +381,7 @@ int reproc_close(reproc_t *process, REPROC_STREAM stream)
 int reproc_wait(reproc_t *process, int timeout)
 {
   assert_return(process, REPROC_EINVAL);
+  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
   assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
 
   int r = -1;
@@ -390,6 +407,7 @@ int reproc_wait(reproc_t *process, int timeout)
 int reproc_terminate(reproc_t *process)
 {
   assert_return(process, REPROC_EINVAL);
+  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
   assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
 
   if (process->status >= 0) {
@@ -402,6 +420,7 @@ int reproc_terminate(reproc_t *process)
 int reproc_kill(reproc_t *process)
 {
   assert_return(process, REPROC_EINVAL);
+  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
   assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
 
   if (process->status >= 0) {
@@ -414,6 +433,7 @@ int reproc_kill(reproc_t *process)
 int reproc_stop(reproc_t *process, reproc_stop_actions stop)
 {
   assert_return(process, REPROC_EINVAL);
+  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
   assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
 
   reproc_stop_action actions[3] = { stop.first, stop.second, stop.third };

@@ -16,7 +16,7 @@ int main(void)
   const char *envp[3] = { "IP=127.0.0.1", "PORT=8080", NULL };
 
   r = reproc_start(process, argv, (reproc_options){ .environment = envp });
-  assert(r == 0);
+  assert(r >= 0);
 
   char *output = NULL;
   reproc_sink sink = reproc_sink_string(&output);

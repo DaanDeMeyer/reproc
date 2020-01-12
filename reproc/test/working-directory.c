@@ -23,7 +23,7 @@ int main(void)
 
   r = reproc_start(process, argv,
                    (reproc_options){ .working_directory = RESOURCE_DIRECTORY });
-  assert(r == 0);
+  assert(r >= 0);
 
   char *output = NULL;
   reproc_sink sink = reproc_sink_string(&output);

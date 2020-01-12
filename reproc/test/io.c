@@ -15,7 +15,7 @@ static void io(const char *mode, const char *input, const char *expected)
   const char *argv[3] = { RESOURCE_DIRECTORY "/io", mode, NULL };
 
   r = reproc_start(process, argv, (reproc_options){ 0 });
-  assert(r == 0);
+  assert(r >= 0);
 
   r = reproc_write(process, (uint8_t *) input, strlen(input));
   assert(r == 0);
@@ -48,7 +48,7 @@ static void timeout(void)
   const char *argv[3] = { RESOURCE_DIRECTORY "/io", "stdout", NULL };
 
   r = reproc_start(process, argv, (reproc_options){ .timeout = 200 });
-  assert(r == 0);
+  assert(r >= 0);
 
   uint8_t buffer = 0;
   r = reproc_read(process, NULL, &buffer, sizeof(buffer));

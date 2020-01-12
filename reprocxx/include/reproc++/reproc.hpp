@@ -96,6 +96,11 @@ public:
   REPROCXX_EXPORT std::error_code start(const arguments &arguments,
                                         const options &options = {}) noexcept;
 
+  /*! Sets the `fork` option in `reproc_options` and calls `start`. Returns
+  `true` in the child process and `false` in the parent process. */
+  REPROCXX_EXPORT std::pair<bool, std::error_code>
+  fork(const options &options = {}) noexcept;
+
   /*! `reproc_read` but returns a tuple of (stream, bytes read, error) and
   defaults to waiting indefinitely for each read to complete.*/
   REPROCXX_EXPORT std::tuple<stream, size_t, std::error_code>
