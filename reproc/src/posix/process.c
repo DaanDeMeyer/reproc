@@ -308,11 +308,23 @@ int process_start(pid_t *process,
     int read;
     int write;
   } pipe = { HANDLE_INVALID, HANDLE_INVALID };
+  char *program = NULL;
   int r = -1;
 
   // We create an error pipe to receive errors from the child process.
   r = pipe_init(&pipe.read, PIPE_BLOCKING, &pipe.write, PIPE_BLOCKING);
   if (r < 0) {
+    goto finish;
+  }
+
+  // We prepend the parent working directory to `program` if it is a
+  // relative path so that it will always be searched for relative to the
+  // parent working directory even after executing `chdir`.
+  program = options.working_directory && path_is_relative(argv[0])
+                ? path_prepend_cwd(argv[0])
+                : strdup(argv[0]);
+  if (program == NULL) {
+    r = -1;
     goto finish;
   }
 
@@ -340,17 +352,6 @@ int process_start(pid_t *process,
       if (r < 0) {
         goto end;
       }
-    }
-
-    // We prepend the parent working directory to `program` if it is a
-    // relative path so that it will always be searched for relative to the
-    // parent working directory even after executing `chdir`.
-    const char *program = options.working_directory && path_is_relative(argv[0])
-                              ? path_prepend_cwd(argv[0])
-                              : argv[0];
-    if (program == NULL) {
-      r = -ENOMEM;
-      goto end;
     }
 
     if (options.working_directory != NULL) {
@@ -404,6 +405,7 @@ int process_start(pid_t *process,
 finish:
   handle_destroy(pipe.read);
   handle_destroy(pipe.write);
+  free(program);
 
   return error_unify(r);
 }
