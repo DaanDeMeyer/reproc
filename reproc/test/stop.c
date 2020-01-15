@@ -17,7 +17,9 @@ static void stop(REPROC_STOP action, int status)
   r = reproc_wait(process, 50);
   assert(r == REPROC_ETIMEDOUT);
 
-  r = reproc_stop(process, (reproc_stop_actions){ .first = { action, 50 } });
+  reproc_stop_actions stop = { .first = { action, 500 } };
+
+  r = reproc_stop(process, stop);
   assert(r == status);
 
   reproc_destroy(process);
