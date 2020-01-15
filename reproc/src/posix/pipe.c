@@ -76,9 +76,10 @@ int pipe_read(int pipe, uint8_t *buffer, size_t size)
   assert(buffer);
 
   int r = (int) read(pipe, buffer, size);
-
-  // `read` returns 0 to indicate the other end of the pipe was closed.
-  r = r == 0 ? -EPIPE : r;
+  if (r == 0) {
+    // `read` returns 0 to indicate the other end of the pipe was closed.
+    r = -EPIPE;
+  }
 
   return error_unify_or_else(r, r);
 }
@@ -93,8 +94,7 @@ int pipe_write(int pipe, const uint8_t *buffer, size_t size, int timeout)
 
   r = poll(&pollfd, 1, timeout);
   if (r <= 0) {
-    r = r == 0 ? -ETIMEDOUT : r;
-    return error_unify(r);
+    return error_unify_or_else(r, -ETIMEDOUT);
   }
 
   r = (int) write(pipe, buffer, size);
@@ -123,8 +123,7 @@ int pipe_wait(int out, int err, int *ready, int timeout)
 
   int r = poll(pollfds, num_pollfds, timeout);
   if (r <= 0) {
-    r = r == 0 ? -ETIMEDOUT : r;
-    return error_unify(r);
+    return error_unify_or_else(r, -ETIMEDOUT);
   }
 
   for (size_t i = 0; i < num_pollfds; i++) {

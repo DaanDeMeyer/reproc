@@ -81,8 +81,9 @@ static int parse_options(const char *const *argv, reproc_options *options)
     options->timeout = 0;
   }
 
-  options->deadline = options->deadline == 0 ? REPROC_INFINITE
-                                             : options->deadline;
+  if (options->deadline == 0) {
+    options->deadline = REPROC_INFINITE;
+  }
 
   bool is_noop = options->stop.first.action == REPROC_STOP_NOOP &&
                  options->stop.second.action == REPROC_STOP_NOOP &&
@@ -116,10 +117,10 @@ static int redirect(handle *parent,
 
     case REPROC_REDIRECT_INHERIT:;
       r = redirect_inherit(parent, child, (REDIRECT_STREAM) stream);
-      // Discard if the corresponding parent stream is closed.
-      r = r == REPROC_EPIPE
-              ? redirect_discard(parent, child, (REDIRECT_STREAM) stream)
-              : r;
+      if (r == REPROC_EPIPE) {
+        // Discard if the corresponding parent stream is closed.
+        r = redirect_discard(parent, child, (REDIRECT_STREAM) stream);
+      }
       break;
 
     case REPROC_REDIRECT_DISCARD:
@@ -239,9 +240,10 @@ int reproc_start(reproc_t *process,
   if (r > 0) {
     process->stop = options.stop;
     process->timeout = options.timeout;
-    process->deadline = options.deadline == REPROC_INFINITE
-                            ? REPROC_INFINITE
-                            : reproc_now() + options.deadline;
+
+    if (options.deadline != REPROC_INFINITE) {
+      process->deadline = reproc_now() + options.deadline;
+    }
   }
 
 finish:
@@ -397,11 +399,11 @@ int reproc_wait(reproc_t *process, int timeout)
     return process->status;
   }
 
-  timeout = timeout == REPROC_DEADLINE
-                // If the deadline has expired, `expiry` returns 0 which means
-                // we'll only check if the process is still running.
-                ? expiry(REPROC_INFINITE, process->deadline)
-                : timeout;
+  if (timeout == REPROC_DEADLINE) {
+    // If the deadline has expired, `expiry` returns 0 which means we'll only
+    // check if the process is still running.
+    timeout = expiry(REPROC_INFINITE, process->deadline);
+  }
 
   r = process_wait(process->handle, timeout);
   if (r < 0) {

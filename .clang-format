@@ -2,9 +2,9 @@
 BasedOnStyle: LLVM
 ---
 Language: Cpp
-AlwaysBreakTemplateDeclarations: Yes
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortFunctionsOnASingleLine: Empty
+AlwaysBreakTemplateDeclarations: Yes
 BinPackParameters: false
 BreakBeforeBraces: Custom
 BraceWrapping:

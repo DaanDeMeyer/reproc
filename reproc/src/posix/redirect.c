@@ -20,19 +20,38 @@ int redirect_pipe(int *parent, int *child, REDIRECT_STREAM stream)
              : pipe_init(parent, PIPE_OPTIONS, child, PIPE_OPTIONS);
 }
 
+static FILE *stream_to_file(REDIRECT_STREAM stream)
+{
+  switch (stream) {
+    case REDIRECT_STREAM_IN:
+      return stdin;
+    case REDIRECT_STREAM_OUT:
+      return stdout;
+    case REDIRECT_STREAM_ERR:
+      return stderr;
+  }
+
+  return NULL;
+}
+
 int redirect_inherit(int *parent, int *child, REDIRECT_STREAM stream)
 {
   assert(parent);
   assert(child);
 
-  FILE *file = stream == REDIRECT_STREAM_IN
-                   ? stdin
-                   : stream == REDIRECT_STREAM_OUT ? stdout : stderr;
-  int r = -1;
+  int r = -EINVAL;
+
+  FILE *file = stream_to_file(stream);
+  if (file == NULL) {
+    return r;
+  }
 
   r = fileno(file);
   if (r < 0) {
-    errno = errno == EBADF ? EPIPE : errno;
+    if (errno == EBADF) {
+      errno = EPIPE;
+    }
+
     return error_unify(r);
   }
 

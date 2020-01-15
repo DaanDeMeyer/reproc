@@ -23,6 +23,7 @@ Checks:
 -google-readability-namespace-comments,
 -google-runtime-references,
 -hicpp-avoid-c-arrays,
+-hicpp-multiway-paths-covered,
 -hicpp-no-array-decay,
 -hicpp-signed-bitwise,
 -hicpp-special-member-functions,

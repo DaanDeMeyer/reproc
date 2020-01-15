@@ -21,16 +21,31 @@ int redirect_pipe(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
              : pipe_init(parent, PARENT_OPTIONS, child, CHILD_OPTIONS);
 }
 
+static DWORD stream_to_id(REDIRECT_STREAM stream)
+{
+  switch (stream) {
+    case REDIRECT_STREAM_IN:
+      return STD_INPUT_HANDLE;
+    case REDIRECT_STREAM_OUT:
+      return STD_OUTPUT_HANDLE;
+    case REDIRECT_STREAM_ERR:
+      return STD_ERROR_HANDLE;
+  }
+
+  return 0;
+}
+
 int redirect_inherit(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
 {
   assert(parent);
   assert(child);
 
-  DWORD id = stream == REDIRECT_STREAM_IN
-                 ? STD_INPUT_HANDLE
-                 : stream == REDIRECT_STREAM_OUT ? STD_OUTPUT_HANDLE
-                                                 : STD_ERROR_HANDLE;
   int r = 0;
+
+  DWORD id = stream_to_id(stream);
+  if (id == 0) {
+    return -ERROR_INVALID_PARAMETER;
+  }
 
   HANDLE *handle = GetStdHandle(id);
   if (handle == INVALID_HANDLE_VALUE) {
@@ -56,10 +71,9 @@ int redirect_inherit(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
 
 enum { FILE_NO_SHARE = 0, FILE_NO_TEMPLATE = 0 };
 
-static SECURITY_ATTRIBUTES INHERIT_HANDLE = { .nLength = sizeof(
-                                                  SECURITY_ATTRIBUTES),
-                                              .bInheritHandle = true,
-                                              .lpSecurityDescriptor = NULL };
+static SECURITY_ATTRIBUTES INHERIT = { .nLength = sizeof(SECURITY_ATTRIBUTES),
+                                       .bInheritHandle = true,
+                                       .lpSecurityDescriptor = NULL };
 
 int redirect_discard(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
 {
@@ -69,7 +83,7 @@ int redirect_discard(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
   DWORD mode = stream == REDIRECT_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
   int r = 0;
 
-  HANDLE handle = CreateFile("NUL", mode, FILE_NO_SHARE, &INHERIT_HANDLE,
+  HANDLE handle = CreateFile("NUL", mode, FILE_NO_SHARE, &INHERIT,
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
                              (HANDLE) FILE_NO_TEMPLATE);
   if (handle == INVALID_HANDLE_VALUE) {
