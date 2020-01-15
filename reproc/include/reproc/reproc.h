@@ -34,6 +34,9 @@ REPROC_EXPORT extern const int REPROC_SIGTERM;
 
 /*! Tells a function that takes a timeout value to wait indefinitely. */
 REPROC_EXPORT extern const int REPROC_INFINITE;
+/*! Pass `REPROC_NONBLOCKING` to `reproc_options`'s `timeout` option to make
+`reproc_read` and `reproc_write` nonblocking. */
+REPROC_EXPORT extern const int REPROC_NONBLOCKING;
 /*! Tells `reproc_wait` to wait until the deadline passed to `reproc_start`
 expires. */
 REPROC_EXPORT extern const int REPROC_DEADLINE;

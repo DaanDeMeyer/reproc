@@ -27,6 +27,7 @@ const int REPROC_SIGTERM = UINT8_MAX + 15;
 
 const int REPROC_INFINITE = -1;
 const int REPROC_DEADLINE = -2;
+const int REPROC_NONBLOCKING = -3;
 
 static int parse_options(const char *const *argv, reproc_options *options)
 {
@@ -72,7 +73,13 @@ static int parse_options(const char *const *argv, reproc_options *options)
     assert_return(argv[0] != NULL, REPROC_EINVAL);
   }
 
-  options->timeout = options->timeout == 0 ? REPROC_INFINITE : options->timeout;
+  // Default to waiting indefinitely but still allow setting a timeout of zero
+  // by setting `timeout` to `REPROC_NONBLOCKING`.
+  if (options->timeout == 0) {
+    options->timeout = REPROC_INFINITE;
+  } else if (options->timeout == REPROC_NONBLOCKING) {
+    options->timeout = 0;
+  }
 
   options->deadline = options->deadline == 0 ? REPROC_INFINITE
                                              : options->deadline;

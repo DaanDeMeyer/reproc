@@ -13,6 +13,7 @@ const int terminate = REPROC_SIGTERM;
 
 const milliseconds infinite = milliseconds(REPROC_INFINITE);
 const milliseconds deadline = milliseconds(REPROC_DEADLINE);
+const milliseconds nonblocking = milliseconds(REPROC_NONBLOCKING);
 
 static std::error_code error_code_from(int r)
 {
