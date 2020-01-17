@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <poll.h>
+#include <sys/socket.h>
 #include <unistd.h>
 
 int pipe_init(int *read,
@@ -21,51 +22,68 @@ int pipe_init(int *read,
   assert(read);
   assert(write);
 
-  int pipefd[2] = { HANDLE_INVALID, HANDLE_INVALID };
+  int pipe[2] = { HANDLE_INVALID, HANDLE_INVALID };
   int r = -1;
 
-#if defined(__APPLE__)
-  r = pipe(pipefd);
-  if (r < 0) {
-    goto finish;
-  }
+  // We use `socketpair` so we have a POSIX compatible way of setting the pipe
+  // size using `setsockopt` with `SO_RECVBUF`.
 
-  r = fcntl(pipefd[0], F_SETFD, FD_CLOEXEC);
-  if (r < 0) {
-    goto finish;
-  }
-
-  r = fcntl(pipefd[1], F_SETFD, FD_CLOEXEC);
+#if defined(__linux__)
+  // `SOCK_CLOEXEC` avoids the race condition between `socketpair` and `fcntl`.
+  r = socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, pipe);
   if (r < 0) {
     goto finish;
   }
 #else
-  // `pipe2` with `O_CLOEXEC` avoids the race condition between `pipe` and
-  // `fcntl`.
-  r = pipe2(pipefd, O_CLOEXEC);
+  r = socketpair(AF_UNIX, SOCK_STREAM, 0, pipe);
+  if (r < 0) {
+    goto finish;
+  }
+
+  r = fcntl(pipe[0], F_SETFD, FD_CLOEXEC);
+  if (r < 0) {
+    goto finish;
+  }
+
+  r = fcntl(pipe[1], F_SETFD, FD_CLOEXEC);
   if (r < 0) {
     goto finish;
   }
 #endif
 
-  r = fcntl(pipefd[0], F_SETFL, read_options.nonblocking ? O_NONBLOCK : 0);
+  // `socketpair` gives us a bidirectional socket pair but we only need
+  // unidirectional traffic so shut down writes on the read end and vice-versa
+  // on the write end.
+
+  r = shutdown(pipe[0], SHUT_WR);
   if (r < 0) {
     goto finish;
   }
 
-  r = fcntl(pipefd[1], F_SETFL, write_options.nonblocking ? O_NONBLOCK : 0);
+  r = shutdown(pipe[1], SHUT_RD);
   if (r < 0) {
     goto finish;
   }
 
-  *read = pipefd[0];
-  *write = pipefd[1];
+  r = fcntl(pipe[0], F_SETFL, read_options.nonblocking ? O_NONBLOCK : 0);
+  if (r < 0) {
+    goto finish;
+  }
+
+  r = fcntl(pipe[1], F_SETFL, write_options.nonblocking ? O_NONBLOCK : 0);
+  if (r < 0) {
+    goto finish;
+  }
+
+  *read = pipe[0];
+  *write = pipe[1];
+
+  pipe[0] = HANDLE_INVALID;
+  pipe[1] = HANDLE_INVALID;
 
 finish:
-  if (r < 0) {
-    handle_destroy(pipefd[0]);
-    handle_destroy(pipefd[1]);
-  }
+  handle_destroy(pipe[0]);
+  handle_destroy(pipe[1]);
 
   return error_unify(r);
 }
