@@ -55,6 +55,11 @@ int pipe_init(int *read,
   // unidirectional traffic so shut down writes on the read end and vice-versa
   // on the write end.
 
+  // `shutdown` behaves differently on macOS which causes the tests to fail. As
+  // this is mostly ceremonial, we disable `shutdown` on macOS until someone
+  // with a mac is impacted by this and is willing to further investigate the
+  // issue.
+#if !defined(__APPLE__)
   r = shutdown(pipe[0], SHUT_WR);
   if (r < 0) {
     goto finish;
@@ -64,6 +69,7 @@ int pipe_init(int *read,
   if (r < 0) {
     goto finish;
   }
+#endif
 
   r = fcntl(pipe[0], F_SETFL, read_options.nonblocking ? O_NONBLOCK : 0);
   if (r < 0) {
