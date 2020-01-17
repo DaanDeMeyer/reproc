@@ -163,20 +163,26 @@ jobs:
       # determine if the step succeeded or failed, we run each example in its
       # own step.
 
-      - name: "Examples: drain"
+      - name: "reproc: drain"
         run: build/reproc/examples/drain
 
-      - name: "Examples: git-status"
+      - name: "reproc: git-status"
         run: build/reproc/examples/git-status
 
-      - name: "Examples: inherit"
+      - name: "reproc: inherit"
         run: build/reproc/examples/inherit cmake --help
 
-      - name: "Examples: background"
+      - name: "reproc: run"
+        run: build/reproc/examples/run cmake --help
+
+      - name: "reproc++: background"
         run: build/reprocxx/examples/background cmake --help
 
-      - name: "Examples: cmake-help"
+      - name: "reproc++: cmake-help"
         run: build/reprocxx/examples/cmake-help
 
-      - name: "Examples: forward"
+      - name: "reproc++: forward"
         run: build/reprocxx/examples/forward cmake --help
+
+      - name: "reproc++: run"
+        run: build/reprocxx/examples/run cmake --help
