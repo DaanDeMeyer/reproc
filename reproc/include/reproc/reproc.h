@@ -233,14 +233,15 @@ REPROC_EXPORT int reproc_read(reproc_t *process,
                               size_t size);
 
 /*!
-Writes `size` bytes from `buffer` to the standard input (stdin) of the child
-process.
+Writes up to `size` bytes from `buffer` to the standard input (stdin) of the
+child process.
 
 (POSIX) By default, writing to a closed stdin pipe terminates the parent process
 with the `SIGPIPE` signal. `reproc_write` will only return `REPROC_EPIPE` if
 this signal is ignored by the parent process.
 
-if `buffer` is `NULL` and `size` is zero, this function returns 0.
+Returns the amount of bytes written. If `buffer` is `NULL` and `size` is zero,
+this function returns 0.
 
 If the standard input of the child process wasn't opened with
 `REPROC_REDIRECT_PIPE`, this function returns `REPROC_EPIPE` unless `buffer` is

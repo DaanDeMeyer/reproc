@@ -219,9 +219,17 @@ int reproc_start(reproc_t *process,
 
   if (options.input.data != NULL) {
     // `reproc_write` only needs the child process stdin pipe to be initialized.
-    r = reproc_write(process, options.input.data, options.input.size);
-    if (r < 0) {
-      goto finish;
+    size_t written = 0;
+
+    while (written < options.input.size) {
+      r = reproc_write(process, options.input.data + written,
+                       options.input.size - written);
+      if (r < 0) {
+        goto finish;
+      }
+
+      assert(written + (size_t) r <= options.input.size);
+      written += (size_t) r;
     }
 
     r = reproc_close(process, REPROC_STREAM_IN);
@@ -342,31 +350,18 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
     return REPROC_EPIPE;
   }
 
-  int r = -1;
+  int timeout = expiry(process->timeout, process->deadline);
+  if (timeout == 0) {
+    return REPROC_ETIMEDOUT;
+  }
 
-  do {
-    int timeout = expiry(process->timeout, process->deadline);
-    if (timeout == 0) {
-      return REPROC_ETIMEDOUT;
-    }
+  int r = pipe_write(process->stdio.in, buffer, size, timeout);
 
-    r = pipe_write(process->stdio.in, buffer, size, timeout);
+  if (r == REPROC_EPIPE) {
+    process->stdio.in = pipe_destroy(process->stdio.in);
+  }
 
-    if (r == REPROC_EPIPE) {
-      process->stdio.in = pipe_destroy(process->stdio.in);
-    }
-
-    if (r < 0) {
-      break;
-    }
-
-    size_t bytes_written = (size_t) r;
-
-    buffer += bytes_written;
-    size -= bytes_written;
-  } while (size != 0);
-
-  return r < 0 ? r : 0;
+  return r;
 }
 
 int reproc_close(reproc_t *process, REPROC_STREAM stream)

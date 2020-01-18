@@ -109,8 +109,8 @@ public:
 
   /*! reproc_write` but defaults to waiting indefinitely for each write to
   complete. */
-  REPROCXX_EXPORT std::error_code write(const uint8_t *buffer,
-                                        size_t size) noexcept;
+  REPROCXX_EXPORT std::pair<size_t, std::error_code>
+  write(const uint8_t *buffer, size_t size) noexcept;
 
   REPROCXX_EXPORT std::error_code close(stream stream) noexcept;
 

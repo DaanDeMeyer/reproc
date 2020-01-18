@@ -20,7 +20,7 @@ static void io()
   assert(r >= 0);
 
   r = reproc_write(process, (uint8_t *) MESSAGE, strlen(MESSAGE));
-  assert(r == 0);
+  assert(r == strlen(MESSAGE));
 
   r = reproc_close(process, REPROC_STREAM_IN);
   assert(r == 0);

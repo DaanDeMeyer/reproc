@@ -87,10 +87,11 @@ std::tuple<stream, size_t, std::error_code> process::read(uint8_t *buffer,
   return { static_cast<enum stream>(stream), r, error_code_from(r) };
 }
 
-std::error_code process::write(const uint8_t *buffer, size_t size) noexcept
+std::pair<size_t, std::error_code> process::write(const uint8_t *buffer,
+                                                  size_t size) noexcept
 {
   int r = reproc_write(process_.get(), buffer, size);
-  return error_code_from(r);
+  return { r, error_code_from(r) };
 }
 
 std::error_code process::close(stream stream) noexcept
