@@ -191,7 +191,11 @@ int reproc_start(reproc_t *process,
   assert_return(process, REPROC_EINVAL);
   assert_return(process->status == STATUS_NOT_STARTED, REPROC_EINVAL);
 
-  struct stdio child = { HANDLE_INVALID, HANDLE_INVALID, HANDLE_INVALID };
+  struct {
+    handle_type in;
+    handle_type out;
+    handle_type err;
+  } child = { HANDLE_INVALID, HANDLE_INVALID, HANDLE_INVALID };
   int r = -1;
 
   r = parse_options(argv, &options);
@@ -241,7 +245,7 @@ int reproc_start(reproc_t *process,
   struct process_options process_options = {
     .environment = options.environment,
     .working_directory = options.working_directory,
-    .redirect = child
+    .redirect = { .in = child.in, .out = child.out, .err = child.err }
   };
 
   r = process_start(&process->handle, argv, process_options);

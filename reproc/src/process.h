@@ -10,12 +10,6 @@
 
 extern const process_type PROCESS_INVALID; // NOLINT
 
-struct stdio {
-  handle_type in;
-  handle_type out;
-  handle_type err;
-};
-
 struct process_options {
   // If `NULL`, the child process inherits the environment of the current
   // process.
@@ -26,7 +20,11 @@ struct process_options {
   // The standard streams of the child process are redirected to the handles in
   // `redirect`. If a handle is `HANDLE_INVALID`, the corresponding child
   // process standard stream is closed.
-  struct stdio redirect;
+  struct {
+    handle_type in;
+    handle_type out;
+    handle_type err;
+  } redirect;
 };
 
 // Spawns a child process that executes the command stored in `argv`.
