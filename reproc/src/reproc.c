@@ -115,7 +115,7 @@ static int redirect(handle *parent,
       r = redirect_pipe(parent, child, (REDIRECT_STREAM) stream);
       break;
 
-    case REPROC_REDIRECT_INHERIT:;
+    case REPROC_REDIRECT_INHERIT:
       r = redirect_inherit(parent, child, (REDIRECT_STREAM) stream);
       if (r == REPROC_EPIPE) {
         // Discard if the corresponding parent stream is closed.
