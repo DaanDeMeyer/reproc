@@ -7,6 +7,7 @@ endif()
 
 if(WIN32)
   set(REPROC_PLATFORM windows)
+  target_compile_definitions(reproc PRIVATE WIN32_LEAN_AND_MEAN)
 else()
   set(REPROC_PLATFORM posix)
 endif()
