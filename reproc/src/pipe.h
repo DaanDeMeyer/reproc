@@ -5,12 +5,12 @@
 #include <stdint.h>
 
 #ifdef _WIN32
-typedef void *pipe_type; // `SOCKET`
+typedef uint64_t pipe_type; // `SOCKET`
 #else
 typedef int pipe_type; // fd
 #endif
 
-extern const pipe_type PIPE_INVALID; // NOLINT
+extern const pipe_type PIPE_INVALID;
 
 struct pipe_options {
   bool inherit; // Ignored on POSIX.

@@ -3,6 +3,7 @@
 #include "clock.h"
 #include "error.h"
 #include "handle.h"
+#include "init.h"
 #include "macro.h"
 #include "pipe.h"
 #include "process.h"
@@ -139,6 +140,24 @@ static int redirect(pipe_type *parent,
   return r;
 }
 
+static handle_type redirect_destroy(handle_type handle, REPROC_REDIRECT type)
+{
+  switch (type) {
+    case REPROC_REDIRECT_PIPE:
+      // We know `handle` is a pipe if `REDIRECT_PIPE` is used so the cast is
+      // safe. This little hack prevents us from having to introduce a generic
+      // handle type.
+      pipe_destroy((pipe_type) handle);
+      break;
+    case REPROC_REDIRECT_INHERIT:
+    case REPROC_REDIRECT_DISCARD:
+      handle_destroy(handle);
+      break;
+  }
+
+  return HANDLE_INVALID;
+}
+
 static int expiry(int timeout, int64_t deadline)
 {
   if (timeout == REPROC_INFINITE && deadline == REPROC_INFINITE) {
@@ -197,6 +216,11 @@ int reproc_start(reproc_t *process,
     handle_type err;
   } child = { HANDLE_INVALID, HANDLE_INVALID, HANDLE_INVALID };
   int r = -1;
+
+  r = init();
+  if (r < 0) {
+    goto finish;
+  }
 
   r = parse_options(argv, &options);
   if (r < 0) {
@@ -266,15 +290,16 @@ finish:
   // Either an error has ocurred or the child pipe endpoints have been copied to
   // the stdin/stdout/stderr streams of the child process. Either way, they can
   // be safely closed.
-  handle_destroy(child.in);
-  handle_destroy(child.out);
-  handle_destroy(child.err);
+  redirect_destroy(child.in, options.redirect.in);
+  redirect_destroy(child.out, options.redirect.out);
+  redirect_destroy(child.err, options.redirect.err);
 
   if (r < 0) {
     process->handle = process_destroy(process->handle);
     process->stdio.in = pipe_destroy(process->stdio.in);
     process->stdio.out = pipe_destroy(process->stdio.out);
     process->stdio.err = pipe_destroy(process->stdio.err);
+    deinit();
   } else if (r == 0) {
     process->handle = PROCESS_INVALID;
     // `process_start` has already taken care of closing the handles for us.
@@ -495,7 +520,9 @@ reproc_t *reproc_destroy(reproc_t *process)
   process->stdio.out = pipe_destroy(process->stdio.out);
   process->stdio.err = pipe_destroy(process->stdio.err);
 
+  deinit();
   free(process);
+
   return NULL;
 }
 

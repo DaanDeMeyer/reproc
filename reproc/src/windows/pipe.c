@@ -1,3 +1,6 @@
+// Make sure `WSAPoll` and friends are defined.
+#define _WIN32_WINNT _WIN32_WINNT_VISTA
+
 #include "pipe.h"
 
 #include "error.h"
@@ -6,261 +9,237 @@
 
 #include <assert.h>
 #include <limits.h>
-#include <stdio.h>
 #include <windows.h>
+#include <winsock2.h>
 
-const HANDLE PIPE_INVALID = INVALID_HANDLE_VALUE; // NOLINT
+const SOCKET PIPE_INVALID = INVALID_SOCKET;
 
-enum {
-  PIPE_BUFFER_SIZE = 65536,
-  PIPE_SINGLE_INSTANCE = 1,
-  PIPE_NO_TIMEOUT = 0,
-  FILE_NO_SHARE = 0,
-  FILE_NO_TEMPLATE = 0
-};
+// Inspired by https://gist.github.com/geertj/4325783.
+static int socketpair(int domain, int type, int protocol, SOCKET *out)
+{
+  assert(out);
 
-static SECURITY_ATTRIBUTES HANDLE_DO_NOT_INHERIT = {
-  .nLength = sizeof(SECURITY_ATTRIBUTES),
-  .bInheritHandle = false,
-  .lpSecurityDescriptor = NULL
-};
+  SOCKET server = PIPE_INVALID;
+  SOCKET pair[2] = { PIPE_INVALID, PIPE_INVALID };
+  int r = -1;
 
-static THREAD_LOCAL unsigned long pipe_serial_number = 0;
+  server = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, 0);
+  if (server == INVALID_SOCKET) {
+    goto finish;
+  }
 
-int pipe_init(HANDLE *read,
+  SOCKADDR_IN localhost = { 0 };
+  localhost.sin_family = AF_INET;
+  localhost.sin_addr.S_un.S_addr = htonl(INADDR_LOOPBACK);
+  localhost.sin_port = 0;
+
+  r = bind(server, (SOCKADDR *) &localhost, sizeof(localhost));
+  if (r < 0) {
+    goto finish;
+  }
+
+  r = listen(server, 1);
+  if (r < 0) {
+    goto finish;
+  }
+
+  SOCKADDR_STORAGE name = { 0 };
+  int size = sizeof(name);
+  r = getsockname(server, (SOCKADDR *) &name, &size);
+  if (r < 0) {
+    goto finish;
+  }
+
+  pair[0] = WSASocketW(domain, type, protocol, NULL, 0, 0);
+  if (pair[0] == INVALID_SOCKET) {
+    goto finish;
+  }
+
+  u_long mode = 1;
+  r = ioctlsocket(pair[0], (long) FIONBIO, &mode);
+  if (r < 0) {
+    goto finish;
+  }
+
+  r = connect(pair[0], (SOCKADDR *) &name, size);
+  if (r < 0 && WSAGetLastError() != WSAEWOULDBLOCK) {
+    goto finish;
+  }
+
+  pair[1] = accept(server, NULL, NULL);
+  if (pair[1] == INVALID_SOCKET) {
+    r = -1;
+    goto finish;
+  }
+
+  out[0] = pair[0];
+  out[1] = pair[1];
+
+  pair[0] = PIPE_INVALID;
+  pair[1] = PIPE_INVALID;
+
+  r = 0;
+
+finish:
+  pipe_destroy(server);
+  pipe_destroy(pair[0]);
+  pipe_destroy(pair[1]);
+
+  return error_unify(r);
+}
+
+int pipe_init(SOCKET *read,
               struct pipe_options read_options,
-              HANDLE *write,
+              SOCKET *write,
               struct pipe_options write_options)
 {
   assert(read);
   assert(write);
 
-  // Windows anonymous pipes don't support overlapped I/O so we use named pipes
-  // instead. This code has been adapted from
-  // https://stackoverflow.com/a/419736/11900641.
-  //
-  // Copyright (c) 1997  Microsoft Corporation
-
-  char name[MAX_PATH]; // Thread-safe unique name for the named pipe.
-  HANDLE pipe_handles[2] = { PIPE_INVALID, PIPE_INVALID };
-  DWORD read_mode = read_options.nonblocking ? FILE_FLAG_OVERLAPPED : 0;
-  DWORD write_mode = write_options.nonblocking ? FILE_FLAG_OVERLAPPED : 0;
-  SECURITY_ATTRIBUTES security = { .nLength = sizeof(SECURITY_ATTRIBUTES),
-                                   .lpSecurityDescriptor = NULL,
-                                   .bInheritHandle = read_options.inherit };
+  SOCKET pair[2] = { PIPE_INVALID, PIPE_INVALID };
   int r = 0;
 
-  sprintf(name, "\\\\.\\Pipe\\RemoteExeAnon.%08lx.%08lx.%08lx",
-          GetCurrentProcessId(), GetCurrentThreadId(), pipe_serial_number++);
-
-  pipe_handles[0] = CreateNamedPipeA(name, PIPE_ACCESS_INBOUND | read_mode,
-                                     PIPE_TYPE_BYTE | PIPE_WAIT,
-                                     PIPE_SINGLE_INSTANCE, PIPE_BUFFER_SIZE,
-                                     PIPE_BUFFER_SIZE, PIPE_NO_TIMEOUT,
-                                     &security);
-  if (pipe_handles[0] == INVALID_HANDLE_VALUE) {
+  // Use sockets instead of pipes so we can use `WSAPoll` which only works with
+  // sockets.
+  r = socketpair(AF_INET, SOCK_STREAM, 0, pair);
+  if (r < 0) {
     goto finish;
   }
 
-  security.bInheritHandle = write_options.inherit;
-
-  pipe_handles[1] = CreateFileA(name, GENERIC_WRITE, FILE_NO_SHARE, &security,
-                                OPEN_EXISTING,
-                                FILE_ATTRIBUTE_NORMAL | write_mode,
-                                (HANDLE) FILE_NO_TEMPLATE);
-  if (pipe_handles[1] == INVALID_HANDLE_VALUE) {
+  r = SetHandleInformation((HANDLE) pair[0], HANDLE_FLAG_INHERIT,
+                           read_options.inherit ? HANDLE_FLAG_INHERIT : 0);
+  if (r == 0) {
     goto finish;
   }
 
-  *read = pipe_handles[0];
-  *write = pipe_handles[1];
+  r = SetHandleInformation((HANDLE) pair[1], HANDLE_FLAG_INHERIT,
+                           write_options.inherit ? HANDLE_FLAG_INHERIT : 0);
+  if (r == 0) {
+    goto finish;
+  }
 
-  r = 1;
+  // Make the connection unidirectional to better emulate a pipe.
+
+  r = shutdown(pair[0], SD_SEND);
+  if (r < 0) {
+    goto finish;
+  }
+
+  r = shutdown(pair[1], SD_RECEIVE);
+  if (r < 0) {
+    goto finish;
+  }
+
+  *read = pair[0];
+  *write = pair[1];
+
+  pair[0] = PIPE_INVALID;
+  pair[1] = PIPE_INVALID;
 
 finish:
-  if (r == 0) {
-    pipe_destroy(pipe_handles[0]);
-    pipe_destroy(pipe_handles[1]);
-  }
+  pipe_destroy(pair[0]);
+  pipe_destroy(pair[1]);
 
   return error_unify(r);
 }
 
-int pipe_read(HANDLE pipe, uint8_t *buffer, size_t size)
+int pipe_read(SOCKET pipe, uint8_t *buffer, size_t size)
 {
-  assert(pipe && pipe != PIPE_INVALID);
+  assert(pipe != PIPE_INVALID);
   assert(buffer);
-  assert(size <= UINT_MAX);
+  assert(size <= INT_MAX);
 
-  DWORD bytes_read = 0;
-  int r = 0;
+  int r = recv(pipe, (char *) buffer, (int) size, 0);
 
-  OVERLAPPED overlapped = { 0 };
-  r = ReadFile(pipe, buffer, (DWORD) size, NULL, &overlapped);
-  if (r == 0 && GetLastError() != ERROR_IO_PENDING) {
-    return error_unify(r);
-  }
-
-  r = GetOverlappedResultEx(pipe, &overlapped, &bytes_read, INFINITE, false);
-  if (r == 0) {
-    return error_unify(r);
-  }
-
-  assert(bytes_read <= INT_MAX);
-
-  return error_unify_or_else(r, (int) bytes_read);
-}
-
-int pipe_write(HANDLE pipe, const uint8_t *buffer, size_t size, int timeout)
-{
-  assert(pipe && pipe != PIPE_INVALID);
-  assert(buffer);
-  assert(size <= UINT_MAX);
-
-  DWORD bytes_written = 0;
-  int r = 0;
-
-  OVERLAPPED overlapped = { 0 };
-  r = WriteFile(pipe, buffer, (DWORD) size, NULL, &overlapped);
-  if (r == 0 && GetLastError() != ERROR_IO_PENDING) {
-    return error_unify(r);
-  }
-
-  r = GetOverlappedResultEx(pipe, &overlapped, &bytes_written,
-                            timeout < 0 ? INFINITE : (DWORD) timeout, false);
-  if (r == 0 && GetLastError() != WAIT_TIMEOUT) {
-    return error_unify(r);
-  }
-
-  if (r == 0) {
-    // The timeout expired. Cancel the ongoing write.
-    r = CancelIo(pipe);
-    assert_unused(r != 0);
-
-    // Check if the write was actually cancelled.
-    r = GetOverlappedResult(pipe, &overlapped, &bytes_written, true);
-
-    // The write might have completed before it was cancelled so only error if
-    // the operation was actually aborted.
-    if (r == 0 && GetLastError() == ERROR_OPERATION_ABORTED) {
-      r = -WAIT_TIMEOUT;
-    }
-  }
-
-  assert(bytes_written <= INT_MAX);
-
-  return error_unify_or_else(r, (int) bytes_written);
-}
-
-int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready, int timeout)
-{
-  assert(ready);
-
-  HANDLE pipes[2] = { PIPE_INVALID, PIPE_INVALID };
-  DWORD num_pipes = 0;
-
-  if (out != PIPE_INVALID) {
-    pipes[num_pipes++] = out;
-  }
-
-  if (err != PIPE_INVALID) {
-    pipes[num_pipes++] = err;
-  }
-
-  if (num_pipes == 0) {
+  if (r == 0 || (r < 0 && WSAGetLastError() == WSAECONNRESET)) {
     return -ERROR_BROKEN_PIPE;
   }
 
-  OVERLAPPED overlapped[ARRAY_SIZE(pipes)] = { { 0 }, { 0 } };
-  HANDLE events[ARRAY_SIZE(pipes)] = { PIPE_INVALID, PIPE_INVALID };
-  int r = 0;
-
-  // We emulate POSIX `poll` by issuing overlapped zero-sized reads and waiting
-  // for the first one to complete. This approach is inspired by the CPython
-  // multiprocessing module `wait` implementation:
-  // https://github.com/python/cpython/blob/10ecbadb799ddf3393d1fc80119a3db14724d381/Lib/multiprocessing/connection.py#L826
-
-  for (size_t i = 0; i < num_pipes; i++) {
-    overlapped[i].hEvent = CreateEvent(&HANDLE_DO_NOT_INHERIT, true, false,
-                                       NULL);
-    if (overlapped[i].hEvent == NULL) {
-      r = 0;
-      goto finish;
-    }
-
-    r = ReadFile(pipes[i], (uint8_t[]){ 0 }, 0, NULL, &overlapped[i]);
-    if (r != 0 || GetLastError() == ERROR_BROKEN_PIPE) {
-      // The read succeeded or we got a broken pipe error. Either way, we know
-      // the pipe is ready to be processed further.
-      r = 1;
-      *ready = pipes[i];
-      goto finish;
-    }
-
-    if (GetLastError() != ERROR_IO_PENDING) {
-      goto finish;
-    }
-
-    events[i] = overlapped[i].hEvent;
-  }
-
-  DWORD result = WaitForMultipleObjects(num_pipes, events, false,
-                                        timeout < 0 ? INFINITE
-                                                    : (DWORD) timeout);
-  // We don't expect `WAIT_ABANDONED_0` to be valid here.
-  assert(result != WAIT_ABANDONED_0);
-
-  if (result == WAIT_TIMEOUT) {
-    r = -WAIT_TIMEOUT;
-    goto finish;
-  }
-
-  if (result == WAIT_FAILED) {
-    r = 0;
-    goto finish;
-  }
-
-  // Map the signaled event back to its corresponding handle.
-  *ready = pipes[result];
-  r = 1;
-
-finish:
-  for (size_t i = 0; i < num_pipes; i++) {
-    // Cancel any remaining zero-sized reads that we queued if they have not yet
-    // completed.
-
-    if (events[i] == PIPE_INVALID) {
-      continue;
-    }
-
-    PROTECT_SYSTEM_ERROR;
-
-    r = CancelIo(pipes[i]);
-    assert_unused(r != 0 || GetLastError() == ERROR_NOT_FOUND);
-
-    if (r == 0 && GetLastError() == ERROR_NOT_FOUND) {
-      continue;
-    }
-
-    // `CancelIoEx` only requests cancellation. We use `GetOverlappedResult` to
-    // wait until the read is actually cancelled.
-
-    DWORD bytes_transferred = 0;
-    r = GetOverlappedResult(pipes[i], &overlapped[i], &bytes_transferred, true);
-    assert_unused(r != 0 || (GetLastError() == ERROR_OPERATION_ABORTED ||
-                             GetLastError() == ERROR_BROKEN_PIPE));
-
-    UNPROTECT_SYSTEM_ERROR;
-  }
-
-  for (size_t i = 0; i < num_pipes; i++) {
-    pipe_destroy(overlapped[i].hEvent);
-  }
-
-  return error_unify(r);
+  return error_unify_or_else(r, r);
 }
 
-HANDLE pipe_destroy(HANDLE pipe)
+int pipe_write(SOCKET pipe, const uint8_t *buffer, size_t size, int timeout)
 {
-  return handle_destroy(pipe);
+  assert(pipe != PIPE_INVALID);
+  assert(buffer);
+  assert(size <= INT_MAX);
+
+  int r = -1;
+
+  if (timeout > 0) {
+    WSAPOLLFD pollfd = { .fd = pipe, .events = POLLOUT };
+
+    r = WSAPoll(&pollfd, 1, timeout);
+    if (r <= 0) {
+      if (r == 0) {
+        r = -WAIT_TIMEOUT;
+      }
+
+      return error_unify(r);
+    }
+  }
+
+  r = send(pipe, (const char *) buffer, (int) size, 0);
+
+  if (r < 0 && WSAGetLastError() == WSAECONNRESET) {
+    r = -ERROR_BROKEN_PIPE;
+  }
+
+  return error_unify_or_else(r, r);
+}
+
+int pipe_wait(SOCKET out, SOCKET err, SOCKET *ready, int timeout)
+{
+  assert(ready);
+
+  WSAPOLLFD pollfds[2] = { { 0 }, { 0 } };
+  ULONG num_pollfds = 0;
+
+  if (out != PIPE_INVALID) {
+    pollfds[num_pollfds++] = (WSAPOLLFD){ .fd = out, .events = POLLIN };
+  }
+
+  if (err != PIPE_INVALID) {
+    pollfds[num_pollfds++] = (WSAPOLLFD){ .fd = err, .events = POLLIN };
+  }
+
+  if (num_pollfds == 0) {
+    return -ERROR_BROKEN_PIPE;
+  }
+
+  int r = WSAPoll(pollfds, num_pollfds, timeout);
+  if (r <= 0) {
+    if (r == 0) {
+      r = -WAIT_TIMEOUT;
+    }
+
+    return error_unify(r);
+  }
+
+  for (size_t i = 0; i < num_pollfds; i++) {
+    WSAPOLLFD pollfd = pollfds[i];
+
+    if (pollfd.revents > 0) {
+      *ready = pollfd.fd;
+      break;
+    }
+  }
+
+  return 0;
+}
+
+SOCKET pipe_destroy(SOCKET pipe)
+{
+  if (pipe == PIPE_INVALID) {
+    return PIPE_INVALID;
+  }
+
+  int saved = WSAGetLastError();
+
+  int r = closesocket(pipe);
+  assert_unused(r == 0);
+
+  WSASetLastError(saved);
+
+  return PIPE_INVALID;
 }

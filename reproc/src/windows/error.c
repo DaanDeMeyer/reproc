@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <winsock2.h>
 
 const int REPROC_EINVAL = -ERROR_INVALID_PARAMETER;
 const int REPROC_EPIPE = -ERROR_BROKEN_PIPE;
@@ -21,7 +22,20 @@ int error_unify(int r)
 int error_unify_or_else(int r, int success)
 {
   assert(GetLastError() <= INT_MAX);
-  return r < 0 ? r : r == 0 ? -(int) GetLastError() : success;
+
+  if (r < -1) {
+    return r;
+  }
+
+  if (r == -1) {
+    return -WSAGetLastError();
+  }
+
+  if (r == 0) {
+    return -(int) GetLastError();
+  }
+
+  return success;
 }
 
 enum { ERROR_STRING_MAX_SIZE = 512 };
