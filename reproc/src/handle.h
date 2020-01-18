@@ -1,18 +1,14 @@
 #pragma once
 
-// `handle` allows to define a cross-platform internal API that is
-// implemented on each platform.
 #if defined(_WIN32)
-// `void *` = `HANDLE`
-typedef void *handle;
+typedef void *handle_type; // `HANDLE`
 #else
-// `int` = `pid_t` (used for fd's as well)
-typedef int handle;
+typedef int handle_type; // fd
 #endif
 
-extern const handle HANDLE_INVALID;
+extern const handle_type HANDLE_INVALID; // NOLINT
 
 // Closes `handle` if it is not an invalid handle and returns an invalid handle.
 // Does not overwrite the last system error if an error occurs while closing
 // `handle`.
-handle handle_destroy(handle handle);
+handle_type handle_destroy(handle_type handle);

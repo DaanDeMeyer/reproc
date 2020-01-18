@@ -11,14 +11,16 @@ static const struct pipe_options CHILD_OPTIONS = { .inherit = true,
 static const struct pipe_options PARENT_OPTIONS = { .inherit = false,
                                                     .nonblocking = true };
 
-int redirect_pipe(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
+int redirect_pipe(pipe_type *parent, HANDLE *child, REDIRECT_STREAM stream)
 {
   assert(parent);
   assert(child);
 
   return stream == REDIRECT_STREAM_IN
-             ? pipe_init(child, CHILD_OPTIONS, parent, PARENT_OPTIONS)
-             : pipe_init(parent, PARENT_OPTIONS, child, CHILD_OPTIONS);
+             ? pipe_init((pipe_type *) child, CHILD_OPTIONS, parent,
+                         PARENT_OPTIONS)
+             : pipe_init(parent, PARENT_OPTIONS, (pipe_type *) child,
+                         CHILD_OPTIONS);
 }
 
 static DWORD stream_to_id(REDIRECT_STREAM stream)
@@ -35,7 +37,7 @@ static DWORD stream_to_id(REDIRECT_STREAM stream)
   return 0;
 }
 
-int redirect_inherit(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
+int redirect_inherit(pipe_type *parent, HANDLE *child, REDIRECT_STREAM stream)
 {
   assert(parent);
   assert(child);
@@ -63,7 +65,7 @@ int redirect_inherit(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
     return error_unify(r);
   }
 
-  *parent = HANDLE_INVALID;
+  *parent = PIPE_INVALID;
   *child = duplicated;
 
   return 0;
@@ -75,7 +77,7 @@ static SECURITY_ATTRIBUTES INHERIT = { .nLength = sizeof(SECURITY_ATTRIBUTES),
                                        .bInheritHandle = true,
                                        .lpSecurityDescriptor = NULL };
 
-int redirect_discard(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
+int redirect_discard(pipe_type *parent, HANDLE *child, REDIRECT_STREAM stream)
 {
   assert(parent);
   assert(child);
@@ -90,7 +92,7 @@ int redirect_discard(HANDLE *parent, HANDLE *child, REDIRECT_STREAM stream)
     return error_unify(r);
   }
 
-  *parent = HANDLE_INVALID;
+  *parent = PIPE_INVALID;
   *child = handle;
 
   return 0;

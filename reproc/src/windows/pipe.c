@@ -1,12 +1,15 @@
 #include "pipe.h"
 
 #include "error.h"
+#include "handle.h"
 #include "macro.h"
 
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
 #include <windows.h>
+
+const HANDLE PIPE_INVALID = INVALID_HANDLE_VALUE; // NOLINT
 
 enum {
   PIPE_BUFFER_SIZE = 65536,
@@ -39,7 +42,7 @@ int pipe_init(HANDLE *read,
   // Copyright (c) 1997  Microsoft Corporation
 
   char name[MAX_PATH]; // Thread-safe unique name for the named pipe.
-  HANDLE pipe_handles[2] = { HANDLE_INVALID, HANDLE_INVALID };
+  HANDLE pipe_handles[2] = { PIPE_INVALID, PIPE_INVALID };
   DWORD read_mode = read_options.nonblocking ? FILE_FLAG_OVERLAPPED : 0;
   DWORD write_mode = write_options.nonblocking ? FILE_FLAG_OVERLAPPED : 0;
   SECURITY_ATTRIBUTES security = { .nLength = sizeof(SECURITY_ATTRIBUTES),
@@ -76,8 +79,8 @@ int pipe_init(HANDLE *read,
 
 finish:
   if (r == 0) {
-    handle_destroy(pipe_handles[0]);
-    handle_destroy(pipe_handles[1]);
+    pipe_destroy(pipe_handles[0]);
+    pipe_destroy(pipe_handles[1]);
   }
 
   return error_unify(r);
@@ -85,7 +88,7 @@ finish:
 
 int pipe_read(HANDLE pipe, uint8_t *buffer, size_t size)
 {
-  assert(pipe && pipe != HANDLE_INVALID);
+  assert(pipe && pipe != PIPE_INVALID);
   assert(buffer);
   assert(size <= UINT_MAX);
 
@@ -110,7 +113,7 @@ int pipe_read(HANDLE pipe, uint8_t *buffer, size_t size)
 
 int pipe_write(HANDLE pipe, const uint8_t *buffer, size_t size, int timeout)
 {
-  assert(pipe && pipe != HANDLE_INVALID);
+  assert(pipe && pipe != PIPE_INVALID);
   assert(buffer);
   assert(size <= UINT_MAX);
 
@@ -153,14 +156,14 @@ int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready, int timeout)
 {
   assert(ready);
 
-  HANDLE pipes[2] = { HANDLE_INVALID, HANDLE_INVALID };
+  HANDLE pipes[2] = { PIPE_INVALID, PIPE_INVALID };
   DWORD num_pipes = 0;
 
-  if (out != HANDLE_INVALID) {
+  if (out != PIPE_INVALID) {
     pipes[num_pipes++] = out;
   }
 
-  if (err != HANDLE_INVALID) {
+  if (err != PIPE_INVALID) {
     pipes[num_pipes++] = err;
   }
 
@@ -169,7 +172,7 @@ int pipe_wait(HANDLE out, HANDLE err, HANDLE *ready, int timeout)
   }
 
   OVERLAPPED overlapped[ARRAY_SIZE(pipes)] = { { 0 }, { 0 } };
-  HANDLE events[ARRAY_SIZE(pipes)] = { HANDLE_INVALID, HANDLE_INVALID };
+  HANDLE events[ARRAY_SIZE(pipes)] = { PIPE_INVALID, PIPE_INVALID };
   int r = 0;
 
   // We emulate POSIX `poll` by issuing overlapped zero-sized reads and waiting
@@ -226,7 +229,7 @@ finish:
     // Cancel any remaining zero-sized reads that we queued if they have not yet
     // completed.
 
-    if (events[i] == HANDLE_INVALID) {
+    if (events[i] == PIPE_INVALID) {
       continue;
     }
 
@@ -251,8 +254,13 @@ finish:
   }
 
   for (size_t i = 0; i < num_pipes; i++) {
-    handle_destroy(overlapped[i].hEvent);
+    pipe_destroy(overlapped[i].hEvent);
   }
 
   return error_unify(r);
+}
+
+HANDLE pipe_destroy(HANDLE pipe)
+{
+  return handle_destroy(pipe);
 }

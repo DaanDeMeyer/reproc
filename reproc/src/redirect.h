@@ -1,6 +1,7 @@
 #pragma once
 
 #include "handle.h"
+#include "pipe.h"
 
 typedef enum {
   REDIRECT_STREAM_IN,
@@ -8,8 +9,14 @@ typedef enum {
   REDIRECT_STREAM_ERR
 } REDIRECT_STREAM;
 
-int redirect_pipe(handle *parent, handle *child, REDIRECT_STREAM stream);
+int redirect_pipe(pipe_type *parent,
+                  handle_type *child,
+                  REDIRECT_STREAM stream);
 
-int redirect_inherit(handle *parent, handle *child, REDIRECT_STREAM stream);
+int redirect_inherit(pipe_type *parent,
+                     handle_type *child,
+                     REDIRECT_STREAM stream);
 
-int redirect_discard(handle *parent, handle *child, REDIRECT_STREAM stream);
+int redirect_discard(pipe_type *parent,
+                     handle_type *child,
+                     REDIRECT_STREAM stream);

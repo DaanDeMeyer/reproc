@@ -60,7 +60,7 @@ int redirect_inherit(int *parent, int *child, REDIRECT_STREAM stream)
     return error_unify(r);
   }
 
-  *parent = HANDLE_INVALID;
+  *parent = PIPE_INVALID;
   *child = r; // `r` contains the duplicated file descriptor.
 
   return 0;
@@ -78,7 +78,7 @@ int redirect_discard(int *parent, int *child, REDIRECT_STREAM stream)
     return error_unify(r);
   }
 
-  *parent = HANDLE_INVALID;
+  *parent = PIPE_INVALID;
   *child = r;
 
   return 0;

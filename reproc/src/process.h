@@ -2,10 +2,18 @@
 
 #include "handle.h"
 
+#if defined(_WIN32)
+  typedef void *process_type; // `HANDLE`
+#else
+  typedef int process_type; // `pid_t`
+#endif
+
+extern const process_type PROCESS_INVALID; // NOLINT
+
 struct stdio {
-  handle in;
-  handle out;
-  handle err;
+  handle_type in;
+  handle_type out;
+  handle_type err;
 };
 
 struct process_options {
@@ -28,7 +36,7 @@ struct process_options {
 // Windows, if `argv` is `NULL`, an error is returned.
 //
 // The process handle of the new child process is assigned to `process`.
-int process_start(handle *process,
+int process_start(process_type *process,
                   const char *const *argv,
                   struct process_options options);
 
@@ -37,14 +45,14 @@ int process_start(handle *process,
 //
 // If `timeout` is `REPROC_INFINITE`, this function waits indefinitely for a
 // process to exit.
-int process_wait(handle process, int timeout);
+int process_wait(process_type process, int timeout);
 
 // Sends the `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) signal to the process
 // indicated by `process`.
-int process_terminate(handle process);
+int process_terminate(process_type process);
 
 // Sends the `SIGKILL` signal to `process` (POSIX) or calls `TerminateProcess`
 // on `process` (Windows).
-int process_kill(handle process);
+int process_kill(process_type process);
 
-handle process_destroy(handle process);
+process_type process_destroy(process_type process);

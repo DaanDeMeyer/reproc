@@ -15,6 +15,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+const pid_t PROCESS_INVALID = -1;
+
 static int signal_mask(int how, const sigset_t *newmask, sigset_t *oldmask)
 {
   int r = -1;
@@ -150,7 +152,7 @@ static pid_t process_fork(const int *except, size_t num_except)
   struct {
     int read;
     int write;
-  } pipe = { HANDLE_INVALID, HANDLE_INVALID };
+  } pipe = { PIPE_INVALID, PIPE_INVALID };
 
   r = pipe_init(&pipe.read, PIPE_BLOCKING, &pipe.write, PIPE_BLOCKING);
   if (r < 0) {
@@ -168,8 +170,8 @@ static pid_t process_fork(const int *except, size_t num_except)
 
     UNPROTECT_SYSTEM_ERROR;
 
-    handle_destroy(pipe.read);
-    handle_destroy(pipe.write);
+    pipe_destroy(pipe.read);
+    pipe_destroy(pipe.write);
 
     return error_unify(r);
   }
@@ -190,7 +192,7 @@ static pid_t process_fork(const int *except, size_t num_except)
 
     // Close the error pipe write end on the parent's side so `read` will return
     // when it is closed on the child side as well.
-    handle_destroy(pipe.write);
+    pipe_destroy(pipe.write);
 
     int child_errno = 0;
     r = (int) read(pipe.read, &child_errno, sizeof(child_errno));
@@ -209,7 +211,7 @@ static pid_t process_fork(const int *except, size_t num_except)
       }
     }
 
-    handle_destroy(pipe.read);
+    pipe_destroy(pipe.read);
 
     return error_unify_or_else(r, child);
   }
@@ -290,8 +292,8 @@ finish:
     _exit(EXIT_FAILURE);
   }
 
-  handle_destroy(pipe.write);
-  handle_destroy(pipe.read);
+  pipe_destroy(pipe.write);
+  pipe_destroy(pipe.read);
 
   return 0;
 }
@@ -309,7 +311,7 @@ int process_start(pid_t *process,
   struct {
     int read;
     int write;
-  } pipe = { HANDLE_INVALID, HANDLE_INVALID };
+  } pipe = { PIPE_INVALID, PIPE_INVALID };
   char *program = NULL;
   int r = -1;
 
@@ -389,8 +391,8 @@ int process_start(pid_t *process,
       _exit(EXIT_FAILURE);
     }
 
-    handle_destroy(pipe.read);
-    handle_destroy(pipe.write);
+    pipe_destroy(pipe.read);
+    pipe_destroy(pipe.write);
     free(program);
 
     return 0;
@@ -400,7 +402,7 @@ int process_start(pid_t *process,
 
   // Close the error pipe write end on the parent's side so `read` will return
   // when it is closed on the child side as well.
-  pipe.write = handle_destroy(pipe.write);
+  pipe.write = pipe_destroy(pipe.write);
 
   PROTECT_SYSTEM_ERROR;
 
@@ -422,8 +424,8 @@ int process_start(pid_t *process,
   *process = r;
 
 finish:
-  handle_destroy(pipe.read);
-  handle_destroy(pipe.write);
+  pipe_destroy(pipe.read);
+  pipe_destroy(pipe.write);
   free(program);
 
   return error_unify_or_else(r, 1);
@@ -436,7 +438,7 @@ static int parse_status(int status)
 
 int process_wait(pid_t process, int timeout)
 {
-  assert(process != HANDLE_INVALID);
+  assert(process != PROCESS_INVALID);
 
   int status = 0;
   int r = -1;
@@ -514,7 +516,7 @@ int process_wait(pid_t process, int timeout)
 
 int process_terminate(pid_t process)
 {
-  assert(process != HANDLE_INVALID);
+  assert(process != PROCESS_INVALID);
 
   int r = kill(process, SIGTERM);
   return error_unify(r);
@@ -522,7 +524,7 @@ int process_terminate(pid_t process)
 
 int process_kill(pid_t process)
 {
-  assert(process != HANDLE_INVALID);
+  assert(process != PROCESS_INVALID);
 
   int r = kill(process, SIGKILL);
   return error_unify(r);
@@ -532,5 +534,5 @@ pid_t process_destroy(pid_t process)
 {
   // `waitpid` already cleans up the process for us.
   (void) process;
-  return HANDLE_INVALID;
+  return PROCESS_INVALID;
 }

@@ -4,6 +4,7 @@
 #include "pipe.h"
 
 #include "error.h"
+#include "handle.h"
 #include "macro.h"
 
 #include <assert.h>
@@ -14,6 +15,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+const int PIPE_INVALID = -1;
+
 int pipe_init(int *read,
               struct pipe_options read_options,
               int *write,
@@ -22,7 +25,7 @@ int pipe_init(int *read,
   assert(read);
   assert(write);
 
-  int pipe[2] = { HANDLE_INVALID, HANDLE_INVALID };
+  int pipe[2] = { PIPE_INVALID, PIPE_INVALID };
   int r = -1;
 
   // We use `socketpair` so we have a POSIX compatible way of setting the pipe
@@ -84,19 +87,19 @@ int pipe_init(int *read,
   *read = pipe[0];
   *write = pipe[1];
 
-  pipe[0] = HANDLE_INVALID;
-  pipe[1] = HANDLE_INVALID;
+  pipe[0] = PIPE_INVALID;
+  pipe[1] = PIPE_INVALID;
 
 finish:
-  handle_destroy(pipe[0]);
-  handle_destroy(pipe[1]);
+  pipe_destroy(pipe[0]);
+  pipe_destroy(pipe[1]);
 
   return error_unify(r);
 }
 
 int pipe_read(int pipe, uint8_t *buffer, size_t size)
 {
-  assert(pipe != HANDLE_INVALID);
+  assert(pipe != PIPE_INVALID);
   assert(buffer);
 
   int r = (int) read(pipe, buffer, size);
@@ -110,7 +113,7 @@ int pipe_read(int pipe, uint8_t *buffer, size_t size)
 
 int pipe_write(int pipe, const uint8_t *buffer, size_t size, int timeout)
 {
-  assert(pipe != HANDLE_INVALID);
+  assert(pipe != PIPE_INVALID);
   assert(buffer);
 
   struct pollfd pollfd = { .fd = pipe, .events = POLLOUT };
@@ -133,11 +136,11 @@ int pipe_wait(int out, int err, int *ready, int timeout)
   struct pollfd pollfds[2] = { { 0 }, { 0 } };
   nfds_t num_pollfds = 0;
 
-  if (out != HANDLE_INVALID) {
+  if (out != PIPE_INVALID) {
     pollfds[num_pollfds++] = (struct pollfd){ .fd = out, .events = POLLIN };
   }
 
-  if (err != HANDLE_INVALID) {
+  if (err != PIPE_INVALID) {
     pollfds[num_pollfds++] = (struct pollfd){ .fd = err, .events = POLLIN };
   }
 
@@ -160,4 +163,9 @@ int pipe_wait(int out, int err, int *ready, int timeout)
   }
 
   return 0;
+}
+
+int pipe_destroy(int pipe)
+{
+  return handle_destroy(pipe);
 }

@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <windows.h>
 
+const HANDLE PROCESS_INVALID = INVALID_HANDLE_VALUE; // NOLINT
+
 extern const int REPROC_SIGKILL;
 extern const int REPROC_SIGTERM;
 
@@ -287,7 +289,7 @@ int process_start(HANDLE *process,
   wchar_t *environment_line_wstring = NULL;
   wchar_t *working_directory_wstring = NULL;
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
-  PROCESS_INFORMATION info = { HANDLE_INVALID, HANDLE_INVALID, 0, 0 };
+  PROCESS_INFORMATION info = { PROCESS_INVALID, HANDLE_INVALID, 0, 0 };
   int r = 0;
 
   // Join `argv` to a whitespace delimited string as required by
@@ -425,7 +427,7 @@ int process_wait(HANDLE process, int timeout)
 
 int process_terminate(HANDLE process)
 {
-  assert(process && process != HANDLE_INVALID);
+  assert(process && process != PROCESS_INVALID);
 
   // `GenerateConsoleCtrlEvent` can only be called on a process group. To call
   // `GenerateConsoleCtrlEvent` on a single child process it has to be put in
@@ -437,7 +439,7 @@ int process_terminate(HANDLE process)
 
 int process_kill(HANDLE process)
 {
-  assert(process && process != HANDLE_INVALID);
+  assert(process && process != PROCESS_INVALID);
 
   // We use 137 (`SIGKILL`) as the exit status because it is the same exit
   // status as a process that is stopped with the `SIGKILL` signal on POSIX
