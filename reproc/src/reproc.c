@@ -192,7 +192,7 @@ int reproc_start(reproc_t *process,
 
   r = parse_options(argv, &options);
   if (r < 0) {
-    return r;
+    goto finish;
   }
 
   r = redirect(&process->stdio.in, &child.in, REPROC_STREAM_IN,
