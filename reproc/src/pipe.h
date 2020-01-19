@@ -12,17 +12,9 @@ typedef int pipe_type; // fd
 
 extern const pipe_type PIPE_INVALID;
 
-struct pipe_options {
-  bool inherit; // Ignored on POSIX.
-  bool nonblocking;
-};
-
 // Creates a new anonymous pipe. `read` and `write` are set to the read and
 // write handle of the pipe respectively.
-int pipe_init(pipe_type *read,
-              struct pipe_options read_options,
-              pipe_type *write,
-              struct pipe_options write_options);
+int pipe_init(pipe_type *read, pipe_type *write);
 
 // Reads up to `size` bytes into `buffer` from the pipe indicated by `pipe` and
 // returns the amount of bytes read.

@@ -6,21 +6,13 @@
 #include <assert.h>
 #include <windows.h>
 
-static const struct pipe_options CHILD_OPTIONS = { .inherit = true,
-                                                   .nonblocking = false };
-static const struct pipe_options PARENT_OPTIONS = { .inherit = false,
-                                                    .nonblocking = true };
-
 int redirect_pipe(pipe_type *parent, HANDLE *child, REDIRECT_STREAM stream)
 {
   assert(parent);
   assert(child);
 
-  return stream == REDIRECT_STREAM_IN
-             ? pipe_init((pipe_type *) child, CHILD_OPTIONS, parent,
-                         PARENT_OPTIONS)
-             : pipe_init(parent, PARENT_OPTIONS, (pipe_type *) child,
-                         CHILD_OPTIONS);
+  return stream == REDIRECT_STREAM_IN ? pipe_init((pipe_type *) child, parent)
+                                      : pipe_init(parent, (pipe_type *) child);
 }
 
 static DWORD stream_to_id(REDIRECT_STREAM stream)

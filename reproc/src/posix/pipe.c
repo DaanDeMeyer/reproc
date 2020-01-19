@@ -9,16 +9,15 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <poll.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
 const int PIPE_INVALID = -1;
 
-int pipe_init(int *read,
-              struct pipe_options read_options,
-              int *write,
-              struct pipe_options write_options)
+int pipe_init(int *read, int *write)
 {
   assert(read);
   assert(write);
@@ -71,16 +70,6 @@ int pipe_init(int *read,
     goto finish;
   }
 #endif
-
-  r = fcntl(pipe[0], F_SETFL, read_options.nonblocking ? O_NONBLOCK : 0);
-  if (r < 0) {
-    goto finish;
-  }
-
-  r = fcntl(pipe[1], F_SETFL, write_options.nonblocking ? O_NONBLOCK : 0);
-  if (r < 0) {
-    goto finish;
-  }
 
   *read = pipe[0];
   *write = pipe[1];

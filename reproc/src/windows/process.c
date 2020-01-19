@@ -239,6 +239,15 @@ handle_inherit_list_create(HANDLE *handles, size_t num_handles)
 
   int r = 0;
 
+  // Make sure all the given handles can be inherited.
+  for (size_t i = 0; i < num_handles; i++) {
+    r = SetHandleInformation(handles[i], HANDLE_FLAG_INHERIT,
+                             HANDLE_FLAG_INHERIT);
+    if (r == 0) {
+      return NULL;
+    }
+  }
+
   // Get the required size for `attribute_list`.
   SIZE_T attribute_list_size = 0;
   r = InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size);

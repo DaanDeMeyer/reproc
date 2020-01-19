@@ -95,7 +95,6 @@ static char *path_prepend_cwd(const char *path)
   return cwd;
 }
 
-static const struct pipe_options PIPE_BLOCKING = { .nonblocking = false };
 static const int MAX_FD_LIMIT = 1024 * 1024;
 
 static int get_max_fd(void)
@@ -154,7 +153,7 @@ static pid_t process_fork(const int *except, size_t num_except)
     int write;
   } pipe = { PIPE_INVALID, PIPE_INVALID };
 
-  r = pipe_init(&pipe.read, PIPE_BLOCKING, &pipe.write, PIPE_BLOCKING);
+  r = pipe_init(&pipe.read, &pipe.write);
   if (r < 0) {
     return error_unify(r);
   }
@@ -316,7 +315,7 @@ int process_start(pid_t *process,
   int r = -1;
 
   // We create an error pipe to receive errors from the child process.
-  r = pipe_init(&pipe.read, PIPE_BLOCKING, &pipe.write, PIPE_BLOCKING);
+  r = pipe_init(&pipe.read, &pipe.write);
   if (r < 0) {
     goto finish;
   }

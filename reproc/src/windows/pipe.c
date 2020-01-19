@@ -88,10 +88,7 @@ finish:
   return error_unify(r);
 }
 
-int pipe_init(SOCKET *read,
-              struct pipe_options read_options,
-              SOCKET *write,
-              struct pipe_options write_options)
+int pipe_init(SOCKET *read, SOCKET *write)
 {
   assert(read);
   assert(write);
@@ -106,14 +103,12 @@ int pipe_init(SOCKET *read,
     goto finish;
   }
 
-  r = SetHandleInformation((HANDLE) pair[0], HANDLE_FLAG_INHERIT,
-                           read_options.inherit ? HANDLE_FLAG_INHERIT : 0);
+  r = SetHandleInformation((HANDLE) pair[0], HANDLE_FLAG_INHERIT, 0);
   if (r == 0) {
     goto finish;
   }
 
-  r = SetHandleInformation((HANDLE) pair[1], HANDLE_FLAG_INHERIT,
-                           write_options.inherit ? HANDLE_FLAG_INHERIT : 0);
+  r = SetHandleInformation((HANDLE) pair[1], HANDLE_FLAG_INHERIT, 0);
   if (r == 0) {
     goto finish;
   }
