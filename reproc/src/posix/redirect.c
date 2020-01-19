@@ -8,15 +8,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-int redirect_pipe(int *parent, int *child, REDIRECT_STREAM stream)
-{
-  assert(parent);
-  assert(child);
-
-  return stream == REDIRECT_STREAM_IN ? pipe_init(child, parent)
-                                      : pipe_init(parent, child);
-}
-
 static FILE *stream_to_file(REDIRECT_STREAM stream)
 {
   switch (stream) {

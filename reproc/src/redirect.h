@@ -9,10 +9,6 @@ typedef enum {
   REDIRECT_STREAM_ERR
 } REDIRECT_STREAM;
 
-int redirect_pipe(pipe_type *parent,
-                  handle_type *child,
-                  REDIRECT_STREAM stream);
-
 int redirect_inherit(pipe_type *parent,
                      handle_type *child,
                      REDIRECT_STREAM stream);

@@ -104,6 +104,33 @@ static int parse_options(const char *const *argv, reproc_options *options)
   return 0;
 }
 
+static int
+redirect_pipe(pipe_type *parent, handle_type *child, REPROC_STREAM stream)
+{
+  assert(parent);
+  assert(child);
+
+  pipe_type pipe[2] = { PIPE_INVALID, PIPE_INVALID };
+  int r = -1;
+
+  r = pipe_init(&pipe[0], &pipe[1]);
+  if (r < 0) {
+    goto finish;
+  }
+
+  *child = stream == REPROC_STREAM_IN ? pipe[0] : pipe[1];
+  *parent = stream == REPROC_STREAM_IN ? pipe[1] : pipe[0];
+
+  pipe[0] = PIPE_INVALID;
+  pipe[1] = PIPE_INVALID;
+
+finish:
+  pipe_destroy(pipe[0]);
+  pipe_destroy(pipe[1]);
+
+  return r;
+}
+
 static int redirect(pipe_type *parent,
                     handle_type *child,
                     REPROC_STREAM stream,
@@ -117,7 +144,7 @@ static int redirect(pipe_type *parent,
   switch (type) {
 
     case REPROC_REDIRECT_PIPE:
-      r = redirect_pipe(parent, child, (REDIRECT_STREAM) stream);
+      r = redirect_pipe(parent, child, stream);
       break;
 
     case REPROC_REDIRECT_INHERIT:

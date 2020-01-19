@@ -6,15 +6,6 @@
 #include <assert.h>
 #include <windows.h>
 
-int redirect_pipe(pipe_type *parent, HANDLE *child, REDIRECT_STREAM stream)
-{
-  assert(parent);
-  assert(child);
-
-  return stream == REDIRECT_STREAM_IN ? pipe_init((pipe_type *) child, parent)
-                                      : pipe_init(parent, (pipe_type *) child);
-}
-
 static DWORD stream_to_id(REDIRECT_STREAM stream)
 {
   switch (stream) {
