@@ -16,18 +16,21 @@ extern const pipe_type PIPE_INVALID;
 // write handle of the pipe respectively.
 int pipe_init(pipe_type *read, pipe_type *write);
 
+// Sets `pipe` to nonblocking mode.
+int pipe_nonblocking(pipe_type pipe, bool enable);
+
 // Reads up to `size` bytes into `buffer` from the pipe indicated by `pipe` and
 // returns the amount of bytes read.
 int pipe_read(pipe_type pipe, uint8_t *buffer, size_t size);
 
 // Writes up to `size` bytes from `buffer` to the pipe indicated by `pipe` and
 // returns the amount of bytes written.
-int pipe_write(pipe_type pipe, const uint8_t *buffer, size_t size, int timeout);
+int pipe_write(pipe_type pipe, const uint8_t *buffer, size_t size);
 
-// Stores the value of the first of `out` and `ready` that will have data
-// available to read in `ready`.
+// Returns the first stream of `in`, `out` and `err` that has data available to
+// read. 0 => in, 1 => out, 2 => err.
 //
-// Returns `REPROC_EPIPE` if both `out` and `err` are invalid handles.
-int pipe_wait(const pipe_type *pipes, size_t num_pipes, int timeout);
+// Returns `REPROC_EPIPE` if `in`, `out` and `err` are invalid.
+int pipe_wait(pipe_type in, pipe_type out, pipe_type err, int timeout);
 
 pipe_type pipe_destroy(pipe_type pipe);

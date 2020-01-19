@@ -53,7 +53,7 @@ int main(void)
   while (true) {
     // `reproc_poll` returns the first stream (stdout or stderr) that has data
     // available to read.
-    r = reproc_poll(process);
+    r = reproc_poll(process, REPROC_STREAM_OUT | REPROC_STREAM_ERR);
     if (r < 0) {
       break;
     }

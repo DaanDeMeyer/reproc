@@ -55,8 +55,7 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
     goto finish;
   }
 
-  u_long mode = 1;
-  r = ioctlsocket(pair[0], (long) FIONBIO, &mode);
+  r = pipe_nonblocking(pair[0], true);
   if (r < 0) {
     goto finish;
   }
@@ -66,8 +65,7 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
     goto finish;
   }
 
-  mode = 0;
-  r = ioctlsocket(pair[0], (long) FIONBIO, &mode);
+  r = pipe_nonblocking(pair[0], false);
   if (r < 0) {
     goto finish;
   }
@@ -144,6 +142,13 @@ finish:
   return error_unify(r);
 }
 
+int pipe_nonblocking(SOCKET pipe, bool enable)
+{
+  u_long mode = enable;
+  int r = ioctlsocket(pipe, (long) FIONBIO, &mode);
+  return error_unify(r);
+}
+
 int pipe_read(SOCKET pipe, uint8_t *buffer, size_t size)
 {
   assert(pipe != PIPE_INVALID);
@@ -153,34 +158,19 @@ int pipe_read(SOCKET pipe, uint8_t *buffer, size_t size)
   int r = recv(pipe, (char *) buffer, (int) size, 0);
 
   if (r == 0 || (r < 0 && WSAGetLastError() == WSAECONNRESET)) {
-    return -ERROR_BROKEN_PIPE;
+    r = -ERROR_BROKEN_PIPE;
   }
 
   return error_unify_or_else(r, r);
 }
 
-int pipe_write(SOCKET pipe, const uint8_t *buffer, size_t size, int timeout)
+int pipe_write(SOCKET pipe, const uint8_t *buffer, size_t size)
 {
   assert(pipe != PIPE_INVALID);
   assert(buffer);
   assert(size <= INT_MAX);
 
-  int r = -1;
-
-  if (timeout > 0) {
-    WSAPOLLFD pollfd = { .fd = pipe, .events = POLLOUT };
-
-    r = WSAPoll(&pollfd, 1, timeout);
-    if (r <= 0) {
-      if (r == 0) {
-        r = -WAIT_TIMEOUT;
-      }
-
-      return error_unify(r);
-    }
-  }
-
-  r = send(pipe, (const char *) buffer, (int) size, 0);
+  int r = send(pipe, (const char *) buffer, (int) size, 0);
 
   if (r < 0 && WSAGetLastError() == WSAECONNRESET) {
     r = -ERROR_BROKEN_PIPE;
@@ -189,49 +179,34 @@ int pipe_write(SOCKET pipe, const uint8_t *buffer, size_t size, int timeout)
   return error_unify_or_else(r, r);
 }
 
-int pipe_wait(const SOCKET *pipes, size_t num_pipes, int timeout)
+int pipe_wait(SOCKET in, SOCKET out, SOCKET err, int timeout)
 {
-  assert(pipes);
-  assert(num_pipes <= INT_MAX);
-
-  WSAPOLLFD *pollfds = NULL;
-  int r = -ERROR_NOT_ENOUGH_MEMORY;
-
-  pollfds = calloc(sizeof(WSAPOLLFD), num_pipes);
-  if (pollfds == NULL) {
-    goto finish;
+  if (in == PIPE_INVALID && out == PIPE_INVALID && err == PIPE_INVALID) {
+    return -EPIPE;
   }
 
-  for (size_t i = 0; i < num_pipes; i++) {
-    pollfds[i] = (struct pollfd){ .fd = pipes[i], .events = POLLIN };
-  }
+  struct pollfd pollfds[3] = { { .fd = in, .events = POLLOUT },
+                               { .fd = out, .events = POLLIN },
+                               { .fd = err, .events = POLLIN } };
 
-  r = WSAPoll(pollfds, (int) num_pipes, timeout);
+  int r = WSAPoll(pollfds, ARRAY_SIZE(pollfds), timeout);
   if (r <= 0) {
-    if (r == 0) {
-      r = -WAIT_TIMEOUT;
-    }
-
-    goto finish;
+    return error_unify(r == 0 ? -WAIT_TIMEOUT : r);
   }
 
   size_t i = 0;
 
-  for (; i < num_pipes; i++) {
+  for (; i < ARRAY_SIZE(pollfds); i++) {
     WSAPOLLFD pollfd = pollfds[i];
 
-    if (pollfd.revents > 0) {
+    if (pollfd.revents > 0 && pollfd.revents != POLLNVAL) {
       break;
     }
   }
 
-  assert(i < num_pipes);
-  r = (int) i;
+  assert(i < ARRAY_SIZE(pollfds));
 
-finish:
-  free(pollfds);
-
-  return error_unify_or_else(r, r);
+  return (int) i;
 }
 
 SOCKET pipe_destroy(SOCKET pipe)

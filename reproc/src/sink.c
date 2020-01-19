@@ -27,7 +27,7 @@ int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
   int r = -1;
 
   while (true) {
-    r = reproc_poll(process);
+    r = reproc_poll(process, REPROC_STREAM_OUT | REPROC_STREAM_ERR);
     if (r < 0) {
       break;
     }

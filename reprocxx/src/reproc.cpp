@@ -13,7 +13,6 @@ const int terminate = REPROC_SIGTERM;
 
 const milliseconds infinite = milliseconds(REPROC_INFINITE);
 const milliseconds deadline = milliseconds(REPROC_DEADLINE);
-const milliseconds nonblocking = milliseconds(REPROC_NONBLOCKING);
 
 static std::error_code error_code_from(int r)
 {
@@ -79,9 +78,9 @@ std::pair<bool, std::error_code> process::fork(const options &options) noexcept
   return { r == 0, error_code_from(r) };
 }
 
-std::pair<stream, std::error_code> process::poll()
+std::pair<stream, std::error_code> process::poll(stream set)
 {
-  int r = reproc_poll(process_.get());
+  int r = reproc_poll(process_.get(), static_cast<REPROC_STREAM>(set));
   return { static_cast<stream>(r), error_code_from(r) };
 }
 

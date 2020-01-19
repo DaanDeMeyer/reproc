@@ -78,7 +78,27 @@ struct options {
   class input input;
 };
 
-enum class stream { in, out, err };
+enum class stream { in = 1 << 0, out = 1 << 1, err = 1 << 2 };
+
+inline constexpr stream operator&(stream x, stream y)
+{
+  return static_cast<stream>(static_cast<int>(x) & static_cast<int>(y));
+}
+
+inline constexpr stream operator|(stream x, stream y)
+{
+  return static_cast<stream>(static_cast<int>(x) | static_cast<int>(y));
+}
+
+inline constexpr stream operator^(stream x, stream y)
+{
+  return static_cast<stream>(static_cast<int>(x) ^ static_cast<int>(y));
+}
+
+inline constexpr stream operator~(stream x)
+{
+  return static_cast<stream>(~static_cast<int>(x));
+}
 
 /*! Improves on reproc's API by adding RAII and changing the API of some
 functions to be more idiomatic C++. */
@@ -102,7 +122,8 @@ public:
   REPROCXX_EXPORT std::pair<bool, std::error_code>
   fork(const options &options = {}) noexcept;
 
-  REPROCXX_EXPORT std::pair<stream, std::error_code> poll();
+  /*! `reproc_poll` but returns a pair of (stream, error). */
+  REPROCXX_EXPORT std::pair<stream, std::error_code> poll(stream set);
 
   /*! `reproc_read` but returns a pair of (bytes read, error). */
   REPROCXX_EXPORT std::pair<size_t, std::error_code>

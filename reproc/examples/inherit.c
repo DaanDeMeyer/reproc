@@ -22,6 +22,7 @@ int main(int argc, const char *argv[])
   if (process == NULL) {
     goto finish;
   }
+
   r = reproc_start(process, argv + 1, (reproc_options) { .inherit = true });
   if (r < 0) {
     goto finish;

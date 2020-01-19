@@ -32,7 +32,6 @@ const int REPROC_SIGTERM = UINT8_MAX + 15;
 
 const int REPROC_INFINITE = -1;
 const int REPROC_DEADLINE = -2;
-const int REPROC_NONBLOCKING = -3;
 
 static int parse_options(const char *const *argv, reproc_options *options)
 {
@@ -82,8 +81,6 @@ static int parse_options(const char *const *argv, reproc_options *options)
   // by setting `timeout` to `REPROC_NONBLOCKING`.
   if (options->timeout == 0) {
     options->timeout = REPROC_INFINITE;
-  } else if (options->timeout == REPROC_NONBLOCKING) {
-    options->timeout = 0;
   }
 
   if (options->deadline == 0) {
@@ -118,7 +115,8 @@ redirect_pipe(pipe_type *parent, handle_type *child, REPROC_STREAM stream)
     goto finish;
   }
 
-  *child = stream == REPROC_STREAM_IN ? pipe[0] : pipe[1];
+  *child = stream == REPROC_STREAM_IN ? (handle_type) pipe[0]
+                                      : (handle_type) pipe[1];
   *parent = stream == REPROC_STREAM_IN ? pipe[1] : pipe[0];
 
   pipe[0] = PIPE_INVALID;
@@ -341,7 +339,7 @@ finish:
   return r;
 }
 
-int reproc_poll(reproc_t *process)
+int reproc_poll(reproc_t *process, REPROC_STREAM set)
 {
   assert_return(process, REPROC_EINVAL);
 
@@ -353,11 +351,14 @@ int reproc_poll(reproc_t *process)
     return REPROC_EPIPE;
   }
 
-  // Put a dummy pipe first so the index returned by `pipe_wait` equals the
-  // stream that's ready to be read from.
-  pipe_type pipes[3] = { PIPE_INVALID, process->stdio.out, process->stdio.err };
+  pipe_type in = set & REPROC_STREAM_IN ? process->stdio.in : PIPE_INVALID;
+  pipe_type out = set & REPROC_STREAM_OUT ? process->stdio.out : PIPE_INVALID;
+  pipe_type err = set & REPROC_STREAM_ERR ? process->stdio.err : PIPE_INVALID;
 
-  return pipe_wait(pipes, ARRAY_SIZE(pipes), timeout);
+  int r = pipe_wait(in, out, err, timeout);
+
+  // Convert return value of `pipe_wait` to `REPROC_STREAM`.
+  return r < 0 ? r : 1 << r;
 }
 
 int reproc_read(reproc_t *process,
@@ -370,9 +371,6 @@ int reproc_read(reproc_t *process,
   assert_return(stream == REPROC_STREAM_OUT || stream == REPROC_STREAM_ERR,
                 REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
-
-  int timeout = expiry(process->timeout, process->deadline);
-  assert_return(timeout != 0, REPROC_ETIMEDOUT);
 
   pipe_type *pipe = stream == REPROC_STREAM_OUT ? &process->stdio.out
                                                 : &process->stdio.err;
@@ -404,10 +402,7 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
     return REPROC_EPIPE;
   }
 
-  int timeout = expiry(process->timeout, process->deadline);
-  assert_return(timeout != 0, REPROC_ETIMEDOUT);
-
-  int r = pipe_write(process->stdio.in, buffer, size, timeout);
+  int r = pipe_write(process->stdio.in, buffer, size);
 
   if (r == REPROC_EPIPE) {
     process->stdio.in = pipe_destroy(process->stdio.in);

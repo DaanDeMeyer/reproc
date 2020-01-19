@@ -11,6 +11,7 @@ const int REPROC_EINVAL = -EINVAL;
 const int REPROC_EPIPE = -EPIPE;
 const int REPROC_ETIMEDOUT = -ETIMEDOUT;
 const int REPROC_ENOMEM = -ENOMEM;
+const int REPROC_EWOULDBLOCK = -EWOULDBLOCK;
 
 int error_unify(int r)
 {

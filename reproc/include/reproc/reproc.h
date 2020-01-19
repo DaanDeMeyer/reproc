@@ -26,6 +26,8 @@ stdout/stderr all of the data remaining in that stream has been read). */
 REPROC_EXPORT extern const int REPROC_EPIPE;
 /*! A memory allocation failed. */
 REPROC_EXPORT extern const int REPROC_ENOMEM;
+/*! A call to `reproc_read` or `reproc_write` would have blocked. */
+REPROC_EXPORT extern const int REPROC_EWOULDBLOCK;
 
 /*! Signal exit status constants. */
 
@@ -34,9 +36,6 @@ REPROC_EXPORT extern const int REPROC_SIGTERM;
 
 /*! Tells a function that takes a timeout value to wait indefinitely. */
 REPROC_EXPORT extern const int REPROC_INFINITE;
-/*! Pass `REPROC_NONBLOCKING` to `reproc_options`'s `timeout` option to make
-`reproc_read` and `reproc_write` nonblocking. */
-REPROC_EXPORT extern const int REPROC_NONBLOCKING;
 /*! Tells `reproc_wait` to wait until the deadline passed to `reproc_start`
 expires. */
 REPROC_EXPORT extern const int REPROC_DEADLINE;
@@ -44,11 +43,11 @@ REPROC_EXPORT extern const int REPROC_DEADLINE;
 /*! Stream identifiers used to indicate which stream to act on. */
 typedef enum {
   /*! stdin */
-  REPROC_STREAM_IN,
+  REPROC_STREAM_IN = 1 << 0,
   /*! stdout */
-  REPROC_STREAM_OUT,
+  REPROC_STREAM_OUT = 1 << 1,
   /*! stderr */
-  REPROC_STREAM_ERR
+  REPROC_STREAM_ERR = 1 << 2
 } REPROC_STREAM;
 
 /*! Used to tell reproc where to redirect the streams of the child process. */
@@ -127,9 +126,9 @@ typedef struct reproc_options {
   */
   reproc_stop_actions stop;
   /*!
-  Maximum duration in milliseconds to wait for a single `reproc_read` or
-  `reproc_write` operation to complete. If the timeout expires, the call to
-  `reproc_read` or `reproc_write` returns `REPROC_ETIMEDOUT`.
+  Maximum duration in milliseconds to wait for a single `reproc_poll` operation
+  to complete. If the timeout expires, the call to `reproc_poll` returns
+  `REPROC_ETIMEDOUT`.
 
   When `timeout` is zero, `reproc_read` and `reproc_write` will wait
   indefinitely for any I/O to complete.
@@ -214,13 +213,16 @@ REPROC_EXPORT int reproc_start(reproc_t *process,
                                reproc_options options);
 
 /*!
-Returns the first stream of `process` that has data available to be read (stdout
-or stderr).
+Returns the first stream of `process` in `set` that is readable/writable.
+
+Example: `r = reproc_poll(process, REPROC_STREAM_OUT | REPROC_STREAM_ERR);`
 
 Actionable errors:
-- `REPROC_EPIPE` (both stdout and stderr have been closed)
+- `REPROC_EPIPE` (All streams in `set` are closed)
+- `REPROC_ETIMEDOUT`
 */
-REPROC_EXPORT int reproc_poll(reproc_t *process);
+REPROC_EXPORT int
+reproc_poll(reproc_t *process, REPROC_STREAM set);
 
 /*!
 Reads up to `size` bytes into `buffer` from the child process output stream
@@ -228,7 +230,7 @@ indicated by `stream`.
 
 Actionable errors:
 - `REPROC_EPIPE`
-- `REPROC_ETIMEDOUT`
+- `REPROC_EWOULDBLOCK`
 */
 REPROC_EXPORT int reproc_read(reproc_t *process,
                               REPROC_STREAM stream,
@@ -252,7 +254,7 @@ If the standard input of the child process wasn't opened with
 
 Actionable errors:
 - `REPROC_EPIPE`
-- `REPROC_ETIMEDOUT`
+- `REPROC_EWOULDBLOCK`
 */
 REPROC_EXPORT int
 reproc_write(reproc_t *process, const uint8_t *buffer, size_t size);
@@ -272,8 +274,10 @@ has already exited or exits within the given timeout, its exit status is
 returned.
 
 If `timeout` is 0, the function will only check if the child process is still
-running without waiting. If `timeout` is `REPROC_INFINITE`, the function will
-wait indefinitely for the child process to exit.
+running without waiting. If `timeout` is `REPROC_INFINITE`, this function will
+wait indefinitely for the child process to exit. If `timeout` is
+`REPROC_DEADLINE`, this function waits until the deadline passed to
+`reproc_start` expires.
 
 Actionable errors:
 - `REPROC_ETIMEDOUT`

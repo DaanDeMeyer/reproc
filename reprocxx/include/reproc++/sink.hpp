@@ -36,7 +36,7 @@ std::error_code drain(process &process, Out &&out, Err &&err)
 
   while (true) {
     stream stream = {};
-    std::tie(stream, ec) = process.poll();
+    std::tie(stream, ec) = process.poll(stream::out | stream::err);
     if (ec) {
       break;
     }

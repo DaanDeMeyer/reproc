@@ -5,6 +5,7 @@
 
 #include "error.h"
 #include "handle.h"
+#include "macro.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -84,12 +85,19 @@ finish:
   return error_unify(r);
 }
 
+int pipe_nonblocking(int pipe, bool enable)
+{
+  int r = fcntl(pipe, F_SETFL, enable ? O_NONBLOCK : 0);
+  return error_unify(r);
+}
+
 int pipe_read(int pipe, uint8_t *buffer, size_t size)
 {
   assert(pipe != PIPE_INVALID);
   assert(buffer);
 
   int r = (int) read(pipe, buffer, size);
+
   if (r == 0) {
     // `read` returns 0 to indicate the other end of the pipe was closed.
     r = -EPIPE;
@@ -98,53 +106,34 @@ int pipe_read(int pipe, uint8_t *buffer, size_t size)
   return error_unify_or_else(r, r);
 }
 
-int pipe_write(int pipe, const uint8_t *buffer, size_t size, int timeout)
+int pipe_write(int pipe, const uint8_t *buffer, size_t size)
 {
   assert(pipe != PIPE_INVALID);
   assert(buffer);
 
-  struct pollfd pollfd = { .fd = pipe, .events = POLLOUT };
-  int r = -1;
-
-  r = poll(&pollfd, 1, timeout);
-  if (r <= 0) {
-    return error_unify_or_else(r, -ETIMEDOUT);
-  }
-
-  r = (int) write(pipe, buffer, size);
+  int r = (int) write(pipe, buffer, size);
 
   return error_unify_or_else(r, r);
 }
 
-int pipe_wait(const int *pipes, size_t num_pipes, int timeout)
+int pipe_wait(int in, int out, int err, int timeout)
 {
-  assert(pipes);
-  assert(num_pipes <= INT_MAX);
-
-  struct pollfd *pollfds = NULL;
-  int r = -ENOMEM;
-
-  pollfds = calloc(sizeof(struct pollfd), num_pipes);
-  if (pollfds == NULL) {
-    goto finish;
+  if (in == PIPE_INVALID && out == PIPE_INVALID && err == PIPE_INVALID) {
+    return -EPIPE;
   }
 
-  for (size_t i = 0; i < num_pipes; i++) {
-    pollfds[i] = (struct pollfd){ .fd = pipes[i], .events = POLLIN };
-  }
+  struct pollfd pollfds[3] = { { .fd = in, .events = POLLOUT },
+                               { .fd = out, .events = POLLIN },
+                               { .fd = err, .events = POLLIN } };
 
-  r = poll(pollfds, (nfds_t) num_pipes, timeout);
+  int r = poll(pollfds, ARRAY_SIZE(pollfds), timeout);
   if (r <= 0) {
-    if (r == 0) {
-      r = -ETIMEDOUT;
-    }
-
-    goto finish;
+    return error_unify(r == 0 ? -ETIMEDOUT : r);
   }
 
-  size_t i = 0;
+  nfds_t i = 0;
 
-  for (; i < num_pipes; i++) {
+  for (; i < ARRAY_SIZE(pollfds); i++) {
     struct pollfd pollfd = pollfds[i];
 
     if (pollfd.revents > 0) {
@@ -152,13 +141,9 @@ int pipe_wait(const int *pipes, size_t num_pipes, int timeout)
     }
   }
 
-  assert(i < num_pipes);
-  r = (int) i;
+  assert(i < ARRAY_SIZE(pollfds));
 
-finish:
-  free(pollfds);
-
-  return error_unify_or_else(r, r);
+  return (int) i;
 }
 
 int pipe_destroy(int pipe)
