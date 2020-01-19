@@ -66,6 +66,12 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
     goto finish;
   }
 
+  mode = 0;
+  r = ioctlsocket(pair[0], (long) FIONBIO, &mode);
+  if (r < 0) {
+    goto finish;
+  }
+
   pair[1] = accept(server, NULL, NULL);
   if (pair[1] == INVALID_SOCKET) {
     r = -1;
