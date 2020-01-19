@@ -102,9 +102,6 @@ jobs:
           scoop install ninja llvm --global
 
           if ("${{ matrix.config.compiler }}" -eq "gcc") {
-            # Make sure a sane version of mingw is found first.
-            # See https://github.com/actions/virtual-environments/pull/211.
-            scoop install gcc --global
             echo "::set-env name=CC::gcc"
             echo "::set-env name=CXX::g++"
           } elseif ("${{ matrix.config.compiler }}" -eq "clang") {
