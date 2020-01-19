@@ -5,12 +5,10 @@
 
 #include "error.h"
 #include "handle.h"
-#include "macro.h"
 
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
