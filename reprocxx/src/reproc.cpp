@@ -79,12 +79,18 @@ std::pair<bool, std::error_code> process::fork(const options &options) noexcept
   return { r == 0, error_code_from(r) };
 }
 
-std::tuple<stream, size_t, std::error_code> process::read(uint8_t *buffer,
-                                                          size_t size) noexcept
+std::pair<stream, std::error_code> process::poll()
 {
-  REPROC_STREAM stream = {};
-  int r = reproc_read(process_.get(), &stream, buffer, size);
-  return { static_cast<enum stream>(stream), r, error_code_from(r) };
+  int r = reproc_poll(process_.get());
+  return { static_cast<stream>(r), error_code_from(r) };
+}
+
+std::pair<size_t, std::error_code>
+process::read(stream stream, uint8_t *buffer, size_t size) noexcept
+{
+  int r = reproc_read(process_.get(), static_cast<REPROC_STREAM>(stream),
+                      buffer, size);
+  return { r, error_code_from(r) };
 }
 
 std::pair<size_t, std::error_code> process::write(const uint8_t *buffer,

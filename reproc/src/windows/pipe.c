@@ -189,44 +189,49 @@ int pipe_write(SOCKET pipe, const uint8_t *buffer, size_t size, int timeout)
   return error_unify_or_else(r, r);
 }
 
-int pipe_wait(SOCKET out, SOCKET err, SOCKET *ready, int timeout)
+int pipe_wait(const SOCKET *pipes, size_t num_pipes, int timeout)
 {
-  assert(ready);
+  assert(pipes);
+  assert(num_pipes <= INT_MAX);
 
-  WSAPOLLFD pollfds[2] = { { 0 }, { 0 } };
-  ULONG num_pollfds = 0;
+  WSAPOLLFD *pollfds = NULL;
+  int r = -ERROR_NOT_ENOUGH_MEMORY;
 
-  if (out != PIPE_INVALID) {
-    pollfds[num_pollfds++] = (WSAPOLLFD){ .fd = out, .events = POLLIN };
+  pollfds = calloc(sizeof(WSAPOLLFD), num_pipes);
+  if (pollfds == NULL) {
+    goto finish;
   }
 
-  if (err != PIPE_INVALID) {
-    pollfds[num_pollfds++] = (WSAPOLLFD){ .fd = err, .events = POLLIN };
+  for (size_t i = 0; i < num_pipes; i++) {
+    pollfds[i] = (struct pollfd){ .fd = pipes[i], .events = POLLIN };
   }
 
-  if (num_pollfds == 0) {
-    return -ERROR_BROKEN_PIPE;
-  }
-
-  int r = WSAPoll(pollfds, num_pollfds, timeout);
+  r = WSAPoll(pollfds, (int) num_pipes, timeout);
   if (r <= 0) {
     if (r == 0) {
       r = -WAIT_TIMEOUT;
     }
 
-    return error_unify(r);
+    goto finish;
   }
 
-  for (size_t i = 0; i < num_pollfds; i++) {
+  size_t i = 0;
+
+  for (; i < num_pipes; i++) {
     WSAPOLLFD pollfd = pollfds[i];
 
     if (pollfd.revents > 0) {
-      *ready = pollfd.fd;
       break;
     }
   }
 
-  return 0;
+  assert(i < num_pipes);
+  r = (int) i;
+
+finish:
+  free(pollfds);
+
+  return error_unify_or_else(r, r);
 }
 
 SOCKET pipe_destroy(SOCKET pipe)

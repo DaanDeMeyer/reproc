@@ -36,8 +36,13 @@ std::error_code drain(process &process, Out &&out, Err &&err)
 
   while (true) {
     stream stream = {};
+    std::tie(stream, ec) = process.poll();
+    if (ec) {
+      break;
+    }
+
     size_t bytes_read = 0;
-    std::tie(stream, bytes_read, ec) = process.read(buffer, BUFFER_SIZE);
+    std::tie(bytes_read, ec) = process.read(stream, buffer, BUFFER_SIZE);
     if (ec) {
       break;
     }

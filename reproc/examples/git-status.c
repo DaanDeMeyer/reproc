@@ -51,12 +51,18 @@ int main(void)
   // while loop keeps running until an error occurs in `reproc_read` (the child
   // process closing its output stream is also reported as an error).
   while (true) {
-    // `reproc_read` takes an optional pointer to a `REPROC_STREAM` and sets its
-    // value to the stream that it read from. As we're going to put both the
-    // stdout and stderr output in the same string, we pass `NULL` since we
-    // don't need to know which stream was read from.
+    // `reproc_poll` returns the first stream (stdout or stderr) that has data
+    // available to read.
+    r = reproc_poll(process);
+    if (r < 0) {
+      break;
+    }
+
+    REPROC_STREAM stream = (REPROC_STREAM) r;
+
+    // Read from the stream returned by `reproc_poll` with `reproc_read`.
     uint8_t buffer[4096];
-    r = reproc_read(process, NULL, buffer, sizeof(buffer));
+    r = reproc_read(process, stream, buffer, sizeof(buffer));
     if (r < 0) {
       break;
     }

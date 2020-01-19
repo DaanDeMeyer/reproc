@@ -28,6 +28,6 @@ int pipe_write(pipe_type pipe, const uint8_t *buffer, size_t size, int timeout);
 // available to read in `ready`.
 //
 // Returns `REPROC_EPIPE` if both `out` and `err` are invalid handles.
-int pipe_wait(pipe_type out, pipe_type err, pipe_type *ready, int timeout);
+int pipe_wait(const pipe_type *pipes, size_t num_pipes, int timeout);
 
 pipe_type pipe_destroy(pipe_type pipe);

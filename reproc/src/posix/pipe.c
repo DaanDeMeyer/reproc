@@ -116,40 +116,49 @@ int pipe_write(int pipe, const uint8_t *buffer, size_t size, int timeout)
   return error_unify_or_else(r, r);
 }
 
-int pipe_wait(int out, int err, int *ready, int timeout)
+int pipe_wait(const int *pipes, size_t num_pipes, int timeout)
 {
-  assert(ready);
+  assert(pipes);
+  assert(num_pipes <= INT_MAX);
 
-  struct pollfd pollfds[2] = { { 0 }, { 0 } };
-  nfds_t num_pollfds = 0;
+  struct pollfd *pollfds = NULL;
+  int r = -ENOMEM;
 
-  if (out != PIPE_INVALID) {
-    pollfds[num_pollfds++] = (struct pollfd){ .fd = out, .events = POLLIN };
+  pollfds = calloc(sizeof(struct pollfd), num_pipes);
+  if (pollfds == NULL) {
+    goto finish;
   }
 
-  if (err != PIPE_INVALID) {
-    pollfds[num_pollfds++] = (struct pollfd){ .fd = err, .events = POLLIN };
+  for (size_t i = 0; i < num_pipes; i++) {
+    pollfds[i] = (struct pollfd){ .fd = pipes[i], .events = POLLIN };
   }
 
-  if (num_pollfds == 0) {
-    return -EPIPE;
-  }
-
-  int r = poll(pollfds, num_pollfds, timeout);
+  r = poll(pollfds, (nfds_t) num_pipes, timeout);
   if (r <= 0) {
-    return error_unify_or_else(r, -ETIMEDOUT);
+    if (r == 0) {
+      r = -ETIMEDOUT;
+    }
+
+    goto finish;
   }
 
-  for (size_t i = 0; i < num_pollfds; i++) {
+  size_t i = 0;
+
+  for (; i < num_pipes; i++) {
     struct pollfd pollfd = pollfds[i];
 
     if (pollfd.revents > 0) {
-      *ready = pollfd.fd;
       break;
     }
   }
 
-  return 0;
+  assert(i < num_pipes);
+  r = (int) i;
+
+finish:
+  free(pollfds);
+
+  return error_unify_or_else(r, r);
 }
 
 int pipe_destroy(int pipe)

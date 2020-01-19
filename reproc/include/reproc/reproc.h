@@ -214,21 +214,24 @@ REPROC_EXPORT int reproc_start(reproc_t *process,
                                reproc_options options);
 
 /*!
-Reads up to `size` bytes into `buffer` from either the child process stdout or
-stderr stream and returns the amount of bytes read.
+Returns the first stream of `process` that has data available to be read (stdout
+or stderr).
 
-If `stream` is not `NULL`, it is used to store the stream that was
-read from (`REPROC_STREAM_OUT` or `REPROC_STREAM_ERR`).
+Actionable errors:
+- `REPROC_EPIPE` (both stdout and stderr have been closed)
+*/
+REPROC_EXPORT int reproc_poll(reproc_t *process);
 
-If both streams are closed by the child process or weren't opened with
-`REPROC_REDIRECT_PIPE`, this function returns `REPROC_EPIPE`.
+/*!
+Reads up to `size` bytes into `buffer` from the child process output stream
+indicated by `stream`.
 
 Actionable errors:
 - `REPROC_EPIPE`
 - `REPROC_ETIMEDOUT`
 */
 REPROC_EXPORT int reproc_read(reproc_t *process,
-                              REPROC_STREAM *stream,
+                              REPROC_STREAM stream,
                               uint8_t *buffer,
                               size_t size);
 

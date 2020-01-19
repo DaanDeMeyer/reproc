@@ -52,22 +52,30 @@ static void timeout(void)
   reproc_t *process = reproc_new();
   assert(process);
 
-  const char *argv[3] = { RESOURCE_DIRECTORY "/io", "stdout", NULL };
+  const char *argv[2] = { RESOURCE_DIRECTORY "/io", NULL };
 
   r = reproc_start(process, argv, (reproc_options){ .timeout = 200 });
   assert(r >= 0);
 
-  uint8_t buffer = 0;
-  r = reproc_read(process, NULL, &buffer, sizeof(buffer));
+  char *out = NULL;
+  char *err = NULL;
+  r = reproc_drain(process, reproc_sink_string(&out), reproc_sink_string(&err));
   assert(r == REPROC_ETIMEDOUT);
+  assert(out != NULL && strlen(out) == 0);
+  assert(err != NULL && strlen(err) == 0);
 
   r = reproc_close(process, REPROC_STREAM_IN);
   assert(r == 0);
 
-  r = reproc_read(process, NULL, &buffer, sizeof(buffer));
-  assert(r == REPROC_EPIPE);
+  r = reproc_drain(process, reproc_sink_string(&out), reproc_sink_string(&err));
+  assert(r == 0);
+  assert(out != NULL && strlen(out) == 0);
+  assert(err != NULL && strlen(err) == 0);
 
   reproc_destroy(process);
+
+  reproc_free(out);
+  reproc_free(err);
 }
 
 int main(void)

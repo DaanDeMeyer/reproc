@@ -314,54 +314,52 @@ finish:
   return r;
 }
 
+int reproc_poll(reproc_t *process)
+{
+  assert_return(process, REPROC_EINVAL);
+
+  int timeout = expiry(process->timeout, process->deadline);
+  assert_return(timeout != 0, REPROC_ETIMEDOUT);
+
+  if (process->stdio.out == PIPE_INVALID &&
+      process->stdio.err == PIPE_INVALID) {
+    return REPROC_EPIPE;
+  }
+
+  // Put a dummy pipe first so the index returned by `pipe_wait` equals the
+  // stream that's ready to be read from.
+  pipe_type pipes[3] = { PIPE_INVALID, process->stdio.out, process->stdio.err };
+
+  return pipe_wait(pipes, ARRAY_SIZE(pipes), timeout);
+}
+
 int reproc_read(reproc_t *process,
-                REPROC_STREAM *stream,
+                REPROC_STREAM stream,
                 uint8_t *buffer,
                 size_t size)
 {
   assert_return(process, REPROC_EINVAL);
   assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
+  assert_return(stream == REPROC_STREAM_OUT || stream == REPROC_STREAM_ERR,
+                REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
 
-  pipe_type ready = PIPE_INVALID;
-  int r = -1;
+  int timeout = expiry(process->timeout, process->deadline);
+  assert_return(timeout != 0, REPROC_ETIMEDOUT);
 
-  while (true) {
-    int timeout = expiry(process->timeout, process->deadline);
-    if (timeout == 0) {
-      return REPROC_ETIMEDOUT;
-    }
-
-    // Get the first pipe that will have data available to be read.
-    r = pipe_wait(process->stdio.out, process->stdio.err, &ready, timeout);
-    if (r < 0) {
-      return r;
-    }
-
-    r = pipe_read(ready, buffer, size);
-    if (r >= 0) {
-      break;
-    }
-
-    if (r != REPROC_EPIPE) {
-      return r;
-    }
-
-    // If the pipe was closed, destroy its handle and try waiting again.
-
-    if (ready == process->stdio.out) {
-      process->stdio.out = pipe_destroy(process->stdio.out);
-    } else {
-      process->stdio.err = pipe_destroy(process->stdio.err);
-    }
+  pipe_type *pipe = stream == REPROC_STREAM_OUT ? &process->stdio.out
+                                                : &process->stdio.err;
+  if (*pipe == PIPE_INVALID) {
+    return REPROC_EPIPE;
   }
 
-  if (stream) {
-    *stream = ready == process->stdio.out ? REPROC_STREAM_OUT
-                                          : REPROC_STREAM_ERR;
+  int r = pipe_read(*pipe, buffer, size);
+
+  if (r == REPROC_EPIPE) {
+    *pipe = pipe_destroy(*pipe);
   }
 
-  return r; // bytes read
+  return r;
 }
 
 int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
@@ -380,9 +378,7 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
   }
 
   int timeout = expiry(process->timeout, process->deadline);
-  if (timeout == 0) {
-    return REPROC_ETIMEDOUT;
-  }
+  assert_return(timeout != 0, REPROC_ETIMEDOUT);
 
   int r = pipe_write(process->stdio.in, buffer, size, timeout);
 

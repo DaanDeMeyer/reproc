@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <memory>
 #include <system_error>
-#include <tuple>
+#include <utility>
 
 // Forward declare `reproc_t` so we don't have to include reproc.h in the
 // header.
@@ -102,13 +102,13 @@ public:
   REPROCXX_EXPORT std::pair<bool, std::error_code>
   fork(const options &options = {}) noexcept;
 
-  /*! `reproc_read` but returns a tuple of (stream, bytes read, error) and
-  defaults to waiting indefinitely for each read to complete.*/
-  REPROCXX_EXPORT std::tuple<stream, size_t, std::error_code>
-  read(uint8_t *buffer, size_t size) noexcept;
+  REPROCXX_EXPORT std::pair<stream, std::error_code> poll();
 
-  /*! reproc_write` but defaults to waiting indefinitely for each write to
-  complete. */
+  /*! `reproc_read` but returns a pair of (bytes read, error). */
+  REPROCXX_EXPORT std::pair<size_t, std::error_code>
+  read(stream stream, uint8_t *buffer, size_t size) noexcept;
+
+  /*! reproc_write` but returns a pair of (bytes_written, error). */
   REPROCXX_EXPORT std::pair<size_t, std::error_code>
   write(const uint8_t *buffer, size_t size) noexcept;
 
