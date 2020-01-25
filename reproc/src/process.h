@@ -3,9 +3,9 @@
 #include "handle.h"
 
 #if defined(_WIN32)
-  typedef void *process_type; // `HANDLE`
+typedef void *process_type; // `HANDLE`
 #else
-  typedef int process_type; // `pid_t`
+typedef int process_type; // `pid_t`
 #endif
 
 extern const process_type PROCESS_INVALID; // NOLINT
@@ -17,14 +17,14 @@ struct process_options {
   // If not `NULL`, the working directory of the child process is set to
   // `working_directory`.
   const char *working_directory;
-  // The standard streams of the child process are redirected to the handles in
-  // `redirect`. If a handle is `HANDLE_INVALID`, the corresponding child
+  // The standard streams of the child process are redirected to the `in`, `out`
+  // and `err` handles. If a handle is `HANDLE_INVALID`, the corresponding child
   // process standard stream is closed.
   struct {
     handle_type in;
     handle_type out;
     handle_type err;
-  } redirect;
+  } pipe;
 };
 
 // Spawns a child process that executes the command stored in `argv`.

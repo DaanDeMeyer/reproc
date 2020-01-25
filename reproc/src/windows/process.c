@@ -346,8 +346,7 @@ int process_start(HANDLE *process,
   // handles it should inherit can still unintentionally inherit handles meant
   // for a reproc child process. See https://stackoverflow.com/a/2345126 for
   // more information.
-  HANDLE inherit[3] = { options.redirect.in, options.redirect.out,
-                        options.redirect.err };
+  HANDLE inherit[3] = { options.pipe.in, options.pipe.out, options.pipe.err };
   attribute_list = handle_inherit_list_create(inherit, ARRAY_SIZE(inherit));
   if (attribute_list == NULL) {
     goto finish;
@@ -357,9 +356,9 @@ int process_start(HANDLE *process,
     .StartupInfo = { .cb = sizeof(extended_startup_info),
                      .dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW,
                      // `STARTF_USESTDHANDLES`
-                     .hStdInput = options.redirect.in,
-                     .hStdOutput = options.redirect.out,
-                     .hStdError = options.redirect.err,
+                     .hStdInput = options.pipe.in,
+                     .hStdOutput = options.pipe.out,
+                     .hStdError = options.pipe.err,
                      // `STARTF_USESHOWWINDOW`. Make sure the console window of
                      // the child process isn't visible. See
                      // https://github.com/DaanDeMeyer/reproc/issues/6 and
