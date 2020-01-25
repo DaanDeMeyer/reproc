@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <windows.h>
 #include <winsock2.h>
 
@@ -179,34 +180,52 @@ int pipe_write(SOCKET pipe, const uint8_t *buffer, size_t size)
   return error_unify_or_else(r, r);
 }
 
-int pipe_wait(SOCKET in, SOCKET out, SOCKET err, int timeout)
+int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
 {
-  if (in == PIPE_INVALID && out == PIPE_INVALID && err == PIPE_INVALID) {
-    return -EPIPE;
+  assert(num_sets * PIPES_PER_SET <= INT_MAX);
+
+  WSAPOLLFD *pollfds = NULL;
+  size_t num_pipes = num_sets * PIPES_PER_SET;
+  int r = -ERROR_NOT_ENOUGH_MEMORY;
+
+  pollfds = calloc(sizeof(WSAPOLLFD), num_pipes);
+  if (pollfds == NULL) {
+    goto finish;
   }
 
-  struct pollfd pollfds[3] = { { .fd = in, .events = POLLOUT },
-                               { .fd = out, .events = POLLIN },
-                               { .fd = err, .events = POLLIN } };
-
-  int r = WSAPoll(pollfds, ARRAY_SIZE(pollfds), timeout);
-  if (r <= 0) {
-    return error_unify(r == 0 ? -WAIT_TIMEOUT : r);
+  for (size_t i = 0; i < num_sets; i++) {
+    size_t j = i * PIPES_PER_SET;
+    pollfds[j + 0] = (WSAPOLLFD){ .fd = sets[i].in, .events = POLLOUT };
+    pollfds[j + 1] = (WSAPOLLFD){ .fd = sets[i].out, .events = POLLIN };
+    pollfds[j + 2] = (WSAPOLLFD){ .fd = sets[i].err, .events = POLLIN };
   }
 
-  size_t i = 0;
+  r = WSAPoll(pollfds, (ULONG) num_pipes, timeout);
+  if (r < 0) {
+    goto finish;
+  }
 
-  for (; i < ARRAY_SIZE(pollfds); i++) {
+  for (size_t i = 0; i < num_sets; i++) {
+    sets[i].events = 0;
+  }
+
+  for (size_t i = 0; i < num_pipes; i++) {
     WSAPOLLFD pollfd = pollfds[i];
 
     if (pollfd.revents > 0 && pollfd.revents != POLLNVAL) {
-      break;
+      int event = 1 << (i % PIPES_PER_SET);
+      sets[i / PIPES_PER_SET].events |= event;
     }
   }
 
-  assert(i < ARRAY_SIZE(pollfds));
+  if (r == 0) {
+    r = -WAIT_TIMEOUT;
+  }
 
-  return (int) i;
+finish:
+  free(pollfds);
+
+  return r;
 }
 
 SOCKET pipe_destroy(SOCKET pipe)

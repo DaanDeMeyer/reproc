@@ -116,34 +116,52 @@ int pipe_write(int pipe, const uint8_t *buffer, size_t size)
   return error_unify_or_else(r, r);
 }
 
-int pipe_wait(int in, int out, int err, int timeout)
+int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
 {
-  if (in == PIPE_INVALID && out == PIPE_INVALID && err == PIPE_INVALID) {
-    return -EPIPE;
+  assert(num_sets * PIPES_PER_SET <= INT_MAX);
+
+  struct pollfd *pollfds = NULL;
+  size_t num_pipes = num_sets * PIPES_PER_SET;
+  int r = -ENOMEM;
+
+  pollfds = calloc(sizeof(struct pollfd), num_pipes);
+  if (pollfds == NULL) {
+    goto finish;
   }
 
-  struct pollfd pollfds[3] = { { .fd = in, .events = POLLOUT },
-                               { .fd = out, .events = POLLIN },
-                               { .fd = err, .events = POLLIN } };
-
-  int r = poll(pollfds, ARRAY_SIZE(pollfds), timeout);
-  if (r <= 0) {
-    return error_unify(r == 0 ? -ETIMEDOUT : r);
+  for (size_t i = 0; i < num_sets; i++) {
+    size_t j = i * PIPES_PER_SET;
+    pollfds[j + 0] = (struct pollfd){ .fd = sets[i].in, .events = POLLOUT };
+    pollfds[j + 1] = (struct pollfd){ .fd = sets[i].out, .events = POLLIN };
+    pollfds[j + 2] = (struct pollfd){ .fd = sets[i].err, .events = POLLIN };
   }
 
-  nfds_t i = 0;
+  r = poll(pollfds, (nfds_t) num_pipes, timeout);
+  if (r < 0) {
+    goto finish;
+  }
 
-  for (; i < ARRAY_SIZE(pollfds); i++) {
+  for (size_t i = 0; i < num_sets; i++) {
+    sets[i].events = 0;
+  }
+
+  for (size_t i = 0; i < num_pipes; i++) {
     struct pollfd pollfd = pollfds[i];
 
     if (pollfd.revents > 0) {
-      break;
+      int event = 1 << (i % PIPES_PER_SET);
+      sets[i / PIPES_PER_SET].events |= event;
     }
   }
 
-  assert(i < ARRAY_SIZE(pollfds));
+  if (r == 0) {
+    r = -ETIMEDOUT;
+  }
 
-  return (int) i;
+finish:
+  free(pollfds);
+
+  return r;
 }
 
 int pipe_destroy(int pipe)

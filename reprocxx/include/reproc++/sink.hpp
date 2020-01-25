@@ -35,11 +35,18 @@ std::error_code drain(process &process, Out &&out, Err &&err)
   std::error_code ec;
 
   while (true) {
-    stream stream = {};
-    std::tie(stream, ec) = process.poll(stream::out | stream::err);
+    int events = 0;
+    std::tie(events, ec) = process.poll(event::out | event::err);
     if (ec) {
       break;
     }
+
+    if (events & event::timeout) {
+      return { static_cast<int>(std::errc::timed_out),
+               std::generic_category() };
+    }
+
+    stream stream = events & event::out ? stream::out : stream::err;
 
     size_t bytes_read = 0;
     std::tie(bytes_read, ec) = process.read(stream, buffer, BUFFER_SIZE);

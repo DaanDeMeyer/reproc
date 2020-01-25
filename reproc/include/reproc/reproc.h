@@ -43,11 +43,11 @@ REPROC_EXPORT extern const int REPROC_DEADLINE;
 /*! Stream identifiers used to indicate which stream to act on. */
 typedef enum {
   /*! stdin */
-  REPROC_STREAM_IN = 1 << 0,
+  REPROC_STREAM_IN,
   /*! stdout */
-  REPROC_STREAM_OUT = 1 << 1,
+  REPROC_STREAM_OUT,
   /*! stderr */
-  REPROC_STREAM_ERR = 1 << 2
+  REPROC_STREAM_ERR
 } REPROC_STREAM;
 
 /*! Used to tell reproc where to redirect the streams of the child process. */
@@ -180,6 +180,28 @@ typedef struct reproc_options {
   bool fork;
 } reproc_options;
 
+enum {
+  /*! Data can be written to stdin. */
+  REPROC_EVENT_IN = 1 << 0,
+  /*! Data can be read from stdout. */
+  REPROC_EVENT_OUT = 1 << 1,
+  /*! Data can be read from stderr. */
+  REPROC_EVENT_ERR = 1 << 2,
+  /*! The deadline or timeout of the process expired. */
+  REPROC_EVENT_TIMEOUT = 1 << 3
+};
+
+typedef struct reproc_event_source {
+  /*! Process to poll for events. */
+  reproc_t *process;
+  /*! Events of the process that we're interested in. Takes a combo of
+  `REPROC_EVENT` flags. */
+  int interests;
+  /*! Combo of `REPROC_EVENT` flags that indicate the events that occurred. This
+  field is filled in by `reproc_poll`. */
+  int events;
+} reproc_event_source;
+
 /*! Allocate a new `reproc_t` instance on the heap. */
 REPROC_EXPORT reproc_t *reproc_new(void);
 
@@ -213,16 +235,16 @@ REPROC_EXPORT int reproc_start(reproc_t *process,
                                reproc_options options);
 
 /*!
-Returns the first stream of `process` in `set` that is readable/writable.
+Polls each process in `sources` for its corresponding events in `interests` and
+stores events that occurred for each process in `events`.
 
-Example: `r = reproc_poll(process, REPROC_STREAM_OUT | REPROC_STREAM_ERR);`
+Returns `REPROC_EPIPE` if none of the sources have valid pipes remaining that
+can be polled.
 
 Actionable errors:
-- `REPROC_EPIPE` (All streams in `set` are closed)
-- `REPROC_ETIMEDOUT`
+- `REPROC_EPIPE`
 */
-REPROC_EXPORT int
-reproc_poll(reproc_t *process, REPROC_STREAM set);
+REPROC_EXPORT int reproc_poll(reproc_event_source *sources, size_t num_sources);
 
 /*!
 Reads up to `size` bytes into `buffer` from the child process output stream

@@ -10,6 +10,22 @@ typedef uint64_t pipe_type; // `SOCKET`
 typedef int pipe_type; // fd
 #endif
 
+// Keep in sync with `REPROC_EVENT`.
+enum {
+  PIPE_EVENT_IN = 1 << 0,
+  PIPE_EVENT_OUT = 1 << 1,
+  PIPE_EVENT_ERR = 1 << 2
+};
+
+typedef struct {
+  pipe_type in;
+  pipe_type out;
+  pipe_type err;
+  int events;
+} pipe_set;
+
+enum { PIPES_PER_SET = 3 };
+
 extern const pipe_type PIPE_INVALID;
 
 // Creates a new anonymous pipe. `read` and `write` are set to the read and
@@ -31,6 +47,6 @@ int pipe_write(pipe_type pipe, const uint8_t *buffer, size_t size);
 // read. 0 => in, 1 => out, 2 => err.
 //
 // Returns `REPROC_EPIPE` if `in`, `out` and `err` are invalid.
-int pipe_wait(pipe_type in, pipe_type out, pipe_type err, int timeout);
+int pipe_wait(pipe_set *sets, size_t num_sets, int timeout);
 
 pipe_type pipe_destroy(pipe_type pipe);

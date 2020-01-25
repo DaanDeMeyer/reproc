@@ -78,27 +78,24 @@ struct options {
   class input input;
 };
 
-enum class stream { in = 1 << 0, out = 1 << 1, err = 1 << 2 };
+enum class stream { in, out, err };
 
-inline constexpr stream operator&(stream x, stream y)
-{
-  return static_cast<stream>(static_cast<int>(x) & static_cast<int>(y));
+class process;
+
+namespace event {
+
+enum { in = 1 << 0, out = 1 << 1, err = 1 << 2, timeout = 1 << 3 };
+
+struct source {
+  class process &process;
+  int interests;
+  int events;
+};
+
 }
 
-inline constexpr stream operator|(stream x, stream y)
-{
-  return static_cast<stream>(static_cast<int>(x) | static_cast<int>(y));
-}
-
-inline constexpr stream operator^(stream x, stream y)
-{
-  return static_cast<stream>(static_cast<int>(x) ^ static_cast<int>(y));
-}
-
-inline constexpr stream operator~(stream x)
-{
-  return static_cast<stream>(~static_cast<int>(x));
-}
+REPROCXX_EXPORT std::error_code poll(event::source *sources,
+                                     size_t num_sources);
 
 /*! Improves on reproc's API by adding RAII and changing the API of some
 functions to be more idiomatic C++. */
@@ -122,8 +119,9 @@ public:
   REPROCXX_EXPORT std::pair<bool, std::error_code>
   fork(const options &options = {}) noexcept;
 
-  /*! `reproc_poll` but returns a pair of (stream, error). */
-  REPROCXX_EXPORT std::pair<stream, std::error_code> poll(stream set);
+  /*! Shorthand for `reproc::poll` that only polls this process. Returns a pair
+  of (events, error). */
+  REPROCXX_EXPORT std::pair<int, std::error_code> poll(int interests);
 
   /*! `reproc_read` but returns a pair of (bytes read, error). */
   REPROCXX_EXPORT std::pair<size_t, std::error_code>
@@ -148,6 +146,9 @@ public:
   stop(stop_actions stop) noexcept;
 
 private:
+  REPROCXX_EXPORT friend std::error_code poll(event::source *sources,
+                                              size_t num_sources);
+
   std::unique_ptr<reproc_t, void (*)(reproc_t *)> process_;
 };
 

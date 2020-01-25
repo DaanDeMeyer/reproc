@@ -51,14 +51,18 @@ int main(void)
   // while loop keeps running until an error occurs in `reproc_read` (the child
   // process closing its output stream is also reported as an error).
   while (true) {
+    reproc_event_source source = { process, REPROC_EVENT_OUT | REPROC_EVENT_ERR,
+                                   0 };
+
     // `reproc_poll` returns the first stream (stdout or stderr) that has data
     // available to read.
-    r = reproc_poll(process, REPROC_STREAM_OUT | REPROC_STREAM_ERR);
+    r = reproc_poll(&source, 1);
     if (r < 0) {
       break;
     }
 
-    REPROC_STREAM stream = (REPROC_STREAM) r;
+    REPROC_STREAM stream = source.events & REPROC_EVENT_OUT ? REPROC_STREAM_OUT
+                                                            : REPROC_STREAM_ERR;
 
     // Read from the stream returned by `reproc_poll` with `reproc_read`.
     uint8_t buffer[4096];

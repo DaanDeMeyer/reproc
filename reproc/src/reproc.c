@@ -10,6 +10,7 @@
 #include "redirect.h"
 
 #include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 
 struct reproc_t {
@@ -210,6 +211,28 @@ static int expiry(int timeout, int64_t deadline)
   return MIN(timeout, remaining);
 }
 
+static int find_earliest_expiry(reproc_event_source *sources,
+                                size_t num_sources)
+{
+  assert(sources);
+  assert(num_sources > 0 && num_sources <= INT_MAX);
+
+  int earliest = 0;
+  int min = REPROC_INFINITE;
+
+  for (int i = 0; i < (int) num_sources; i++) {
+    reproc_t *process = sources[i].process;
+    int current = expiry(process->timeout, process->deadline);
+
+    if (min == REPROC_INFINITE || current < min) {
+      earliest = i;
+      min = current;
+    }
+  }
+
+  return earliest;
+}
+
 reproc_t *reproc_new(void)
 {
   reproc_t *process = malloc(sizeof(reproc_t));
@@ -339,26 +362,68 @@ finish:
   return r;
 }
 
-int reproc_poll(reproc_t *process, REPROC_STREAM set)
+static bool contains_valid_pipe(pipe_set *sets, size_t num_sets)
 {
-  assert_return(process, REPROC_EINVAL);
-
-  int timeout = expiry(process->timeout, process->deadline);
-  assert_return(timeout != 0, REPROC_ETIMEDOUT);
-
-  if (process->stdio.out == PIPE_INVALID &&
-      process->stdio.err == PIPE_INVALID) {
-    return REPROC_EPIPE;
+  for (size_t i = 0; i < num_sets; i++) {
+    if (sets[i].in != PIPE_INVALID || sets[i].out != PIPE_INVALID ||
+        sets[i].err != PIPE_INVALID) {
+      return true;
+    }
   }
 
-  pipe_type in = set & REPROC_STREAM_IN ? process->stdio.in : PIPE_INVALID;
-  pipe_type out = set & REPROC_STREAM_OUT ? process->stdio.out : PIPE_INVALID;
-  pipe_type err = set & REPROC_STREAM_ERR ? process->stdio.err : PIPE_INVALID;
+  return false;
+}
 
-  int r = pipe_wait(in, out, err, timeout);
+int reproc_poll(reproc_event_source *sources, size_t num_sources)
+{
+  assert_return(sources, REPROC_EINVAL);
+  assert_return(num_sources > 0, REPROC_EINVAL);
+  assert_return(num_sources <= INT_MAX, REPROC_EINVAL);
 
-  // Convert return value of `pipe_wait` to `REPROC_STREAM`.
-  return r < 0 ? r : 1 << r;
+  int earliest = find_earliest_expiry(sources, num_sources);
+  int timeout = expiry(sources[earliest].process->timeout,
+                       sources[earliest].process->deadline);
+  int r = REPROC_ENOMEM;
+
+  pipe_set *sets = calloc(sizeof(pipe_set), num_sources);
+  if (sets == NULL) {
+    return r;
+  }
+
+  for (size_t i = 0; i < num_sources; i++) {
+    pipe_set *set = sets + i;
+    reproc_t *process = sources[i].process;
+    int interests = sources[i].interests;
+
+    set->in = interests & REPROC_EVENT_IN ? process->stdio.in : PIPE_INVALID;
+    set->out = interests & REPROC_EVENT_OUT ? process->stdio.out : PIPE_INVALID;
+    set->err = interests & REPROC_EVENT_ERR ? process->stdio.err : PIPE_INVALID;
+  }
+
+  if (!contains_valid_pipe(sets, num_sources)) {
+    r = REPROC_EPIPE;
+    goto finish;
+  }
+
+  r = pipe_wait(sets, num_sources, timeout);
+
+  if (r == REPROC_ETIMEDOUT) {
+    sources[earliest].events = REPROC_EVENT_TIMEOUT;
+    r = 0;
+  }
+
+  if (r <= 0) {
+    goto finish;
+  }
+
+  for (size_t i = 0; i < num_sources; i++) {
+    sources[i].events = sets[i].events;
+  }
+
+finish:
+  free(sets);
+
+  return r;
 }
 
 int reproc_read(reproc_t *process,

@@ -27,14 +27,27 @@ int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
   int r = -1;
 
   while (true) {
-    r = reproc_poll(process, REPROC_STREAM_OUT | REPROC_STREAM_ERR);
+    reproc_event_source source = { process, REPROC_EVENT_OUT | REPROC_EVENT_ERR,
+                                   0 };
+
+    r = reproc_poll(&source, 1);
     if (r < 0) {
       break;
     }
 
-    REPROC_STREAM stream = (REPROC_STREAM) r;
+    if (source.events & REPROC_EVENT_TIMEOUT) {
+      r = REPROC_ETIMEDOUT;
+      break;
+    }
+
+    REPROC_STREAM stream = source.events & REPROC_EVENT_OUT ? REPROC_STREAM_OUT
+                                                            : REPROC_STREAM_ERR;
 
     r = reproc_read(process, stream, buffer, ARRAY_SIZE(buffer));
+    if (r == REPROC_EPIPE) {
+      continue;
+    }
+
     if (r < 0) {
       break;
     }

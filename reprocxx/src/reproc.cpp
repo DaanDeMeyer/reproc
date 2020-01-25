@@ -78,10 +78,11 @@ std::pair<bool, std::error_code> process::fork(const options &options) noexcept
   return { r == 0, error_code_from(r) };
 }
 
-std::pair<stream, std::error_code> process::poll(stream set)
+std::pair<int, std::error_code> process::poll(int interests)
 {
-  int r = reproc_poll(process_.get(), static_cast<REPROC_STREAM>(set));
-  return { static_cast<stream>(r), error_code_from(r) };
+  event::source source{ *this, interests, 0 };
+  std::error_code ec = ::reproc::poll(&source, 1);
+  return { source.events, ec };
 }
 
 std::pair<size_t, std::error_code>
@@ -127,6 +128,28 @@ std::pair<int, std::error_code> process::stop(stop_actions stop) noexcept
 {
   int r = reproc_stop(process_.get(), reproc_stop_actions_from(stop));
   return { r, error_code_from(r) };
+}
+
+std::error_code poll(event::source *sources, size_t num_sources)
+{
+  auto *reproc_sources = new reproc_event_source[num_sources];
+
+  for (size_t i = 0; i < num_sources; i++) {
+    reproc_sources[i] = { sources[i].process.process_.get(),
+                          sources[i].interests, 0 };
+  }
+
+  int r = reproc_poll(reproc_sources, num_sources);
+
+  if (r >= 0) {
+    for (size_t i = 0; i < num_sources; i++) {
+      sources[i].events = reproc_sources[i].events;
+    }
+  }
+
+  delete[] reproc_sources;
+
+  return error_code_from(r);
 }
 
 }
