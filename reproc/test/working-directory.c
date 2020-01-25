@@ -19,7 +19,7 @@ int main(void)
   reproc_t *process = reproc_new();
   assert(process);
 
-  const char *argv[2] = { RESOURCE_DIRECTORY "/working-directory", NULL };
+  const char *argv[] = { RESOURCE_DIRECTORY "/working-directory", NULL };
 
   r = reproc_start(process, argv,
                    (reproc_options){ .working_directory = RESOURCE_DIRECTORY });

@@ -14,7 +14,7 @@ static void io()
   reproc_t *process = reproc_new();
   assert(process);
 
-  const char *argv[3] = { RESOURCE_DIRECTORY "/io", NULL };
+  const char *argv[] = { RESOURCE_DIRECTORY "/io", NULL };
 
   r = reproc_start(process, argv, (reproc_options){ 0 });
   assert(r >= 0);
@@ -52,7 +52,7 @@ static void timeout(void)
   reproc_t *process = reproc_new();
   assert(process);
 
-  const char *argv[2] = { RESOURCE_DIRECTORY "/io", NULL };
+  const char *argv[] = { RESOURCE_DIRECTORY "/io", NULL };
 
   r = reproc_start(process, argv, (reproc_options){ .timeout = 200 });
   assert(r >= 0);

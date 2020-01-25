@@ -20,7 +20,7 @@ int main(void)
     goto finish;
   }
 
-  const char *argv[3] = { "git", "--help", NULL };
+  const char *argv[] = { "git", "--help", NULL };
 
   r = reproc_start(process, argv, (reproc_options){ 0 });
   if (r < 0) {

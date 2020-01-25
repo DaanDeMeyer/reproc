@@ -109,7 +109,7 @@ redirect_pipe(pipe_type *parent, handle_type *child, REPROC_STREAM stream)
   assert(parent);
   assert(child);
 
-  pipe_type pipe[2] = { PIPE_INVALID, PIPE_INVALID };
+  pipe_type pipe[] = { PIPE_INVALID, PIPE_INVALID };
   int r = -1;
 
   r = pipe_init(&pipe[0], &pipe[1]);
@@ -586,7 +586,7 @@ int reproc_stop(reproc_t *process, reproc_stop_actions stop)
   assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
   assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
 
-  reproc_stop_action actions[3] = { stop.first, stop.second, stop.third };
+  reproc_stop_action actions[] = { stop.first, stop.second, stop.third };
   int r = -1;
 
   for (size_t i = 0; i < ARRAY_SIZE(actions); i++) {

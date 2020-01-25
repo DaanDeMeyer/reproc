@@ -21,7 +21,7 @@ int main(void)
 
   // `argv` must start with the name (or path) of the program to execute and
   // must end with a `NULL` value.
-  const char *argv[3] = { "git", "status", NULL };
+  const char *argv[] = { "git", "status", NULL };
 
   // `reproc_start` takes a child process instance (`reproc_t`), argv and
   // a set of options including the working directory and environment of the

@@ -10,7 +10,7 @@ int main(void)
   reproc_t *process = reproc_new();
   assert(process);
 
-  const char *argv[2] = { RESOURCE_DIRECTORY "/overflow", NULL };
+  const char *argv[] = { RESOURCE_DIRECTORY "/overflow", NULL };
 
   r = reproc_start(process, argv, (reproc_options){ 0 });
   assert(r >= 0);

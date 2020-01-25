@@ -9,7 +9,7 @@ static void stop(REPROC_STOP action, int status)
   reproc_t *process = reproc_new();
   assert(process);
 
-  const char *argv[2] = { RESOURCE_DIRECTORY "/stop", NULL };
+  const char *argv[] = { RESOURCE_DIRECTORY "/stop", NULL };
 
   r = reproc_start(process, argv, (reproc_options){ 0 });
   assert(r >= 0);

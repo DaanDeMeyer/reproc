@@ -12,8 +12,8 @@ int main(void)
   reproc_t *process = reproc_new();
   assert(process);
 
-  const char *argv[4] = { RESOURCE_DIRECTORY "/argv", "\"argument 1\"",
-                          "\"argument 2\"", NULL };
+  const char *argv[] = { RESOURCE_DIRECTORY "/argv", "\"argument 1\"",
+                         "\"argument 2\"", NULL };
 
   r = reproc_start(process, argv, (reproc_options){ 0 });
   assert(r >= 0);

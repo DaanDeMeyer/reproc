@@ -333,7 +333,7 @@ int process_start(pid_t *process,
     }
   }
 
-  int except[6] = { options.pipe.in, options.pipe.out, options.pipe.err,
+  int except[] = { options.pipe.in, options.pipe.out, options.pipe.err,
                     pipe.read,       pipe.write,       options.pipe.exit };
 
   r = process_fork(except, ARRAY_SIZE(except));
@@ -344,7 +344,7 @@ int process_start(pid_t *process,
   if (r == 0) {
     // Redirect stdin, stdout and stderr.
 
-    int redirect[3] = { options.pipe.in, options.pipe.out, options.pipe.err };
+    int redirect[] = { options.pipe.in, options.pipe.out, options.pipe.err };
 
     for (size_t i = 0; i < ARRAY_SIZE(redirect); i++) {
       // `i` corresponds to the standard stream we need to redirect.

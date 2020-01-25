@@ -23,7 +23,7 @@ int pipe_init(int *read, int *write)
   assert(read);
   assert(write);
 
-  int pipe[2] = { PIPE_INVALID, PIPE_INVALID };
+  int pipe[] = { PIPE_INVALID, PIPE_INVALID };
   int r = -1;
 
   // We use `socketpair` so we have a POSIX compatible way of setting the pipe

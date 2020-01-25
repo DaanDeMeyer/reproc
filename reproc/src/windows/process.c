@@ -346,8 +346,8 @@ int process_start(HANDLE *process,
   // handles it should inherit can still unintentionally inherit handles meant
   // for a reproc child process. See https://stackoverflow.com/a/2345126 for
   // more information.
-  HANDLE inherit[4] = { options.pipe.in, options.pipe.out, options.pipe.err,
-                        options.pipe.exit };
+  HANDLE inherit[] = { options.pipe.in, options.pipe.out, options.pipe.err,
+                       options.pipe.exit };
   attribute_list = handle_inherit_list_create(inherit, ARRAY_SIZE(inherit));
   if (attribute_list == NULL) {
     goto finish;

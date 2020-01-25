@@ -21,7 +21,7 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
   assert(out);
 
   SOCKET server = PIPE_INVALID;
-  SOCKET pair[2] = { PIPE_INVALID, PIPE_INVALID };
+  SOCKET pair[] = { PIPE_INVALID, PIPE_INVALID };
   int r = -1;
 
   server = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, 0);
@@ -98,7 +98,7 @@ int pipe_init(SOCKET *read, SOCKET *write)
   assert(read);
   assert(write);
 
-  SOCKET pair[2] = { PIPE_INVALID, PIPE_INVALID };
+  SOCKET pair[] = { PIPE_INVALID, PIPE_INVALID };
   int r = 0;
 
   // Use sockets instead of pipes so we can use `WSAPoll` which only works with
