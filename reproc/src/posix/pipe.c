@@ -41,12 +41,26 @@ int pipe_init(int *read, int *write)
     goto finish;
   }
 
-  r = fcntl(pipe[0], F_SETFD, FD_CLOEXEC);
+  r = fcntl(pipe[0], F_GETFD, 0);
   if (r < 0) {
     goto finish;
   }
 
-  r = fcntl(pipe[1], F_SETFD, FD_CLOEXEC);
+  r |= FD_CLOEXEC;
+
+  r = fcntl(pipe[0], F_SETFD, r);
+  if (r < 0) {
+    goto finish;
+  }
+
+  r = fcntl(pipe[1], F_GETFD, 0);
+  if (r < 0) {
+    goto finish;
+  }
+
+  r |= FD_CLOEXEC;
+
+  r = fcntl(pipe[1], F_SETFD, r);
   if (r < 0) {
     goto finish;
   }
@@ -84,7 +98,17 @@ finish:
 
 int pipe_nonblocking(int pipe, bool enable)
 {
-  int r = fcntl(pipe, F_SETFL, enable ? O_NONBLOCK : 0);
+  int r = -1;
+
+  r = fcntl(pipe, F_GETFL, 0);
+  if (r < 0) {
+    return error_unify(r);
+  }
+
+  r = enable ? r | O_NONBLOCK : r & ~O_NONBLOCK;
+
+  r = fcntl(pipe, F_SETFL, r);
+
   return error_unify(r);
 }
 
