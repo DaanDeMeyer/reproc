@@ -14,17 +14,19 @@ typedef int pipe_type; // fd
 enum {
   PIPE_EVENT_IN = 1 << 0,
   PIPE_EVENT_OUT = 1 << 1,
-  PIPE_EVENT_ERR = 1 << 2
+  PIPE_EVENT_ERR = 1 << 2,
+  PIPE_EVENT_EXIT = 1 << 3
 };
 
 typedef struct {
   pipe_type in;
   pipe_type out;
   pipe_type err;
+  pipe_type exit;
   int events;
 } pipe_set;
 
-enum { PIPES_PER_SET = 3 };
+enum { PIPES_PER_SET = 4 };
 
 extern const pipe_type PIPE_INVALID;
 

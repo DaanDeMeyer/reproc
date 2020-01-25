@@ -19,11 +19,13 @@ struct process_options {
   const char *working_directory;
   // The standard streams of the child process are redirected to the `in`, `out`
   // and `err` handles. If a handle is `HANDLE_INVALID`, the corresponding child
-  // process standard stream is closed.
+  // process standard stream is closed. The `exit` handle is simply inherited by
+  // the child process.
   struct {
     handle_type in;
     handle_type out;
     handle_type err;
+    handle_type exit;
   } pipe;
 };
 
@@ -38,12 +40,8 @@ int process_start(process_type *process,
                   const char *const *argv,
                   struct process_options options);
 
-// Waits `timeout` milliseconds for `process` to exit. If `process` exits within
-// the configured timeout, its exit status is returned.
-//
-// If `timeout` is `REPROC_INFINITE`, this function waits indefinitely for a
-// process to exit.
-int process_wait(process_type process, int timeout);
+// Returns the process's exit status if it has finished running.
+int process_wait(process_type process);
 
 // Sends the `SIGTERM` (POSIX) or `CTRL-BREAK` (Windows) signal to the process
 // indicated by `process`.

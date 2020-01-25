@@ -19,6 +19,7 @@ struct reproc_t {
     pipe_type in;
     pipe_type out;
     pipe_type err;
+    pipe_type exit;
   } pipe;
   int status;
   reproc_stop_actions stop;
@@ -240,13 +241,14 @@ reproc_t *reproc_new(void)
     return NULL;
   }
 
-  *process = (reproc_t){
-    .handle = PROCESS_INVALID,
-    .pipe = { .in = PIPE_INVALID, .out = PIPE_INVALID, .err = PIPE_INVALID },
-    .status = STATUS_NOT_STARTED,
-    .timeout = REPROC_INFINITE,
-    .deadline = REPROC_INFINITE
-  };
+  *process = (reproc_t){ .handle = PROCESS_INVALID,
+                         .pipe = { .in = PIPE_INVALID,
+                                   .out = PIPE_INVALID,
+                                   .err = PIPE_INVALID,
+                                   .exit = PIPE_INVALID },
+                         .status = STATUS_NOT_STARTED,
+                         .timeout = REPROC_INFINITE,
+                         .deadline = REPROC_INFINITE };
 
   return process;
 }
@@ -262,7 +264,8 @@ int reproc_start(reproc_t *process,
     handle_type in;
     handle_type out;
     handle_type err;
-  } child = { HANDLE_INVALID, HANDLE_INVALID, HANDLE_INVALID };
+    pipe_type exit;
+  } child = { HANDLE_INVALID, HANDLE_INVALID, HANDLE_INVALID, PIPE_INVALID };
   int r = -1;
 
   r = init();
@@ -293,6 +296,11 @@ int reproc_start(reproc_t *process,
     goto finish;
   }
 
+  r = pipe_init(&process->pipe.exit, &child.exit);
+  if (r < 0) {
+    goto finish;
+  }
+
   if (options.input.data != NULL) {
     // `reproc_write` only needs the child process stdin pipe to be initialized.
     size_t written = 0;
@@ -317,7 +325,10 @@ int reproc_start(reproc_t *process,
   struct process_options process_options = {
     .environment = options.environment,
     .working_directory = options.working_directory,
-    .redirect = { .in = child.in, .out = child.out, .err = child.err }
+    .pipe = { .in = child.in,
+              .out = child.out,
+              .err = child.err,
+              .exit = (handle_type) child.exit }
   };
 
   r = process_start(&process->handle, argv, process_options);
@@ -341,12 +352,14 @@ finish:
   redirect_destroy(child.in, options.redirect.in);
   redirect_destroy(child.out, options.redirect.out);
   redirect_destroy(child.err, options.redirect.err);
+  pipe_destroy(child.exit);
 
   if (r < 0) {
     process->handle = process_destroy(process->handle);
     process->pipe.in = pipe_destroy(process->pipe.in);
     process->pipe.out = pipe_destroy(process->pipe.out);
     process->pipe.err = pipe_destroy(process->pipe.err);
+    process->pipe.exit = pipe_destroy(process->pipe.exit);
     deinit();
   } else if (r == 0) {
     process->handle = PROCESS_INVALID;
@@ -354,6 +367,7 @@ finish:
     process->pipe.in = PIPE_INVALID;
     process->pipe.out = PIPE_INVALID;
     process->pipe.err = PIPE_INVALID;
+    process->pipe.exit = PIPE_INVALID;
     process->status = STATUS_IN_CHILD;
   } else {
     process->status = STATUS_IN_PROGRESS;
@@ -398,6 +412,8 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources)
     set->in = interests & REPROC_EVENT_IN ? process->pipe.in : PIPE_INVALID;
     set->out = interests & REPROC_EVENT_OUT ? process->pipe.out : PIPE_INVALID;
     set->err = interests & REPROC_EVENT_ERR ? process->pipe.err : PIPE_INVALID;
+    set->exit = interests & REPROC_EVENT_EXIT ? process->pipe.exit
+                                              : PIPE_INVALID;
   }
 
   if (!contains_valid_pipe(sets, num_sources)) {
@@ -516,10 +532,24 @@ int reproc_wait(reproc_t *process, int timeout)
     timeout = expiry(REPROC_INFINITE, process->deadline);
   }
 
-  r = process_wait(process->handle, timeout);
+  pipe_set set = { .in = PIPE_INVALID,
+                   .out = PIPE_INVALID,
+                   .err = PIPE_INVALID,
+                   .exit = process->pipe.exit };
+
+  r = pipe_wait(&set, 1, timeout);
   if (r < 0) {
     return r;
   }
+
+  assert(set.events & PIPE_EVENT_EXIT);
+
+  r = process_wait(process->handle);
+  if (r < 0) {
+    return r;
+  }
+
+  process->pipe.exit = pipe_destroy(process->pipe.exit);
 
   return process->status = r;
 }
@@ -602,6 +632,7 @@ reproc_t *reproc_destroy(reproc_t *process)
   process->pipe.in = pipe_destroy(process->pipe.in);
   process->pipe.out = pipe_destroy(process->pipe.out);
   process->pipe.err = pipe_destroy(process->pipe.err);
+  process->pipe.exit = pipe_destroy(process->pipe.exit);
 
   deinit();
   free(process);

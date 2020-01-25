@@ -319,3 +319,11 @@ different threads at the same time will result in issues.
   on Windows. For more information, read the Remarks section in the
   documentation of the Windows `TerminateProcess` function that reproc uses to
   kill child processes on Windows.
+
+- Child processes spawned via reproc inherit a single extra file handle which is
+  used to wait for the child process to exit. If the child process closes this
+  file handle manually, reproc will wrongly detect the child process has exited.
+  If this handle is further inherited by other processes that outlive the child
+  process, reproc will detect the child process is still running even if it has
+  exited. If data is written to this handle, reproc will also wrongly detect the
+  child process has exited.

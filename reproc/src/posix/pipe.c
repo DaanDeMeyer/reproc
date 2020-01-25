@@ -56,21 +56,18 @@ int pipe_init(int *read, int *write)
   // unidirectional traffic so shut down writes on the read end and vice-versa
   // on the write end.
 
-  // `shutdown` behaves differently on macOS which causes the tests to fail. As
-  // this is mostly ceremonial, we disable `shutdown` on macOS until someone
-  // with a mac is impacted by this and is willing to further investigate the
-  // issue.
-#if !defined(__APPLE__)
-  r = shutdown(pipe[0], SHUT_WR);
-  if (r < 0) {
-    goto finish;
-  }
+  // On macos 10.15, doing `SHUT_WR` before `SHUT_RD` fails so we do the
+  // opposite.
 
   r = shutdown(pipe[1], SHUT_RD);
   if (r < 0) {
     goto finish;
   }
-#endif
+
+  r = shutdown(pipe[0], SHUT_WR);
+  if (r < 0) {
+    goto finish;
+  }
 
   *read = pipe[0];
   *write = pipe[1];
@@ -134,6 +131,9 @@ int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
     pollfds[j + 0] = (struct pollfd){ .fd = sets[i].in, .events = POLLOUT };
     pollfds[j + 1] = (struct pollfd){ .fd = sets[i].out, .events = POLLIN };
     pollfds[j + 2] = (struct pollfd){ .fd = sets[i].err, .events = POLLIN };
+    // macos 10.15 indicates `POLLIN` instead of `POLLHUP` when the peer fd is
+    // closed.
+    pollfds[j + 3] = (struct pollfd){ .fd = sets[i].exit, .events = POLLIN };
   }
 
   r = poll(pollfds, (nfds_t) num_pipes, timeout);

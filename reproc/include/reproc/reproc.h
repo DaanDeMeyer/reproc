@@ -187,8 +187,10 @@ enum {
   REPROC_EVENT_OUT = 1 << 1,
   /*! Data can be read from stderr. */
   REPROC_EVENT_ERR = 1 << 2,
+  /*! The process finished running. */
+  REPROC_EVENT_EXIT = 1 << 3,
   /*! The deadline or timeout of the process expired. */
-  REPROC_EVENT_TIMEOUT = 1 << 3
+  REPROC_EVENT_TIMEOUT = 1 << 4,
 };
 
 typedef struct reproc_event_source {

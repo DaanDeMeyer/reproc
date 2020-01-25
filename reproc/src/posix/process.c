@@ -333,8 +333,8 @@ int process_start(pid_t *process,
     }
   }
 
-  int except[5] = { options.pipe.in, options.pipe.out, options.pipe.err,
-                    pipe.read, pipe.write };
+  int except[6] = { options.pipe.in, options.pipe.out, options.pipe.err,
+                    pipe.read,       pipe.write,       options.pipe.exit };
 
   r = process_fork(except, ARRAY_SIZE(except));
   if (r < 0) {
@@ -342,13 +342,6 @@ int process_start(pid_t *process,
   }
 
   if (r == 0) {
-    // Put the process in its own process group which is required by
-    // `process_wait`.
-    r = setpgid(0, 0);
-    if (r < 0) {
-      goto child;
-    }
-
     // Redirect stdin, stdout and stderr.
 
     int redirect[3] = { options.pipe.in, options.pipe.out, options.pipe.err };
@@ -372,6 +365,21 @@ int process_start(pid_t *process,
       // `environ` is carried over calls to `exec`.
       extern char **environ; // NOLINT
       environ = (char **) options.environment;
+    }
+
+    // Make sure the `exit` file descriptor is inherited by unsetting the
+    // `FD_CLOEXEC` flag.
+
+    r = fcntl(options.pipe.exit, F_GETFD, 0);
+    if (r < 0) {
+      goto child;
+    }
+
+    r &= ~FD_CLOEXEC;
+
+    r = fcntl(options.pipe.exit, F_SETFD, r);
+    if (r < 0) {
+      goto child;
     }
 
     if (argv != NULL) {
@@ -434,82 +442,19 @@ static int parse_status(int status)
   return WIFEXITED(status) ? WEXITSTATUS(status) : WTERMSIG(status) + UINT8_MAX;
 }
 
-int process_wait(pid_t process, int timeout)
+int process_wait(pid_t process)
 {
   assert(process != PROCESS_INVALID);
 
   int status = 0;
-  int r = -1;
-
-  if (timeout <= 0) {
-    r = waitpid(process, &status, timeout == 0 ? WNOHANG : 0);
-
-    if (r > 0) {
-      assert(r == process);
-      status = parse_status(status);
-    }
-
-    if (r == 0) {
-      r = -ETIMEDOUT;
-    }
-
-    return error_unify_or_else(r, status);
-  }
-
-  r = process_fork(NULL, 0);
+  int r = waitpid(process, &status, 0);
   if (r < 0) {
     return error_unify(r);
-  }
-
-  if (r == 0) {
-    struct timeval timeval = {
-      .tv_sec = timeout / 1000,          // ms -> s
-      .tv_usec = (timeout % 1000) * 1000 // leftover ms -> us
-    };
-
-    // `select` with no file descriptors can be used as a makeshift sleep
-    // function that can still be interrupted.
-    r = select(0, NULL, NULL, NULL, &timeval);
-
-    _exit(r < 0 ? EXIT_FAILURE : EXIT_SUCCESS);
-  }
-
-  pid_t timeout_pid = r;
-
-  // Put the timeout process in the same process group as the process we're
-  // waiting on so we can wait on both at once using `waitpid`. We do this in
-  // the parent process to avoid a race condition between calling `setpgid` in
-  // the child process and calling `waitpid` in the parent process.
-  r = setpgid(timeout_pid, process);
-
-  r = r < 0 ? r : waitpid(-process, &status, 0);
-
-  if (r != timeout_pid) {
-    // We didn't time out. Terminate the timeout process to make sure it exits.
-    PROTECT_SYSTEM_ERROR;
-
-    r = process_terminate(timeout_pid);
-    assert_unused(r == 0);
-    r = waitpid(timeout_pid, NULL, 0);
-    assert_unused(r == timeout_pid);
-
-    UNPROTECT_SYSTEM_ERROR;
-  }
-
-  if (r < 0) {
-    return error_unify(r);
-  }
-
-  status = parse_status(status);
-
-  if (r == timeout_pid) {
-    // The timeout expired or the timeout process was interrupted.
-    return status == 0 ? -ETIMEDOUT : -EINTR;
   }
 
   assert(r == process);
 
-  return error_unify_or_else(r, status);
+  return parse_status(status);
 }
 
 int process_terminate(pid_t process)

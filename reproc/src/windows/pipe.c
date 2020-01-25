@@ -198,6 +198,7 @@ int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
     pollfds[j + 0] = (WSAPOLLFD){ .fd = sets[i].in, .events = POLLOUT };
     pollfds[j + 1] = (WSAPOLLFD){ .fd = sets[i].out, .events = POLLIN };
     pollfds[j + 2] = (WSAPOLLFD){ .fd = sets[i].err, .events = POLLIN };
+    pollfds[j + 3] = (WSAPOLLFD){ .fd = sets[i].exit };
   }
 
   r = WSAPoll(pollfds, (ULONG) num_pipes, timeout);

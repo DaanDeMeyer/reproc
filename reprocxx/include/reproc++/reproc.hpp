@@ -84,7 +84,13 @@ class process;
 
 namespace event {
 
-enum { in = 1 << 0, out = 1 << 1, err = 1 << 2, timeout = 1 << 3 };
+enum {
+  in = 1 << 0,
+  out = 1 << 1,
+  err = 1 << 2,
+  exit = 1 << 3,
+  timeout = 1 << 4
+};
 
 struct source {
   class process &process;
