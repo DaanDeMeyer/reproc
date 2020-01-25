@@ -19,7 +19,7 @@ struct reproc_t {
     pipe_type in;
     pipe_type out;
     pipe_type err;
-  } stdio;
+  } pipe;
   int status;
   reproc_stop_actions stop;
   int timeout;
@@ -242,7 +242,7 @@ reproc_t *reproc_new(void)
 
   *process = (reproc_t){
     .handle = PROCESS_INVALID,
-    .stdio = { .in = PIPE_INVALID, .out = PIPE_INVALID, .err = PIPE_INVALID },
+    .pipe = { .in = PIPE_INVALID, .out = PIPE_INVALID, .err = PIPE_INVALID },
     .status = STATUS_NOT_STARTED,
     .timeout = REPROC_INFINITE,
     .deadline = REPROC_INFINITE
@@ -275,19 +275,19 @@ int reproc_start(reproc_t *process,
     goto finish;
   }
 
-  r = redirect(&process->stdio.in, &child.in, REPROC_STREAM_IN,
+  r = redirect(&process->pipe.in, &child.in, REPROC_STREAM_IN,
                options.redirect.in);
   if (r < 0) {
     goto finish;
   }
 
-  r = redirect(&process->stdio.out, &child.out, REPROC_STREAM_OUT,
+  r = redirect(&process->pipe.out, &child.out, REPROC_STREAM_OUT,
                options.redirect.out);
   if (r < 0) {
     goto finish;
   }
 
-  r = redirect(&process->stdio.err, &child.err, REPROC_STREAM_ERR,
+  r = redirect(&process->pipe.err, &child.err, REPROC_STREAM_ERR,
                options.redirect.err);
   if (r < 0) {
     goto finish;
@@ -344,16 +344,16 @@ finish:
 
   if (r < 0) {
     process->handle = process_destroy(process->handle);
-    process->stdio.in = pipe_destroy(process->stdio.in);
-    process->stdio.out = pipe_destroy(process->stdio.out);
-    process->stdio.err = pipe_destroy(process->stdio.err);
+    process->pipe.in = pipe_destroy(process->pipe.in);
+    process->pipe.out = pipe_destroy(process->pipe.out);
+    process->pipe.err = pipe_destroy(process->pipe.err);
     deinit();
   } else if (r == 0) {
     process->handle = PROCESS_INVALID;
     // `process_start` has already taken care of closing the handles for us.
-    process->stdio.in = PIPE_INVALID;
-    process->stdio.out = PIPE_INVALID;
-    process->stdio.err = PIPE_INVALID;
+    process->pipe.in = PIPE_INVALID;
+    process->pipe.out = PIPE_INVALID;
+    process->pipe.err = PIPE_INVALID;
     process->status = STATUS_IN_CHILD;
   } else {
     process->status = STATUS_IN_PROGRESS;
@@ -395,9 +395,9 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources)
     reproc_t *process = sources[i].process;
     int interests = sources[i].interests;
 
-    set->in = interests & REPROC_EVENT_IN ? process->stdio.in : PIPE_INVALID;
-    set->out = interests & REPROC_EVENT_OUT ? process->stdio.out : PIPE_INVALID;
-    set->err = interests & REPROC_EVENT_ERR ? process->stdio.err : PIPE_INVALID;
+    set->in = interests & REPROC_EVENT_IN ? process->pipe.in : PIPE_INVALID;
+    set->out = interests & REPROC_EVENT_OUT ? process->pipe.out : PIPE_INVALID;
+    set->err = interests & REPROC_EVENT_ERR ? process->pipe.err : PIPE_INVALID;
   }
 
   if (!contains_valid_pipe(sets, num_sources)) {
@@ -437,8 +437,8 @@ int reproc_read(reproc_t *process,
                 REPROC_EINVAL);
   assert_return(buffer, REPROC_EINVAL);
 
-  pipe_type *pipe = stream == REPROC_STREAM_OUT ? &process->stdio.out
-                                                : &process->stdio.err;
+  pipe_type *pipe = stream == REPROC_STREAM_OUT ? &process->pipe.out
+                                                : &process->pipe.err;
   if (*pipe == PIPE_INVALID) {
     return REPROC_EPIPE;
   }
@@ -463,14 +463,14 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
     return 0;
   }
 
-  if (process->stdio.in == PIPE_INVALID) {
+  if (process->pipe.in == PIPE_INVALID) {
     return REPROC_EPIPE;
   }
 
-  int r = pipe_write(process->stdio.in, buffer, size);
+  int r = pipe_write(process->pipe.in, buffer, size);
 
   if (r == REPROC_EPIPE) {
-    process->stdio.in = pipe_destroy(process->stdio.in);
+    process->pipe.in = pipe_destroy(process->pipe.in);
   }
 
   return r;
@@ -483,13 +483,13 @@ int reproc_close(reproc_t *process, REPROC_STREAM stream)
 
   switch (stream) {
     case REPROC_STREAM_IN:
-      process->stdio.in = pipe_destroy(process->stdio.in);
+      process->pipe.in = pipe_destroy(process->pipe.in);
       break;
     case REPROC_STREAM_OUT:
-      process->stdio.out = pipe_destroy(process->stdio.out);
+      process->pipe.out = pipe_destroy(process->pipe.out);
       break;
     case REPROC_STREAM_ERR:
-      process->stdio.err = pipe_destroy(process->stdio.err);
+      process->pipe.err = pipe_destroy(process->pipe.err);
       break;
     default:
       return REPROC_EINVAL;
@@ -599,9 +599,9 @@ reproc_t *reproc_destroy(reproc_t *process)
   }
 
   process->handle = process_destroy(process->handle);
-  process->stdio.in = pipe_destroy(process->stdio.in);
-  process->stdio.out = pipe_destroy(process->stdio.out);
-  process->stdio.err = pipe_destroy(process->stdio.err);
+  process->pipe.in = pipe_destroy(process->pipe.in);
+  process->pipe.out = pipe_destroy(process->pipe.out);
+  process->pipe.err = pipe_destroy(process->pipe.err);
 
   deinit();
   free(process);
