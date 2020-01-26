@@ -23,75 +23,56 @@ int pipe_init(int *read, int *write)
   assert(read);
   assert(write);
 
-  int pipe[] = { PIPE_INVALID, PIPE_INVALID };
+  int pair[] = { PIPE_INVALID, PIPE_INVALID };
   int r = -1;
 
-  // We use `socketpair` so we have a POSIX compatible way of setting the pipe
-  // size using `setsockopt` with `SO_RECVBUF`.
+#if defined(__APPLE__)
+  r = pipe(pair);
+  if (r < 0) {
+    goto finish;
+  }
 
-#if defined(__linux__)
-  // `SOCK_CLOEXEC` avoids the race condition between `socketpair` and `fcntl`.
-  r = socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, pipe);
+  r = fcntl(pair[0], F_GETFD, 0);
+  if (r < 0) {
+    goto finish;
+  }
+
+  r |= FD_CLOEXEC;
+
+  r = fcntl(pair[0], F_SETFD, r);
+  if (r < 0) {
+    goto finish;
+  }
+
+  r = fcntl(pair[1], F_GETFD, 0);
+  if (r < 0) {
+    goto finish;
+  }
+
+  r |= FD_CLOEXEC;
+
+  r = fcntl(pair[1], F_SETFD, r);
   if (r < 0) {
     goto finish;
   }
 #else
-  r = socketpair(AF_UNIX, SOCK_STREAM, 0, pipe);
-  if (r < 0) {
-    goto finish;
-  }
-
-  r = fcntl(pipe[0], F_GETFD, 0);
-  if (r < 0) {
-    goto finish;
-  }
-
-  r |= FD_CLOEXEC;
-
-  r = fcntl(pipe[0], F_SETFD, r);
-  if (r < 0) {
-    goto finish;
-  }
-
-  r = fcntl(pipe[1], F_GETFD, 0);
-  if (r < 0) {
-    goto finish;
-  }
-
-  r |= FD_CLOEXEC;
-
-  r = fcntl(pipe[1], F_SETFD, r);
+  // `pipe2` with `O_CLOEXEC` avoids the race condition between `pipe` and
+  // `fcntl`.
+  r = pipe2(pair, O_CLOEXEC);
   if (r < 0) {
     goto finish;
   }
 #endif
 
-  // `socketpair` gives us a bidirectional socket pair but we only need
-  // unidirectional traffic so shut down writes on the read end and vice-versa
-  // on the write end.
+  *read = pair[0];
+  *write = pair[1];
 
-  // On macos 10.15, doing `SHUT_WR` before `SHUT_RD` fails so we do the
-  // opposite.
-
-  r = shutdown(pipe[1], SHUT_RD);
-  if (r < 0) {
-    goto finish;
-  }
-
-  r = shutdown(pipe[0], SHUT_WR);
-  if (r < 0) {
-    goto finish;
-  }
-
-  *read = pipe[0];
-  *write = pipe[1];
-
-  pipe[0] = PIPE_INVALID;
-  pipe[1] = PIPE_INVALID;
+  pair[0] = PIPE_INVALID;
+  pair[1] = PIPE_INVALID;
 
 finish:
-  pipe_destroy(pipe[0]);
-  pipe_destroy(pipe[1]);
+  pipe_destroy(pair[0]);
+  pipe_destroy(pair[1]);
 
   return error_unify(r);
 }
