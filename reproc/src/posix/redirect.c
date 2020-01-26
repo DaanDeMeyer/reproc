@@ -22,10 +22,9 @@ static FILE *stream_to_file(REDIRECT_STREAM stream)
   return NULL;
 }
 
-int redirect_inherit(int *parent, int *child, REDIRECT_STREAM stream)
+int redirect_inherit(int *handle, REDIRECT_STREAM stream)
 {
-  assert(parent);
-  assert(child);
+  assert(handle);
 
   int r = -EINVAL;
 
@@ -48,16 +47,14 @@ int redirect_inherit(int *parent, int *child, REDIRECT_STREAM stream)
     return error_unify(r);
   }
 
-  *parent = PIPE_INVALID;
-  *child = r; // `r` contains the duplicated file descriptor.
+  *handle = r; // `r` contains the duplicated file descriptor.
 
   return 0;
 }
 
-int redirect_discard(int *parent, int *child, REDIRECT_STREAM stream)
+int redirect_discard(int *handle, REDIRECT_STREAM stream)
 {
-  assert(parent);
-  assert(child);
+  assert(handle);
 
   int mode = stream == REDIRECT_STREAM_IN ? O_RDONLY : O_WRONLY;
 
@@ -66,8 +63,7 @@ int redirect_discard(int *parent, int *child, REDIRECT_STREAM stream)
     return error_unify(r);
   }
 
-  *parent = PIPE_INVALID;
-  *child = r;
+  *handle = r;
 
   return 0;
 }

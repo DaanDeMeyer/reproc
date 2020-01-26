@@ -148,15 +148,25 @@ static int redirect(pipe_type *parent,
       break;
 
     case REPROC_REDIRECT_INHERIT:
-      r = redirect_inherit(parent, child, (REDIRECT_STREAM) stream);
+      r = redirect_inherit(child, (REDIRECT_STREAM) stream);
       if (r == REPROC_EPIPE) {
         // Discard if the corresponding parent stream is closed.
-        r = redirect_discard(parent, child, (REDIRECT_STREAM) stream);
+        r = redirect_discard(child, (REDIRECT_STREAM) stream);
       }
+
+      if (r >= 0) {
+        *parent = PIPE_INVALID;
+      }
+
       break;
 
     case REPROC_REDIRECT_DISCARD:
-      r = redirect_discard(parent, child, (REDIRECT_STREAM) stream);
+      r = redirect_discard(child, (REDIRECT_STREAM) stream);
+
+      if (r >= 0) {
+        *parent = PIPE_INVALID;
+      }
+
       break;
 
     default:
