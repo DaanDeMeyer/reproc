@@ -645,7 +645,10 @@ reproc_t *reproc_destroy(reproc_t *process)
   process->pipe.err = pipe_destroy(process->pipe.err);
   process->pipe.exit = pipe_destroy(process->pipe.exit);
 
-  deinit();
+  if (process->status != STATUS_NOT_STARTED) {
+    deinit();
+  }
+
   free(process);
 
   return NULL;
