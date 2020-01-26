@@ -2,6 +2,8 @@
 
 #include "handle.h"
 
+#include <stdbool.h>
+
 #if defined(_WIN32)
 typedef void *process_type; // `HANDLE`
 #else
@@ -27,6 +29,8 @@ struct process_options {
     handle_type err;
     handle_type exit;
   } pipe;
+
+  bool pty;
 };
 
 // Spawns a child process that executes the command stored in `argv`.

@@ -30,9 +30,9 @@ enum { PIPES_PER_SET = 4 };
 
 extern const pipe_type PIPE_INVALID;
 
-// Creates a new anonymous pipe. `read` and `write` are set to the read and
-// write handle of the pipe respectively.
-int pipe_init(pipe_type *read, pipe_type *write);
+// Creates a new anonymous pipe. `parent` and `child` are set to the parent and
+// child endpoint of the pipe respectively.
+int pipe_init(pipe_type *parent, pipe_type *child, bool input, bool pty);
 
 // Sets `pipe` to nonblocking mode.
 int pipe_nonblocking(pipe_type pipe, bool enable);

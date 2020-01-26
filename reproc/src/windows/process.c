@@ -232,8 +232,10 @@ static wchar_t *string_to_wstring(const char *string, size_t size)
   return wstring;
 }
 
+static const DWORD NUM_ATTRIBUTES = 1;
+
 static LPPROC_THREAD_ATTRIBUTE_LIST
-handle_inherit_list_create(HANDLE *handles, size_t num_handles)
+setup_attribute_list(HANDLE *handles, size_t num_handles)
 {
   assert(handles);
 
@@ -250,7 +252,8 @@ handle_inherit_list_create(HANDLE *handles, size_t num_handles)
 
   // Get the required size for `attribute_list`.
   SIZE_T attribute_list_size = 0;
-  r = InitializeProcThreadAttributeList(NULL, 1, 0, &attribute_list_size);
+  r = InitializeProcThreadAttributeList(NULL, NUM_ATTRIBUTES, 0,
+                                        &attribute_list_size);
   if (r == 0 && GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
     return NULL;
   }
@@ -261,7 +264,7 @@ handle_inherit_list_create(HANDLE *handles, size_t num_handles)
     return NULL;
   }
 
-  r = InitializeProcThreadAttributeList(attribute_list, 1, 0,
+  r = InitializeProcThreadAttributeList(attribute_list, NUM_ATTRIBUTES, 0,
                                         &attribute_list_size);
   if (r == 0) {
     free(attribute_list);
@@ -286,7 +289,7 @@ int process_start(HANDLE *process,
 {
   assert(process);
 
-  if (argv == NULL) {
+  if (argv == NULL || options.pty) {
     return -ERROR_CALL_NOT_IMPLEMENTED;
   }
 
@@ -346,9 +349,9 @@ int process_start(HANDLE *process,
   // handles it should inherit can still unintentionally inherit handles meant
   // for a reproc child process. See https://stackoverflow.com/a/2345126 for
   // more information.
-  HANDLE inherit[] = { options.pipe.in, options.pipe.out, options.pipe.err,
-                       options.pipe.exit };
-  attribute_list = handle_inherit_list_create(inherit, ARRAY_SIZE(inherit));
+  HANDLE handles[] = { options.pipe.exit, options.pipe.in, options.pipe.out,
+                       options.pipe.err };
+  attribute_list = setup_attribute_list(handles, ARRAY_SIZE(handles));
   if (attribute_list == NULL) {
     goto finish;
   }

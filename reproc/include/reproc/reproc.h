@@ -133,6 +133,24 @@ typedef struct reproc_options {
     may not be set.
     */
     bool discard;
+    /*!
+    Use pseudo-ttys instead of pipes when `REPROC_REDIRECT_PIPE` is used. Child
+    processes spawned with this option set will think they are running in a
+    terminal.
+
+    When this option is set, `redirect.err` is ignored and both the stdout and
+    the stderr stream of the child process will be redirected from
+    `REPROC_STREAM_OUT`.
+
+    Currently, this option is not implemented on Windows because of bugs in
+    ConPTY (See https://github.com/microsoft/terminal/issues/4359). Once these
+    are fixed and ConPTY is more established, implementing `pty` on Windows
+    becomes feasible. Until then, setting this option on Windows makes
+    `reproc_start` return an error.
+
+    If `parent` or `discard` are set, this option may not be set.
+    */
+    bool pty;
   } redirect;
   /*!
   Stop actions that are passed to `reproc_stop` in `reproc_destroy` to stop the

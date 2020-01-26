@@ -5,7 +5,6 @@
 
 #include "error.h"
 #include "handle.h"
-#include "macro.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -13,59 +12,70 @@
 #include <limits.h>
 #include <poll.h>
 #include <stdlib.h>
-#include <sys/socket.h>
 #include <unistd.h>
+
+#if defined(__linux__)
+  #include <pty.h>
+#else
+  #include <util.h>
+#endif
 
 const int PIPE_INVALID = -1;
 
-int pipe_init(int *read, int *write)
+static int pipe_cloexec(int pipe)
 {
-  assert(read);
-  assert(write);
+  int r = -1;
+
+  r = fcntl(pipe, F_GETFD, 0);
+  if (r < 0) {
+    return error_unify(r);
+  }
+
+  r |= FD_CLOEXEC;
+
+  r = fcntl(pipe, F_SETFD, r);
+  if (r < 0) {
+    return error_unify(r);
+  }
+
+  return 0;
+}
+
+int pipe_init(int *parent, int *child, bool input, bool pty)
+{
+  assert(parent);
+  assert(child);
 
   int pair[] = { PIPE_INVALID, PIPE_INVALID };
   int r = -1;
 
 #if defined(__APPLE__)
-  r = pipe(pair);
-  if (r < 0) {
-    goto finish;
-  }
-
-  r = fcntl(pair[0], F_GETFD, 0);
-  if (r < 0) {
-    goto finish;
-  }
-
-  r |= FD_CLOEXEC;
-
-  r = fcntl(pair[0], F_SETFD, r);
-  if (r < 0) {
-    goto finish;
-  }
-
-  r = fcntl(pair[1], F_GETFD, 0);
-  if (r < 0) {
-    goto finish;
-  }
-
-  r |= FD_CLOEXEC;
-
-  r = fcntl(pair[1], F_SETFD, r);
+  r = pty ? openpty(&pair[0], &pair[1], NULL, NULL, NULL) : pipe(pair);
   if (r < 0) {
     goto finish;
   }
 #else
   // `pipe2` with `O_CLOEXEC` avoids the race condition between `pipe` and
   // `fcntl`.
-  r = pipe2(pair, O_CLOEXEC);
+  r = pty ? openpty(&pair[0], &pair[1], NULL, NULL, NULL)
+          : pipe2(pair, O_CLOEXEC);
   if (r < 0) {
     goto finish;
   }
 #endif
 
-  *read = pair[0];
-  *write = pair[1];
+  r = pipe_cloexec(pair[0]);
+  if (r < 0) {
+    goto finish;
+  }
+
+  r = pipe_cloexec(pair[1]);
+  if (r < 0) {
+    goto finish;
+  }
+
+  *parent = pty ? pair[0] : input ? pair[1] : pair[0];
+  *child = pty ? pair[1] : input ? pair[0] : pair[1];
 
   pair[0] = PIPE_INVALID;
   pair[1] = PIPE_INVALID;
@@ -100,8 +110,9 @@ int pipe_read(int pipe, uint8_t *buffer, size_t size)
 
   int r = (int) read(pipe, buffer, size);
 
-  if (r == 0) {
-    // `read` returns 0 to indicate the other end of the pipe was closed.
+  if (r == 0 || (r < 0 && errno == EIO)) {
+    // `read` returns 0 to indicate the other end of the pipe was closed. When a
+    // pty is closed, `read` returns `EIO` on Linux.
     r = -EPIPE;
   }
 

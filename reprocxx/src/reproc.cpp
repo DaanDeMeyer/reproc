@@ -49,6 +49,7 @@ static reproc_options reproc_options_from(const options &options, bool fork)
                  static_cast<REPROC_REDIRECT>(options.redirect.stdio.err) },
                options.redirect.parent,
                options.redirect.discard,
+               options.redirect.pty
            },
            reproc_stop_actions_from(options.stop),
            options.timeout.count(),
