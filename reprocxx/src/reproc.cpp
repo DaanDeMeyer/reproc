@@ -43,14 +43,16 @@ static reproc_options reproc_options_from(const options &options, bool fork)
 {
   return { options.environment.data(),
            options.working_directory,
-           { static_cast<REPROC_REDIRECT>(options.redirect.in),
-             static_cast<REPROC_REDIRECT>(options.redirect.out),
-             static_cast<REPROC_REDIRECT>(options.redirect.err) },
+           {
+               { static_cast<REPROC_REDIRECT>(options.redirect.stdio.in),
+                 static_cast<REPROC_REDIRECT>(options.redirect.stdio.out),
+                 static_cast<REPROC_REDIRECT>(options.redirect.stdio.err) },
+               options.redirect.parent,
+               options.redirect.discard,
+           },
            reproc_stop_actions_from(options.stop),
            options.timeout.count(),
            options.deadline.count(),
-           options.inherit,
-           options.discard,
            { options.input.data(), options.input.size() },
            fork };
 }

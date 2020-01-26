@@ -20,9 +20,9 @@ static DWORD stream_to_id(REDIRECT_STREAM stream)
   return 0;
 }
 
-int redirect_inherit(HANDLE *handle, REDIRECT_STREAM stream)
+int redirect_parent(HANDLE *out, REDIRECT_STREAM stream)
 {
-  assert(handle);
+  assert(out);
 
   int r = 0;
 
@@ -47,7 +47,7 @@ int redirect_inherit(HANDLE *handle, REDIRECT_STREAM stream)
     return error_unify(r);
   }
 
-  *handle = duplicated;
+  *out = duplicated;
 
   return 0;
 }
@@ -58,9 +58,9 @@ static SECURITY_ATTRIBUTES INHERIT = { .nLength = sizeof(SECURITY_ATTRIBUTES),
                                        .bInheritHandle = true,
                                        .lpSecurityDescriptor = NULL };
 
-int redirect_discard(HANDLE *handle, REDIRECT_STREAM stream)
+int redirect_discard(HANDLE *out, REDIRECT_STREAM stream)
 {
-  assert(handle);
+  assert(out);
 
   DWORD mode = stream == REDIRECT_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
   int r = 0;
@@ -72,7 +72,7 @@ int redirect_discard(HANDLE *handle, REDIRECT_STREAM stream)
     return error_unify(r);
   }
 
-  *handle = handle;
+  *out = handle;
 
   return 0;
 }

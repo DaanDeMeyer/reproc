@@ -22,9 +22,9 @@ static FILE *stream_to_file(REDIRECT_STREAM stream)
   return NULL;
 }
 
-int redirect_inherit(int *handle, REDIRECT_STREAM stream)
+int redirect_parent(int *out, REDIRECT_STREAM stream)
 {
-  assert(handle);
+  assert(out);
 
   int r = -EINVAL;
 
@@ -47,14 +47,14 @@ int redirect_inherit(int *handle, REDIRECT_STREAM stream)
     return error_unify(r);
   }
 
-  *handle = r; // `r` contains the duplicated file descriptor.
+  *out = r; // `r` contains the duplicated file descriptor.
 
   return 0;
 }
 
-int redirect_discard(int *handle, REDIRECT_STREAM stream)
+int redirect_discard(int *out, REDIRECT_STREAM stream)
 {
-  assert(handle);
+  assert(out);
 
   int mode = stream == REDIRECT_STREAM_IN ? O_RDONLY : O_WRONLY;
 
@@ -63,7 +63,7 @@ int redirect_discard(int *handle, REDIRECT_STREAM stream)
     return error_unify(r);
   }
 
-  *handle = r;
+  *out = r;
 
   return 0;
 }

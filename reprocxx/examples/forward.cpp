@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
   // We have the child process inherit the parent's standard streams so the
   // child process reads directly from the stdin and writes directly to the
   // stdout/stderr of the parent process.
-  options.inherit = true;
+  options.redirect.parent = true;
 
   // Exclude `argv[0]` which is the current program's name.
   std::error_code ec = process.start(argv + 1, options);

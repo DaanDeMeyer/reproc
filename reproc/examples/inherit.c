@@ -23,7 +23,8 @@ int main(int argc, const char *argv[])
     goto finish;
   }
 
-  r = reproc_start(process, argv + 1, (reproc_options) { .inherit = true });
+  r = reproc_start(process, argv + 1,
+                   (reproc_options){ .redirect.parent = true });
   if (r < 0) {
     goto finish;
   }

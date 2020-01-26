@@ -11,7 +11,7 @@ int main(int argc, const char *argv[])
   std::error_code ec;
 
   reproc::options options;
-  options.inherit = true;
+  options.redirect.parent = true;
   options.deadline = reproc::milliseconds(5000);
 
   std::tie(status, ec) = reproc::run(argv + 1, options);

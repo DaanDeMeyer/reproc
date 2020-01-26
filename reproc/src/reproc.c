@@ -39,37 +39,38 @@ static int parse_options(const char *const *argv, reproc_options *options)
 {
   assert(options);
 
-  if (options->redirect.in || options->redirect.out || options->redirect.err) {
-    assert_return(!options->inherit, REPROC_EINVAL);
-    assert_return(!options->discard, REPROC_EINVAL);
+  if (options->redirect.stdio.in || options->redirect.stdio.out ||
+      options->redirect.stdio.err) {
+    assert_return(!options->redirect.parent, REPROC_EINVAL);
+    assert_return(!options->redirect.discard, REPROC_EINVAL);
   }
 
-  if (options->inherit) {
-    assert_return(options->redirect.in == 0, REPROC_EINVAL);
-    assert_return(options->redirect.out == 0, REPROC_EINVAL);
-    assert_return(options->redirect.err == 0, REPROC_EINVAL);
-    assert_return(!options->discard, REPROC_EINVAL);
+  if (options->redirect.parent) {
+    assert_return(options->redirect.stdio.in == 0, REPROC_EINVAL);
+    assert_return(options->redirect.stdio.out == 0, REPROC_EINVAL);
+    assert_return(options->redirect.stdio.err == 0, REPROC_EINVAL);
+    assert_return(!options->redirect.discard, REPROC_EINVAL);
 
-    options->redirect.in = REPROC_REDIRECT_INHERIT;
-    options->redirect.out = REPROC_REDIRECT_INHERIT;
-    options->redirect.err = REPROC_REDIRECT_INHERIT;
+    options->redirect.stdio.in = REPROC_REDIRECT_PARENT;
+    options->redirect.stdio.out = REPROC_REDIRECT_PARENT;
+    options->redirect.stdio.err = REPROC_REDIRECT_PARENT;
   }
 
-  if (options->discard) {
-    assert_return(options->redirect.in == 0, REPROC_EINVAL);
-    assert_return(options->redirect.out == 0, REPROC_EINVAL);
-    assert_return(options->redirect.err == 0, REPROC_EINVAL);
-    assert_return(!options->inherit, REPROC_EINVAL);
+  if (options->redirect.discard) {
+    assert_return(options->redirect.stdio.in == 0, REPROC_EINVAL);
+    assert_return(options->redirect.stdio.out == 0, REPROC_EINVAL);
+    assert_return(options->redirect.stdio.err == 0, REPROC_EINVAL);
+    assert_return(!options->redirect.parent, REPROC_EINVAL);
 
-    options->redirect.in = REPROC_REDIRECT_DISCARD;
-    options->redirect.out = REPROC_REDIRECT_DISCARD;
-    options->redirect.err = REPROC_REDIRECT_DISCARD;
+    options->redirect.stdio.in = REPROC_REDIRECT_DISCARD;
+    options->redirect.stdio.out = REPROC_REDIRECT_DISCARD;
+    options->redirect.stdio.err = REPROC_REDIRECT_DISCARD;
   }
 
   if (options->input.data != NULL || options->input.size > 0) {
     assert_return(options->input.data != NULL, REPROC_EINVAL);
     assert_return(options->input.size > 0, REPROC_EINVAL);
-    assert_return(options->redirect.in == 0, REPROC_EINVAL);
+    assert_return(options->redirect.stdio.in == 0, REPROC_EINVAL);
   }
 
   if (options->fork) {
@@ -147,8 +148,8 @@ static int redirect(pipe_type *parent,
       r = redirect_pipe(parent, child, stream);
       break;
 
-    case REPROC_REDIRECT_INHERIT:
-      r = redirect_inherit(child, (REDIRECT_STREAM) stream);
+    case REPROC_REDIRECT_PARENT:
+      r = redirect_parent(child, (REDIRECT_STREAM) stream);
       if (r == REPROC_EPIPE) {
         // Discard if the corresponding parent stream is closed.
         r = redirect_discard(child, (REDIRECT_STREAM) stream);
@@ -186,7 +187,7 @@ static handle_type redirect_destroy(handle_type handle, REPROC_REDIRECT type)
       // handle type.
       pipe_destroy((pipe_type) handle);
       break;
-    case REPROC_REDIRECT_INHERIT:
+    case REPROC_REDIRECT_PARENT:
     case REPROC_REDIRECT_DISCARD:
       handle_destroy(handle);
       break;
@@ -289,19 +290,19 @@ int reproc_start(reproc_t *process,
   }
 
   r = redirect(&process->pipe.in, &child.in, REPROC_STREAM_IN,
-               options.redirect.in);
+               options.redirect.stdio.in);
   if (r < 0) {
     goto finish;
   }
 
   r = redirect(&process->pipe.out, &child.out, REPROC_STREAM_OUT,
-               options.redirect.out);
+               options.redirect.stdio.out);
   if (r < 0) {
     goto finish;
   }
 
   r = redirect(&process->pipe.err, &child.err, REPROC_STREAM_ERR,
-               options.redirect.err);
+               options.redirect.stdio.err);
   if (r < 0) {
     goto finish;
   }
@@ -359,9 +360,9 @@ finish:
   // Either an error has ocurred or the child pipe endpoints have been copied to
   // the stdin/stdout/stderr streams of the child process. Either way, they can
   // be safely closed.
-  redirect_destroy(child.in, options.redirect.in);
-  redirect_destroy(child.out, options.redirect.out);
-  redirect_destroy(child.err, options.redirect.err);
+  redirect_destroy(child.in, options.redirect.stdio.in);
+  redirect_destroy(child.out, options.redirect.stdio.out);
+  redirect_destroy(child.err, options.redirect.stdio.err);
   pipe_destroy(child.exit);
 
   if (r < 0) {

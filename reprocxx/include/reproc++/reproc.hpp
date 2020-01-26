@@ -41,7 +41,7 @@ REPROCXX_EXPORT extern const milliseconds infinite;
 REPROCXX_EXPORT extern const milliseconds deadline;
 REPROCXX_EXPORT extern const milliseconds nonblocking;
 
-enum class redirect { pipe, inherit, discard };
+enum class redirect { pipe, parent, discard };
 
 enum class stop { noop, wait, terminate, kill };
 
@@ -63,16 +63,18 @@ struct options {
   const char *working_directory = nullptr;
 
   struct {
-    redirect in;
-    redirect out;
-    redirect err;
+    struct {
+      redirect in;
+      redirect out;
+      redirect err;
+    } stdio;
+    bool parent;
+    bool discard;
   } redirect = {};
 
   struct stop_actions stop = {};
   reproc::milliseconds timeout = reproc::milliseconds(0);
   reproc::milliseconds deadline = reproc::milliseconds(0);
-  bool inherit = false;
-  bool discard = false;
   /*! Implicitly converts from string literals to the pointer size pair expected
   by `reproc_start`. */
   class input input;

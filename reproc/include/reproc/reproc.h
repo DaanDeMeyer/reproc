@@ -52,11 +52,11 @@ typedef enum {
 
 /*! Used to tell reproc where to redirect the streams of the child process. */
 typedef enum {
-  /*! Redirect the stream to a pipe. */
+  /*! Redirect to a pipe. */
   REPROC_REDIRECT_PIPE,
-  /*! Inherit the corresponding stream from the parent process. */
-  REPROC_REDIRECT_INHERIT,
-  /*! Redirect the stream to /dev/null (or NUL on Windows). */
+  /*! Redirect to the corresponding stream from the parent process. */
+  REPROC_REDIRECT_PARENT,
+  /*! Redirect to /dev/null (or NUL on Windows). */
   REPROC_REDIRECT_DISCARD
 } REPROC_REDIRECT;
 
@@ -109,13 +109,30 @@ typedef struct reproc_options {
   By default each stream is redirected to a pipe which can be written to (stdin)
   or read from (stdout/stderr) using `reproc_write` and `reproc_read`
   respectively.
-
-  If `inherit` or `discard` are set, this option may not be set.
   */
   struct {
-    REPROC_REDIRECT in;
-    REPROC_REDIRECT out;
-    REPROC_REDIRECT err;
+    /*!
+    `stdio` specificies where to redirect each of the standard I/O streams of
+    the child process. If `parent` or `discard` are set, this option may not be
+    set.
+    */
+    struct {
+      REPROC_REDIRECT in;
+      REPROC_REDIRECT out;
+      REPROC_REDIRECT err;
+    } stdio;
+    /*!
+    Shorthand for setting all members of `stdio` to
+    `REPROC_REDIRECT_PARENT`. If `discard` or `stdio` are set, this option
+    may not be set.
+    */
+    bool parent;
+    /*!
+    Shorthand for setting all members of `stdio` to
+    `REPROC_REDIRECT_DISCARD`. If `parent` or `stdio` are set, this option
+    may not be set.
+    */
+    bool discard;
   } redirect;
   /*!
   Stop actions that are passed to `reproc_stop` in `reproc_destroy` to stop the
@@ -142,16 +159,6 @@ typedef struct reproc_options {
   When `deadline` is zero, no deadline is set for the process.
   */
   int deadline;
-  /*!
-  Shorthand for setting all members of `redirect` to `REPROC_REDIRECT_INHERIT`.
-  If `discard` or `redirect` are set, this option may not be set.
-  */
-  bool inherit;
-  /*!
-  Shorthand for setting all members of `redirect` to `REPROC_REDIRECT_DISCARD`.
-  If `inherit` or `redirect` are set, this option may not be set.
-  */
-  bool discard;
   /*!
   `input` is written to the stdin pipe before the child process is started.
 

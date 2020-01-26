@@ -13,7 +13,8 @@ int main(int argc, const char *argv[])
   (void) argc;
 
   int r = reproc_run(argv + 1,
-                     (reproc_options){ .inherit = true, .deadline = 5000 },
+                     (reproc_options){ .redirect.parent = true,
+                                       .deadline = 5000 },
                      REPROC_SINK_NULL, REPROC_SINK_NULL);
 
   if (r < 0) {
