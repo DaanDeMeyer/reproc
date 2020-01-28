@@ -116,8 +116,6 @@ function(reproc_add_common TARGET LANGUAGE)
         /wd4068
       )
 
-      target_compile_definitions(${TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS)
-
       if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.15.0)
         # CMake 3.15 does not add /W3 to the compiler flags by default anymore
         # so we add /W4 instead.
@@ -143,6 +141,10 @@ function(reproc_add_common TARGET LANGUAGE)
       if(LANGUAGE STREQUAL C OR CMAKE_CXX_COMPILER_ID MATCHES Clang)
         target_compile_options(${TARGET} PRIVATE -Wmissing-prototypes)
       endif()
+    endif()
+
+    if(WIN32)
+      target_compile_definitions(${TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS)
     endif()
 
     target_compile_options(${TARGET} PRIVATE

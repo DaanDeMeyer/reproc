@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <memory>
 #include <system_error>
 #include <utility>
@@ -41,7 +42,7 @@ REPROCXX_EXPORT extern const milliseconds infinite;
 REPROCXX_EXPORT extern const milliseconds deadline;
 REPROCXX_EXPORT extern const milliseconds nonblocking;
 
-enum class redirect { pipe, parent, discard };
+enum class redirect { pipe, parent, discard, handle, file };
 
 enum class stop { noop, wait, terminate, kill };
 
@@ -55,6 +56,12 @@ struct stop_actions {
   stop_action second;
   stop_action third;
 };
+
+#if defined(_WIN32)
+using handle = void *;
+#else
+using handle = int;
+#endif
 
 struct options {
   /*! Implicitly converts from any STL container of string pairs to the
@@ -71,6 +78,16 @@ struct options {
     bool parent;
     bool discard;
     bool pty;
+    struct {
+      handle in;
+      handle out;
+      handle err;
+    } handle;
+    struct {
+      FILE *in;
+      FILE *out;
+      FILE *err;
+    } file;
   } redirect = {};
 
   struct stop_actions stop = {};

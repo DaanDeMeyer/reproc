@@ -2,6 +2,7 @@
 Checks:
 '
 *,
+-android-cloexec-fopen,
 -android-cloexec-pipe,
 -bugprone-exception-escape,
 -cert-err58-cpp,

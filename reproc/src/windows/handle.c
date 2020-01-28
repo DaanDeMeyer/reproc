@@ -3,9 +3,30 @@
 #include "error.h"
 
 #include <assert.h>
+#include <io.h>
 #include <windows.h>
 
 const HANDLE HANDLE_INVALID = INVALID_HANDLE_VALUE; // NOLINT
+
+int handle_from(FILE *file, HANDLE *handle)
+{
+  int r = -1;
+
+  r = _fileno(file);
+  if (r < 0) {
+    return -ERROR_INVALID_HANDLE;
+  }
+
+  intptr_t result = _get_osfhandle(r);
+  if (result == -1) {
+    return -ERROR_INVALID_HANDLE;
+  }
+
+  r = DuplicateHandle(GetCurrentProcess(), (HANDLE) result, GetCurrentProcess(),
+                      handle, DUPLICATE_SAME_ACCESS, FALSE, 0);
+
+  return error_unify(r);
+}
 
 HANDLE handle_destroy(HANDLE handle)
 {

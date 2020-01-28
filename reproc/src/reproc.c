@@ -35,6 +35,8 @@ const int REPROC_SIGTERM = UINT8_MAX + 15;
 const int REPROC_INFINITE = -1;
 const int REPROC_DEADLINE = -2;
 
+#define assert_xnor(left, right, r) assert_return(!(left) == !(right), r)
+
 static int parse_options(const char *const *argv, reproc_options *options)
 {
   assert(options);
@@ -45,10 +47,26 @@ static int parse_options(const char *const *argv, reproc_options *options)
     assert_return(!options->redirect.discard, REPROC_EINVAL);
   }
 
+  if (options->redirect.parent || options->redirect.discard ||
+      options->redirect.pty) {
+    assert_return(!options->redirect.handle.in, REPROC_EINVAL);
+    assert_return(!options->redirect.handle.out, REPROC_EINVAL);
+    assert_return(!options->redirect.handle.err, REPROC_EINVAL);
+
+    assert_return(!options->redirect.file.in, REPROC_EINVAL);
+    assert_return(!options->redirect.file.out, REPROC_EINVAL);
+    assert_return(!options->redirect.file.err, REPROC_EINVAL);
+  }
+
+  if (options->redirect.parent || options->redirect.discard) {
+    assert_return(!options->redirect.pty, REPROC_EINVAL);
+
+    assert_return(!options->redirect.stdio.in, REPROC_EINVAL);
+    assert_return(!options->redirect.stdio.out, REPROC_EINVAL);
+    assert_return(!options->redirect.stdio.err, REPROC_EINVAL);
+  }
+
   if (options->redirect.parent) {
-    assert_return(options->redirect.stdio.in == 0, REPROC_EINVAL);
-    assert_return(options->redirect.stdio.out == 0, REPROC_EINVAL);
-    assert_return(options->redirect.stdio.err == 0, REPROC_EINVAL);
     assert_return(!options->redirect.discard, REPROC_EINVAL);
 
     options->redirect.stdio.in = REPROC_REDIRECT_PARENT;
@@ -57,9 +75,6 @@ static int parse_options(const char *const *argv, reproc_options *options)
   }
 
   if (options->redirect.discard) {
-    assert_return(options->redirect.stdio.in == 0, REPROC_EINVAL);
-    assert_return(options->redirect.stdio.out == 0, REPROC_EINVAL);
-    assert_return(options->redirect.stdio.err == 0, REPROC_EINVAL);
     assert_return(!options->redirect.parent, REPROC_EINVAL);
 
     options->redirect.stdio.in = REPROC_REDIRECT_DISCARD;
@@ -71,6 +86,23 @@ static int parse_options(const char *const *argv, reproc_options *options)
     assert_return(!options->redirect.parent, REPROC_EINVAL);
     assert_return(!options->redirect.discard, REPROC_EINVAL);
   }
+
+  if (options->redirect.handle.in || options->redirect.handle.out ||
+      options->redirect.handle.err) {
+    assert_return(!options->redirect.parent, REPROC_EINVAL);
+    assert_return(!options->redirect.discard, REPROC_EINVAL);
+    assert_return(!options->redirect.pty, REPROC_EINVAL);
+  }
+
+  // clang-format off
+  assert_xnor(options->redirect.stdio.in == REPROC_REDIRECT_HANDLE, options->redirect.handle.in, REPROC_EINVAL);
+  assert_xnor(options->redirect.stdio.out == REPROC_REDIRECT_HANDLE, options->redirect.handle.out, REPROC_EINVAL);
+  assert_xnor(options->redirect.stdio.err == REPROC_REDIRECT_HANDLE, options->redirect.handle.err, REPROC_EINVAL);
+
+  assert_xnor(options->redirect.stdio.in == REPROC_REDIRECT_FILE, options->redirect.file.in, REPROC_EINVAL);
+  assert_xnor(options->redirect.stdio.out == REPROC_REDIRECT_FILE, options->redirect.file.out, REPROC_EINVAL);
+  assert_xnor(options->redirect.stdio.err == REPROC_REDIRECT_FILE, options->redirect.file.err, REPROC_EINVAL);
+  // clang-format on
 
   if (options->input.data != NULL || options->input.size > 0) {
     assert_return(options->input.data != NULL, REPROC_EINVAL);
@@ -140,7 +172,9 @@ static int redirect(pipe_type *parent,
                     handle_type *child,
                     REPROC_STREAM stream,
                     REPROC_REDIRECT type,
-                    bool pty)
+                    bool pty,
+                    handle_type handle,
+                    FILE *file)
 {
   assert(parent);
   assert(child);
@@ -160,18 +194,41 @@ static int redirect(pipe_type *parent,
         r = redirect_discard(child, (REDIRECT_STREAM) stream);
       }
 
-      if (r >= 0) {
-        *parent = PIPE_INVALID;
+      if (r < 0) {
+        break;
       }
+
+      *parent = PIPE_INVALID;
 
       break;
 
     case REPROC_REDIRECT_DISCARD:
       r = redirect_discard(child, (REDIRECT_STREAM) stream);
-
-      if (r >= 0) {
-        *parent = PIPE_INVALID;
+      if (r < 0) {
+        break;
       }
+
+      *parent = PIPE_INVALID;
+
+      break;
+
+    case REPROC_REDIRECT_HANDLE:
+      assert(handle);
+
+      *child = handle;
+      *parent = PIPE_INVALID;
+
+      break;
+
+    case REPROC_REDIRECT_FILE:
+      assert(file);
+
+      r = handle_from(file, child);
+      if (r < 0) {
+        break;
+      }
+
+      *parent = PIPE_INVALID;
 
       break;
 
@@ -194,7 +251,10 @@ static handle_type redirect_destroy(handle_type handle, REPROC_REDIRECT type)
       break;
     case REPROC_REDIRECT_PARENT:
     case REPROC_REDIRECT_DISCARD:
+    case REPROC_REDIRECT_FILE:
       handle_destroy(handle);
+      break;
+    case REPROC_REDIRECT_HANDLE:
       break;
   }
 
@@ -295,19 +355,22 @@ int reproc_start(reproc_t *process,
   }
 
   r = redirect(&process->pipe.in, &child.in, REPROC_STREAM_IN,
-               options.redirect.stdio.in, options.redirect.pty);
+               options.redirect.stdio.in, options.redirect.pty,
+               options.redirect.handle.in, options.redirect.file.in);
   if (r < 0) {
     goto finish;
   }
 
   r = redirect(&process->pipe.out, &child.out, REPROC_STREAM_OUT,
-               options.redirect.stdio.out, options.redirect.pty);
+               options.redirect.stdio.out, options.redirect.pty,
+               options.redirect.handle.out, options.redirect.file.out);
   if (r < 0) {
     goto finish;
   }
 
   r = redirect(&process->pipe.err, &child.err, REPROC_STREAM_ERR,
-               options.redirect.stdio.err, options.redirect.pty);
+               options.redirect.stdio.err, options.redirect.pty,
+               options.redirect.handle.err, options.redirect.file.err);
   if (r < 0) {
     goto finish;
   }

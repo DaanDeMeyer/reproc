@@ -163,6 +163,9 @@ jobs:
       - name: "reproc: drain"
         run: build/reproc/examples/drain
 
+      - name: "reproc: file"
+        run: build/reproc/examples/file cmake --help
+
       - name: "reproc: git-status"
         run: build/reproc/examples/git-status
 

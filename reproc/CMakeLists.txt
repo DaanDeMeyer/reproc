@@ -72,6 +72,7 @@ endif()
 
 if(REPROC_EXAMPLES)
   reproc_add_example(reproc drain C)
+  reproc_add_example(reproc file C)
   reproc_add_example(reproc git-status C)
   reproc_add_example(reproc inherit C)
   reproc_add_example(reproc run C)

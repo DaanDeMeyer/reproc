@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,7 +58,11 @@ typedef enum {
   /*! Redirect to the corresponding stream from the parent process. */
   REPROC_REDIRECT_PARENT,
   /*! Redirect to /dev/null (or NUL on Windows). */
-  REPROC_REDIRECT_DISCARD
+  REPROC_REDIRECT_DISCARD,
+  /*! Redirect to a handle. */
+  REPROC_REDIRECT_HANDLE,
+  /*! Redirect to a `FILE *`. */
+  REPROC_REDIRECT_FILE
 } REPROC_REDIRECT;
 
 /*! Used to tell `reproc_stop` how to stop a child process. */
@@ -82,6 +87,12 @@ typedef struct reproc_stop_actions {
   reproc_stop_action second;
   reproc_stop_action third;
 } reproc_stop_actions;
+
+#if defined(_WIN32)
+typedef void *reproc_handle; // `HANDLE`
+#else
+typedef int reproc_handle; // fd
+#endif
 
 typedef struct reproc_options {
   /*!
@@ -123,14 +134,14 @@ typedef struct reproc_options {
     } stdio;
     /*!
     Shorthand for setting all members of `stdio` to
-    `REPROC_REDIRECT_PARENT`. If `discard` or `stdio` are set, this option
-    may not be set.
+    `REPROC_REDIRECT_PARENT`. If `discard`, `stdio`, `pty` or `handle` are set,
+    this option may not be set.
     */
     bool parent;
     /*!
     Shorthand for setting all members of `stdio` to
-    `REPROC_REDIRECT_DISCARD`. If `parent` or `stdio` are set, this option
-    may not be set.
+    `REPROC_REDIRECT_DISCARD`. If `parent`, `stdio`, `pty` or `handle` are set,
+    this option may not be set.
     */
     bool discard;
     /*!
@@ -148,9 +159,52 @@ typedef struct reproc_options {
     becomes feasible. Until then, setting this option on Windows makes
     `reproc_start` return an error.
 
-    If `parent` or `discard` are set, this option may not be set.
+    If `parent`, `discard` or `handle` are set, this option may not be set.
     */
     bool pty;
+    /*!
+    The actual handle to redirect to when a member of `stdio` is set to
+    `REPROC_REDIRECT_HANDLE`. The given handle must be in blocking mode (
+    `O_NONBLOCK` and `OVERLAPPED` handles are not supported).
+
+    Note that reproc does not take ownership of the handle. The user is
+    responsible for closing the handle after passing it to `reproc_start`. Since
+    the operating system will copy the handle to the child process, the handle
+    can be closed immediately after calling `reproc_start` if the handle is not
+    needed in the parent process anymore.
+
+    If this option is set, the corresponding stream in `stdio` must be set to
+    `REPROC_REDIRECT_HANDLE`.
+
+    If `parent`, `discard` or `pty` are set, this option may not be set.
+    */
+    struct {
+      reproc_handle in;
+      reproc_handle out;
+      reproc_handle err;
+    } handle;
+    /*!
+    The actual file to redirect to when a member of `stdio` is set to
+    `REPROC_REDIRECT_FILE`.
+
+    Note that reproc does not take ownership of the file. The user is
+    responsible for closing the file after passing it to `reproc_start`. Just
+    like with `handles`, the operating system will copy the file handle to the
+    child process so the file can be closed immediately after calling
+    `reproc_start` if it isn't needed anymore by the parent process.
+
+    Any file passed to `file.in` must have been opened in read mode. Likewise,
+    any files passed to `file.out` or `file.err` must have been opened in write
+    mode.
+
+    If this option is set, the corresponding stream in `stdio` must be set to
+    `REPROC_REDIRECT_FILE`.
+    */
+    struct {
+      FILE *in;
+      FILE *out;
+      FILE *err;
+    } file;
   } redirect;
   /*!
   Stop actions that are passed to `reproc_stop` in `reproc_destroy` to stop the
