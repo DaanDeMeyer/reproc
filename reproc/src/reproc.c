@@ -495,9 +495,10 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources)
   if (r == REPROC_ETIMEDOUT) {
     sources[earliest].events = REPROC_EVENT_TIMEOUT;
     r = 0;
+    goto finish;
   }
 
-  if (r <= 0) {
+  if (r < 0) {
     goto finish;
   }
 

@@ -164,6 +164,10 @@ int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
 
   if (r == 0) {
     r = -ETIMEDOUT;
+  } else if (r > 0) {
+    // `poll` returns the amount of ready file descriptors on success so we
+    // explicitly reset `r` to 0.
+    r = 0;
   }
 
 finish:
