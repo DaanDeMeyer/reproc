@@ -202,68 +202,13 @@ provides constants (`REPROC_ETIMEDOUT`, `REPROC_EPIPE`, ...) that can be used to
 match against the error without having to write platform-specific code. To get a
 string representation of an error, pass it to `reproc_strerror`.
 
-```c
-reproc_t *process = NULL;
-int r = REPROC_ENOMEM;
-
-process = reproc_new();
-if (process == NULL) {
-  goto finish;
-}
-
-r = reproc_start(...);
-if (r < 0) {
-  goto finish;
-}
-
-r = reproc_write(...)
-if (r == REPROC_EPIPE) {
-  goto finish;
-}
-
-finish:
-if (r < 0) {
-  printf("%s\n", reproc_strerror(r));
-}
-
-return abs(r);
-```
-
 reproc++'s API integrates with the C++ standard library error codes mechanism
 (`std::error_code` and `std::error_condition`). Most methods in reproc++'s API
 return `std::error_code` values that contain the actual system error that
 occurred. You can test against these error codes using values from the
-`std::errc` enum:
+`std::errc` enum.
 
-```c++
-reproc::process;
-std::error_code ec = process.start(...);
-
-if (ec == std::errc::no_such_file_or_directory) {
-  std::cerr << "Executable not found. Make sure it is available from the PATH.";
-  return 1;
-}
-
-if (ec) {
-  // Will print the actual system error value from errno or GetLastError() if a
-  // system error occurred.
-  std::cerr << ec.value() << std::endl;
-  // You can also print a string representation of the error.
-  std::cerr << ec.message();
-  return 1;
-}
-```
-
-If needed, `std::error_code`'s can be converted to exceptions using
-`std::system_error`:
-
-```c++
-reproc::process;
-std::error_code ec = process.start(...);
-if (ec) {
-  throw std::system_error(ec, "Unable to start process");
-}
-```
+See the examples for more information on how to handle errors when using reproc.
 
 ## Multithreading
 
