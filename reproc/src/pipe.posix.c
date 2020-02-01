@@ -1,6 +1,3 @@
-// Make sure we get `pipe2` on Linux.
-#define _GNU_SOURCE
-
 #include "pipe.h"
 
 #include "error.h"
@@ -24,19 +21,10 @@ int pipe_init(int *read, int *write)
   int pair[] = { PIPE_INVALID, PIPE_INVALID };
   int r = -1;
 
-#if defined(__APPLE__)
   r = pipe(pair);
   if (r < 0) {
     goto finish;
   }
-#else
-  // `pipe2` with `O_CLOEXEC` avoids the race condition between `pipe` and
-  // `fcntl`.
-  r = pipe2(pair, O_CLOEXEC);
-  if (r < 0) {
-    goto finish;
-  }
-#endif
 
   r = handle_cloexec(pair[0], true);
   if (r < 0) {
