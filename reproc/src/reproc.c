@@ -157,7 +157,9 @@ redirect_pipe(pipe_type *parent, handle_type *child, REPROC_STREAM stream)
   *child = stream == REPROC_STREAM_IN ? (handle_type) pipe[0]
                                       : (handle_type) pipe[1];
 
-  return 0;
+  r = pipe_nonblocking(*parent, true);
+
+  return error_unify(r);
 }
 
 static int redirect(pipe_type *parent,
