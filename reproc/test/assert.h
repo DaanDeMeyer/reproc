@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define assert(expression)                                                     \
+#define ASSERT(expression)                                                     \
   do {                                                                         \
     if (!(expression)) {                                                       \
       fprintf(stderr, "%s:%u: Assertion '%s' failed ", __FILE__, __LINE__,     \

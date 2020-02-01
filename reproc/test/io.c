@@ -12,31 +12,31 @@ static void io()
   int r = -1;
 
   reproc_t *process = reproc_new();
-  assert(process);
+  ASSERT(process);
 
   const char *argv[] = { RESOURCE_DIRECTORY "/io", NULL };
 
   r = reproc_start(process, argv,
                    (reproc_options){
                        .redirect.err.type = REPROC_REDIRECT_STDOUT });
-  assert(r >= 0);
+  ASSERT(r >= 0);
 
   r = reproc_write(process, (uint8_t *) MESSAGE, strlen(MESSAGE));
-  assert(r == strlen(MESSAGE));
+  ASSERT(r == strlen(MESSAGE));
 
   r = reproc_close(process, REPROC_STREAM_IN);
-  assert(r == 0);
+  ASSERT(r == 0);
 
   char *out = NULL;
   r = reproc_drain(process, reproc_sink_string(&out), REPROC_SINK_NULL);
-  assert(r == 0);
+  ASSERT(r == 0);
 
-  assert(out != NULL);
+  ASSERT(out != NULL);
 
-  assert(strcmp(out, MESSAGE MESSAGE) == 0);
+  ASSERT(strcmp(out, MESSAGE MESSAGE) == 0);
 
   r = reproc_wait(process, REPROC_INFINITE);
-  assert(r == 0);
+  ASSERT(r == 0);
 
   reproc_destroy(process);
 
@@ -48,27 +48,27 @@ static void timeout(void)
   int r = -1;
 
   reproc_t *process = reproc_new();
-  assert(process);
+  ASSERT(process);
 
   const char *argv[] = { RESOURCE_DIRECTORY "/io", NULL };
 
   r = reproc_start(process, argv, (reproc_options){ .timeout = 200 });
-  assert(r >= 0);
+  ASSERT(r >= 0);
 
   char *out = NULL;
   char *err = NULL;
   r = reproc_drain(process, reproc_sink_string(&out), reproc_sink_string(&err));
-  assert(r == REPROC_ETIMEDOUT);
-  assert(out != NULL && strlen(out) == 0);
-  assert(err != NULL && strlen(err) == 0);
+  ASSERT(r == REPROC_ETIMEDOUT);
+  ASSERT(out != NULL && strlen(out) == 0);
+  ASSERT(err != NULL && strlen(err) == 0);
 
   r = reproc_close(process, REPROC_STREAM_IN);
-  assert(r == 0);
+  ASSERT(r == 0);
 
   r = reproc_drain(process, reproc_sink_string(&out), reproc_sink_string(&err));
-  assert(r == 0);
-  assert(out != NULL && strlen(out) == 0);
-  assert(err != NULL && strlen(err) == 0);
+  ASSERT(r == 0);
+  ASSERT(out != NULL && strlen(out) == 0);
+  ASSERT(err != NULL && strlen(err) == 0);
 
   reproc_destroy(process);
 

@@ -13,10 +13,10 @@ int main(void)
   int r = -1;
 
   reproc_t *process = reproc_new();
-  assert(process);
+  ASSERT(process);
 
   r = reproc_start(process, NULL, (reproc_options){ .fork = true });
-  assert(r >= 0);
+  ASSERT(r >= 0);
 
   static const char *message = "reproc stands for REdirected PROCess!";
 
@@ -28,13 +28,13 @@ int main(void)
   char *output = NULL;
   reproc_sink sink = reproc_sink_string(&output);
   r = reproc_drain(process, sink, sink);
-  assert(r == 0);
-  assert(output != NULL);
+  ASSERT(r == 0);
+  ASSERT(output != NULL);
 
-  assert(strcmp(message, output) == 0);
+  ASSERT(strcmp(message, output) == 0);
 
   r = reproc_wait(process, REPROC_INFINITE);
-  assert(r == 0);
+  ASSERT(r == 0);
 
   reproc_destroy(process);
   reproc_free(output);
