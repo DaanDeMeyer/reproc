@@ -16,7 +16,9 @@ static void io()
 
   const char *argv[] = { RESOURCE_DIRECTORY "/io", NULL };
 
-  r = reproc_start(process, argv, (reproc_options){ 0 });
+  r = reproc_start(process, argv,
+                   (reproc_options){
+                       .redirect.err.type = REPROC_REDIRECT_STDOUT });
   assert(r >= 0);
 
   r = reproc_write(process, (uint8_t *) MESSAGE, strlen(MESSAGE));
@@ -26,15 +28,12 @@ static void io()
   assert(r == 0);
 
   char *out = NULL;
-  char *err = NULL;
-  r = reproc_drain(process, reproc_sink_string(&out), reproc_sink_string(&err));
+  r = reproc_drain(process, reproc_sink_string(&out), REPROC_SINK_NULL);
   assert(r == 0);
 
   assert(out != NULL);
-  assert(err != NULL);
 
-  assert(strcmp(out, MESSAGE) == 0);
-  assert(strcmp(err, MESSAGE) == 0);
+  assert(strcmp(out, MESSAGE MESSAGE) == 0);
 
   r = reproc_wait(process, REPROC_INFINITE);
   assert(r == 0);
@@ -42,7 +41,6 @@ static void io()
   reproc_destroy(process);
 
   reproc_free(out);
-  reproc_free(err);
 }
 
 static void timeout(void)

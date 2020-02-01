@@ -62,7 +62,9 @@ typedef enum {
   /*! Redirect to a handle (fd on Linux, HANDLE/SOCKET on Windows). */
   REPROC_REDIRECT_HANDLE,
   /*! Redirect to a `FILE *`. */
-  REPROC_REDIRECT_FILE
+  REPROC_REDIRECT_FILE,
+  /*! Redirect to child process stdout. Only valid for stderr. */
+  REPROC_REDIRECT_STDOUT
 } REPROC_REDIRECT;
 
 /*! Used to tell `reproc_stop` how to stop a child process. */

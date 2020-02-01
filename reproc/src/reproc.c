@@ -165,7 +165,8 @@ redirect_pipe(pipe_type *parent, handle_type *child, REPROC_STREAM stream)
 static int redirect(pipe_type *parent,
                     handle_type *child,
                     REPROC_STREAM stream,
-                    reproc_redirect redirect)
+                    reproc_redirect redirect,
+                    handle_type out)
 {
   assert(parent);
   assert(child);
@@ -206,6 +207,8 @@ static int redirect(pipe_type *parent,
     case REPROC_REDIRECT_HANDLE:
       assert(redirect.handle);
 
+      r = 0;
+
       *child = redirect.handle;
       *parent = PIPE_INVALID;
 
@@ -219,6 +222,17 @@ static int redirect(pipe_type *parent,
         break;
       }
 
+      *parent = PIPE_INVALID;
+
+      break;
+
+    case REPROC_REDIRECT_STDOUT:
+      assert(stream == REPROC_STREAM_ERR);
+      assert(out != HANDLE_INVALID);
+
+      r = 0;
+
+      *child = out;
       *parent = PIPE_INVALID;
 
       break;
@@ -246,6 +260,7 @@ static handle_type redirect_destroy(handle_type handle, REPROC_REDIRECT type)
     case REPROC_REDIRECT_PARENT:
     case REPROC_REDIRECT_FILE:
     case REPROC_REDIRECT_HANDLE:
+    case REPROC_REDIRECT_STDOUT:
       break;
   }
 
@@ -346,19 +361,19 @@ int reproc_start(reproc_t *process,
   }
 
   r = redirect(&process->pipe.in, &child.in, REPROC_STREAM_IN,
-               options.redirect.in);
+               options.redirect.in, HANDLE_INVALID);
   if (r < 0) {
     goto finish;
   }
 
   r = redirect(&process->pipe.out, &child.out, REPROC_STREAM_OUT,
-               options.redirect.out);
+               options.redirect.out, HANDLE_INVALID);
   if (r < 0) {
     goto finish;
   }
 
   r = redirect(&process->pipe.err, &child.err, REPROC_STREAM_ERR,
-               options.redirect.err);
+               options.redirect.err, child.out);
   if (r < 0) {
     goto finish;
   }
