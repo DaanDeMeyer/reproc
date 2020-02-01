@@ -241,7 +241,8 @@ enum {
   REPROC_EVENT_ERR = 1 << 2,
   /*! The process finished running. */
   REPROC_EVENT_EXIT = 1 << 3,
-  /*! The deadline or timeout of the process expired. */
+  /*! The deadline or timeout of the process expired. This event is added by
+  default to the list of interested events. */
   REPROC_EVENT_TIMEOUT = 1 << 4,
 };
 
