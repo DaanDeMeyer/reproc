@@ -18,7 +18,7 @@ int main(void)
   char *output = NULL;
   reproc_sink sink = reproc_sink_string(&output);
   r = reproc_drain(process, sink, sink);
-  assert(r >= 0);
+  assert(r == 0);
   assert(output != NULL);
 
   r = reproc_wait(process, REPROC_INFINITE);
