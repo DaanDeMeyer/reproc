@@ -35,13 +35,11 @@ const int REPROC_SIGTERM = UINT8_MAX + 15;
 const int REPROC_INFINITE = -1;
 const int REPROC_DEADLINE = -2;
 
-static int
-parse_redirect(reproc_redirect *redirect, bool parent, bool discard, bool pty)
+static int parse_redirect(reproc_redirect *redirect, bool parent, bool discard)
 {
   if (redirect->type) {
     ASSERT_EINVAL(!parent);
     ASSERT_EINVAL(!discard);
-    ASSERT_EINVAL(!pty);
   }
 
   if (redirect->handle || redirect->type == REPROC_REDIRECT_HANDLE) {
@@ -50,7 +48,6 @@ parse_redirect(reproc_redirect *redirect, bool parent, bool discard, bool pty)
     ASSERT_EINVAL(!redirect->file);
     ASSERT_EINVAL(!parent);
     ASSERT_EINVAL(!discard);
-    ASSERT_EINVAL(!pty);
     redirect->type = REPROC_REDIRECT_HANDLE;
   }
 
@@ -60,7 +57,6 @@ parse_redirect(reproc_redirect *redirect, bool parent, bool discard, bool pty)
     ASSERT_EINVAL(!redirect->handle);
     ASSERT_EINVAL(!parent);
     ASSERT_EINVAL(!discard);
-    ASSERT_EINVAL(!pty);
     redirect->type = REPROC_REDIRECT_FILE;
   }
 
@@ -69,7 +65,6 @@ parse_redirect(reproc_redirect *redirect, bool parent, bool discard, bool pty)
     ASSERT_EINVAL(!redirect->file);
     ASSERT_EINVAL(!redirect->handle);
     ASSERT_EINVAL(!discard);
-    ASSERT_EINVAL(!pty);
     redirect->type = REPROC_REDIRECT_PARENT;
   }
 
@@ -78,17 +73,7 @@ parse_redirect(reproc_redirect *redirect, bool parent, bool discard, bool pty)
     ASSERT_EINVAL(!redirect->file);
     ASSERT_EINVAL(!redirect->handle);
     ASSERT_EINVAL(!parent);
-    ASSERT_EINVAL(!pty);
     redirect->type = REPROC_REDIRECT_DISCARD;
-  }
-
-  if (pty) {
-    ASSERT_EINVAL(!redirect->type);
-    ASSERT_EINVAL(!redirect->file);
-    ASSERT_EINVAL(!redirect->handle);
-    ASSERT_EINVAL(!parent);
-    ASSERT_EINVAL(!discard);
-    redirect->type = REPROC_REDIRECT_PIPE;
   }
 
   return 0;
@@ -101,19 +86,19 @@ static int parse_options(const char *const *argv, reproc_options *options)
   int r = -1;
 
   r = parse_redirect(&options->redirect.in, options->redirect.parent,
-                     options->redirect.discard, options->redirect.pty);
+                     options->redirect.discard);
   if (r < 0) {
     return r;
   }
 
   r = parse_redirect(&options->redirect.out, options->redirect.parent,
-                     options->redirect.discard, options->redirect.pty);
+                     options->redirect.discard);
   if (r < 0) {
     return r;
   }
 
   r = parse_redirect(&options->redirect.err, options->redirect.parent,
-                     options->redirect.discard, options->redirect.pty);
+                     options->redirect.discard);
   if (r < 0) {
     return r;
   }
@@ -155,29 +140,22 @@ static int parse_options(const char *const *argv, reproc_options *options)
   return 0;
 }
 
-static int redirect_pipe(pipe_type *parent,
-                         handle_type *child,
-                         REPROC_STREAM stream,
-                         bool pty)
+static int
+redirect_pipe(pipe_type *parent, handle_type *child, REPROC_STREAM stream)
 {
   assert(parent);
   assert(child);
 
-  if (pty && stream == REPROC_STREAM_ERR) {
-    *parent = PIPE_INVALID;
-    *child = HANDLE_INVALID;
-    return 0;
-  }
-
   pipe_type pipe[] = { PIPE_INVALID, PIPE_INVALID };
 
-  int r = pipe_init(&pipe[0], &pipe[1], stream == REPROC_STREAM_IN, pty);
+  int r = pipe_init(&pipe[0], &pipe[1]);
   if (r < 0) {
     return r;
   }
 
-  *parent = pipe[0];
-  *child = (handle_type) pipe[1];
+  *parent = stream == REPROC_STREAM_IN ? pipe[1] : pipe[0];
+  *child = stream == REPROC_STREAM_IN ? (handle_type) pipe[0]
+                                      : (handle_type) pipe[1];
 
   return 0;
 }
@@ -185,8 +163,7 @@ static int redirect_pipe(pipe_type *parent,
 static int redirect(pipe_type *parent,
                     handle_type *child,
                     REPROC_STREAM stream,
-                    reproc_redirect redirect,
-                    bool pty)
+                    reproc_redirect redirect)
 {
   assert(parent);
   assert(child);
@@ -196,7 +173,7 @@ static int redirect(pipe_type *parent,
   switch (redirect.type) {
 
     case REPROC_REDIRECT_PIPE:
-      r = redirect_pipe(parent, child, stream, pty);
+      r = redirect_pipe(parent, child, stream);
       break;
 
     case REPROC_REDIRECT_PARENT:
@@ -367,24 +344,24 @@ int reproc_start(reproc_t *process,
   }
 
   r = redirect(&process->pipe.in, &child.in, REPROC_STREAM_IN,
-               options.redirect.in, options.redirect.pty);
+               options.redirect.in);
   if (r < 0) {
     goto finish;
   }
 
   r = redirect(&process->pipe.out, &child.out, REPROC_STREAM_OUT,
-               options.redirect.out, options.redirect.pty);
+               options.redirect.out);
   if (r < 0) {
     goto finish;
   }
 
   r = redirect(&process->pipe.err, &child.err, REPROC_STREAM_ERR,
-               options.redirect.err, options.redirect.pty);
+               options.redirect.err);
   if (r < 0) {
     goto finish;
   }
 
-  r = pipe_init(&process->pipe.exit, &child.exit, false, false);
+  r = pipe_init(&process->pipe.exit, &child.exit);
   if (r < 0) {
     goto finish;
   }
@@ -416,8 +393,7 @@ int reproc_start(reproc_t *process,
     .pipe = { .in = child.in,
               .out = child.out,
               .err = child.err,
-              .exit = (handle_type) child.exit },
-    .pty = options.redirect.pty
+              .exit = (handle_type) child.exit }
   };
 
   r = process_start(&process->handle, argv, process_options);

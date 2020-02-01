@@ -153,7 +153,7 @@ static pid_t process_fork(const int *except, size_t num_except)
     int write;
   } pipe = { PIPE_INVALID, PIPE_INVALID };
 
-  r = pipe_init(&pipe.read, &pipe.write, false, false);
+  r = pipe_init(&pipe.read, &pipe.write);
   if (r < 0) {
     return error_unify(r);
   }
@@ -307,10 +307,6 @@ int process_start(pid_t *process,
     assert(argv[0] != NULL);
   }
 
-  if (options.pty) {
-    assert(options.pipe.err == HANDLE_INVALID);
-  }
-
   struct {
     int read;
     int write;
@@ -319,7 +315,7 @@ int process_start(pid_t *process,
   int r = -1;
 
   // We create an error pipe to receive errors from the child process.
-  r = pipe_init(&pipe.read, &pipe.write, false, false);
+  r = pipe_init(&pipe.read, &pipe.write);
   if (r < 0) {
     goto finish;
   }
@@ -348,8 +344,7 @@ int process_start(pid_t *process,
   if (r == 0) {
     // Redirect stdin, stdout and stderr.
 
-    int redirect[] = { options.pipe.in, options.pipe.out,
-                       options.pty ? options.pipe.out : options.pipe.err };
+    int redirect[] = { options.pipe.in, options.pipe.out, options.pipe.err };
 
     for (size_t i = 0; i < ARRAY_SIZE(redirect); i++) {
       // `i` corresponds to the standard stream we need to redirect.

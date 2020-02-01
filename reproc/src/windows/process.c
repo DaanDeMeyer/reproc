@@ -289,7 +289,7 @@ int process_start(HANDLE *process,
 {
   assert(process);
 
-  if (argv == NULL || options.pty) {
+  if (argv == NULL) {
     return -ERROR_CALL_NOT_IMPLEMENTED;
   }
 

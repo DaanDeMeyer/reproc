@@ -14,12 +14,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#if defined(__linux__)
-  #include <pty.h>
-#else
-  #include <util.h>
-#endif
-
 const int PIPE_INVALID = -1;
 
 static int pipe_cloexec(int pipe)
@@ -41,24 +35,23 @@ static int pipe_cloexec(int pipe)
   return 0;
 }
 
-int pipe_init(int *parent, int *child, bool input, bool pty)
+int pipe_init(int *read, int *write)
 {
-  assert(parent);
-  assert(child);
+  assert(read);
+  assert(write);
 
   int pair[] = { PIPE_INVALID, PIPE_INVALID };
   int r = -1;
 
 #if defined(__APPLE__)
-  r = pty ? openpty(&pair[0], &pair[1], NULL, NULL, NULL) : pipe(pair);
+  r = pipe(pair);
   if (r < 0) {
     goto finish;
   }
 #else
   // `pipe2` with `O_CLOEXEC` avoids the race condition between `pipe` and
   // `fcntl`.
-  r = pty ? openpty(&pair[0], &pair[1], NULL, NULL, NULL)
-          : pipe2(pair, O_CLOEXEC);
+  r = pipe2(pair, O_CLOEXEC);
   if (r < 0) {
     goto finish;
   }
@@ -74,8 +67,8 @@ int pipe_init(int *parent, int *child, bool input, bool pty)
     goto finish;
   }
 
-  *parent = pty ? pair[0] : input ? pair[1] : pair[0];
-  *child = pty ? pair[1] : input ? pair[0] : pair[1];
+  *read = pair[0];
+  *write = pair[1];
 
   pair[0] = PIPE_INVALID;
   pair[1] = PIPE_INVALID;
@@ -110,9 +103,8 @@ int pipe_read(int pipe, uint8_t *buffer, size_t size)
 
   int r = (int) read(pipe, buffer, size);
 
-  if (r == 0 || (r < 0 && errno == EIO)) {
-    // `read` returns 0 to indicate the other end of the pipe was closed. When a
-    // pty is closed, `read` returns `EIO` on Linux.
+  if (r == 0) {
+    // `read` returns 0 to indicate the other end of the pipe was closed.
     r = -EPIPE;
   }
 

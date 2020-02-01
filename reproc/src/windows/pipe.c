@@ -93,11 +93,10 @@ finish:
   return error_unify(r);
 }
 
-int pipe_init(SOCKET *parent, SOCKET *child, bool input, bool pty)
+int pipe_init(SOCKET *read, SOCKET *write)
 {
-  assert(parent);
-  assert(child);
-  (void) pty;
+  assert(read);
+  assert(write);
 
   SOCKET pair[] = { PIPE_INVALID, PIPE_INVALID };
   int r = 0;
@@ -131,8 +130,8 @@ int pipe_init(SOCKET *parent, SOCKET *child, bool input, bool pty)
     goto finish;
   }
 
-  *parent = input ? pair[1] : pair[0];
-  *child = input ? pair[0] : pair[1];
+  *read = pair[0];
+  *write = pair[1];
 
   pair[0] = PIPE_INVALID;
   pair[1] = PIPE_INVALID;

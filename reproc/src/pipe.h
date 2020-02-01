@@ -32,7 +32,7 @@ extern const pipe_type PIPE_INVALID;
 
 // Creates a new anonymous pipe. `parent` and `child` are set to the parent and
 // child endpoint of the pipe respectively.
-int pipe_init(pipe_type *parent, pipe_type *child, bool input, bool pty);
+int pipe_init(pipe_type *read, pipe_type *write);
 
 // Sets `pipe` to nonblocking mode.
 int pipe_nonblocking(pipe_type pipe, bool enable);

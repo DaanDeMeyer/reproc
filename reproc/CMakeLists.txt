@@ -11,7 +11,6 @@ if(WIN32)
   target_link_libraries(reproc PRIVATE ws2_32)
 else()
   set(REPROC_PLATFORM posix)
-  target_link_libraries(reproc PRIVATE util)
 endif()
 
 target_sources(reproc PRIVATE

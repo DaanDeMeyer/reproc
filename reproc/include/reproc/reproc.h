@@ -178,22 +178,6 @@ typedef struct reproc_options {
     When this option is set, no other redirect options may be set.
     */
     bool discard;
-    /*!
-    Redirect all streams to pseudo-ttys. Child processes spawned with this
-    option set will think they are running in a terminal.
-
-    When this option is set, stdout and stderr are combined and available via
-    `REPROC_STREAM_OUT`.
-
-    When this option is set, no other redirect options may be set.
-
-    Currently, this option is not implemented on Windows because of bugs in
-    ConPTY (See https://github.com/microsoft/terminal/issues/4359). Once these
-    are fixed and ConPTY is more established, implementing `pty` on Windows
-    becomes feasible. Until then, setting this option on Windows makes
-    `reproc_start` return an error.
-    */
-    bool pty;
   } redirect;
   /*!
   Stop actions that are passed to `reproc_stop` in `reproc_destroy` to stop the

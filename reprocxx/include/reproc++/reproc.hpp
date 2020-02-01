@@ -81,7 +81,6 @@ struct options {
     redirect err;
     bool parent;
     bool discard;
-    bool pty;
   } redirect = {};
 
   struct stop_actions stop = {};
