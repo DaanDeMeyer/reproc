@@ -42,8 +42,8 @@ std::error_code drain(process &process, Out &&out, Err &&err)
     }
 
     if (events & event::timeout) {
-      return { static_cast<int>(std::errc::timed_out),
-               std::generic_category() };
+      ec = { static_cast<int>(std::errc::timed_out), std::generic_category() };
+      break;
     }
 
     stream stream = events & event::out ? stream::out : stream::err;
