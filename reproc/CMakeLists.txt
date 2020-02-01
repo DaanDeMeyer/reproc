@@ -1,3 +1,7 @@
+if(WIN32)
+  set(REPROC_WINSOCK_LIBRARY ws2_32)
+endif()
+
 reproc_add_library(reproc C)
 
 if(REPROC_MULTITHREADED)
@@ -8,7 +12,7 @@ endif()
 if(WIN32)
   set(REPROC_PLATFORM windows)
   target_compile_definitions(reproc PRIVATE WIN32_LEAN_AND_MEAN)
-  target_link_libraries(reproc PRIVATE ws2_32)
+  target_link_libraries(reproc PRIVATE ${REPROC_WINSOCK_LIBRARY})
 else()
   set(REPROC_PLATFORM posix)
 endif()
