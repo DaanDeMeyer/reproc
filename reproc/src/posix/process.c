@@ -346,29 +346,22 @@ int process_start(pid_t *process,
 
     int redirect[] = { options.pipe.in, options.pipe.out, options.pipe.err };
 
-    for (size_t i = 0; i < ARRAY_SIZE(redirect); i++) {
+    for (int i = 0; i < (int) ARRAY_SIZE(redirect); i++) {
       // `i` corresponds to the standard stream we need to redirect.
-      r = dup2(redirect[i], (int) i);
+      r = dup2(redirect[i], i);
       if (r < 0) {
         goto child;
       }
-    }
 
-    // Make sure the standard streams pipes are closed when we call exec.
-
-    r = handle_cloexec(options.pipe.in, true);
-    if (r < 0) {
-      goto child;
-    }
-
-    r = handle_cloexec(options.pipe.out, true);
-    if (r < 0) {
-      goto child;
-    }
-
-    r = handle_cloexec(options.pipe.err, true);
-    if (r < 0) {
-      goto child;
+      // Make sure we don't accidentally cloexec the standard streams of the
+      // child process when we're inheriting the parent standard streams.
+      if (redirect[i] != i) {
+        // Make sure the pipe is closed when we call exec.
+        r = handle_cloexec(redirect[i], true);
+        if (r < 0) {
+          goto child;
+        }
+      }
     }
 
     // Make sure the `exit` file descriptor is inherited.

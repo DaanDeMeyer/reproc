@@ -29,6 +29,8 @@ int handle_from(FILE *file, HANDLE *handle)
 
 int handle_cloexec(handle_type handle, bool enable)
 {
+  (void) handle;
+  (void) enable;
   return -ERROR_CALL_NOT_IMPLEMENTED;
 }
 
