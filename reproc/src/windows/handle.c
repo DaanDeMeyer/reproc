@@ -27,6 +27,11 @@ int handle_from(FILE *file, HANDLE *handle)
   return error_unify(r);
 }
 
+int handle_cloexec(handle_type handle, bool enable)
+{
+  return -ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 HANDLE handle_destroy(HANDLE handle)
 {
   if (handle == NULL || handle == HANDLE_INVALID) {

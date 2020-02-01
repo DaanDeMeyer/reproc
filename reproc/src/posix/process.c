@@ -354,6 +354,30 @@ int process_start(pid_t *process,
       }
     }
 
+    // Make sure the standard streams pipes are closed when we call exec.
+
+    r = handle_cloexec(options.pipe.in, true);
+    if (r < 0) {
+      goto child;
+    }
+
+    r = handle_cloexec(options.pipe.out, true);
+    if (r < 0) {
+      goto child;
+    }
+
+    r = handle_cloexec(options.pipe.err, true);
+    if (r < 0) {
+      goto child;
+    }
+
+    // Make sure the `exit` file descriptor is inherited.
+
+    r = handle_cloexec(options.pipe.exit, false);
+    if (r < 0) {
+      goto child;
+    }
+
     if (options.working_directory != NULL) {
       r = chdir(options.working_directory);
       if (r < 0) {
@@ -365,21 +389,6 @@ int process_start(pid_t *process,
       // `environ` is carried over calls to `exec`.
       extern char **environ; // NOLINT
       environ = (char **) options.environment;
-    }
-
-    // Make sure the `exit` file descriptor is inherited by unsetting the
-    // `FD_CLOEXEC` flag.
-
-    r = fcntl(options.pipe.exit, F_GETFD, 0);
-    if (r < 0) {
-      goto child;
-    }
-
-    r &= ~FD_CLOEXEC;
-
-    r = fcntl(options.pipe.exit, F_SETFD, r);
-    if (r < 0) {
-      goto child;
     }
 
     if (argv != NULL) {

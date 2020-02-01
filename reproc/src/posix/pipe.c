@@ -16,25 +16,6 @@
 
 const int PIPE_INVALID = -1;
 
-static int pipe_cloexec(int pipe)
-{
-  int r = -1;
-
-  r = fcntl(pipe, F_GETFD, 0);
-  if (r < 0) {
-    return error_unify(r);
-  }
-
-  r |= FD_CLOEXEC;
-
-  r = fcntl(pipe, F_SETFD, r);
-  if (r < 0) {
-    return error_unify(r);
-  }
-
-  return 0;
-}
-
 int pipe_init(int *read, int *write)
 {
   assert(read);
@@ -57,12 +38,12 @@ int pipe_init(int *read, int *write)
   }
 #endif
 
-  r = pipe_cloexec(pair[0]);
+  r = handle_cloexec(pair[0], true);
   if (r < 0) {
     goto finish;
   }
 
-  r = pipe_cloexec(pair[1]);
+  r = handle_cloexec(pair[1], true);
   if (r < 0) {
     goto finish;
   }
