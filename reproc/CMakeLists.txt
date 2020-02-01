@@ -10,21 +10,21 @@ if(REPROC_MULTITHREADED)
 endif()
 
 if(WIN32)
-  set(REPROC_PLATFORM windows)
+  set(PLATFORM win32)
   target_compile_definitions(reproc PRIVATE WIN32_LEAN_AND_MEAN)
   target_link_libraries(reproc PRIVATE ${REPROC_WINSOCK_LIBRARY})
 else()
-  set(REPROC_PLATFORM posix)
+  set(PLATFORM posix)
 endif()
 
 target_sources(reproc PRIVATE
-  src/${REPROC_PLATFORM}/clock.c
-  src/${REPROC_PLATFORM}/error.c
-  src/${REPROC_PLATFORM}/handle.c
-  src/${REPROC_PLATFORM}/init.c
-  src/${REPROC_PLATFORM}/pipe.c
-  src/${REPROC_PLATFORM}/process.c
-  src/${REPROC_PLATFORM}/redirect.c
+  src/clock.${PLATFORM}.c
+  src/error.${PLATFORM}.c
+  src/handle.${PLATFORM}.c
+  src/init.${PLATFORM}.c
+  src/pipe.${PLATFORM}.c
+  src/process.${PLATFORM}.c
+  src/redirect.${PLATFORM}.c
   src/reproc.c
   src/sink.c
   src/run.c
