@@ -36,14 +36,9 @@ int redirect_parent(int *out, REDIRECT_STREAM stream)
   r = fileno(file);
   if (r < 0) {
     if (errno == EBADF) {
-      errno = EPIPE;
+      r = -EPIPE;
     }
 
-    return error_unify(r);
-  }
-
-  r = fcntl(r, F_DUPFD_CLOEXEC, 0);
-  if (r < 0) {
     return error_unify(r);
   }
 

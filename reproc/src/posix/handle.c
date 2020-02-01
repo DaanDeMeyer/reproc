@@ -18,11 +18,6 @@ int handle_from(FILE *file, int *handle)
     return error_unify(r);
   }
 
-  r = fcntl(r, F_DUPFD_CLOEXEC, 0);
-  if (r < 0) {
-    return error_unify(r);
-  }
-
   *handle = r;
 
   return 0;

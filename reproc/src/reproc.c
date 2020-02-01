@@ -240,11 +240,11 @@ static handle_type redirect_destroy(handle_type handle, REPROC_REDIRECT type)
       // handle type.
       pipe_destroy((pipe_type) handle);
       break;
-    case REPROC_REDIRECT_PARENT:
     case REPROC_REDIRECT_DISCARD:
-    case REPROC_REDIRECT_FILE:
       handle_destroy(handle);
       break;
+    case REPROC_REDIRECT_PARENT:
+    case REPROC_REDIRECT_FILE:
     case REPROC_REDIRECT_HANDLE:
       break;
   }

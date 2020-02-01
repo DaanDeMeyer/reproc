@@ -234,8 +234,8 @@ static wchar_t *string_to_wstring(const char *string, size_t size)
 
 static const DWORD NUM_ATTRIBUTES = 1;
 
-static LPPROC_THREAD_ATTRIBUTE_LIST
-setup_attribute_list(HANDLE *handles, size_t num_handles)
+static LPPROC_THREAD_ATTRIBUTE_LIST setup_attribute_list(HANDLE *handles,
+                                                         size_t num_handles)
 {
   assert(handles);
 
@@ -351,7 +351,15 @@ int process_start(HANDLE *process,
   // more information.
   HANDLE handles[] = { options.pipe.exit, options.pipe.in, options.pipe.out,
                        options.pipe.err };
-  attribute_list = setup_attribute_list(handles, ARRAY_SIZE(handles));
+  size_t num_handles = ARRAY_SIZE(handles);
+
+  if (options.pipe.out == options.pipe.err) {
+    // CreateProcess doesn't like the same handle being specified twice in the
+    // `PROC_THREAD_ATTRIBUTE_HANDLE_LIST` attribute.
+    num_handles--;
+  }
+
+  attribute_list = setup_attribute_list(handles, num_handles);
   if (attribute_list == NULL) {
     goto finish;
   }

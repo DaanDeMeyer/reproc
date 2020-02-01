@@ -22,8 +22,7 @@ int handle_from(FILE *file, HANDLE *handle)
     return -ERROR_INVALID_HANDLE;
   }
 
-  r = DuplicateHandle(GetCurrentProcess(), (HANDLE) result, GetCurrentProcess(),
-                      handle, DUPLICATE_SAME_ACCESS, FALSE, 0);
+  *handle = (HANDLE) result;
 
   return error_unify(r);
 }

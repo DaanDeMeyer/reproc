@@ -40,14 +40,7 @@ int redirect_parent(HANDLE *out, REDIRECT_STREAM stream)
     return -ERROR_BROKEN_PIPE;
   }
 
-  HANDLE duplicated = HANDLE_INVALID;
-  r = DuplicateHandle(GetCurrentProcess(), handle, GetCurrentProcess(),
-                      &duplicated, 0, true, DUPLICATE_SAME_ACCESS);
-  if (r == 0) {
-    return error_unify(r);
-  }
-
-  *out = duplicated;
+  *out = handle;
 
   return 0;
 }
