@@ -27,7 +27,7 @@
 
 // Use this to assert inside a `PROTECT/UNPROTECT` block to avoid clang dead
 // store warnings.
-#define assert_unused(expression)                                              \
+#define ASSERT_UNUSED(expression)                                              \
   do {                                                                         \
     (void) !(expression);                                                      \
     assert((expression));                                                      \

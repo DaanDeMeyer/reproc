@@ -165,7 +165,7 @@ static pid_t process_fork(const int *except, size_t num_except)
     PROTECT_SYSTEM_ERROR;
 
     r = signal_mask(SIG_SETMASK, &mask.new, &mask.old);
-    assert_unused(r == 0);
+    ASSERT_UNUSED(r == 0);
 
     UNPROTECT_SYSTEM_ERROR;
 
@@ -187,7 +187,7 @@ static pid_t process_fork(const int *except, size_t num_except)
     PROTECT_SYSTEM_ERROR;
 
     r = signal_mask(SIG_SETMASK, &mask.old, &mask.old);
-    assert_unused(r == 0);
+    ASSERT_UNUSED(r == 0);
 
     // Close the error pipe write end on the parent's side so `read` will return
     // when it is closed on the child side as well.
@@ -195,7 +195,7 @@ static pid_t process_fork(const int *except, size_t num_except)
 
     int child_errno = 0;
     r = (int) read(pipe.read, &child_errno, sizeof(child_errno));
-    assert_unused(r >= 0);
+    ASSERT_UNUSED(r >= 0);
 
     UNPROTECT_SYSTEM_ERROR;
 
@@ -416,7 +416,7 @@ int process_start(pid_t *process,
 
   int child_errno = 0;
   r = (int) read(pipe.read, &child_errno, sizeof(child_errno));
-  assert_unused(r >= 0);
+  ASSERT_UNUSED(r >= 0);
 
   UNPROTECT_SYSTEM_ERROR;
 

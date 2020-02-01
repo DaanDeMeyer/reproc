@@ -53,7 +53,7 @@ int handle_destroy(int handle)
   PROTECT_SYSTEM_ERROR;
 
   r = close(handle);
-  assert_unused(r == 0);
+  ASSERT_UNUSED(r == 0);
 
   UNPROTECT_SYSTEM_ERROR;
 

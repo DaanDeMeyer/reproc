@@ -46,7 +46,7 @@ HANDLE handle_destroy(HANDLE handle)
 
   // Avoid `CloseHandle` errors overriding other system errors.
   r = CloseHandle(handle);
-  assert_unused(r != 0);
+  ASSERT_UNUSED(r != 0);
 
   UNPROTECT_SYSTEM_ERROR;
 

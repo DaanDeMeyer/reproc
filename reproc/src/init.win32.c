@@ -17,7 +17,7 @@ void deinit(void)
   int saved = WSAGetLastError();
 
   int r = WSACleanup();
-  assert_unused(r == 0);
+  ASSERT_UNUSED(r == 0);
 
   WSASetLastError(saved);
 }

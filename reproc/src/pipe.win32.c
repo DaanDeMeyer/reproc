@@ -242,7 +242,7 @@ SOCKET pipe_destroy(SOCKET pipe)
   int saved = WSAGetLastError();
 
   int r = closesocket(pipe);
-  assert_unused(r == 0);
+  ASSERT_UNUSED(r == 0);
 
   WSASetLastError(saved);
 
