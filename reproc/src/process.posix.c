@@ -333,8 +333,8 @@ int process_start(pid_t *process,
     }
   }
 
-  int except[] = { options.pipe.in, options.pipe.out, options.pipe.err,
-                   pipe.read,       pipe.write,       options.pipe.exit };
+  int except[] = { options.handle.in, options.handle.out, options.handle.err,
+                   pipe.read,         pipe.write,         options.handle.exit };
 
   r = process_fork(except, ARRAY_SIZE(except));
   if (r < 0) {
@@ -344,7 +344,8 @@ int process_start(pid_t *process,
   if (r == 0) {
     // Redirect stdin, stdout and stderr.
 
-    int redirect[] = { options.pipe.in, options.pipe.out, options.pipe.err };
+    int redirect[] = { options.handle.in, options.handle.out,
+                       options.handle.err };
 
     for (int i = 0; i < (int) ARRAY_SIZE(redirect); i++) {
       // `i` corresponds to the standard stream we need to redirect.
@@ -366,7 +367,7 @@ int process_start(pid_t *process,
 
     // Make sure the `exit` file descriptor is inherited.
 
-    r = handle_cloexec(options.pipe.exit, false);
+    r = handle_cloexec(options.handle.exit, false);
     if (r < 0) {
       goto child;
     }

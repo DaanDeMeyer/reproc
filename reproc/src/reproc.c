@@ -407,10 +407,10 @@ int reproc_start(reproc_t *process,
   struct process_options process_options = {
     .environment = options.environment,
     .working_directory = options.working_directory,
-    .pipe = { .in = child.in,
-              .out = child.out,
-              .err = child.err,
-              .exit = (handle_type) child.exit }
+    .handle = { .in = child.in,
+                .out = child.out,
+                .err = child.err,
+                .exit = (handle_type) child.exit }
   };
 
   r = process_start(&process->handle, argv, process_options);

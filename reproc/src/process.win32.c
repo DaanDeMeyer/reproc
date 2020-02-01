@@ -349,11 +349,11 @@ int process_start(HANDLE *process,
   // handles it should inherit can still unintentionally inherit handles meant
   // for a reproc child process. See https://stackoverflow.com/a/2345126 for
   // more information.
-  HANDLE handles[] = { options.pipe.exit, options.pipe.in, options.pipe.out,
-                       options.pipe.err };
+  HANDLE handles[] = { options.handle.exit, options.handle.in, options.handle.out,
+                       options.handle.err };
   size_t num_handles = ARRAY_SIZE(handles);
 
-  if (options.pipe.out == options.pipe.err) {
+  if (options.handle.out == options.handle.err) {
     // CreateProcess doesn't like the same handle being specified twice in the
     // `PROC_THREAD_ATTRIBUTE_HANDLE_LIST` attribute.
     num_handles--;
@@ -368,9 +368,9 @@ int process_start(HANDLE *process,
     .StartupInfo = { .cb = sizeof(extended_startup_info),
                      .dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW,
                      // `STARTF_USESTDHANDLES`
-                     .hStdInput = options.pipe.in,
-                     .hStdOutput = options.pipe.out,
-                     .hStdError = options.pipe.err,
+                     .hStdInput = options.handle.in,
+                     .hStdOutput = options.handle.out,
+                     .hStdError = options.handle.err,
                      // `STARTF_USESHOWWINDOW`. Make sure the console window of
                      // the child process isn't visible. See
                      // https://github.com/DaanDeMeyer/reproc/issues/6 and

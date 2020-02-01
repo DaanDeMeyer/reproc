@@ -28,7 +28,7 @@ struct process_options {
     handle_type out;
     handle_type err;
     handle_type exit;
-  } pipe;
+  } handle;
 };
 
 // Spawns a child process that executes the command stored in `argv`.
