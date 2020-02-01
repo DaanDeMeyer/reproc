@@ -89,7 +89,7 @@ available in the following package repositories:
 - vcpkg (https://github.com/microsoft/vcpkg/tree/master/ports/reproc)
 
 If using a package manager is not an option, you can build and install reproc
-from source:
+from source (CMake 3.13+):
 
 ```sh
 cmake -B build
@@ -97,7 +97,8 @@ cmake --build build
 cmake --install build
 ```
 
-Enable the `REPROC_TEST` option and build the `test` target to run the tests:
+Enable the `REPROC_TEST` option and build the `test` target to run the tests
+(CMake 3.13+):
 
 ```sh
 cmake -B build -DREPROC_TEST=ON
