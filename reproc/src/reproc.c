@@ -462,6 +462,8 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources)
   int earliest = find_earliest_expiry(sources, num_sources);
   int timeout = expiry(sources[earliest].process->timeout,
                        sources[earliest].process->deadline);
+  ASSERT_RETURN(timeout != 0, REPROC_ETIMEDOUT);
+
   int r = REPROC_ENOMEM;
 
   pipe_set *sets = calloc(sizeof(pipe_set), num_sources);
