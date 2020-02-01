@@ -15,9 +15,7 @@ int main(int argc, const char *argv[])
 
   int r = reproc_run(argv + 1,
                      (reproc_options){
-                         .redirect = { .stdio = { .out = REPROC_REDIRECT_FILE,
-                                                  .err = REPROC_REDIRECT_FILE },
-                                       .file = { .out = file, .err = file } } },
+                         .redirect = { .out.file = file, .err.file = file } },
                      REPROC_SINK_NULL, REPROC_SINK_NULL);
 
   fclose(file);

@@ -59,7 +59,7 @@ typedef enum {
   REPROC_REDIRECT_PARENT,
   /*! Redirect to /dev/null (or NUL on Windows). */
   REPROC_REDIRECT_DISCARD,
-  /*! Redirect to a handle. */
+  /*! Redirect to a handle (fd on Linux, HANDLE/SOCKET on Windows). */
   REPROC_REDIRECT_HANDLE,
   /*! Redirect to a `FILE *`. */
   REPROC_REDIRECT_FILE
@@ -94,6 +94,42 @@ typedef void *reproc_handle; // `HANDLE`
 typedef int reproc_handle; // fd
 #endif
 
+typedef struct reproc_redirect {
+  /*! Type of redirection, defaults to `REPROC_REDIRECT_PIPE` if unset. */
+  REPROC_REDIRECT type;
+  /*!
+  Redirect a stream to an operating system handle. The given handle must be in
+  blocking mode ( `O_NONBLOCK` and `OVERLAPPED` handles are not supported).
+
+  Note that reproc does not take ownership of the handle. The user is
+  responsible for closing the handle after passing it to `reproc_start`. Since
+  the operating system will copy the handle to the child process, the handle
+  can be closed immediately after calling `reproc_start` if the handle is not
+  needed in the parent process anymore.
+
+  If `handle` is set, `type` must be unset or set to `REPROC_REDIRECT_HANDLE`
+  and `file` must be unset.
+  */
+  reproc_handle handle;
+  /*!
+  Redirect a stream to a file stream.
+
+  Note that reproc does not take ownership of the file. The user is
+  responsible for closing the file after passing it to `reproc_start`. Just
+  like with `handles`, the operating system will copy the file handle to the
+  child process so the file can be closed immediately after calling
+  `reproc_start` if it isn't needed anymore by the parent process.
+
+  Any file passed to `file.in` must have been opened in read mode. Likewise,
+  any files passed to `file.out` or `file.err` must have been opened in write
+  mode.
+
+  If `file` is set, `type` must be unset or set to `REPROC_REDIRECT_FILE` and
+  `handle` must be unset.
+  */
+  FILE *file;
+} reproc_redirect;
+
 typedef struct reproc_options {
   /*!
   `environment` is an array of UTF-8 encoded, null terminated strings that
@@ -123,88 +159,41 @@ typedef struct reproc_options {
   */
   struct {
     /*!
-    `stdio` specificies where to redirect each of the standard I/O streams of
-    the child process. If `parent` or `discard` are set, this option may not be
-    set.
+    `in`, `out` and `err` specify where to redirect the standard I/O streams of
+    the child process. When not set, each of them defaults to
+    `REPROC_REDIRECT_PIPE`.
     */
-    struct {
-      REPROC_REDIRECT in;
-      REPROC_REDIRECT out;
-      REPROC_REDIRECT err;
-    } stdio;
+    reproc_redirect in;
+    reproc_redirect out;
+    reproc_redirect err;
     /*!
-    Shorthand for setting all members of `stdio` to
-    `REPROC_REDIRECT_PARENT`. If `discard`, `stdio`, `pty` or `handle` are set,
-    this option may not be set.
+    Shorthand for setting `in`, `out` and `err` to `REPROC_REDIRECT_PARENT`.
+
+    When this option is set, no other redirect options may be set.
     */
     bool parent;
     /*!
-    Shorthand for setting all members of `stdio` to
-    `REPROC_REDIRECT_DISCARD`. If `parent`, `stdio`, `pty` or `handle` are set,
-    this option may not be set.
+    Shorthand for setting `in`, `out` and `err` to `REPROC_REDIRECT_DISCARD`.
+
+    When this option is set, no other redirect options may be set.
     */
     bool discard;
     /*!
-    Use pseudo-ttys instead of pipes when `REPROC_REDIRECT_PIPE` is used. Child
-    processes spawned with this option set will think they are running in a
-    terminal.
+    Redirect all streams to pseudo-ttys. Child processes spawned with this
+    option set will think they are running in a terminal.
 
-    When this option is set, `redirect.err` is ignored and both the stdout and
-    the stderr stream of the child process will be redirected from
+    When this option is set, stdout and stderr are combined and available via
     `REPROC_STREAM_OUT`.
+
+    When this option is set, no other redirect options may be set.
 
     Currently, this option is not implemented on Windows because of bugs in
     ConPTY (See https://github.com/microsoft/terminal/issues/4359). Once these
     are fixed and ConPTY is more established, implementing `pty` on Windows
     becomes feasible. Until then, setting this option on Windows makes
     `reproc_start` return an error.
-
-    If `parent`, `discard` or `handle` are set, this option may not be set.
     */
     bool pty;
-    /*!
-    The actual handle to redirect to when a member of `stdio` is set to
-    `REPROC_REDIRECT_HANDLE`. The given handle must be in blocking mode (
-    `O_NONBLOCK` and `OVERLAPPED` handles are not supported).
-
-    Note that reproc does not take ownership of the handle. The user is
-    responsible for closing the handle after passing it to `reproc_start`. Since
-    the operating system will copy the handle to the child process, the handle
-    can be closed immediately after calling `reproc_start` if the handle is not
-    needed in the parent process anymore.
-
-    If this option is set, the corresponding stream in `stdio` must be set to
-    `REPROC_REDIRECT_HANDLE`.
-
-    If `parent`, `discard` or `pty` are set, this option may not be set.
-    */
-    struct {
-      reproc_handle in;
-      reproc_handle out;
-      reproc_handle err;
-    } handle;
-    /*!
-    The actual file to redirect to when a member of `stdio` is set to
-    `REPROC_REDIRECT_FILE`.
-
-    Note that reproc does not take ownership of the file. The user is
-    responsible for closing the file after passing it to `reproc_start`. Just
-    like with `handles`, the operating system will copy the file handle to the
-    child process so the file can be closed immediately after calling
-    `reproc_start` if it isn't needed anymore by the parent process.
-
-    Any file passed to `file.in` must have been opened in read mode. Likewise,
-    any files passed to `file.out` or `file.err` must have been opened in write
-    mode.
-
-    If this option is set, the corresponding stream in `stdio` must be set to
-    `REPROC_REDIRECT_FILE`.
-    */
-    struct {
-      FILE *in;
-      FILE *out;
-      FILE *err;
-    } file;
   } redirect;
   /*!
   Stop actions that are passed to `reproc_stop` in `reproc_destroy` to stop the

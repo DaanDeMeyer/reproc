@@ -42,8 +42,6 @@ REPROCXX_EXPORT extern const milliseconds infinite;
 REPROCXX_EXPORT extern const milliseconds deadline;
 REPROCXX_EXPORT extern const milliseconds nonblocking;
 
-enum class redirect { pipe, parent, discard, handle, file };
-
 enum class stop { noop, wait, terminate, kill };
 
 struct stop_action {
@@ -63,6 +61,14 @@ using handle = void *;
 using handle = int;
 #endif
 
+struct redirect {
+  enum type { pipe, parent, discard };
+
+  enum type type = {};
+  reproc::handle handle = {};
+  FILE *file = {};
+};
+
 struct options {
   /*! Implicitly converts from any STL container of string pairs to the
   environment format expected by `reproc_start`. */
@@ -70,24 +76,12 @@ struct options {
   const char *working_directory = nullptr;
 
   struct {
-    struct {
-      redirect in;
-      redirect out;
-      redirect err;
-    } stdio;
+    redirect in;
+    redirect out;
+    redirect err;
     bool parent;
     bool discard;
     bool pty;
-    struct {
-      handle in;
-      handle out;
-      handle err;
-    } handle;
-    struct {
-      FILE *in;
-      FILE *out;
-      FILE *err;
-    } file;
   } redirect = {};
 
   struct stop_actions stop = {};

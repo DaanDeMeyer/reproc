@@ -39,20 +39,24 @@ static reproc_stop_actions reproc_stop_actions_from(stop_actions stop)
   };
 }
 
+static reproc_redirect reproc_redirect_from(redirect redirect)
+{
+  return { static_cast<REPROC_REDIRECT>(redirect.type), redirect.handle,
+           redirect.file };
+}
+
 static reproc_options reproc_options_from(const options &options, bool fork)
 {
   return { options.environment.data(),
            options.working_directory,
-           { { static_cast<REPROC_REDIRECT>(options.redirect.stdio.in),
-               static_cast<REPROC_REDIRECT>(options.redirect.stdio.out),
-               static_cast<REPROC_REDIRECT>(options.redirect.stdio.err) },
-             options.redirect.parent,
-             options.redirect.discard,
-             options.redirect.pty,
-             { options.redirect.handle.in, options.redirect.handle.out,
-               options.redirect.handle.err },
-             { options.redirect.file.in, options.redirect.file.out,
-               options.redirect.file.err } },
+           {
+               reproc_redirect_from(options.redirect.in),
+               reproc_redirect_from(options.redirect.out),
+               reproc_redirect_from(options.redirect.err),
+               options.redirect.parent,
+               options.redirect.discard,
+               options.redirect.pty,
+           },
            reproc_stop_actions_from(options.stop),
            options.timeout.count(),
            options.deadline.count(),

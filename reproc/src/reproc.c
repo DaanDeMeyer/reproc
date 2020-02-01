@@ -35,86 +35,100 @@ const int REPROC_SIGTERM = UINT8_MAX + 15;
 const int REPROC_INFINITE = -1;
 const int REPROC_DEADLINE = -2;
 
-#define assert_xnor(left, right, r) assert_return(!(left) == !(right), r)
+static int
+parse_redirect(reproc_redirect *redirect, bool parent, bool discard, bool pty)
+{
+  if (redirect->type) {
+    ASSERT_EINVAL(!parent);
+    ASSERT_EINVAL(!discard);
+    ASSERT_EINVAL(!pty);
+  }
+
+  if (redirect->handle || redirect->type == REPROC_REDIRECT_HANDLE) {
+    ASSERT_EINVAL(!redirect->type || redirect->type == REPROC_REDIRECT_HANDLE);
+    ASSERT_EINVAL(redirect->handle);
+    ASSERT_EINVAL(!redirect->file);
+    ASSERT_EINVAL(!parent);
+    ASSERT_EINVAL(!discard);
+    ASSERT_EINVAL(!pty);
+    redirect->type = REPROC_REDIRECT_HANDLE;
+  }
+
+  if (redirect->file || redirect->type == REPROC_REDIRECT_FILE) {
+    ASSERT_EINVAL(!redirect->type || redirect->type == REPROC_REDIRECT_FILE);
+    ASSERT_EINVAL(redirect->file);
+    ASSERT_EINVAL(!redirect->handle);
+    ASSERT_EINVAL(!parent);
+    ASSERT_EINVAL(!discard);
+    ASSERT_EINVAL(!pty);
+    redirect->type = REPROC_REDIRECT_FILE;
+  }
+
+  if (parent) {
+    ASSERT_EINVAL(!redirect->type);
+    ASSERT_EINVAL(!redirect->file);
+    ASSERT_EINVAL(!redirect->handle);
+    ASSERT_EINVAL(!discard);
+    ASSERT_EINVAL(!pty);
+    redirect->type = REPROC_REDIRECT_PARENT;
+  }
+
+  if (discard) {
+    ASSERT_EINVAL(!redirect->type);
+    ASSERT_EINVAL(!redirect->file);
+    ASSERT_EINVAL(!redirect->handle);
+    ASSERT_EINVAL(!parent);
+    ASSERT_EINVAL(!pty);
+    redirect->type = REPROC_REDIRECT_DISCARD;
+  }
+
+  if (pty) {
+    ASSERT_EINVAL(!redirect->type);
+    ASSERT_EINVAL(!redirect->file);
+    ASSERT_EINVAL(!redirect->handle);
+    ASSERT_EINVAL(!parent);
+    ASSERT_EINVAL(!discard);
+    redirect->type = REPROC_REDIRECT_PIPE;
+  }
+
+  return 0;
+}
 
 static int parse_options(const char *const *argv, reproc_options *options)
 {
   assert(options);
 
-  if (options->redirect.stdio.in || options->redirect.stdio.out ||
-      options->redirect.stdio.err) {
-    assert_return(!options->redirect.parent, REPROC_EINVAL);
-    assert_return(!options->redirect.discard, REPROC_EINVAL);
+  int r = -1;
+
+  r = parse_redirect(&options->redirect.in, options->redirect.parent,
+                     options->redirect.discard, options->redirect.pty);
+  if (r < 0) {
+    return r;
   }
 
-  if (options->redirect.parent || options->redirect.discard ||
-      options->redirect.pty) {
-    assert_return(!options->redirect.handle.in, REPROC_EINVAL);
-    assert_return(!options->redirect.handle.out, REPROC_EINVAL);
-    assert_return(!options->redirect.handle.err, REPROC_EINVAL);
-
-    assert_return(!options->redirect.file.in, REPROC_EINVAL);
-    assert_return(!options->redirect.file.out, REPROC_EINVAL);
-    assert_return(!options->redirect.file.err, REPROC_EINVAL);
+  r = parse_redirect(&options->redirect.out, options->redirect.parent,
+                     options->redirect.discard, options->redirect.pty);
+  if (r < 0) {
+    return r;
   }
 
-  if (options->redirect.parent || options->redirect.discard) {
-    assert_return(!options->redirect.pty, REPROC_EINVAL);
-
-    assert_return(!options->redirect.stdio.in, REPROC_EINVAL);
-    assert_return(!options->redirect.stdio.out, REPROC_EINVAL);
-    assert_return(!options->redirect.stdio.err, REPROC_EINVAL);
+  r = parse_redirect(&options->redirect.err, options->redirect.parent,
+                     options->redirect.discard, options->redirect.pty);
+  if (r < 0) {
+    return r;
   }
-
-  if (options->redirect.parent) {
-    assert_return(!options->redirect.discard, REPROC_EINVAL);
-
-    options->redirect.stdio.in = REPROC_REDIRECT_PARENT;
-    options->redirect.stdio.out = REPROC_REDIRECT_PARENT;
-    options->redirect.stdio.err = REPROC_REDIRECT_PARENT;
-  }
-
-  if (options->redirect.discard) {
-    assert_return(!options->redirect.parent, REPROC_EINVAL);
-
-    options->redirect.stdio.in = REPROC_REDIRECT_DISCARD;
-    options->redirect.stdio.out = REPROC_REDIRECT_DISCARD;
-    options->redirect.stdio.err = REPROC_REDIRECT_DISCARD;
-  }
-
-  if (options->redirect.pty) {
-    assert_return(!options->redirect.parent, REPROC_EINVAL);
-    assert_return(!options->redirect.discard, REPROC_EINVAL);
-  }
-
-  if (options->redirect.handle.in || options->redirect.handle.out ||
-      options->redirect.handle.err) {
-    assert_return(!options->redirect.parent, REPROC_EINVAL);
-    assert_return(!options->redirect.discard, REPROC_EINVAL);
-    assert_return(!options->redirect.pty, REPROC_EINVAL);
-  }
-
-  // clang-format off
-  assert_xnor(options->redirect.stdio.in == REPROC_REDIRECT_HANDLE, options->redirect.handle.in, REPROC_EINVAL);
-  assert_xnor(options->redirect.stdio.out == REPROC_REDIRECT_HANDLE, options->redirect.handle.out, REPROC_EINVAL);
-  assert_xnor(options->redirect.stdio.err == REPROC_REDIRECT_HANDLE, options->redirect.handle.err, REPROC_EINVAL);
-
-  assert_xnor(options->redirect.stdio.in == REPROC_REDIRECT_FILE, options->redirect.file.in, REPROC_EINVAL);
-  assert_xnor(options->redirect.stdio.out == REPROC_REDIRECT_FILE, options->redirect.file.out, REPROC_EINVAL);
-  assert_xnor(options->redirect.stdio.err == REPROC_REDIRECT_FILE, options->redirect.file.err, REPROC_EINVAL);
-  // clang-format on
 
   if (options->input.data != NULL || options->input.size > 0) {
-    assert_return(options->input.data != NULL, REPROC_EINVAL);
-    assert_return(options->input.size > 0, REPROC_EINVAL);
-    assert_return(options->redirect.stdio.in == 0, REPROC_EINVAL);
+    ASSERT_EINVAL(options->input.data != NULL);
+    ASSERT_EINVAL(options->input.size > 0);
+    ASSERT_EINVAL(options->redirect.in.type == REPROC_REDIRECT_PIPE);
   }
 
   if (options->fork) {
-    assert_return(argv == NULL, REPROC_EINVAL);
+    ASSERT_EINVAL(argv == NULL);
   } else {
-    assert_return(argv != NULL, REPROC_EINVAL);
-    assert_return(argv[0] != NULL, REPROC_EINVAL);
+    ASSERT_EINVAL(argv != NULL);
+    ASSERT_EINVAL(argv[0] != NULL);
   }
 
   // Default to waiting indefinitely but still allow setting a timeout of zero
@@ -171,17 +185,15 @@ static int redirect_pipe(pipe_type *parent,
 static int redirect(pipe_type *parent,
                     handle_type *child,
                     REPROC_STREAM stream,
-                    REPROC_REDIRECT type,
-                    bool pty,
-                    handle_type handle,
-                    FILE *file)
+                    reproc_redirect redirect,
+                    bool pty)
 {
   assert(parent);
   assert(child);
 
   int r = -1;
 
-  switch (type) {
+  switch (redirect.type) {
 
     case REPROC_REDIRECT_PIPE:
       r = redirect_pipe(parent, child, stream, pty);
@@ -213,17 +225,17 @@ static int redirect(pipe_type *parent,
       break;
 
     case REPROC_REDIRECT_HANDLE:
-      assert(handle);
+      assert(redirect.handle);
 
-      *child = handle;
+      *child = redirect.handle;
       *parent = PIPE_INVALID;
 
       break;
 
     case REPROC_REDIRECT_FILE:
-      assert(file);
+      assert(redirect.file);
 
-      r = handle_from(file, child);
+      r = handle_from(redirect.file, child);
       if (r < 0) {
         break;
       }
@@ -333,8 +345,8 @@ int reproc_start(reproc_t *process,
                  const char *const *argv,
                  reproc_options options)
 {
-  assert_return(process, REPROC_EINVAL);
-  assert_return(process->status == STATUS_NOT_STARTED, REPROC_EINVAL);
+  ASSERT_EINVAL(process);
+  ASSERT_EINVAL(process->status == STATUS_NOT_STARTED);
 
   struct {
     handle_type in;
@@ -355,22 +367,19 @@ int reproc_start(reproc_t *process,
   }
 
   r = redirect(&process->pipe.in, &child.in, REPROC_STREAM_IN,
-               options.redirect.stdio.in, options.redirect.pty,
-               options.redirect.handle.in, options.redirect.file.in);
+               options.redirect.in, options.redirect.pty);
   if (r < 0) {
     goto finish;
   }
 
   r = redirect(&process->pipe.out, &child.out, REPROC_STREAM_OUT,
-               options.redirect.stdio.out, options.redirect.pty,
-               options.redirect.handle.out, options.redirect.file.out);
+               options.redirect.out, options.redirect.pty);
   if (r < 0) {
     goto finish;
   }
 
   r = redirect(&process->pipe.err, &child.err, REPROC_STREAM_ERR,
-               options.redirect.stdio.err, options.redirect.pty,
-               options.redirect.handle.err, options.redirect.file.err);
+               options.redirect.err, options.redirect.pty);
   if (r < 0) {
     goto finish;
   }
@@ -429,9 +438,9 @@ finish:
   // Either an error has ocurred or the child pipe endpoints have been copied to
   // the stdin/stdout/stderr streams of the child process. Either way, they can
   // be safely closed.
-  redirect_destroy(child.in, options.redirect.stdio.in);
-  redirect_destroy(child.out, options.redirect.stdio.out);
-  redirect_destroy(child.err, options.redirect.stdio.err);
+  redirect_destroy(child.in, options.redirect.in.type);
+  redirect_destroy(child.out, options.redirect.out.type);
+  redirect_destroy(child.err, options.redirect.err.type);
   pipe_destroy(child.exit);
 
   if (r < 0) {
@@ -470,9 +479,9 @@ static bool contains_valid_pipe(pipe_set *sets, size_t num_sets)
 
 int reproc_poll(reproc_event_source *sources, size_t num_sources)
 {
-  assert_return(sources, REPROC_EINVAL);
-  assert_return(num_sources > 0, REPROC_EINVAL);
-  assert_return(num_sources <= INT_MAX, REPROC_EINVAL);
+  ASSERT_EINVAL(sources);
+  ASSERT_EINVAL(num_sources > 0);
+  ASSERT_EINVAL(num_sources <= INT_MAX);
 
   int earliest = find_earliest_expiry(sources, num_sources);
   int timeout = expiry(sources[earliest].process->timeout,
@@ -527,11 +536,10 @@ int reproc_read(reproc_t *process,
                 uint8_t *buffer,
                 size_t size)
 {
-  assert_return(process, REPROC_EINVAL);
-  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
-  assert_return(stream == REPROC_STREAM_OUT || stream == REPROC_STREAM_ERR,
-                REPROC_EINVAL);
-  assert_return(buffer, REPROC_EINVAL);
+  ASSERT_EINVAL(process);
+  ASSERT_EINVAL(process->status != STATUS_IN_CHILD);
+  ASSERT_EINVAL(stream == REPROC_STREAM_OUT || stream == REPROC_STREAM_ERR);
+  ASSERT_EINVAL(buffer);
 
   pipe_type *pipe = stream == REPROC_STREAM_OUT ? &process->pipe.out
                                                 : &process->pipe.err;
@@ -550,12 +558,12 @@ int reproc_read(reproc_t *process,
 
 int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 {
-  assert_return(process, REPROC_EINVAL);
-  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
+  ASSERT_EINVAL(process);
+  ASSERT_EINVAL(process->status != STATUS_IN_CHILD);
 
   if (buffer == NULL) {
     // Allow `NULL` buffers but only if `size == 0`.
-    assert_return(size == 0, REPROC_EINVAL);
+    ASSERT_EINVAL(size == 0);
     return 0;
   }
 
@@ -574,8 +582,8 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
 
 int reproc_close(reproc_t *process, REPROC_STREAM stream)
 {
-  assert_return(process, REPROC_EINVAL);
-  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
+  ASSERT_EINVAL(process);
+  ASSERT_EINVAL(process->status != STATUS_IN_CHILD);
 
   switch (stream) {
     case REPROC_STREAM_IN:
@@ -596,9 +604,9 @@ int reproc_close(reproc_t *process, REPROC_STREAM stream)
 
 int reproc_wait(reproc_t *process, int timeout)
 {
-  assert_return(process, REPROC_EINVAL);
-  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
-  assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
+  ASSERT_EINVAL(process);
+  ASSERT_EINVAL(process->status != STATUS_IN_CHILD);
+  ASSERT_EINVAL(process->status != STATUS_NOT_STARTED);
 
   int r = -1;
 
@@ -636,9 +644,9 @@ int reproc_wait(reproc_t *process, int timeout)
 
 int reproc_terminate(reproc_t *process)
 {
-  assert_return(process, REPROC_EINVAL);
-  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
-  assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
+  ASSERT_EINVAL(process);
+  ASSERT_EINVAL(process->status != STATUS_IN_CHILD);
+  ASSERT_EINVAL(process->status != STATUS_NOT_STARTED);
 
   if (process->status >= 0) {
     return 0;
@@ -649,9 +657,9 @@ int reproc_terminate(reproc_t *process)
 
 int reproc_kill(reproc_t *process)
 {
-  assert_return(process, REPROC_EINVAL);
-  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
-  assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
+  ASSERT_EINVAL(process);
+  ASSERT_EINVAL(process->status != STATUS_IN_CHILD);
+  ASSERT_EINVAL(process->status != STATUS_NOT_STARTED);
 
   if (process->status >= 0) {
     return 0;
@@ -662,9 +670,9 @@ int reproc_kill(reproc_t *process)
 
 int reproc_stop(reproc_t *process, reproc_stop_actions stop)
 {
-  assert_return(process, REPROC_EINVAL);
-  assert_return(process->status != STATUS_IN_CHILD, REPROC_EINVAL);
-  assert_return(process->status != STATUS_NOT_STARTED, REPROC_EINVAL);
+  ASSERT_EINVAL(process);
+  ASSERT_EINVAL(process->status != STATUS_IN_CHILD);
+  ASSERT_EINVAL(process->status != STATUS_NOT_STARTED);
 
   reproc_stop_action actions[] = { stop.first, stop.second, stop.third };
   int r = -1;
@@ -702,7 +710,7 @@ int reproc_stop(reproc_t *process, reproc_stop_actions stop)
 
 reproc_t *reproc_destroy(reproc_t *process)
 {
-  assert_return(process, NULL);
+  ASSERT_RETURN(process, NULL);
 
   if (process->status == STATUS_IN_PROGRESS) {
     reproc_stop(process, process->stop);

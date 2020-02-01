@@ -34,12 +34,14 @@
   } while (0)
 
 // Returns `r` if `expression` is false.
-#define assert_return(expression, r)                                           \
+#define ASSERT_RETURN(expression, r)                                           \
   do {                                                                         \
     if (!(expression)) {                                                       \
       return (r);                                                              \
     }                                                                          \
   } while (false)
+
+#define ASSERT_EINVAL(expression) ASSERT_RETURN(expression, REPROC_EINVAL)
 
 // Returns a common representation of platform-specific errors. In practice, the
 // value of `errno` or `GetLastError` is negated and returned if `r` indicates

@@ -8,9 +8,9 @@
 
 int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
 {
-  assert_return(process, REPROC_EINVAL);
-  assert_return(out.function, REPROC_EINVAL);
-  assert_return(err.function, REPROC_EINVAL);
+  ASSERT_EINVAL(process);
+  ASSERT_EINVAL(out.function);
+  ASSERT_EINVAL(err.function);
 
   const uint8_t initial = 0;
 
@@ -118,7 +118,7 @@ const reproc_sink REPROC_SINK_NULL = { sink_discard, NULL };
 
 void *reproc_free(void *ptr)
 {
-  assert_return(ptr, NULL);
+  ASSERT_RETURN(ptr, NULL);
   free(ptr);
   return NULL;
 }
