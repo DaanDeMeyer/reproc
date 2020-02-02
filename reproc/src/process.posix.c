@@ -437,7 +437,7 @@ finish:
 
 static int parse_status(int status)
 {
-  return WIFEXITED(status) ? WEXITSTATUS(status) : WTERMSIG(status) + UINT8_MAX;
+  return WIFEXITED(status) ? WEXITSTATUS(status) : WTERMSIG(status) + 128;
 }
 
 int process_wait(pid_t process)

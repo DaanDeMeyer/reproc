@@ -29,8 +29,10 @@ struct reproc_t {
 
 enum { STATUS_NOT_STARTED = -1, STATUS_IN_PROGRESS = -2, STATUS_IN_CHILD = -3 };
 
-const int REPROC_SIGKILL = UINT8_MAX + 9;
-const int REPROC_SIGTERM = UINT8_MAX + 15;
+#define SIGOFFSET 128
+
+const int REPROC_SIGKILL = SIGOFFSET + 9;
+const int REPROC_SIGTERM = SIGOFFSET + 15;
 
 const int REPROC_INFINITE = -1;
 const int REPROC_DEADLINE = -2;
