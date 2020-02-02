@@ -20,6 +20,8 @@ public:
       : data_(reinterpret_cast<const uint8_t *>(data)), size_(N)
   {}
 
+  input(const input &other) = default;
+
   const uint8_t *data() const noexcept
   {
     return data_;

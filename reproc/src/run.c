@@ -2,10 +2,19 @@
 
 #include <reproc/sink.h>
 
-int reproc_run(const char *const *argv,
-               reproc_options options, // lgtm [cpp/large-parameter]
-               reproc_sink out,
-               reproc_sink err)
+int reproc_run(const char *const *argv, reproc_options options)
+{
+  if (!options.redirect.discard) {
+    options.redirect.parent = true;
+  }
+
+  return reproc_run_ex(argv, options, REPROC_SINK_NULL, REPROC_SINK_NULL);
+}
+
+int reproc_run_ex(const char *const *argv,
+                  reproc_options options,
+                  reproc_sink out,
+                  reproc_sink err)
 {
   reproc_t *process = NULL;
   int r = REPROC_ENOMEM;

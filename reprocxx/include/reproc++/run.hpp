@@ -28,7 +28,13 @@ run(const arguments &arguments, const options &options, Out &&out, Err &&err)
 inline std::pair<int, std::error_code> run(const arguments &arguments,
                                            const options &options = {})
 {
-  return run(arguments, options, sink::null, sink::null);
+  struct options modified = options::clone(options);
+
+  if (!options.redirect.discard) {
+    modified.redirect.parent = true;
+  }
+
+  return run(arguments, modified, sink::null, sink::null);
 }
 
 }

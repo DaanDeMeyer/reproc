@@ -89,6 +89,22 @@ struct options {
   /*! Implicitly converts from string literals to the pointer size pair expected
   by `reproc_start`. */
   class input input;
+
+  /*! Make a shallow copy of `options`. */
+  static options clone(const options &other)
+  {
+    struct options clone;
+    // Make sure we make a shallow copy of `environment`.
+    clone.environment = other.environment.data();
+    clone.working_directory = other.working_directory;
+    clone.redirect = other.redirect;
+    clone.stop = other.stop;
+    clone.timeout = other.timeout;
+    clone.deadline = other.deadline;
+    clone.input = other.input;
+
+    return clone;
+  }
 };
 
 enum class stream { in, out, err };
