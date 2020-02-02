@@ -62,7 +62,7 @@ using handle = int;
 #endif
 
 struct redirect {
-  enum type { pipe, parent, discard };
+  enum type { pipe = 1, parent, discard };
 
   enum type type = {};
   reproc::handle handle = {};

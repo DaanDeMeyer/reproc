@@ -37,43 +37,30 @@ const int REPROC_DEADLINE = -2;
 
 static int parse_redirect(reproc_redirect *redirect, bool parent, bool discard)
 {
-  if (redirect->type) {
-    ASSERT_EINVAL(!parent);
-    ASSERT_EINVAL(!discard);
-  }
-
-  if (redirect->handle || redirect->type == REPROC_REDIRECT_HANDLE) {
+  if (redirect->type == REPROC_REDIRECT_HANDLE || redirect->handle) {
     ASSERT_EINVAL(!redirect->type || redirect->type == REPROC_REDIRECT_HANDLE);
     ASSERT_EINVAL(redirect->handle);
     ASSERT_EINVAL(!redirect->file);
-    ASSERT_EINVAL(!parent);
-    ASSERT_EINVAL(!discard);
     redirect->type = REPROC_REDIRECT_HANDLE;
   }
 
-  if (redirect->file || redirect->type == REPROC_REDIRECT_FILE) {
+  if (redirect->type == REPROC_REDIRECT_FILE || redirect->file) {
     ASSERT_EINVAL(!redirect->type || redirect->type == REPROC_REDIRECT_FILE);
     ASSERT_EINVAL(redirect->file);
     ASSERT_EINVAL(!redirect->handle);
-    ASSERT_EINVAL(!parent);
-    ASSERT_EINVAL(!discard);
     redirect->type = REPROC_REDIRECT_FILE;
   }
 
-  if (parent) {
-    ASSERT_EINVAL(!redirect->type);
-    ASSERT_EINVAL(!redirect->file);
-    ASSERT_EINVAL(!redirect->handle);
-    ASSERT_EINVAL(!discard);
-    redirect->type = REPROC_REDIRECT_PARENT;
-  }
-
-  if (discard) {
-    ASSERT_EINVAL(!redirect->type);
-    ASSERT_EINVAL(!redirect->file);
-    ASSERT_EINVAL(!redirect->handle);
-    ASSERT_EINVAL(!parent);
-    redirect->type = REPROC_REDIRECT_DISCARD;
+  if (!redirect->type) {
+    if (parent) {
+      ASSERT_EINVAL(!discard);
+      redirect->type = REPROC_REDIRECT_PARENT;
+    } else if (discard) {
+      ASSERT_EINVAL(!parent);
+      redirect->type = REPROC_REDIRECT_DISCARD;
+    } else {
+      redirect->type = REPROC_REDIRECT_PIPE;
+    }
   }
 
   return 0;

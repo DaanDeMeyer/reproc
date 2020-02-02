@@ -54,7 +54,7 @@ typedef enum {
 /*! Used to tell reproc where to redirect the streams of the child process. */
 typedef enum {
   /*! Redirect to a pipe. */
-  REPROC_REDIRECT_PIPE,
+  REPROC_REDIRECT_PIPE = 1,
   /*! Redirect to the corresponding stream from the parent process. */
   REPROC_REDIRECT_PARENT,
   /*! Redirect to /dev/null (or NUL on Windows). */
@@ -97,7 +97,8 @@ typedef int reproc_handle; // fd
 #endif
 
 typedef struct reproc_redirect {
-  /*! Type of redirection, defaults to `REPROC_REDIRECT_PIPE` if unset. */
+  /*! Type of redirection. if `type` is unset, it defaults to
+  `REPROC_REDIRECT_PIPE`. */
   REPROC_REDIRECT type;
   /*!
   Redirect a stream to an operating system handle. The given handle must be in
@@ -169,15 +170,17 @@ typedef struct reproc_options {
     reproc_redirect out;
     reproc_redirect err;
     /*!
-    Shorthand for setting `in`, `out` and `err` to `REPROC_REDIRECT_PARENT`.
+    Use `REPROC_REDIRECT_PARENT` instead of `REPROC_REDIRECT_PIPE` when `type`
+    is unset.
 
-    When this option is set, no other redirect options may be set.
+    When this option is set, `discard` may not be set.
     */
     bool parent;
     /*!
-    Shorthand for setting `in`, `out` and `err` to `REPROC_REDIRECT_DISCARD`.
+    Use `REPROC_REDIRECT_DISCARD` instead of `REPROC_REDIRECT_PIPE` when `type`
+    is unset.
 
-    When this option is set, no other redirect options may be set.
+    When this option is set, `parent` may not be set.
     */
     bool discard;
   } redirect;

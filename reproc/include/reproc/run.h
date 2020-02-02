@@ -3,6 +3,9 @@
 #include <reproc/reproc.h>
 #include <reproc/sink.h>
 
+// /*! Sets `options.redirect.parent = true`. */
+// REPROC_EXPORT int reproc_run(const char *const *argv, reproc_options options);
+
 /*!
 Wrapper function that starts a process with the given arguments, drain its
 output and waits until it exits. Have a look at its (trivial) implementation and
