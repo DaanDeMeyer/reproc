@@ -55,6 +55,7 @@ static reproc_options reproc_options_from(const options &options, bool fork)
                reproc_redirect_from(options.redirect.err),
                options.redirect.parent,
                options.redirect.discard,
+               options.redirect.file,
            },
            reproc_stop_actions_from(options.stop),
            options.timeout.count(),

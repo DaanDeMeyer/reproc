@@ -81,6 +81,7 @@ struct options {
     redirect err;
     bool parent;
     bool discard;
+    FILE *file;
   } redirect = {};
 
   struct stop_actions stop = {};

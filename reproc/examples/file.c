@@ -13,9 +13,7 @@ int main(int argc, const char *argv[])
     return EXIT_FAILURE;
   }
 
-  int r = reproc_run(argv + 1,
-                     (reproc_options){
-                         .redirect = { .out.file = file, .err.file = file } });
+  int r = reproc_run(argv + 1, (reproc_options){ .redirect.file = file });
 
   fclose(file);
 

@@ -35,8 +35,15 @@ const int REPROC_SIGTERM = UINT8_MAX + 15;
 const int REPROC_INFINITE = -1;
 const int REPROC_DEADLINE = -2;
 
-static int parse_redirect(reproc_redirect *redirect, bool parent, bool discard)
+static int
+parse_redirect(reproc_redirect *redirect, bool parent, bool discard, FILE *file)
 {
+  if (file) {
+    ASSERT_EINVAL(!redirect->type && !redirect->handle && !redirect->file);
+    redirect->type = REPROC_REDIRECT_FILE;
+    redirect->file = file;
+  }
+
   if (redirect->type == REPROC_REDIRECT_HANDLE || redirect->handle) {
     ASSERT_EINVAL(!redirect->type || redirect->type == REPROC_REDIRECT_HANDLE);
     ASSERT_EINVAL(redirect->handle);
@@ -73,19 +80,19 @@ static int parse_options(const char *const *argv, reproc_options *options)
   int r = -1;
 
   r = parse_redirect(&options->redirect.in, options->redirect.parent,
-                     options->redirect.discard);
+                     options->redirect.discard, NULL);
   if (r < 0) {
     return r;
   }
 
   r = parse_redirect(&options->redirect.out, options->redirect.parent,
-                     options->redirect.discard);
+                     options->redirect.discard, options->redirect.file);
   if (r < 0) {
     return r;
   }
 
   r = parse_redirect(&options->redirect.err, options->redirect.parent,
-                     options->redirect.discard);
+                     options->redirect.discard, options->redirect.file);
   if (r < 0) {
     return r;
   }

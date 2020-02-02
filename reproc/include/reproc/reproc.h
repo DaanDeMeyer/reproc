@@ -183,6 +183,12 @@ typedef struct reproc_options {
     When this option is set, `parent` may not be set.
     */
     bool discard;
+    /*!
+    Shorthand for redirecting stdout and stderr to the same file.
+
+    If this option is set, `out` and `err` must be unset.
+    */
+    FILE *file;
   } redirect;
   /*!
   Stop actions that are passed to `reproc_stop` in `reproc_destroy` to stop the
