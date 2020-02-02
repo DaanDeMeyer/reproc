@@ -2,8 +2,12 @@
   #include <windows.h>
   #define sleep(x) Sleep((x))
 #else
-  #include <unistd.h>
-  #define sleep(x) usleep((x) *1000)
+  #define _POSIX_C_SOURCE 200809L
+  #include <time.h>
+  #define sleep(x)                                                             \
+    nanosleep(&(struct timespec){ .tv_sec = (x) / 1000,                        \
+                                  .tv_nsec = ((x) % 1000) * 1000000 },         \
+              NULL);
 #endif
 
 int main(void)

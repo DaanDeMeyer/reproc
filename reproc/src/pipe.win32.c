@@ -1,4 +1,3 @@
-// Make sure `WSAPoll` and friends are defined.
 #define _WIN32_WINNT _WIN32_WINNT_VISTA
 
 #include "pipe.h"

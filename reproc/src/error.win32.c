@@ -1,7 +1,10 @@
-#include <reproc/reproc.h>
+#define _WIN32_WINNT _WIN32_WINNT_VISTA
 
 #include "error.h"
+
 #include "macro.h"
+
+#include <reproc/reproc.h>
 
 #include <assert.h>
 #include <limits.h>

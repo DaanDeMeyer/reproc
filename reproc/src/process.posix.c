@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include "process.h"
 
 #include "error.h"
@@ -229,8 +231,9 @@ static pid_t process_fork(const int *except, size_t num_except)
     goto finish;
   }
 
-  for (int i = 0; i < NSIG; i++) {
-    r = sigaction(i, &action, NULL);
+  // NSIG is not standardized so we use a fixed limit instead.
+  for (int signal = 0; signal < 32; signal++) {
+    r = sigaction(signal, &action, NULL);
     if (r < 0 && errno != EINVAL) {
       goto finish;
     }

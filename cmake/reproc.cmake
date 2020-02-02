@@ -78,10 +78,25 @@ function(reproc_add_common TARGET LANGUAGE)
   cmake_parse_arguments(ARG "" "OUTPUT_DIRECTORY;OUTPUT_NAME" "" ${ARGN})
 
   if(LANGUAGE STREQUAL C)
+    set(STANDARD 99)
     target_compile_features(${TARGET} PUBLIC c_std_99)
   else()
+    # TODO: Remove once https://gitlab.kitware.com/cmake/cmake/issues/20300 is
+    # fixed.
+    if(MINGW)
+      set(STANDARD 14)
+    else()
+      set(STANDARD 11)
+    endif()
+
     target_compile_features(${TARGET} PUBLIC cxx_std_11)
   endif()
+
+  set_target_properties(${TARGET} PROPERTIES
+    ${LANGUAGE}_STANDARD ${STANDARD}
+    ${LANGUAGE}_STANDARD_REQUIRED ON
+    ${LANGUAGE}_EXTENSIONS OFF
+  )
 
   if(DEFINED ARG_OUTPUT_DIRECTORY)
     set_target_properties(${TARGET} PROPERTIES

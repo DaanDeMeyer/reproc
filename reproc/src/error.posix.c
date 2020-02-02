@@ -1,7 +1,10 @@
-#include <reproc/reproc.h>
+#define _POSIX_C_SOURCE 200809L
 
 #include "error.h"
+
 #include "macro.h"
+
+#include <reproc/reproc.h>
 
 #include <errno.h>
 #include <stdlib.h>
