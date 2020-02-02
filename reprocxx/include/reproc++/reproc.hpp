@@ -64,9 +64,9 @@ using handle = int;
 struct redirect {
   enum type { pipe = 1, parent, discard };
 
-  enum type type = {};
-  reproc::handle handle = {};
-  FILE *file = {};
+  enum type type;
+  reproc::handle handle;
+  FILE *file;
 };
 
 struct options {
