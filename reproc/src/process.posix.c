@@ -164,12 +164,8 @@ static pid_t process_fork(const int *except, size_t num_except)
   if (r < 0) {
     // `fork` error.
 
-    PROTECT_SYSTEM_ERROR;
-
     r = signal_mask(SIG_SETMASK, &mask.new, &mask.old);
     ASSERT_UNUSED(r == 0);
-
-    UNPROTECT_SYSTEM_ERROR;
 
     pipe_destroy(pipe.read);
     pipe_destroy(pipe.write);
@@ -186,8 +182,6 @@ static pid_t process_fork(const int *except, size_t num_except)
     // errors from `signal_mask` and `read`. This puts the responsibility
     // for cleaning up the process in the hands of the caller.
 
-    PROTECT_SYSTEM_ERROR;
-
     r = signal_mask(SIG_SETMASK, &mask.old, &mask.old);
     ASSERT_UNUSED(r == 0);
 
@@ -199,8 +193,6 @@ static pid_t process_fork(const int *except, size_t num_except)
     r = (int) read(pipe.read, &child_errno, sizeof(child_errno));
     ASSERT_UNUSED(r >= 0);
 
-    UNPROTECT_SYSTEM_ERROR;
-
     if (child_errno > 0) {
       // If the child writes to the error pipe and exits, we're certain the
       // child process exited on its own and we can report errors as usual.
@@ -210,6 +202,8 @@ static pid_t process_fork(const int *except, size_t num_except)
       if (r == child) {
         r = -child_errno;
       }
+    } else {
+      r = 0;
     }
 
     pipe_destroy(pipe.read);
@@ -416,13 +410,9 @@ int process_start(pid_t *process,
   // when it is closed on the child side as well.
   pipe.write = pipe_destroy(pipe.write);
 
-  PROTECT_SYSTEM_ERROR;
-
   int child_errno = 0;
   r = (int) read(pipe.read, &child_errno, sizeof(child_errno));
   ASSERT_UNUSED(r >= 0);
-
-  UNPROTECT_SYSTEM_ERROR;
 
   if (child_errno > 0) {
     r = waitpid(child, NULL, 0);
@@ -431,9 +421,11 @@ int process_start(pid_t *process,
     }
 
     goto finish;
+  } else {
+    r = 0;
   }
 
-  *process = r;
+  *process = child;
 
 finish:
   pipe_destroy(pipe.read);

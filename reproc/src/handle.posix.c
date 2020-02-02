@@ -52,12 +52,8 @@ int handle_destroy(int handle)
 
   int r = 0;
 
-  PROTECT_SYSTEM_ERROR;
-
   r = close(handle);
   ASSERT_UNUSED(r == 0);
-
-  UNPROTECT_SYSTEM_ERROR;
 
   return HANDLE_INVALID;
 }

@@ -44,13 +44,8 @@ HANDLE handle_destroy(HANDLE handle)
 
   int r = 0;
 
-  PROTECT_SYSTEM_ERROR;
-
-  // Avoid `CloseHandle` errors overriding other system errors.
   r = CloseHandle(handle);
   ASSERT_UNUSED(r != 0);
-
-  UNPROTECT_SYSTEM_ERROR;
 
   return HANDLE_INVALID;
 }
