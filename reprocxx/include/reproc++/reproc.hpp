@@ -40,7 +40,6 @@ using milliseconds = std::chrono::duration<int, std::milli>;
 
 REPROCXX_EXPORT extern const milliseconds infinite;
 REPROCXX_EXPORT extern const milliseconds deadline;
-REPROCXX_EXPORT extern const milliseconds nonblocking;
 
 enum class stop { noop, wait, terminate, kill };
 
