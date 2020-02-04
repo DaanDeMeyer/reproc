@@ -1,6 +1,11 @@
 # Changelog
 
-## 10.1.0
+## 11.0.0
+
+### General
+
+- Compilation now happens with compiler extensions disabled (`-std=c99` and
+  `-std=c++11`).
 
 ### reproc
 
@@ -8,11 +13,115 @@
   `redirect` options to `REPROC_REDIRECT_INHERIT` and `REPROC_REDIRECT_DISCARD`
   respectively.
 
+- Add `reproc_run` and `reproc_run_ex` which allows running a process using only
+  a single function.
+
+  Running a simple process with reproc required calling `reproc_new`,
+  `reproc_start`, `reproc_wait` and optionally `reproc_drain` with all the
+  associated error handling. `reproc_run` encapsulates all this boilerplate.
+
+- Add `input` option that writes the given to the child process stdin pipe
+  before starting the process.
+
+  This allows passing input to the process when using `reproc_run`.
+
+- Add `deadline` option that specifies a point in time beyond which
+  `reproc_poll` will return `REPROC_ETIMEDOUT`.
+
+- Add `REPROC_DEADLINE` that makes `reproc_wait` wait until the deadline
+  specified in the `deadline` option has expired.
+
+  By default, if the `deadline` option is set, `reproc_destroy` waits until the
+  deadline expires before sending a `SIGTERM` signal to the child process.
+
+- Add (POSIX only) `fork` option that makes `reproc_start` a safe alternative to
+  `fork` with support for all of reproc's other features.
+
+- Return the amount of bytes written from `reproc_write` and stop handling
+  partial writes.
+
+  Now that reproc uses nonblocking pipes, it doesn't make sense to handle
+  partial writes anymore. The `input` option can be used as an alternative.
+  `reproc_start` keeps writing until all data from `input` is written to the
+  child process stdin pipe or until a call to `reproc_write` returns an error.
+
+- Add `reproc_poll` to query child process events of one or more child
+  processes.
+
+  We now support polling multiple child processes for events. `reproc_poll`
+  mimicks the POSIX `poll` function but instead of pollfds, it takes a list of
+  event sources which consist out of a process, the events we're interested in
+  and an output field which is filled in by `reproc_poll` that contains the
+  events that occurred for that child process.
+
+- Stop reading from both stdout and stderr in `reproc_read`.
+
+  Because we now have `reproc_poll`, `reproc_read` was simplified to again read
+  from the given stream which is passed again as an argument. To avoid
+  deadlocks, call `reproc_poll` to figure out the first stream that has data
+  available to read.
+
+- Support polling for process exit events.
+
+  By adding `REPROC_EVENT_EXIT` to the list of interested events, we can poll
+  for child process exit events.
+
+- Add a dependency on Winsock2 on Windows.
+
+  To implement `reproc_poll`, we redirect to sockets on Windows which allows us
+  to use `WSAPoll` which is required to implement `reproc_poll`. Using sockets
+  on Windows requires linking with the `ws2_32` library. This dependency is
+  automatically handled by CMake and pkg-config.
+
+- Move `in`, `out` and `err` options out of `stdio` directly into `redirect`.
+
+  This reduces the amount of boilerplate when redirecting streams.
+
+- Rename `REPROC_REDIRECT_INHERIT` to `REPROC_REDIRECT_PARENT`.
+
+  `REPROC_REDIRECT_PARENT` more clearly indicates that we're redirecting to the
+  parent's corresponding standard stream.
+
+- Add support for redirecting to operating system handles.
+
+  This allows redirecting to operating system-specific handles. On POSIX
+  systems, this feature expects file descriptors. On Windows, it expects
+  `HANDLE`s or `SOCKET`s.
+
+- Add support for redirecting to `FILE *`s.
+
+  This gives users a cross-platform way to redirect standard streams to files.
+
+- Add support for redirecting stderr to stdout.
+
+  For high-traffic scenarios, it doesn't make sense to allocate a separate pipe
+  for stderr if its output is only going to be combined with the output of
+  stdout. By using `REPROC_REDIRECT_STDOUT` for stderr, its output is written
+  directly to stdout by the child process.
+
+- Turn `redirect`'s `in`, `out` and `err` options into instances of the new
+  `reproc_redirecŧ` struct.
+
+  An enum didn't cut it anymore for the new file and handle redirect options
+  since those require extra fields to allow specifying which file or handle to
+  redirect to.
+
+- Add `redirect.file` option as a shorthand for redirecting stdout and stderr to
+  the same file.
+
 ### reproc++
 
-- Add `inherit` and `discard` options as shorthands to set all members of the
-  `redirect` options to `reproc::redirect::inherit` and
-  `reproc::redirect::discard` respectively.
+- reproc++ includes mostly the same changes done to reproc so we only document
+  the differences.
+
+- Add `fork` method instead of `fork` option.
+
+  Adding a `fork` option would have required changing `start` to return
+  `std::pair<bool, std::error_code>` to allow determining whether we're in the
+  parent or the child process after a fork. However, the bool return value would
+  only be valid when the fork option was enabled. Thus, this approach would
+  unnecessarily complicate all other use cases of `start` that don't require
+  `fork`. To solve the issue, we made `fork` a separate method instead.
 
 ## 10.0.3
 
