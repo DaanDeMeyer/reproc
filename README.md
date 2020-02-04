@@ -134,7 +134,7 @@ information.
 ## Dependencies
 
 By default, reproc has a dependency on pthreads on POSIX systems (`-pthread`)
-and a dependency on Winsock2 2.2 on Windows systems (`-lws2_32`). CMake and
+and a dependency on Winsock 2.2 on Windows systems (`-lws2_32`). CMake and
 pkg-config handle these dependencies automatically.
 
 ## CMake options
