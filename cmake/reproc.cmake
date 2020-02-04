@@ -81,9 +81,9 @@ function(reproc_add_common TARGET LANGUAGE)
     set(STANDARD 99)
     target_compile_features(${TARGET} PUBLIC c_std_99)
   else()
-    # TODO: Remove once https://gitlab.kitware.com/cmake/cmake/issues/20300 is
-    # fixed.
-    if(MINGW)
+    # clang-tidy uses the MSVC standard library instead of MinGW's standard
+    # library so we have to use C++14 (because MSVC headers use C++14).
+    if(MINGW AND REPROC_TIDY)
       set(STANDARD 14)
     else()
       set(STANDARD 11)
