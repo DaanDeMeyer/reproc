@@ -12,7 +12,7 @@ int reproc_run(const char *const *argv, reproc_options options)
 }
 
 int reproc_run_ex(const char *const *argv,
-                  reproc_options options,
+                  reproc_options options, // lgtm [cpp/large-parameter]
                   reproc_sink out,
                   reproc_sink err)
 {
