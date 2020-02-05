@@ -22,7 +22,7 @@ static void io()
   ASSERT(r >= 0);
 
   r = reproc_write(process, (uint8_t *) MESSAGE, strlen(MESSAGE));
-  ASSERT(r == strlen(MESSAGE));
+  ASSERT(r == (int) strlen(MESSAGE));
 
   r = reproc_close(process, REPROC_STREAM_IN);
   ASSERT(r == 0);
