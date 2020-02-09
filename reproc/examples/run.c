@@ -5,9 +5,7 @@
 
 // Start a process from the arguments given on the command line. Inherit the
 // parent's standard streams and allow the process to run for maximum 5 seconds
-// before terminating it. Since we inherit the standard streams of the parent,
-// we pass `REPROC_SINK_NULL` twice as the sinks since there won't be any output
-// to drain.
+// before terminating it.
 int main(int argc, const char *argv[])
 {
   (void) argc;

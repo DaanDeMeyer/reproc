@@ -6,11 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Shows the output of git --help using `reproc_drain`. We only explain the
-// specifics of `reproc_drain` here, see the git-status example for general
-// information on how to use reproc.
-int main(void)
+// Shows the output of the given command using `reproc_drain`.
+int main(int argc, const char *argv[])
 {
+  (void) argc;
+
   reproc_t *process = NULL;
   char *output = NULL;
   int r = REPROC_ENOMEM;
@@ -20,9 +20,7 @@ int main(void)
     goto finish;
   }
 
-  const char *argv[] = { "git", "--help", NULL };
-
-  r = reproc_start(process, argv, (reproc_options){ 0 });
+  r = reproc_start(process, argv + 1, (reproc_options){ 0 });
   if (r < 0) {
     goto finish;
   }

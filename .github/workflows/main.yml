@@ -161,16 +161,16 @@ jobs:
       # own step.
 
       - name: "reproc: drain"
-        run: build/reproc/examples/drain
+        run: build/reproc/examples/drain cmake --help
 
       - name: "reproc: file"
         run: build/reproc/examples/file cmake --help
 
-      - name: "reproc: git-status"
-        run: build/reproc/examples/git-status
+      - name: "reproc: parent"
+        run: build/reproc/examples/parent cmake --help
 
-      - name: "reproc: inherit"
-        run: build/reproc/examples/inherit cmake --help
+      - name: "reproc: poll"
+        run: build/reproc/examples/poll cmake --help
 
       - name: "reproc: run"
         run: build/reproc/examples/run cmake --help
@@ -178,8 +178,8 @@ jobs:
       - name: "reproc++: background"
         run: build/reprocxx/examples/background cmake --help
 
-      - name: "reproc++: cmake-help"
-        run: build/reprocxx/examples/cmake-help
+      - name: "reproc++: drain"
+        run: build/reprocxx/examples/drain cmake --help
 
       - name: "reproc++: forward"
         run: build/reprocxx/examples/forward cmake --help

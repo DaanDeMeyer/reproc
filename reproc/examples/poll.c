@@ -5,9 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Uses reproc to print the output of git status.
-int main(void)
+// Uses `reproc_poll` and `reproc_read` to print the output of the given
+// command. Usually, using `reproc_run` or `reproc_drain` is a better solution
+// when dealing with a single child process.
+int main(int argc, const char *argv[])
 {
+  (void) argc;
+
   // `reproc_t` stores necessary information between calls to reproc's API.
   reproc_t *process = NULL;
   char *output = NULL;
@@ -19,16 +23,12 @@ int main(void)
     goto finish;
   }
 
-  // `argv` must start with the name (or path) of the program to execute and
-  // must end with a `NULL` value.
-  const char *argv[] = { "git", "status", NULL };
-
   // `reproc_start` takes a child process instance (`reproc_t`), argv and
   // a set of options including the working directory and environment of the
   // child process. If the working directory is `NULL` the working directory of
   // the parent process is used. If the environment is `NULL`, the environment
   // of the parent process is used.
-  r = reproc_start(process, argv, (reproc_options){ 0 });
+  r = reproc_start(process, argv + 1, (reproc_options){ 0 });
 
   // On failure, reproc's API functions return a negative `errno` (POSIX) or
   // `GetLastError` (Windows) style error code. To check against common error
@@ -38,9 +38,8 @@ int main(void)
     goto finish;
   }
 
-  // Close the stdin stream since we're not going to write any input to git.
-  // While the example works perfectly without closing stdin we do it here to
-  // show how `reproc_close` works.
+  // Close the stdin stream since we're not going to write any input to the
+  // child process.
   r = reproc_close(process, REPROC_STREAM_IN);
   if (r < 0) {
     goto finish;

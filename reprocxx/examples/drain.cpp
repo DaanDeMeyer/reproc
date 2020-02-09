@@ -10,27 +10,27 @@ static int fail(std::error_code ec)
   return 1;
 }
 
-// Uses reproc++ to print CMake's help page.
-int main()
+// Uses `reproc::drain` to show the output of the given command.
+int main(int argc, const char *argv[])
 {
-  reproc::process process;
+  if (argc <= 1) {
+    std::cerr << "No arguments provided. Example usage: "
+              << "./drain cmake --help";
+    return 1;
+  }
 
-  // The `process::start` method works with any container of strings and takes
-  // care of converting the vector into the array of null-terminated strings
-  // expected by `reproc_start` (including adding the `NULL` value at the end of
-  // the array).
-  std::array<std::string, 2> argv = { "cmake", "--help" };
+  reproc::process process;
 
   // reproc++ uses error codes to report errors. If exceptions are preferred,
   // convert `std::error_code`'s to exceptions using `std::system_error`.
-  std::error_code ec = process.start(argv);
+  std::error_code ec = process.start(argv + 1);
 
   // reproc++ converts system errors to `std::error_code`'s of the system
   // category. These can be matched against using values from the `std::errc`
   // error condition. See https://en.cppreference.com/w/cpp/error/errc for more
   // information.
   if (ec == std::errc::no_such_file_or_directory) {
-    std::cerr << "cmake not found. Make sure it's available from the PATH.";
+    std::cerr << "Program not found. Make sure it's available from the PATH.";
     return 1;
   } else if (ec) {
     return fail(ec);
