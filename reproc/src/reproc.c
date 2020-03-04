@@ -37,8 +37,11 @@ const int REPROC_SIGTERM = SIGOFFSET + 15;
 const int REPROC_INFINITE = -1;
 const int REPROC_DEADLINE = -2;
 
-static int
-parse_redirect(reproc_redirect *redirect, bool parent, bool discard, FILE *file)
+static int parse_redirect(reproc_redirect *redirect,
+                          REPROC_STREAM stream,
+                          bool parent,
+                          bool discard,
+                          FILE *file)
 {
   if (file) {
     ASSERT_EINVAL(!redirect->type && !redirect->handle && !redirect->file);
@@ -68,7 +71,8 @@ parse_redirect(reproc_redirect *redirect, bool parent, bool discard, FILE *file)
       ASSERT_EINVAL(!parent);
       redirect->type = REPROC_REDIRECT_DISCARD;
     } else {
-      redirect->type = REPROC_REDIRECT_PIPE;
+      redirect->type = stream == REPROC_STREAM_ERR ? REPROC_REDIRECT_PARENT
+                                                   : REPROC_REDIRECT_PIPE;
     }
   }
 
@@ -81,20 +85,22 @@ static int parse_options(const char *const *argv, reproc_options *options)
 
   int r = -1;
 
-  r = parse_redirect(&options->redirect.in, options->redirect.parent,
-                     options->redirect.discard, NULL);
+  r = parse_redirect(&options->redirect.in, REPROC_STREAM_IN,
+                     options->redirect.parent, options->redirect.discard, NULL);
   if (r < 0) {
     return r;
   }
 
-  r = parse_redirect(&options->redirect.out, options->redirect.parent,
-                     options->redirect.discard, options->redirect.file);
+  r = parse_redirect(&options->redirect.out, REPROC_STREAM_OUT,
+                     options->redirect.parent, options->redirect.discard,
+                     options->redirect.file);
   if (r < 0) {
     return r;
   }
 
-  r = parse_redirect(&options->redirect.err, options->redirect.parent,
-                     options->redirect.discard, options->redirect.file);
+  r = parse_redirect(&options->redirect.err, REPROC_STREAM_ERR,
+                     options->redirect.parent, options->redirect.discard,
+                     options->redirect.file);
   if (r < 0) {
     return r;
   }

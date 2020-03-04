@@ -13,6 +13,23 @@
 
   Allows putting pipes back in nonblocking mode if needed.
 
+- Child process stderr streams are now redirected to the parent stderr stream by
+  default.
+
+  Because pipes are blocking again by default, there's a (small) chance of
+  deadlocks if we redirect both stdout and stderr to pipes. Redirecting stderr
+  to the parent by default avoids that issue.
+
+  The other (bigger) issue is that if we redirect stderr to a pipe, there's a
+  good chance users might forget to read from it and discard valuable error
+  output from the child process.
+
+  By redirecting to the parent stderr by default, it's immediately noticeable
+  when a child process is not behaving according to expectations as its error
+  output will appear directly on the parent process stderr stream. Users can
+  then still decide to explicitly discard the output from the stderr stream if
+  needed.
+
 ## 11.0.0
 
 ### General

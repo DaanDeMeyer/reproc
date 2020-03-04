@@ -28,9 +28,7 @@ int main(int argc, const char *argv[])
   // child process. If the working directory is `NULL` the working directory of
   // the parent process is used. If the environment is `NULL`, the environment
   // of the parent process is used.
-  r = reproc_start(process, argv + 1,
-                   (reproc_options){
-                       .redirect.err.type = REPROC_REDIRECT_STDOUT });
+  r = reproc_start(process, argv + 1, (reproc_options){ 0 });
 
   // On failure, reproc's API functions return a negative `errno` (POSIX) or
   // `GetLastError` (Windows) style error code. To check against common error

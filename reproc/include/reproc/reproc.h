@@ -97,8 +97,7 @@ typedef int reproc_handle; // fd
 #endif
 
 typedef struct reproc_redirect {
-  /*! Type of redirection. if `type` is unset, it defaults to
-  `REPROC_REDIRECT_PIPE`. */
+  /*! Type of redirection. */
   REPROC_REDIRECT type;
   /*!
   Redirect a stream to an operating system handle. The given handle must be in
@@ -163,8 +162,8 @@ typedef struct reproc_options {
   struct {
     /*!
     `in`, `out` and `err` specify where to redirect the standard I/O streams of
-    the child process. When not set, each of them defaults to
-    `REPROC_REDIRECT_PIPE`.
+    the child process. When not set, `in` and `out` default to
+    `REPROC_REDIRECT_PIPE` while `err` defaults to `REPROC_REDIRECT_PARENT`.
     */
     reproc_redirect in;
     reproc_redirect out;
