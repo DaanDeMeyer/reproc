@@ -28,7 +28,9 @@ int main(int argc, const char *argv[])
   // child process. If the working directory is `NULL` the working directory of
   // the parent process is used. If the environment is `NULL`, the environment
   // of the parent process is used.
-  r = reproc_start(process, argv + 1, (reproc_options){ 0 });
+  r = reproc_start(process, argv + 1,
+                   (reproc_options){
+                       .redirect.err.type = REPROC_REDIRECT_STDOUT });
 
   // On failure, reproc's API functions return a negative `errno` (POSIX) or
   // `GetLastError` (Windows) style error code. To check against common error
@@ -50,22 +52,8 @@ int main(int argc, const char *argv[])
   // while loop keeps running until an error occurs in `reproc_read` (the child
   // process closing its output stream is also reported as an error).
   while (true) {
-    reproc_event_source source = { process, REPROC_EVENT_OUT | REPROC_EVENT_ERR,
-                                   0 };
-
-    // `reproc_poll` returns the first stream (stdout or stderr) that has data
-    // available to read.
-    r = reproc_poll(&source, 1);
-    if (r < 0) {
-      break;
-    }
-
-    REPROC_STREAM stream = source.events & REPROC_EVENT_OUT ? REPROC_STREAM_OUT
-                                                            : REPROC_STREAM_ERR;
-
-    // Read from the stream returned by `reproc_poll` with `reproc_read`.
     uint8_t buffer[4096];
-    r = reproc_read(process, stream, buffer, sizeof(buffer));
+    r = reproc_read(process, REPROC_STREAM_OUT, buffer, sizeof(buffer));
     if (r < 0) {
       break;
     }

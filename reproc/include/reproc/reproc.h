@@ -241,6 +241,12 @@ typedef struct reproc_options {
   When `fork` is enabled. `argv` must be `NULL` when calling `reproc_start`.
   */
   bool fork;
+  /*!
+  Put pipes created by reproc in nonblocking mode. This makes `reproc_read` and
+  `reproc_write` nonblocking operations. If needed, use `reproc_poll` to wait
+  until streams becomes readable/writable.
+  */
+  bool nonblocking;
 } reproc_options;
 
 enum {

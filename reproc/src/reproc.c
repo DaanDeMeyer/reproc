@@ -136,8 +136,10 @@ static int parse_options(const char *const *argv, reproc_options *options)
   return 0;
 }
 
-static int
-redirect_pipe(pipe_type *parent, handle_type *child, REPROC_STREAM stream)
+static int redirect_pipe(pipe_type *parent,
+                         handle_type *child,
+                         REPROC_STREAM stream,
+                         bool nonblocking)
 {
   assert(parent);
   assert(child);
@@ -153,7 +155,7 @@ redirect_pipe(pipe_type *parent, handle_type *child, REPROC_STREAM stream)
   *child = stream == REPROC_STREAM_IN ? (handle_type) pipe[0]
                                       : (handle_type) pipe[1];
 
-  r = pipe_nonblocking(*parent, true);
+  r = pipe_nonblocking(*parent, nonblocking);
 
   return error_unify(r);
 }
@@ -162,6 +164,7 @@ static int redirect(pipe_type *parent,
                     handle_type *child,
                     REPROC_STREAM stream,
                     reproc_redirect redirect,
+                    bool nonblocking,
                     handle_type out)
 {
   assert(parent);
@@ -172,7 +175,7 @@ static int redirect(pipe_type *parent,
   switch (redirect.type) {
 
     case REPROC_REDIRECT_PIPE:
-      r = redirect_pipe(parent, child, stream);
+      r = redirect_pipe(parent, child, stream, nonblocking);
       break;
 
     case REPROC_REDIRECT_PARENT:
@@ -357,19 +360,19 @@ int reproc_start(reproc_t *process,
   }
 
   r = redirect(&process->pipe.in, &child.in, REPROC_STREAM_IN,
-               options.redirect.in, HANDLE_INVALID);
+               options.redirect.in, options.nonblocking, HANDLE_INVALID);
   if (r < 0) {
     goto finish;
   }
 
   r = redirect(&process->pipe.out, &child.out, REPROC_STREAM_OUT,
-               options.redirect.out, HANDLE_INVALID);
+               options.redirect.out, options.nonblocking, HANDLE_INVALID);
   if (r < 0) {
     goto finish;
   }
 
   r = redirect(&process->pipe.err, &child.err, REPROC_STREAM_ERR,
-               options.redirect.err, child.out);
+               options.redirect.err, options.nonblocking, child.out);
   if (r < 0) {
     goto finish;
   }

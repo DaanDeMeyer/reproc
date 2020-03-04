@@ -89,6 +89,7 @@ struct options {
   /*! Implicitly converts from string literals to the pointer size pair expected
   by `reproc_start`. */
   class input input;
+  bool nonblocking = false;
 
   /*! Make a shallow copy of `options`. */
   static options clone(const options &other)

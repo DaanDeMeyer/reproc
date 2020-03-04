@@ -1,5 +1,18 @@
 # Changelog
 
+## 12.0.0
+
+# reproc
+
+- Put pipes in blocking mode by default.
+
+  This allows using `reproc_read` and `reproc_write` directly without having to
+  figure out `reproc_poll`.
+
+- Add `nonblocking` option.
+
+  Allows putting pipes back in nonblocking mode if needed.
+
 ## 11.0.0
 
 ### General
