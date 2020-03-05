@@ -36,12 +36,12 @@ std::error_code drain(process &process, Out &&out, Err &&err)
 
   while (true) {
     int events = 0;
-    std::tie(events, ec) = process.poll(event::out | event::err);
+    std::tie(events, ec) = process.poll(event::out | event::err, infinite);
     if (ec) {
       break;
     }
 
-    if (events & event::timeout) {
+    if (events & event::deadline) {
       ec = { static_cast<int>(std::errc::timed_out), std::generic_category() };
       break;
     }

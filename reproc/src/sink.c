@@ -30,12 +30,12 @@ int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
     reproc_event_source source = { process, REPROC_EVENT_OUT | REPROC_EVENT_ERR,
                                    0 };
 
-    r = reproc_poll(&source, 1);
+    r = reproc_poll(&source, 1, REPROC_INFINITE);
     if (r < 0) {
       break;
     }
 
-    if (source.events & REPROC_EVENT_TIMEOUT) {
+    if (source.events & REPROC_EVENT_DEADLINE) {
       r = REPROC_ETIMEDOUT;
       break;
     }

@@ -198,18 +198,9 @@ typedef struct reproc_options {
   */
   reproc_stop_actions stop;
   /*!
-  Maximum duration in milliseconds to wait for a single `reproc_poll` operation
-  to complete. If the timeout expires, the call to `reproc_poll` returns
-  `REPROC_ETIMEDOUT`.
-
-  When `timeout` is zero, `reproc_read` and `reproc_write` will wait
-  indefinitely for any I/O to complete.
-  */
-  int timeout;
-  /*!
   Maximum allowed duration in milliseconds the process is allowed to run in
   milliseconds. If the deadline is exceeded, Any ongoing and future calls to
-  `reproc_read` and `reproc_write` return `REPROC_ETIMEDOUT`.
+  `reproc_poll` return `REPROC_ETIMEDOUT`.
 
   When `deadline` is zero, no deadline is set for the process.
   */
@@ -257,9 +248,9 @@ enum {
   REPROC_EVENT_ERR = 1 << 2,
   /*! The process finished running. */
   REPROC_EVENT_EXIT = 1 << 3,
-  /*! The deadline or timeout of the process expired. This event is added by
-  default to the list of interested events. */
-  REPROC_EVENT_TIMEOUT = 1 << 4,
+  /*! The deadline of the process expired. This event is added by default to the
+  list of interested events. */
+  REPROC_EVENT_DEADLINE = 1 << 4,
 };
 
 typedef struct reproc_event_source {
@@ -309,13 +300,18 @@ REPROC_EXPORT int reproc_start(reproc_t *process,
 Polls each process in `sources` for its corresponding events in `interests` and
 stores events that occurred for each process in `events`.
 
+Pass `REPROC_INFINITE` to `timeout` to have `reproc_poll` wait forever for an
+event to occur.
+
 Returns `REPROC_EPIPE` if none of the sources have valid pipes remaining that
-can be polled.
+can be polled and `REPROC_ETIMEDOUT` if the given timeout expires.
 
 Actionable errors:
 - `REPROC_EPIPE`
+- `REPROC_ETIMEDOUT`
 */
-REPROC_EXPORT int reproc_poll(reproc_event_source *sources, size_t num_sources);
+REPROC_EXPORT int
+reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout);
 
 /*!
 Reads up to `size` bytes into `buffer` from the child process output stream

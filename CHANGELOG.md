@@ -2,7 +2,7 @@
 
 ## 12.0.0
 
-# reproc
+### reproc
 
 - Put pipes in blocking mode by default.
 
@@ -29,6 +29,12 @@
   output will appear directly on the parent process stderr stream. Users can
   then still decide to explicitly discard the output from the stderr stream if
   needed.
+
+- Turn `timeout` option into an argument for `reproc_poll`.
+
+  While deadlines can differ per process, the timeout is very likely to always
+  be the same so we make it an argument to the only function that uses it,
+  namely `reproc_poll`.
 
 ## 11.0.0
 

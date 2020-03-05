@@ -58,7 +58,6 @@ static reproc_options reproc_options_from(const options &options, bool fork)
                options.redirect.file,
            },
            reproc_stop_actions_from(options.stop),
-           options.timeout.count(),
            options.deadline.count(),
            { options.input.data(), options.input.size() },
            options.nonblocking,
@@ -88,10 +87,11 @@ std::pair<bool, std::error_code> process::fork(const options &options) noexcept
   return { r == 0, error_code_from(r) };
 }
 
-std::pair<int, std::error_code> process::poll(int interests)
+std::pair<int, std::error_code> process::poll(int interests,
+                                              milliseconds timeout)
 {
   event::source source{ *this, interests, 0 };
-  std::error_code ec = ::reproc::poll(&source, 1);
+  std::error_code ec = ::reproc::poll(&source, 1, timeout);
   return { source.events, ec };
 }
 
@@ -140,7 +140,8 @@ std::pair<int, std::error_code> process::stop(stop_actions stop) noexcept
   return { r, error_code_from(r) };
 }
 
-std::error_code poll(event::source *sources, size_t num_sources)
+std::error_code
+poll(event::source *sources, size_t num_sources, milliseconds timeout)
 {
   auto *reproc_sources = new reproc_event_source[num_sources];
 
@@ -149,7 +150,7 @@ std::error_code poll(event::source *sources, size_t num_sources)
                           sources[i].interests, 0 };
   }
 
-  int r = reproc_poll(reproc_sources, num_sources);
+  int r = reproc_poll(reproc_sources, num_sources, timeout.count());
 
   if (r >= 0) {
     for (size_t i = 0; i < num_sources; i++) {

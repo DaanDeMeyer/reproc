@@ -23,7 +23,6 @@ struct reproc_t {
   } pipe;
   int status;
   reproc_stop_actions stop;
-  int timeout;
   int64_t deadline;
 };
 
@@ -116,12 +115,6 @@ static int parse_options(const char *const *argv, reproc_options *options)
   } else {
     ASSERT_EINVAL(argv != NULL);
     ASSERT_EINVAL(argv[0] != NULL);
-  }
-
-  // Default to waiting indefinitely but still allow setting a timeout of zero
-  // by setting `timeout` to `REPROC_NONBLOCKING`.
-  if (options->timeout == 0) {
-    options->timeout = REPROC_INFINITE;
   }
 
   if (options->deadline == 0) {
@@ -299,8 +292,8 @@ static int expiry(int timeout, int64_t deadline)
   return MIN(timeout, remaining);
 }
 
-static int find_earliest_expiry(reproc_event_source *sources,
-                                size_t num_sources)
+static int find_earliest_deadline(reproc_event_source *sources,
+                                  size_t num_sources)
 {
   assert(sources);
   assert(num_sources > 0 && num_sources <= INT_MAX);
@@ -310,7 +303,7 @@ static int find_earliest_expiry(reproc_event_source *sources,
 
   for (int i = 0; i < (int) num_sources; i++) {
     reproc_t *process = sources[i].process;
-    int current = expiry(process->timeout, process->deadline);
+    int current = expiry(REPROC_INFINITE, process->deadline);
 
     if (min == REPROC_INFINITE || current < min) {
       earliest = i;
@@ -334,7 +327,6 @@ reproc_t *reproc_new(void)
                                    .err = PIPE_INVALID,
                                    .exit = PIPE_INVALID },
                          .status = STATUS_NOT_STARTED,
-                         .timeout = REPROC_INFINITE,
                          .deadline = REPROC_INFINITE };
 
   return process;
@@ -425,7 +417,6 @@ int reproc_start(reproc_t *process,
 
   if (r > 0) {
     process->stop = options.stop;
-    process->timeout = options.timeout;
 
     if (options.deadline != REPROC_INFINITE) {
       process->deadline = reproc_now() + options.deadline;
@@ -475,17 +466,21 @@ static bool contains_valid_pipe(pipe_set *sets, size_t num_sets)
   return false;
 }
 
-int reproc_poll(reproc_event_source *sources, size_t num_sources)
+int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
 {
   ASSERT_EINVAL(sources);
   ASSERT_EINVAL(num_sources > 0);
   ASSERT_EINVAL(num_sources <= INT_MAX);
 
-  int earliest = find_earliest_expiry(sources, num_sources);
-  int timeout = expiry(sources[earliest].process->timeout,
-                       sources[earliest].process->deadline);
-  ASSERT_RETURN(timeout != 0, REPROC_ETIMEDOUT);
+  int earliest = find_earliest_deadline(sources, num_sources);
+  int64_t deadline = sources[earliest].process->deadline;
 
+  if (deadline == 0) {
+    sources[earliest].events = REPROC_EVENT_DEADLINE;
+    return 0;
+  }
+
+  int first = expiry(timeout, deadline);
   int r = REPROC_ENOMEM;
 
   pipe_set *sets = calloc(sizeof(pipe_set), num_sources);
@@ -510,11 +505,13 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources)
     goto finish;
   }
 
-  r = pipe_wait(sets, num_sources, timeout);
+  r = pipe_wait(sets, num_sources, first);
 
   if (r == REPROC_ETIMEDOUT) {
-    sources[earliest].events = REPROC_EVENT_TIMEOUT;
-    r = 0;
+    // Differentiate between timeout and deadline expiry. Deadline expiry is an
+    // event, timeout is an error.
+    sources[earliest].events = first == deadline ? REPROC_EVENT_DEADLINE : 0;
+    r = first == deadline ? 0 : REPROC_ETIMEDOUT;
     goto finish;
   }
 

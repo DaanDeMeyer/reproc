@@ -119,7 +119,7 @@ enum {
   out = 1 << 1,
   err = 1 << 2,
   exit = 1 << 3,
-  timeout = 1 << 4
+  deadline = 1 << 4
 };
 
 struct source {
@@ -131,7 +131,8 @@ struct source {
 }
 
 REPROCXX_EXPORT std::error_code poll(event::source *sources,
-                                     size_t num_sources);
+                                     size_t num_sources,
+                                     milliseconds timeout = infinite);
 
 /*! Improves on reproc's API by adding RAII and changing the API of some
 functions to be more idiomatic C++. */
@@ -157,7 +158,8 @@ public:
 
   /*! Shorthand for `reproc::poll` that only polls this process. Returns a pair
   of (events, error). */
-  REPROCXX_EXPORT std::pair<int, std::error_code> poll(int interests);
+  REPROCXX_EXPORT std::pair<int, std::error_code>
+  poll(int interests, milliseconds timeout = infinite);
 
   /*! `reproc_read` but returns a pair of (bytes read, error). */
   REPROCXX_EXPORT std::pair<size_t, std::error_code>
@@ -182,8 +184,8 @@ public:
   stop(stop_actions stop) noexcept;
 
 private:
-  REPROCXX_EXPORT friend std::error_code poll(event::source *sources,
-                                              size_t num_sources);
+  REPROCXX_EXPORT friend std::error_code
+  poll(event::source *sources, size_t num_sources, milliseconds timeout);
 
   std::unique_ptr<reproc_t, void (*)(reproc_t *)> process_;
 };
