@@ -384,6 +384,13 @@ int reproc_start(reproc_t *process,
     // `reproc_write` only needs the child process stdin pipe to be initialized.
     size_t written = 0;
 
+    // Make sure we don't block indefinitely when `input` is bigger than the
+    // size of the pipe.
+    r = pipe_nonblocking(process->pipe.in, true);
+    if (r < 0) {
+      goto finish;
+    }
+
     while (written < options.input.size) {
       r = reproc_write(process, options.input.data + written,
                        options.input.size - written);
