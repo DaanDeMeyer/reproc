@@ -347,12 +347,12 @@ int reproc_start(reproc_t *process,
   } child = { HANDLE_INVALID, HANDLE_INVALID, HANDLE_INVALID, PIPE_INVALID };
   int r = -1;
 
-  r = init();
+  r = parse_options(argv, &options);
   if (r < 0) {
     goto finish;
   }
 
-  r = parse_options(argv, &options);
+  r = init();
   if (r < 0) {
     goto finish;
   }
