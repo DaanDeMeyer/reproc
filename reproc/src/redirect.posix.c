@@ -10,21 +10,21 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-static FILE *stream_to_file(REDIRECT_STREAM stream)
+static FILE *stream_to_file(REPROC_STREAM stream)
 {
   switch (stream) {
-    case REDIRECT_STREAM_IN:
+    case REPROC_STREAM_IN:
       return stdin;
-    case REDIRECT_STREAM_OUT:
+    case REPROC_STREAM_OUT:
       return stdout;
-    case REDIRECT_STREAM_ERR:
+    case REPROC_STREAM_ERR:
       return stderr;
   }
 
   return NULL;
 }
 
-int redirect_parent(int *out, REDIRECT_STREAM stream)
+int redirect_parent(int *out, REPROC_STREAM stream)
 {
   assert(out);
 
@@ -49,11 +49,11 @@ int redirect_parent(int *out, REDIRECT_STREAM stream)
   return 0;
 }
 
-int redirect_discard(int *out, REDIRECT_STREAM stream)
+int redirect_discard(int *out, REPROC_STREAM stream)
 {
   assert(out);
 
-  int mode = stream == REDIRECT_STREAM_IN ? O_RDONLY : O_WRONLY;
+  int mode = stream == REPROC_STREAM_IN ? O_RDONLY : O_WRONLY;
 
   int r = open("/dev/null", mode | O_CLOEXEC);
   if (r < 0) {

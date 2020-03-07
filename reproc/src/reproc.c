@@ -5,6 +5,7 @@
 #include "handle.h"
 #include "init.h"
 #include "macro.h"
+#include "options.h"
 #include "pipe.h"
 #include "process.h"
 #include "redirect.h"
@@ -35,234 +36,6 @@ const int REPROC_SIGTERM = SIGOFFSET + 15;
 
 const int REPROC_INFINITE = -1;
 const int REPROC_DEADLINE = -2;
-
-static int parse_redirect(reproc_redirect *redirect,
-                          REPROC_STREAM stream,
-                          bool parent,
-                          bool discard,
-                          FILE *file)
-{
-  if (file) {
-    ASSERT_EINVAL(!redirect->type && !redirect->handle && !redirect->file);
-    redirect->type = REPROC_REDIRECT_FILE;
-    redirect->file = file;
-  }
-
-  if (redirect->type == REPROC_REDIRECT_HANDLE || redirect->handle) {
-    ASSERT_EINVAL(!redirect->type || redirect->type == REPROC_REDIRECT_HANDLE);
-    ASSERT_EINVAL(redirect->handle);
-    ASSERT_EINVAL(!redirect->file);
-    redirect->type = REPROC_REDIRECT_HANDLE;
-  }
-
-  if (redirect->type == REPROC_REDIRECT_FILE || redirect->file) {
-    ASSERT_EINVAL(!redirect->type || redirect->type == REPROC_REDIRECT_FILE);
-    ASSERT_EINVAL(redirect->file);
-    ASSERT_EINVAL(!redirect->handle);
-    redirect->type = REPROC_REDIRECT_FILE;
-  }
-
-  if (!redirect->type) {
-    if (parent) {
-      ASSERT_EINVAL(!discard);
-      redirect->type = REPROC_REDIRECT_PARENT;
-    } else if (discard) {
-      ASSERT_EINVAL(!parent);
-      redirect->type = REPROC_REDIRECT_DISCARD;
-    } else {
-      redirect->type = stream == REPROC_STREAM_ERR ? REPROC_REDIRECT_PARENT
-                                                   : REPROC_REDIRECT_PIPE;
-    }
-  }
-
-  return 0;
-}
-
-static int parse_options(reproc_options *options, const char *const *argv)
-{
-  assert(options);
-
-  int r = -1;
-
-  r = parse_redirect(&options->redirect.in, REPROC_STREAM_IN,
-                     options->redirect.parent, options->redirect.discard, NULL);
-  if (r < 0) {
-    return r;
-  }
-
-  r = parse_redirect(&options->redirect.out, REPROC_STREAM_OUT,
-                     options->redirect.parent, options->redirect.discard,
-                     options->redirect.file);
-  if (r < 0) {
-    return r;
-  }
-
-  r = parse_redirect(&options->redirect.err, REPROC_STREAM_ERR,
-                     options->redirect.parent, options->redirect.discard,
-                     options->redirect.file);
-  if (r < 0) {
-    return r;
-  }
-
-  if (options->input.data != NULL || options->input.size > 0) {
-    ASSERT_EINVAL(options->input.data != NULL);
-    ASSERT_EINVAL(options->input.size > 0);
-    ASSERT_EINVAL(options->redirect.in.type == REPROC_REDIRECT_PIPE);
-  }
-
-  if (options->fork) {
-    ASSERT_EINVAL(argv == NULL);
-  } else {
-    ASSERT_EINVAL(argv != NULL && argv[0] != NULL);
-  }
-
-  if (options->deadline == 0) {
-    options->deadline = REPROC_INFINITE;
-  }
-
-  bool is_noop = options->stop.first.action == REPROC_STOP_NOOP &&
-                 options->stop.second.action == REPROC_STOP_NOOP &&
-                 options->stop.third.action == REPROC_STOP_NOOP;
-
-  if (is_noop) {
-    options->stop.first.action = REPROC_STOP_WAIT;
-    options->stop.first.timeout = REPROC_DEADLINE;
-    options->stop.second.action = REPROC_STOP_TERMINATE;
-    options->stop.second.timeout = REPROC_INFINITE;
-  }
-
-  return 0;
-}
-
-static int redirect_pipe(pipe_type *parent,
-                         handle_type *child,
-                         REPROC_STREAM stream,
-                         bool nonblocking)
-{
-  assert(parent);
-  assert(child);
-
-  pipe_type pipe[] = { PIPE_INVALID, PIPE_INVALID };
-
-  int r = pipe_init(&pipe[0], &pipe[1]);
-  if (r < 0) {
-    return r;
-  }
-
-  *parent = stream == REPROC_STREAM_IN ? pipe[1] : pipe[0];
-  *child = stream == REPROC_STREAM_IN ? (handle_type) pipe[0]
-                                      : (handle_type) pipe[1];
-
-  r = pipe_nonblocking(*parent, nonblocking);
-
-  return error_unify(r);
-}
-
-static int redirect(pipe_type *parent,
-                    handle_type *child,
-                    REPROC_STREAM stream,
-                    reproc_redirect redirect,
-                    bool nonblocking,
-                    handle_type out)
-{
-  assert(parent);
-  assert(child);
-
-  int r = -1;
-
-  switch (redirect.type) {
-
-    case REPROC_REDIRECT_PIPE:
-      r = redirect_pipe(parent, child, stream, nonblocking);
-      break;
-
-    case REPROC_REDIRECT_PARENT:
-      r = redirect_parent(child, (REDIRECT_STREAM) stream);
-      if (r == REPROC_EPIPE) {
-        // Discard if the corresponding parent stream is closed.
-        r = redirect_discard(child, (REDIRECT_STREAM) stream);
-      }
-
-      if (r < 0) {
-        break;
-      }
-
-      *parent = PIPE_INVALID;
-
-      break;
-
-    case REPROC_REDIRECT_DISCARD:
-      r = redirect_discard(child, (REDIRECT_STREAM) stream);
-      if (r < 0) {
-        break;
-      }
-
-      *parent = PIPE_INVALID;
-
-      break;
-
-    case REPROC_REDIRECT_HANDLE:
-      assert(redirect.handle);
-
-      r = 0;
-
-      *child = redirect.handle;
-      *parent = PIPE_INVALID;
-
-      break;
-
-    case REPROC_REDIRECT_FILE:
-      assert(redirect.file);
-
-      r = handle_from(redirect.file, child);
-      if (r < 0) {
-        break;
-      }
-
-      *parent = PIPE_INVALID;
-
-      break;
-
-    case REPROC_REDIRECT_STDOUT:
-      assert(stream == REPROC_STREAM_ERR);
-      assert(out != HANDLE_INVALID);
-
-      r = 0;
-
-      *child = out;
-      *parent = PIPE_INVALID;
-
-      break;
-
-    default:
-      r = REPROC_EINVAL;
-      break;
-  }
-
-  return r;
-}
-
-static handle_type redirect_destroy(handle_type handle, REPROC_REDIRECT type)
-{
-  switch (type) {
-    case REPROC_REDIRECT_PIPE:
-      // We know `handle` is a pipe if `REDIRECT_PIPE` is used so the cast is
-      // safe. This little hack prevents us from having to introduce a generic
-      // handle type.
-      pipe_destroy((pipe_type) handle);
-      break;
-    case REPROC_REDIRECT_DISCARD:
-      handle_destroy(handle);
-      break;
-    case REPROC_REDIRECT_PARENT:
-    case REPROC_REDIRECT_FILE:
-    case REPROC_REDIRECT_HANDLE:
-    case REPROC_REDIRECT_STDOUT:
-      break;
-  }
-
-  return HANDLE_INVALID;
-}
 
 static int setup_input(pipe_type *pipe, const uint8_t *data, size_t size)
 {
@@ -392,20 +165,20 @@ int reproc_start(reproc_t *process,
     goto finish;
   }
 
-  r = redirect(&process->pipe.in, &child.in, REPROC_STREAM_IN,
-               options.redirect.in, options.nonblocking, HANDLE_INVALID);
+  r = redirect_init(&process->pipe.in, &child.in, REPROC_STREAM_IN,
+                    options.redirect.in, options.nonblocking, HANDLE_INVALID);
   if (r < 0) {
     goto finish;
   }
 
-  r = redirect(&process->pipe.out, &child.out, REPROC_STREAM_OUT,
-               options.redirect.out, options.nonblocking, HANDLE_INVALID);
+  r = redirect_init(&process->pipe.out, &child.out, REPROC_STREAM_OUT,
+                    options.redirect.out, options.nonblocking, HANDLE_INVALID);
   if (r < 0) {
     goto finish;
   }
 
-  r = redirect(&process->pipe.err, &child.err, REPROC_STREAM_ERR,
-               options.redirect.err, options.nonblocking, child.out);
+  r = redirect_init(&process->pipe.err, &child.err, REPROC_STREAM_ERR,
+                    options.redirect.err, options.nonblocking, child.out);
   if (r < 0) {
     goto finish;
   }

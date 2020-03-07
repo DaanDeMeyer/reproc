@@ -1,15 +1,21 @@
 #pragma once
 
+#include <reproc/reproc.h>
+
 #include "handle.h"
 #include "pipe.h"
 
-// Keep in sync with `REPROC_STREAM`.
-typedef enum {
-  REDIRECT_STREAM_IN,
-  REDIRECT_STREAM_OUT,
-  REDIRECT_STREAM_ERR
-} REDIRECT_STREAM;
+int redirect_init(pipe_type *parent,
+                  handle_type *child,
+                  REPROC_STREAM stream,
+                  reproc_redirect redirect,
+                  bool nonblocking,
+                  handle_type out);
 
-int redirect_parent(handle_type *out, REDIRECT_STREAM stream);
+handle_type redirect_destroy(handle_type handle, REPROC_REDIRECT type);
 
-int redirect_discard(handle_type *out, REDIRECT_STREAM stream);
+// Internal prototypes
+
+int redirect_parent(handle_type *out, REPROC_STREAM stream);
+
+int redirect_discard(handle_type *out, REPROC_STREAM stream);

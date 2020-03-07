@@ -8,21 +8,21 @@
 #include <assert.h>
 #include <windows.h>
 
-static DWORD stream_to_id(REDIRECT_STREAM stream)
+static DWORD stream_to_id(REPROC_STREAM stream)
 {
   switch (stream) {
-    case REDIRECT_STREAM_IN:
+    case REPROC_STREAM_IN:
       return STD_INPUT_HANDLE;
-    case REDIRECT_STREAM_OUT:
+    case REPROC_STREAM_OUT:
       return STD_OUTPUT_HANDLE;
-    case REDIRECT_STREAM_ERR:
+    case REPROC_STREAM_ERR:
       return STD_ERROR_HANDLE;
   }
 
   return 0;
 }
 
-int redirect_parent(HANDLE *out, REDIRECT_STREAM stream)
+int redirect_parent(HANDLE *out, REPROC_STREAM stream)
 {
   assert(out);
 
@@ -53,11 +53,11 @@ static SECURITY_ATTRIBUTES INHERIT = { .nLength = sizeof(SECURITY_ATTRIBUTES),
                                        .bInheritHandle = true,
                                        .lpSecurityDescriptor = NULL };
 
-int redirect_discard(HANDLE *out, REDIRECT_STREAM stream)
+int redirect_discard(HANDLE *out, REPROC_STREAM stream)
 {
   assert(out);
 
-  DWORD mode = stream == REDIRECT_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
+  DWORD mode = stream == REPROC_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
   int r = 0;
 
   HANDLE handle = CreateFile("NUL", mode, FILE_NO_SHARE, &INHERIT,
