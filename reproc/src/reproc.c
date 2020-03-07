@@ -265,6 +265,42 @@ static handle_type redirect_destroy(handle_type handle, REPROC_REDIRECT type)
   return HANDLE_INVALID;
 }
 
+static int setup_input(pipe_type *pipe, const uint8_t *data, size_t size)
+{
+  if (data == NULL || size == 0) {
+    assert(data == NULL);
+    assert(size == 0);
+    return 0;
+  }
+
+  assert(pipe && *pipe != PIPE_INVALID);
+
+  // `reproc_write` only needs the child process stdin pipe to be initialized.
+  size_t written = 0;
+  int r = -1;
+
+  // Make sure we don't block indefinitely when `input` is bigger than the
+  // size of the pipe.
+  r = pipe_nonblocking(*pipe, true);
+  if (r < 0) {
+    return r;
+  }
+
+  while (written < size) {
+    r = pipe_write(*pipe, data + written, size - written);
+    if (r < 0) {
+      return r;
+    }
+
+    assert(written + (size_t) r <= size);
+    written += (size_t) r;
+  }
+
+  *pipe = pipe_destroy(*pipe);
+
+  return 0;
+}
+
 static int expiry(int timeout, int64_t deadline)
 {
   if (timeout == REPROC_INFINITE && deadline == REPROC_INFINITE) {
@@ -380,32 +416,9 @@ int reproc_start(reproc_t *process,
     goto finish;
   }
 
-  if (options.input.data != NULL) {
-    // `reproc_write` only needs the child process stdin pipe to be initialized.
-    size_t written = 0;
-
-    // Make sure we don't block indefinitely when `input` is bigger than the
-    // size of the pipe.
-    r = pipe_nonblocking(process->pipe.in, true);
-    if (r < 0) {
-      goto finish;
-    }
-
-    while (written < options.input.size) {
-      r = reproc_write(process, options.input.data + written,
-                       options.input.size - written);
-      if (r < 0) {
-        goto finish;
-      }
-
-      assert(written + (size_t) r <= options.input.size);
-      written += (size_t) r;
-    }
-
-    r = reproc_close(process, REPROC_STREAM_IN);
-    if (r < 0) {
-      goto finish;
-    }
+  r = setup_input(&process->pipe.in, options.input.data, options.input.size);
+  if (r < 0) {
+    goto finish;
   }
 
   struct process_options process_options = {
