@@ -78,7 +78,7 @@ static int parse_redirect(reproc_redirect *redirect,
   return 0;
 }
 
-static int parse_options(const char *const *argv, reproc_options *options)
+static int parse_options(reproc_options *options, const char *const *argv)
 {
   assert(options);
 
@@ -113,8 +113,7 @@ static int parse_options(const char *const *argv, reproc_options *options)
   if (options->fork) {
     ASSERT_EINVAL(argv == NULL);
   } else {
-    ASSERT_EINVAL(argv != NULL);
-    ASSERT_EINVAL(argv[0] != NULL);
+    ASSERT_EINVAL(argv != NULL && argv[0] != NULL);
   }
 
   if (options->deadline == 0) {
@@ -383,7 +382,7 @@ int reproc_start(reproc_t *process,
   } child = { HANDLE_INVALID, HANDLE_INVALID, HANDLE_INVALID, PIPE_INVALID };
   int r = -1;
 
-  r = parse_options(argv, &options);
+  r = parse_options(&options, argv);
   if (r < 0) {
     goto finish;
   }
