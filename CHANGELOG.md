@@ -36,6 +36,11 @@
   be the same so we make it an argument to the only function that uses it,
   namely `reproc_poll`.
 
+- In `reproc_drain`, call `sink` once with an empty buffer when a stream is
+  closed.
+
+  This allows sinks to handle stream closure if needed.
+
 ## 11.0.0
 
 ### General

@@ -30,6 +30,8 @@ stdout and stderr respectively. The same sink may be passed to both `out` and
 `stream` set to `REPROC_STREAM_IN` to give each sink the chance to process all
 output from the previous call to `reproc_drain` one by one.
 
+When a stream is closed, `sink` is called once with `size` set to zero.
+
 Note that his function returns 0 instead of `REPROC_EPIPE` when both output
 streams of the child process are closed.
 

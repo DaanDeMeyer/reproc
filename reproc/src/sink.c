@@ -44,16 +44,11 @@ int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
                                                             : REPROC_STREAM_ERR;
 
     r = reproc_read(process, stream, buffer, ARRAY_SIZE(buffer));
-    if (r == REPROC_EPIPE) {
-      continue;
-    }
-
-    if (r < 0) {
+    if (r < 0 && r != REPROC_EPIPE) {
       break;
     }
 
-    size_t bytes_read = (size_t) r;
-
+    size_t bytes_read = r == REPROC_EPIPE ? 0 : (size_t) r;
     reproc_sink sink = stream == REPROC_STREAM_OUT ? out : err;
 
     // `sink` returns false to tell us to stop reading.

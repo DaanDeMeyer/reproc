@@ -50,10 +50,11 @@ std::error_code drain(process &process, Out &&out, Err &&err)
 
     size_t bytes_read = 0;
     std::tie(bytes_read, ec) = process.read(stream, buffer, BUFFER_SIZE);
-    if (ec) {
+    if (ec && ec != error::broken_pipe) {
       break;
     }
 
+    bytes_read = ec == error::broken_pipe ? 0 : bytes_read;
     auto &sink = stream == stream::out ? out : err;
 
     // `sink` returns false to tell us to stop reading.
