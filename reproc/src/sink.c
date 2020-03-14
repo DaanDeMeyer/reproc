@@ -70,17 +70,15 @@ static bool sink_string(REPROC_STREAM stream,
   char **string = (char **) context;
   size_t string_size = *string == NULL ? 0 : strlen(*string);
 
-  char *realloc_result = (char *) realloc(*string, string_size + size + 1);
-  if (realloc_result == NULL) {
+  char *r = (char *) realloc(*string, string_size + size + 1);
+  if (r == NULL) {
     free(*string);
     *string = NULL;
     return false;
-  } else {
-    *string = realloc_result;
   }
 
+  *string = r;
   memcpy(*string + string_size, buffer, size);
-
   (*string)[string_size + size] = '\0';
 
   return true;
