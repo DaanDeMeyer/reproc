@@ -11,7 +11,6 @@
 #include "redirect.h"
 
 #include <assert.h>
-#include <limits.h>
 #include <stdlib.h>
 
 struct reproc_t {
@@ -100,16 +99,16 @@ static int expiry(int timeout, int64_t deadline)
   return MIN(timeout, remaining);
 }
 
-static int find_earliest_deadline(reproc_event_source *sources,
-                                  size_t num_sources)
+static size_t find_earliest_deadline(reproc_event_source *sources,
+                                     size_t num_sources)
 {
   assert(sources);
-  assert(num_sources > 0 && num_sources <= INT_MAX);
+  assert(num_sources > 0);
 
-  int earliest = 0;
+  size_t earliest = 0;
   int min = REPROC_INFINITE;
 
-  for (int i = 0; i < (int) num_sources; i++) {
+  for (size_t i = 0; i < num_sources; i++) {
     reproc_t *process = sources[i].process;
     int current = expiry(REPROC_INFINITE, process->deadline);
 
@@ -262,9 +261,8 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
 {
   ASSERT_EINVAL(sources);
   ASSERT_EINVAL(num_sources > 0);
-  ASSERT_EINVAL(num_sources <= INT_MAX);
 
-  int earliest = find_earliest_deadline(sources, num_sources);
+  size_t earliest = find_earliest_deadline(sources, num_sources);
   int64_t deadline = sources[earliest].process->deadline;
 
   if (deadline == 0) {
