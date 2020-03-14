@@ -93,7 +93,7 @@ int redirect_init(pipe_type *parent,
     case REPROC_REDIRECT_FILE:
       assert(redirect.file);
 
-      r = handle_from(redirect.file, child);
+      r = redirect_file(redirect.file, child);
       if (r < 0) {
         break;
       }

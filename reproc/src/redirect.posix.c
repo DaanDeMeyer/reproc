@@ -64,3 +64,17 @@ int redirect_discard(int *out, REPROC_STREAM stream)
 
   return 0;
 }
+
+int redirect_file(FILE *file, int *handle)
+{
+  assert(handle);
+
+  int r = fileno(file);
+  if (r < 0) {
+    return error_unify(r);
+  }
+
+  *handle = r;
+
+  return 0;
+}

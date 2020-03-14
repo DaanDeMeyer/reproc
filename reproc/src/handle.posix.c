@@ -11,20 +11,6 @@
 
 const int HANDLE_INVALID = -1;
 
-int handle_from(FILE *file, int *handle)
-{
-  assert(handle);
-
-  int r = fileno(file);
-  if (r < 0) {
-    return error_unify(r);
-  }
-
-  *handle = r;
-
-  return 0;
-}
-
 int handle_cloexec(int handle, bool enable)
 {
   int r = -1;

@@ -19,3 +19,5 @@ handle_type redirect_destroy(handle_type handle, REPROC_REDIRECT type);
 int redirect_parent(handle_type *out, REPROC_STREAM stream);
 
 int redirect_discard(handle_type *out, REPROC_STREAM stream);
+
+int redirect_file(FILE *file, handle_type *handle);

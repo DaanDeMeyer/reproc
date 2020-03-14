@@ -10,25 +10,6 @@
 
 const HANDLE HANDLE_INVALID = INVALID_HANDLE_VALUE; // NOLINT
 
-int handle_from(FILE *file, HANDLE *handle)
-{
-  int r = -1;
-
-  r = _fileno(file);
-  if (r < 0) {
-    return -ERROR_INVALID_HANDLE;
-  }
-
-  intptr_t result = _get_osfhandle(r);
-  if (result == -1) {
-    return -ERROR_INVALID_HANDLE;
-  }
-
-  *handle = (HANDLE) result;
-
-  return error_unify(r);
-}
-
 int handle_cloexec(handle_type handle, bool enable)
 {
   (void) handle;

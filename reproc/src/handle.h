@@ -11,8 +11,6 @@ typedef int handle_type; // fd
 
 extern const handle_type HANDLE_INVALID; // NOLINT
 
-int handle_from(FILE *file, handle_type *handle);
-
 // Sets the `FD_CLOEXEC` flag on the file descriptor. POSIX only.
 int handle_cloexec(handle_type handle, bool enable);
 

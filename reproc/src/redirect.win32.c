@@ -71,3 +71,22 @@ int redirect_discard(HANDLE *out, REPROC_STREAM stream)
 
   return 0;
 }
+
+int redirect_file(FILE *file, HANDLE *handle)
+{
+  int r = -1;
+
+  r = _fileno(file);
+  if (r < 0) {
+    return -ERROR_INVALID_HANDLE;
+  }
+
+  intptr_t result = _get_osfhandle(r);
+  if (result == -1) {
+    return -ERROR_INVALID_HANDLE;
+  }
+
+  *handle = (HANDLE) result;
+
+  return error_unify(r);
+}
