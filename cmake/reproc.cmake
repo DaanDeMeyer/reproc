@@ -1,4 +1,4 @@
-include(CheckCXXCompilerFlag)
+include(CheckCCompilerFlag)
 include(CMakePackageConfigHelpers)
 include(GenerateExportHeader)
 include(GNUInstallDirs)
@@ -122,7 +122,7 @@ function(reproc_add_common TARGET LANGUAGE)
 
   if(REPROC_WARNINGS)
     if(MSVC)
-      check_cxx_compiler_flag(/permissive- REPROC_HAVE_PERMISSIVE)
+      check_c_compiler_flag(/permissive- REPROC_HAVE_PERMISSIVE)
 
       target_compile_options(${TARGET} PRIVATE
         /nologo # Silence MSVC compiler version output.
