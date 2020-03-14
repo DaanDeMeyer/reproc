@@ -4,7 +4,7 @@
 
 int reproc_run(const char *const *argv, reproc_options options)
 {
-  if (!options.redirect.discard) {
+  if (!options.redirect.discard && !options.redirect.file) {
     options.redirect.parent = true;
   }
 
