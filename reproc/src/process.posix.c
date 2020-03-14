@@ -421,11 +421,10 @@ int process_start(pid_t *process,
     }
 
     goto finish;
-  } else {
-    r = 0;
   }
 
   *process = child;
+  r = 0;
 
 finish:
   pipe_destroy(pipe.read);

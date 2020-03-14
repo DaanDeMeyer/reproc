@@ -67,9 +67,9 @@ int main(int argc, const char *argv[])
     if (result == NULL) {
       r = REPROC_ENOMEM;
       goto finish;
-    } else {
-      output = result;
     }
+
+    output = result;
 
     // Copy new data into `output`.
     memcpy(output + size, buffer, bytes_read);
