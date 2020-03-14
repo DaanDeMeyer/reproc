@@ -41,6 +41,25 @@
 
   This allows sinks to handle stream closure if needed.
 
+- Change sinks to return `int` instead of `bool`. If a `sink` returns a non-zero
+  value, `reproc_drain` exits immediately with the same value.
+
+  This change allows sinks to return their own errors without having to store
+  extra state.
+
+- `reproc_sink_string` now returns `REPROC_ENOMEM` from `reproc_drain` if a
+  memory allocation fails and no longer frees any output that was read
+  previously.
+
+  This allows the user to still do something with the remaining output even if a
+  memory allocation failed. On the flipside, it is now required to always call
+  `reproc_free` after calling `reproc_drain` with a sink string, even if it
+  fails.
+
+### reproc++
+
+- Equivalent changes as those done for reproc.
+
 ## 11.0.0
 
 ### General

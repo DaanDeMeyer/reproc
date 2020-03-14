@@ -13,18 +13,24 @@ int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
   ASSERT_EINVAL(err.function);
 
   const uint8_t initial = 0;
+  int r = -1;
 
   // A single call to `read` might contain multiple messages. By always calling
   // both sinks once with no data before reading, we give them the chance to
   // process all previous output one by one before reading from the child
   // process again.
-  if (!out.function(REPROC_STREAM_IN, &initial, 0, out.context) ||
-      !err.function(REPROC_STREAM_IN, &initial, 0, err.context)) {
-    return 0;
+
+  r = out.function(REPROC_STREAM_IN, &initial, 0, out.context);
+  if (r != 0) {
+    return r;
+  }
+
+  r = err.function(REPROC_STREAM_IN, &initial, 0, err.context);
+  if (r != 0) {
+    return r;
   }
 
   uint8_t buffer[4096];
-  int r = -1;
 
   while (true) {
     reproc_event_source source = { process, REPROC_EVENT_OUT | REPROC_EVENT_ERR,
@@ -32,6 +38,7 @@ int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
 
     r = reproc_poll(&source, 1, REPROC_INFINITE);
     if (r < 0) {
+      r = r == REPROC_EPIPE ? 0 : r;
       break;
     }
 
@@ -51,19 +58,19 @@ int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
     size_t bytes_read = r == REPROC_EPIPE ? 0 : (size_t) r;
     reproc_sink sink = stream == REPROC_STREAM_OUT ? out : err;
 
-    // `sink` returns false to tell us to stop reading.
-    if (!sink.function(stream, buffer, bytes_read, sink.context)) {
+    r = sink.function(stream, buffer, bytes_read, sink.context);
+    if (r != 0) {
       break;
     }
   }
 
-  return r == REPROC_EPIPE ? 0 : r;
+  return r;
 }
 
-static bool sink_string(REPROC_STREAM stream,
-                        const uint8_t *buffer,
-                        size_t size,
-                        void *context)
+static int sink_string(REPROC_STREAM stream,
+                       const uint8_t *buffer,
+                       size_t size,
+                       void *context)
 {
   (void) stream;
 
@@ -72,16 +79,14 @@ static bool sink_string(REPROC_STREAM stream,
 
   char *r = (char *) realloc(*string, string_size + size + 1);
   if (r == NULL) {
-    free(*string);
-    *string = NULL;
-    return false;
+    return REPROC_ENOMEM;
   }
 
   *string = r;
   memcpy(*string + string_size, buffer, size);
   (*string)[string_size + size] = '\0';
 
-  return true;
+  return 0;
 }
 
 reproc_sink reproc_sink_string(char **output)
@@ -89,17 +94,17 @@ reproc_sink reproc_sink_string(char **output)
   return (reproc_sink){ sink_string, output };
 }
 
-static bool sink_discard(REPROC_STREAM stream,
-                         const uint8_t *buffer,
-                         size_t size,
-                         void *context)
+static int sink_discard(REPROC_STREAM stream,
+                        const uint8_t *buffer,
+                        size_t size,
+                        void *context)
 {
   (void) stream;
   (void) buffer;
   (void) size;
   (void) context;
 
-  return true;
+  return 0;
 }
 
 reproc_sink reproc_sink_discard(void)

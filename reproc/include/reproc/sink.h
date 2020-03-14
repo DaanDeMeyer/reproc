@@ -7,12 +7,13 @@ extern "C" {
 #endif
 
 /*! Used by `reproc_drain` to provide data to the caller. Each time data is
-read, `function` is called with `context` .*/
+read, `function` is called with `context`. If a sink returns a non-zero value,
+`reproc_drain` will return immediately with the same value. */
 typedef struct reproc_sink {
-  bool (*function)(REPROC_STREAM stream,
-                   const uint8_t *buffer,
-                   size_t size,
-                   void *context);
+  int (*function)(REPROC_STREAM stream,
+                  const uint8_t *buffer,
+                  size_t size,
+                  void *context);
   void *context;
 } reproc_sink;
 
@@ -21,16 +22,16 @@ redirected to a pipe. */
 REPROC_EXPORT extern const reproc_sink REPROC_SINK_NULL;
 
 /*!
-Calls `reproc_read` on `stream` until `reproc_read` returns an error or one of
-the sinks returns false. The `out` and `err` sinks receive the output from
-stdout and stderr respectively. The same sink may be passed to both `out` and
-`err`.
+Reads from the child process stdout and stderr until an error occurs or both
+streams are closed. The `out` and `err` sinks receive the output from stdout and
+stderr respectively. The same sink may be passed to both `out` and `err`.
 
 `reproc_drain` always starts by calling both sinks once with an empty buffer and
 `stream` set to `REPROC_STREAM_IN` to give each sink the chance to process all
 output from the previous call to `reproc_drain` one by one.
 
-When a stream is closed, `sink` is called once with `size` set to zero.
+When a stream is closed, its corresponding `sink` is called once with `size` set
+to zero.
 
 Note that his function returns 0 instead of `REPROC_EPIPE` when both output
 streams of the child process are closed.
@@ -44,24 +45,23 @@ REPROC_EXPORT int
 reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err);
 
 /*!
-Stores the output (both stdout and stderr) of a process in `output`.
+Appends the output of a process (stdout and stderr) to the value of `output`.
+`output` must point to either `NULL` or a null-terminated string.
 
-Expects a `char **` with its value set to `NULL` as its initial context.
-(Re)Allocates memory as necessary to store the output and assigns it as the
-value of the given context. If allocating more memory fails, the already
-allocated memory is freed and the value of the given context is set to `NULL`.
+Calls `realloc` as necessary to make space in `output` to store the output of
+the child process. Make sure to always call `reproc_free` on the value of
+`output` after calling `reproc_drain` (even if it fails).
 
-After calling `reproc_drain` with `reproc_sink_string`, the value of `output`
-will either point to valid memory or will be set to `NULL`. This means it is
-always safe to call `free` on `output`'s value after `reproc_drain` finishes.
-
-Because the context this function expects does not store the output size,
-`strlen` is called each time data is read to calculate the current size of the
-output. This might cause performance problems when draining processes that
-produce a lot of output.
+Because the resulting sink does not store the output size, `strlen` is called
+each time data is read to calculate the current size of the output. This might
+cause performance problems when draining processes that produce a lot of output.
 
 Similarly, this sink will not work on processes that have null terminators in
 their output because `strlen` is used to calculate the current output size.
+
+Returns `REPROC_ENOMEM` if a call to `realloc` fails. `output` will contain any
+output read from the child process, preceeded by whatever was stored in it at
+the moment its corresponding sink was passed to `reproc_drain`.
 
 The `drain` example shows how to use `reproc_sink_string`.
 ```

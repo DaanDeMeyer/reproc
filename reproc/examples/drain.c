@@ -42,11 +42,6 @@ int main(int argc, const char *argv[])
     goto finish;
   }
 
-  if (output == NULL) {
-    fprintf(stderr, "Failed to allocate memory for output\n");
-    goto finish;
-  }
-
   printf("%s", output);
 
   r = reproc_wait(process, REPROC_INFINITE);

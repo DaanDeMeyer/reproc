@@ -9,35 +9,41 @@
 namespace reproc {
 
 /*!
-`reproc_drain` but takes lambdas as sinks and defaults to waiting indefinitely
-for each read to complete.
-
-`out` and `err` expect the following signature:
+`reproc_drain` but takes lambdas as sinks. Return an error code from a sink to
+break out of `drain` early. `out` and `err` expect the following signature:
 
 ```c++
-bool sink(stream stream, const uint8_t *buffer, size_t size);
+std::error_code sink(stream stream, const uint8_t *buffer, size_t size);
 ```
 */
 template <typename Out, typename Err>
 std::error_code drain(process &process, Out &&out, Err &&err)
 {
   static constexpr uint8_t initial = 0;
+  std::error_code ec;
 
   // A single call to `read` might contain multiple messages. By always calling
   // both sinks once with no data before reading, we give them the chance to
   // process all previous output before reading from the child process again.
-  if (!out(stream::in, &initial, 0) || !err(stream::in, &initial, 0)) {
-    return {};
+
+  ec = out(stream::in, &initial, 0);
+  if (ec) {
+    return ec;
+  }
+
+  ec = err(stream::in, &initial, 0);
+  if (ec) {
+    return ec;
   }
 
   static constexpr size_t BUFFER_SIZE = 4096;
   uint8_t buffer[BUFFER_SIZE] = {};
-  std::error_code ec;
 
   while (true) {
     int events = 0;
     std::tie(events, ec) = process.poll(event::out | event::err, infinite);
     if (ec) {
+      ec = ec == error::broken_pipe ? std::error_code() : ec;
       break;
     }
 
@@ -57,13 +63,13 @@ std::error_code drain(process &process, Out &&out, Err &&err)
     bytes_read = ec == error::broken_pipe ? 0 : bytes_read;
     auto &sink = stream == stream::out ? out : err;
 
-    // `sink` returns false to tell us to stop reading.
-    if (!sink(stream, buffer, bytes_read)) {
+    ec = sink(stream, buffer, bytes_read);
+    if (ec) {
       break;
     }
   }
 
-  return ec == error::broken_pipe ? std::error_code() : ec;
+  return ec;
 }
 
 namespace sink {
@@ -75,11 +81,11 @@ class string {
 public:
   explicit string(std::string &string) noexcept : string_(string) {}
 
-  bool operator()(stream stream, const uint8_t *buffer, size_t size)
+  std::error_code operator()(stream stream, const uint8_t *buffer, size_t size)
   {
     (void) stream;
     string_.append(reinterpret_cast<const char *>(buffer), size);
-    return true;
+    return {};
   }
 };
 
@@ -90,26 +96,26 @@ class ostream {
 public:
   explicit ostream(std::ostream &ostream) noexcept : ostream_(ostream) {}
 
-  bool operator()(stream stream, const uint8_t *buffer, size_t size)
+  std::error_code operator()(stream stream, const uint8_t *buffer, size_t size)
   {
     (void) stream;
     ostream_.write(reinterpret_cast<const char *>(buffer),
                    static_cast<std::streamsize>(size));
-    return true;
+    return {};
   }
 };
 
 /*! Discards all output. */
 class discard {
 public:
-  bool operator()(stream stream, const uint8_t *buffer, size_t size) const
-      noexcept
+  std::error_code
+  operator()(stream stream, const uint8_t *buffer, size_t size) const noexcept
   {
     (void) stream;
     (void) buffer;
     (void) size;
 
-    return true;
+    return {};
   }
 };
 
@@ -127,7 +133,7 @@ public:
       : sink_(string), mutex_(mutex)
   {}
 
-  bool operator()(stream stream, const uint8_t *buffer, size_t size)
+  std::error_code operator()(stream stream, const uint8_t *buffer, size_t size)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     return sink_(stream, buffer, size);
