@@ -33,7 +33,7 @@ Checks:
 -modernize-avoid-c-arrays,
 -modernize-use-trailing-return-type,
 -readability-else-after-return,
--readability-magic-numbers
+-readability-magic-numbers,
 '
 HeaderFilterRegex: '.*reproc\+\+.*$'
 ...
