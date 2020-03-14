@@ -93,7 +93,7 @@ int redirect_init(pipe_type *parent,
     case REPROC_REDIRECT_FILE:
       assert(redirect.file);
 
-      r = redirect_file(redirect.file, child);
+      r = redirect_file(child, redirect.file);
       if (r < 0) {
         break;
       }
@@ -117,17 +117,17 @@ int redirect_init(pipe_type *parent,
   return r;
 }
 
-handle_type redirect_destroy(handle_type handle, REPROC_REDIRECT type)
+handle_type redirect_destroy(handle_type child, REPROC_REDIRECT type)
 {
   switch (type) {
     case REPROC_REDIRECT_PIPE:
       // We know `handle` is a pipe if `REDIRECT_PIPE` is used so the cast is
       // safe. This little hack prevents us from having to introduce a generic
       // handle type.
-      pipe_destroy((pipe_type) handle);
+      pipe_destroy((pipe_type) child);
       break;
     case REPROC_REDIRECT_DISCARD:
-      handle_destroy(handle);
+      handle_destroy(child);
       break;
     case REPROC_REDIRECT_PARENT:
     case REPROC_REDIRECT_FILE:

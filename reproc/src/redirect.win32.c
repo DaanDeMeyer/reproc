@@ -6,6 +6,7 @@
 #include "pipe.h"
 
 #include <assert.h>
+#include <io.h>
 #include <windows.h>
 
 static DWORD stream_to_id(REPROC_STREAM stream)
@@ -22,10 +23,9 @@ static DWORD stream_to_id(REPROC_STREAM stream)
   return 0;
 }
 
-int redirect_parent(HANDLE *out, REPROC_STREAM stream)
+int redirect_parent(HANDLE *child, REPROC_STREAM stream)
 {
-  assert(out);
-
+  assert(child);
   int r = 0;
 
   DWORD id = stream_to_id(stream);
@@ -42,7 +42,7 @@ int redirect_parent(HANDLE *out, REPROC_STREAM stream)
     return -ERROR_BROKEN_PIPE;
   }
 
-  *out = handle;
+  *child = handle;
 
   return 0;
 }
@@ -53,9 +53,9 @@ static SECURITY_ATTRIBUTES INHERIT = { .nLength = sizeof(SECURITY_ATTRIBUTES),
                                        .bInheritHandle = true,
                                        .lpSecurityDescriptor = NULL };
 
-int redirect_discard(HANDLE *out, REPROC_STREAM stream)
+int redirect_discard(HANDLE *child, REPROC_STREAM stream)
 {
-  assert(out);
+  assert(child);
 
   DWORD mode = stream == REPROC_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
   int r = 0;
@@ -67,12 +67,12 @@ int redirect_discard(HANDLE *out, REPROC_STREAM stream)
     return error_unify(r);
   }
 
-  *out = handle;
+  *child = handle;
 
   return 0;
 }
 
-int redirect_file(FILE *file, HANDLE *handle)
+int redirect_file(HANDLE *child, FILE *file)
 {
   int r = -1;
 
@@ -86,7 +86,7 @@ int redirect_file(FILE *file, HANDLE *handle)
     return -ERROR_INVALID_HANDLE;
   }
 
-  *handle = (HANDLE) result;
+  *child = (HANDLE) result;
 
   return error_unify(r);
 }

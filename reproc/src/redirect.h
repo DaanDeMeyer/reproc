@@ -12,12 +12,12 @@ int redirect_init(pipe_type *parent,
                   bool nonblocking,
                   handle_type out);
 
-handle_type redirect_destroy(handle_type handle, REPROC_REDIRECT type);
+handle_type redirect_destroy(handle_type child, REPROC_REDIRECT type);
 
 // Internal prototypes
 
-int redirect_parent(handle_type *out, REPROC_STREAM stream);
+int redirect_parent(handle_type *child, REPROC_STREAM stream);
 
-int redirect_discard(handle_type *out, REPROC_STREAM stream);
+int redirect_discard(handle_type *child, REPROC_STREAM stream);
 
-int redirect_file(FILE *file, handle_type *handle);
+int redirect_file(handle_type *child, FILE *file);
