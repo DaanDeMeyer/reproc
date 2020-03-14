@@ -64,6 +64,11 @@
 
 - Equivalent changes as those done for reproc.
 
+- Remove use of reprocxx.
+
+  Meson gained support for CMake subprojects containing targets with special
+  characters so we rename directories and CMake targets back to reproc++.
+
 ## 11.0.0
 
 ### General

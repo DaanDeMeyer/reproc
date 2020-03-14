@@ -20,7 +20,7 @@ project(
 # Common options and functions separated for easier reuse in other projects.
 include(cmake/reproc.cmake)
 
-option(REPROCXX "Build reproc++." ${REPROC_DEVELOP})
+option(REPROC++ "Build reproc++." ${REPROC_DEVELOP})
 option(REPROC_TEST "Build tests." ${REPROC_DEVELOP})
 option(REPROC_EXAMPLES "Build examples." ${REPROC_DEVELOP})
 
@@ -30,7 +30,7 @@ option(
   ON
 )
 
-if(REPROCXX)
+if(REPROC++)
   enable_language(CXX)
 endif()
 
@@ -45,6 +45,6 @@ if(REPROC_MULTITHREADED)
 endif()
 
 add_subdirectory(reproc)
-if(REPROCXX)
-  add_subdirectory(reprocxx)
+if(REPROC++)
+  add_subdirectory(reproc++)
 endif()

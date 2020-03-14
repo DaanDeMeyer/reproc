@@ -214,10 +214,11 @@ function(reproc_add_library TARGET LANGUAGE)
     set_property(TARGET ${TARGET} PROPERTY DEFINE_SYMBOL "")
 
     string(TOUPPER ${TARGET} TARGET_UPPER)
+    string(REPLACE + X TARGET_SANITIZED ${TARGET_UPPER})
 
-    target_compile_definitions(${TARGET} PRIVATE ${TARGET_UPPER}_BUILDING)
+    target_compile_definitions(${TARGET} PRIVATE ${TARGET_SANITIZED}_BUILDING)
     if(WIN32)
-      target_compile_definitions(${TARGET} PUBLIC ${TARGET_UPPER}_SHARED)
+      target_compile_definitions(${TARGET} PUBLIC ${TARGET_SANITIZED}_SHARED)
     endif()
   endif()
 

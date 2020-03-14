@@ -71,7 +71,7 @@ add_subdirectory(<path-to-reproc>) # For example: add_subdirectory(external/repr
 CMake options can be specified before calling `add_subdirectory`:
 
 ```cmake
-set(REPROCXX ON)
+set(REPROC++ ON)
 add_subdirectory(<path-to-reproc>)
 ```
 
@@ -116,7 +116,7 @@ To find an installed version of reproc using CMake:
 
 ```cmake
 find_package(reproc) # Find reproc.
-find_package(reprocxx) # Find reproc++.
+find_package(reproc++) # Find reproc++.
 ```
 
 After building reproc as part of your project or finding a installed version of
@@ -124,10 +124,10 @@ reproc, you can link against it from within your CMakeLists.txt file as follows:
 
 ```cmake
 target_link_libraries(myapp reproc) # Link against reproc.
-target_link_libraries(myapp reprocxx) # Link against reproc++.
+target_link_libraries(myapp reproc++) # Link against reproc++.
 ```
 
-From Meson 0.53.0 onwards, reproc can be included as a CMake subproject in Meson
+From Meson 0.53.2 onwards, reproc can be included as a CMake subproject in Meson
 build scripts. See https://mesonbuild.com/CMake-module.html for more
 information.
 
@@ -143,7 +143,7 @@ reproc's build can be configured using the following CMake options:
 
 ### User
 
-- `REPROCXX`: Build reproc++ (default: `${REPROC_DEVELOP}`).
+- `REPROC++`: Build reproc++ (default: `${REPROC_DEVELOP}`).
 - `REPROC_TEST`: Build tests (default: `${REPROC_DEVELOP}`).
 
   Run the tests by running the `test` binary which can be found in the build
@@ -193,7 +193,7 @@ reproc's build can be configured using the following CMake options:
 
 Each function and class is documented extensively in its header file. Examples
 can be found in the examples subdirectory of [reproc](reproc/examples) and
-[reproc++](reprocxx/examples).
+[reproc++](reproc++/examples).
 
 ## Error handling
 

@@ -115,7 +115,7 @@ jobs:
           # We add the output directories to the PATH to make sure the tests and
           # examples can find the reproc and reproc++ DLL's.
           $env:PATH += ";$pwd\build\reproc\lib"
-          $env:PATH += ";$pwd\build\reprocxx\lib"
+          $env:PATH += ";$pwd\build\reproc++\lib"
 
           # Make all PATH additions made by scoop and ourselves global.
           echo "::set-env name=PATH::$env:PATH"
@@ -137,7 +137,7 @@ jobs:
           -G Ninja
           -DCMAKE_BUILD_TYPE=Release
           -DBUILD_SHARED_LIBS=ON
-          -DREPROCXX=ON
+          -DREPROC++=ON
           -DREPROC_TEST=ON
           -DREPROC_EXAMPLES=ON
           -DREPROC_WARNINGS=ON
@@ -176,13 +176,13 @@ jobs:
         run: build/reproc/examples/run cmake --help
 
       - name: "reproc++: background"
-        run: build/reprocxx/examples/background cmake --help
+        run: build/reproc++/examples/background cmake --help
 
       - name: "reproc++: drain"
-        run: build/reprocxx/examples/drain cmake --help
+        run: build/reproc++/examples/drain cmake --help
 
       - name: "reproc++: forward"
-        run: build/reprocxx/examples/forward cmake --help
+        run: build/reproc++/examples/forward cmake --help
 
       - name: "reproc++: run"
-        run: build/reprocxx/examples/run cmake --help
+        run: build/reproc++/examples/run cmake --help

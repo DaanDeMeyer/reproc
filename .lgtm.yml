@@ -5,7 +5,7 @@ extraction:
       command: >
         cmake
         -DCMAKE_BUILD_TYPE=Release
-        -DREPROCXX=ON
+        -DREPROC++=ON
         -DREPROC_TEST=ON
         -DREPROC_EXAMPLES=ON
         ./
