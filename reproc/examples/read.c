@@ -65,7 +65,7 @@ int main(int argc, const char *argv[])
     // isn't included in `output_size`.
     char *result = realloc(output, size + bytes_read + 1);
     if (result == NULL) {
-      fprintf(stderr, "Failed to allocate memory for output\n");
+      r = REPROC_ENOMEM;
       goto finish;
     } else {
       output = result;
