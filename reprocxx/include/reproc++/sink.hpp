@@ -42,7 +42,7 @@ std::error_code drain(process &process, Out &&out, Err &&err)
     }
 
     if (events & event::deadline) {
-      ec = { static_cast<int>(std::errc::timed_out), std::generic_category() };
+      ec = std::make_error_code(std::errc::timed_out);
       break;
     }
 
