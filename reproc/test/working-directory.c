@@ -1,7 +1,7 @@
 #include "assert.h"
 
+#include <reproc/drain.h>
 #include <reproc/reproc.h>
-#include <reproc/sink.h>
 
 #include <string.h>
 

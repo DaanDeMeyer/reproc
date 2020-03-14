@@ -1,7 +1,7 @@
 #pragma once
 
+#include <reproc/drain.h>
 #include <reproc/reproc.h>
-#include <reproc/sink.h>
 
 /*! Sets `options.redirect.parent = true` unless `discard` is set and calls
 `reproc_run_ex` with `REPROC_SINK_NULL` for the `out` and `err` sinks. */

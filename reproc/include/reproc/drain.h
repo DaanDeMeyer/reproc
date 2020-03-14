@@ -36,8 +36,6 @@ to zero.
 Note that his function returns 0 instead of `REPROC_EPIPE` when both output
 streams of the child process are closed.
 
-For examples of sinks, see `sink.h`.
-
 Actionable errors:
 - `REPROC_ETIMEDOUT`
 */

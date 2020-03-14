@@ -19,6 +19,7 @@ endif()
 
 target_sources(reproc PRIVATE
   src/clock.${PLATFORM}.c
+  src/drain.c
   src/error.${PLATFORM}.c
   src/handle.${PLATFORM}.c
   src/init.${PLATFORM}.c
@@ -28,7 +29,6 @@ target_sources(reproc PRIVATE
   src/redirect.c
   src/redirect.${PLATFORM}.c
   src/reproc.c
-  src/sink.c
   src/run.c
 )
 

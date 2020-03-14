@@ -1,5 +1,5 @@
+#include <reproc++/drain.hpp>
 #include <reproc++/reproc.hpp>
-#include <reproc++/sink.hpp>
 
 #include <iostream>
 

@@ -1,6 +1,6 @@
 #include <reproc/run.h>
 
-#include <reproc/sink.h>
+#include <reproc/drain.h>
 
 int reproc_run(const char *const *argv, reproc_options options)
 {

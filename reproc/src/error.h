@@ -1,6 +1,6 @@
 #pragma once
 
-// Avoid unused assignment warnings in release mode when the result of an 
+// Avoid unused assignment warnings in release mode when the result of an
 // assignment is only used in an assert statement.
 #define ASSERT_UNUSED(expression)                                              \
   do {                                                                         \

@@ -348,8 +348,8 @@ int process_start(HANDLE *process,
   // handles it should inherit can still unintentionally inherit handles meant
   // for a reproc child process. See https://stackoverflow.com/a/2345126 for
   // more information.
-  HANDLE handles[] = { options.handle.exit, options.handle.in, options.handle.out,
-                       options.handle.err };
+  HANDLE handles[] = { options.handle.exit, options.handle.in,
+                       options.handle.out, options.handle.err };
   size_t num_handles = ARRAY_SIZE(handles);
 
   if (options.handle.out == options.handle.err) {

@@ -1,5 +1,5 @@
+#include <reproc++/drain.hpp>
 #include <reproc++/reproc.hpp>
-#include <reproc++/sink.hpp>
 
 #include <array>
 #include <iostream>
@@ -51,7 +51,7 @@ int main(int argc, const char *argv[])
 
   std::cout << output << std::flush;
 
-  // It's easy to define your own sinks as well. Take a look at `sink.hpp` in
+  // It's easy to define your own sinks as well. Take a look at `drain.hpp` in
   // the repository to see how `sink::string` and other sinks are implemented.
   // The documentation of `reproc::drain` also provides more information on the
   // requirements a sink should fulfill.

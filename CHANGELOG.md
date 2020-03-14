@@ -56,6 +56,10 @@
   `reproc_free` after calling `reproc_drain` with a sink string, even if it
   fails.
 
+- Renamed sink.h to drain.h.
+
+  Reflect that sink.h contains `reproc_drain` by renaming it to drain.h.
+
 ### reproc++
 
 - Equivalent changes as those done for reproc.

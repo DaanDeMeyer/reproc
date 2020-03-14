@@ -1,5 +1,5 @@
+#include <reproc/drain.h>
 #include <reproc/reproc.h>
-#include <reproc/sink.h>
 
 #include <stdbool.h>
 #include <stdio.h>

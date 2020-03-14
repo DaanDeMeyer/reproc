@@ -1,4 +1,4 @@
-#include <reproc/sink.h>
+#include <reproc/drain.h>
 
 #include "error.h"
 #include "macro.h"
