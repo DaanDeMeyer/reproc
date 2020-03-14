@@ -503,11 +503,11 @@ reproc_t *reproc_destroy(reproc_t *process)
     reproc_stop(process, process->stop);
   }
 
-  process->handle = process_destroy(process->handle);
-  process->pipe.in = pipe_destroy(process->pipe.in);
-  process->pipe.out = pipe_destroy(process->pipe.out);
-  process->pipe.err = pipe_destroy(process->pipe.err);
-  process->pipe.exit = pipe_destroy(process->pipe.exit);
+  process_destroy(process->handle);
+  pipe_destroy(process->pipe.in);
+  pipe_destroy(process->pipe.out);
+  pipe_destroy(process->pipe.err);
+  pipe_destroy(process->pipe.exit);
 
   if (process->status != STATUS_NOT_STARTED) {
     deinit();
