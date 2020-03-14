@@ -378,18 +378,16 @@ int reproc_close(reproc_t *process, REPROC_STREAM stream)
   switch (stream) {
     case REPROC_STREAM_IN:
       process->pipe.in = pipe_destroy(process->pipe.in);
-      break;
+      return 0;
     case REPROC_STREAM_OUT:
       process->pipe.out = pipe_destroy(process->pipe.out);
-      break;
+      return 0;
     case REPROC_STREAM_ERR:
       process->pipe.err = pipe_destroy(process->pipe.err);
-      break;
-    default:
-      return REPROC_EINVAL;
+      return 0;
   }
 
-  return 0;
+  return REPROC_EINVAL;
 }
 
 int reproc_wait(reproc_t *process, int timeout)
@@ -468,8 +466,11 @@ int reproc_stop(reproc_t *process, reproc_stop_actions stop)
   int r = -1;
 
   for (size_t i = 0; i < ARRAY_SIZE(actions); i++) {
+    r = REPROC_EINVAL; // NOLINT
+
     switch (actions[i].action) {
       case REPROC_STOP_NOOP:
+        r = 0;
         continue;
       case REPROC_STOP_WAIT:
         r = 0;
@@ -480,8 +481,6 @@ int reproc_stop(reproc_t *process, reproc_stop_actions stop)
       case REPROC_STOP_KILL:
         r = reproc_kill(process);
         break;
-      default:
-        return REPROC_EINVAL;
     }
 
     // Stop if `reproc_terminate` or `reproc_kill` fail.

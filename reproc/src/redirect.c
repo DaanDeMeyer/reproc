@@ -47,7 +47,7 @@ int redirect_init(pipe_type *parent,
   assert(parent);
   assert(child);
 
-  int r = -1;
+  int r = REPROC_EINVAL;
 
   switch (redirect.type) {
 
@@ -111,10 +111,6 @@ int redirect_init(pipe_type *parent,
       *child = out;
       *parent = PIPE_INVALID;
 
-      break;
-
-    default:
-      r = REPROC_EINVAL;
       break;
   }
 
