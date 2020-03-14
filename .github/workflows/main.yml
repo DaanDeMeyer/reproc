@@ -169,8 +169,8 @@ jobs:
       - name: "reproc: parent"
         run: build/reproc/examples/parent cmake --help
 
-      - name: "reproc: poll"
-        run: build/reproc/examples/poll cmake --help
+      - name: "reproc: read"
+        run: build/reproc/examples/read cmake --help
 
       - name: "reproc: run"
         run: build/reproc/examples/run cmake --help
