@@ -10,7 +10,7 @@ typedef void *process_type; // `HANDLE`
 typedef int process_type; // `pid_t`
 #endif
 
-extern const process_type PROCESS_INVALID; // NOLINT
+extern const process_type PROCESS_INVALID;
 
 struct process_options {
   // If `NULL`, the child process inherits the environment of the current

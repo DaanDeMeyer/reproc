@@ -9,7 +9,7 @@ typedef void *handle_type; // `HANDLE`
 typedef int handle_type; // fd
 #endif
 
-extern const handle_type HANDLE_INVALID; // NOLINT
+extern const handle_type HANDLE_INVALID;
 
 // Sets the `FD_CLOEXEC` flag on the file descriptor. POSIX only.
 int handle_cloexec(handle_type handle, bool enable);

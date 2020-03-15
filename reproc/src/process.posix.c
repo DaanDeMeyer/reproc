@@ -378,7 +378,7 @@ int process_start(pid_t *process,
 
     if (options.environment != NULL) {
       // `environ` is carried over calls to `exec`.
-      extern char **environ; // NOLINT
+      extern char **environ;
       environ = (char **) options.environment;
     }
 
