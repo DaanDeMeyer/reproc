@@ -128,7 +128,6 @@ function(reproc_add_common TARGET LANGUAGE)
         /nologo # Silence MSVC compiler version output.
         $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:/WX> # -Werror
         $<$<BOOL:${REPROC_HAVE_PERMISSIVE}>:/permissive->
-        /wd4068
       )
 
       if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.15.0)
@@ -148,7 +147,6 @@ function(reproc_add_common TARGET LANGUAGE)
         -pedantic
         -Wconversion
         -Wsign-conversion
-        -Wno-unknown-pragmas
         $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-Werror>
         $<$<BOOL:${REPROC_WARNINGS_AS_ERRORS}>:-pedantic-errors>
       )
