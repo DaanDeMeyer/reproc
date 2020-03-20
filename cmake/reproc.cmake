@@ -335,11 +335,4 @@ function(reproc_add_example TARGET EXAMPLE LANGUAGE)
 
   target_sources(${TARGET}-${EXAMPLE} PRIVATE examples/${EXAMPLE}.${SOURCE_EXT})
   target_link_libraries(${TARGET}-${EXAMPLE} PRIVATE ${TARGET} ${ARGN})
-
-  if(LANGUAGE STREQUAL C AND REPROC_SANITIZERS)
-    set_target_properties(${TARGET}-${EXAMPLE} PROPERTIES
-      # Hack to avoid UBSan undefined reference errors.
-      LINKER_LANGUAGE CXX
-    )
-  endif()
 endfunction()
