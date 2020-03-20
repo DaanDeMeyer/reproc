@@ -1,13 +1,4 @@
-cmake_minimum_required(VERSION 3.12...3.16)
-
-# TODO: Remove once CMake 3.17 is released.
-if(CMAKE_GENERATOR MATCHES "Unix Makefiles|Ninja")
-  set(
-    CMAKE_EXPORT_COMPILE_COMMANDS
-    $ENV{CMAKE_EXPORT_COMPILE_COMMANDS}
-    CACHE BOOL "Enable/Disable output of compile commands during generation."
-  )
-endif()
+cmake_minimum_required(VERSION 3.12...3.17)
 
 project(
   reproc
