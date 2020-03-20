@@ -11,9 +11,9 @@ project(
 # Common options and functions separated for easier reuse in other projects.
 include(cmake/reproc.cmake)
 
-option(REPROC++ "Build reproc++." ${REPROC_DEVELOP})
-option(REPROC_TEST "Build tests." ${REPROC_DEVELOP})
-option(REPROC_EXAMPLES "Build examples." ${REPROC_DEVELOP})
+option(REPROC++ "Build reproc++" ${REPROC_DEVELOP})
+option(REPROC_TEST "Build tests" ${REPROC_DEVELOP})
+option(REPROC_EXAMPLES "Build examples" ${REPROC_DEVELOP})
 
 option(
   REPROC_MULTITHREADED

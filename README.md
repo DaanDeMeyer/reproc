@@ -143,21 +143,21 @@ reproc's build can be configured using the following CMake options:
 
 ### User
 
-- `REPROC++`: Build reproc++ (default: `${REPROC_DEVELOP}`).
-- `REPROC_TEST`: Build tests (default: `${REPROC_DEVELOP}`).
+- `REPROC++`: Build reproc++ (default: `${REPROC_DEVELOP}`)
+- `REPROC_TEST`: Build tests (default: `${REPROC_DEVELOP}`)
 
   Run the tests by running the `test` binary which can be found in the build
   directory after building reproc.
 
-- `REPROC_EXAMPLES`: Build examples (default: `${REPROC_DEVELOP}`).
+- `REPROC_EXAMPLES`: Build examples (default: `${REPROC_DEVELOP}`)
 
   The resulting binaries will be located in the examples folder of each project
   subdirectory in the build directory after building reproc.
 
 ### Advanced
 
-- `REPROC_OBJECT_LIBRARIES`: Build CMake object libraries. Overrides
-  `BUILD_SHARED_LIBS` (default: `${REPROC_DEVELOP}`).
+- `REPROC_OBJECT_LIBRARIES`: Build CMake object libraries (default:
+  `${REPROC_DEVELOP}`)
 
   This is useful to directly include reproc in another library. When building
   reproc as a static or shared library, it has to be installed alongside the
@@ -168,26 +168,28 @@ reproc's build can be configured using the following CMake options:
   **Note: reproc's object libraries will only link correctly from CMake 3.14
   onwards.**
 
+  **Note: This option overrides `BUILD_SHARED_LIBS`**
+
 - `REPROC_INSTALL`: Generate installation rules (default: `ON` unless
-  `REPROC_OBJECT_LIBRARIES` is enabled).
+  `REPROC_OBJECT_LIBRARIES` is enabled)
 - `REPROC_INSTALL_CMAKECONFIGDIR`: CMake config files installation directory
-  (default: `${CMAKE_INSTALL_LIBDIR}/cmake`).
+  (default: `${CMAKE_INSTALL_LIBDIR}/cmake`)
 - `REPROC_INSTALL_PKGCONFIG`: Install pkg-config files (default: `ON`)
 - `REPROC_INSTALL_PKGCONFIGDIR`: pkg-config files installation directory
-  (default: `${CMAKE_INSTALL_LIBDIR}/pkgconfig`).
+  (default: `${CMAKE_INSTALL_LIBDIR}/pkgconfig`)
 
 - `REPROC_MULTITHREADED`: Use `pthread_sigmask` and link against the system's
-  thread library (default: `ON`).
+  thread library (default: `ON`)
 
 ### Developer
 
 - `REPROC_DEVELOP`: Configure option default values for development (default:
-  `OFF` unless the `REPROC_DEVELOP` environment variable is set).
-- `REPROC_SANITIZERS`: Build with sanitizers (default: `${REPROC_DEVELOP}`).
-- `REPROC_TIDY`: Run clang-tidy when building (default: `${REPROC_DEVELOP}`).
+  `OFF` unless the `REPROC_DEVELOP` environment variable is set)
+- `REPROC_SANITIZERS`: Build with sanitizers (default: `${REPROC_DEVELOP}`)
+- `REPROC_TIDY`: Run clang-tidy when building (default: `${REPROC_DEVELOP}`)
 - `REPROC_WARNINGS`: Enable compiler warnings (default: `${REPROC_DEVELOP}`)
 - `REPROC_WARNINGS_AS_ERRORS`: Add -Werror or equivalent to the compile flags
-  and clang-tidy (default: `OFF`).
+  and clang-tidy (default: `OFF`)
 
 ## Documentation
 
