@@ -21,10 +21,6 @@ option(
   ON
 )
 
-if(REPROC++)
-  enable_language(CXX)
-endif()
-
 if(REPROC_TEST)
   enable_testing()
 endif()
@@ -36,6 +32,8 @@ if(REPROC_MULTITHREADED)
 endif()
 
 add_subdirectory(reproc)
+
 if(REPROC++)
+  enable_language(CXX)
   add_subdirectory(reproc++)
 endif()
