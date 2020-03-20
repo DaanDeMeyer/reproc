@@ -174,7 +174,7 @@ function(reproc_add_common TARGET LANGUAGE)
       )
     endif()
 
-    if(NOT MSVC)
+    if(NOT MSVC AND NOT MINGW)
       target_compile_options(${TARGET} PRIVATE
         -fsanitize=address,undefined
         -fno-omit-frame-pointer
