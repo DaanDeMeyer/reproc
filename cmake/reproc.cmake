@@ -6,6 +6,8 @@ include(GNUInstallDirs)
 ### Developer options ###
 
 option(REPROC_DEVELOP "Enable all developer options" $ENV{REPROC_DEVELOP})
+option(REPROC_TEST "Build tests" ${REPROC_DEVELOP})
+option(REPROC_EXAMPLES "Build examples" ${REPROC_DEVELOP})
 option(REPROC_WARNINGS "Enable compiler warnings" ${REPROC_DEVELOP})
 option(REPROC_TIDY "Run clang-tidy when building" ${REPROC_DEVELOP})
 
@@ -56,6 +58,12 @@ mark_as_advanced(
   REPROC_INSTALL_CMAKECONFIGDIR
   REPROC_INSTALL_PKGCONFIGDIR
 )
+
+### Testing
+
+if(REPROC_TEST)
+  enable_testing()
+endif()
 
 ### clang-tidy ###
 
@@ -319,6 +327,10 @@ function(reproc_add_library TARGET LANGUAGE)
 endfunction()
 
 function(reproc_add_test TARGET TEST LANGUAGE)
+  if(NOT REPROC_TEST)
+    return()
+  endif()
+
   if(LANGUAGE STREQUAL C)
     set(EXTENSION c)
   else()
@@ -355,6 +367,10 @@ function(reproc_add_test TARGET TEST LANGUAGE)
 endfunction()
 
 function(reproc_add_example TARGET EXAMPLE LANGUAGE)
+  if(NOT REPROC_EXAMPLES)
+    return()
+  endif()
+
   if(LANGUAGE STREQUAL C)
     set(EXTENSION c)
   else()

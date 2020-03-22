@@ -12,18 +12,11 @@ project(
 include(cmake/reproc.cmake)
 
 option(REPROC++ "Build reproc++" ${REPROC_DEVELOP})
-option(REPROC_TEST "Build tests" ${REPROC_DEVELOP})
-option(REPROC_EXAMPLES "Build examples" ${REPROC_DEVELOP})
-
 option(
   REPROC_MULTITHREADED
   "Use `pthread_sigmask` and link against the system's thread library"
   ON
 )
-
-if(REPROC_TEST)
-  enable_testing()
-endif()
 
 if(REPROC_MULTITHREADED)
   set(THREADS_PREFER_PTHREAD_FLAG ON)
