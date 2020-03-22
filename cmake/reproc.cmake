@@ -3,7 +3,7 @@ include(CMakePackageConfigHelpers)
 include(GenerateExportHeader)
 include(GNUInstallDirs)
 
-### Developer options ###
+# Developer options
 
 option(REPROC_DEVELOP "Enable all developer options" $ENV{REPROC_DEVELOP})
 option(REPROC_TEST "Build tests" ${REPROC_DEVELOP})
@@ -28,7 +28,7 @@ mark_as_advanced(
   REPROC_WARNINGS_AS_ERRORS
 )
 
-### Installation options ###
+# Installation options
 
 option(REPROC_OBJECT_LIBRARIES "Build CMake object libraries" ${REPROC_DEVELOP})
 
@@ -59,13 +59,13 @@ mark_as_advanced(
   REPROC_INSTALL_PKGCONFIGDIR
 )
 
-### Testing
+# Testing
 
 if(REPROC_TEST)
   enable_testing()
 endif()
 
-### clang-tidy ###
+# clang-tidy
 
 if(REPROC_TIDY)
   find_program(REPROC_TIDY_PROGRAM clang-tidy)
@@ -80,7 +80,7 @@ if(REPROC_TIDY)
   endif()
 endif()
 
-### Functions ###
+# Functions
 
 function(reproc_common TARGET LANGUAGE NAME DIRECTORY)
   if(LANGUAGE STREQUAL C)
@@ -117,7 +117,7 @@ function(reproc_common TARGET LANGUAGE NAME DIRECTORY)
     )
   endif()
 
-  ### Common development flags (warnings + sanitizers + colors) ###
+  # Common development flags (warnings + sanitizers + colors)
 
   if(REPROC_WARNINGS)
     if(MSVC)
