@@ -82,7 +82,7 @@ endif()
 
 ### Functions ###
 
-function(reproc_add_common TARGET LANGUAGE)
+function(reproc_common TARGET LANGUAGE)
   cmake_parse_arguments(ARG "" "OUTPUT_DIRECTORY;OUTPUT_NAME" "" ${ARGN})
 
   if(LANGUAGE STREQUAL C)
@@ -194,14 +194,14 @@ function(reproc_add_common TARGET LANGUAGE)
   endif()
 endfunction()
 
-function(reproc_add_library TARGET LANGUAGE)
+function(reproc_library TARGET LANGUAGE)
   if(REPROC_OBJECT_LIBRARIES)
     add_library(${TARGET} OBJECT)
   else()
     add_library(${TARGET})
   endif()
 
-  reproc_add_common(${TARGET} ${LANGUAGE} OUTPUT_DIRECTORY lib)
+  reproc_common(${TARGET} ${LANGUAGE} OUTPUT_DIRECTORY lib)
 
   if(BUILD_SHARED_LIBS AND NOT REPROC_OBJECT_LIBRARIES)
     # Enable -fvisibility=hidden and -fvisibility-inlines-hidden.
@@ -327,7 +327,7 @@ function(reproc_add_library TARGET LANGUAGE)
   endif()
 endfunction()
 
-function(reproc_add_test TARGET TEST LANGUAGE)
+function(reproc_test TARGET TEST LANGUAGE)
   if(NOT REPROC_TEST)
     return()
   endif()
@@ -340,7 +340,7 @@ function(reproc_add_test TARGET TEST LANGUAGE)
 
   add_executable(${TARGET}-test-${TEST} test/${TEST}.${EXTENSION})
 
-  reproc_add_common(
+  reproc_common(
     ${TARGET}-test-${TEST} ${LANGUAGE}
     OUTPUT_DIRECTORY test
     OUTPUT_NAME ${TEST}
@@ -356,7 +356,7 @@ function(reproc_add_test TARGET TEST LANGUAGE)
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/resources/${TEST}.c)
     add_executable(${TARGET}-resource-${TEST} resources/${TEST}.c)
 
-    reproc_add_common(
+    reproc_common(
       ${TARGET}-resource-${TEST} C
       OUTPUT_DIRECTORY resources
       OUTPUT_NAME ${TEST}
@@ -367,7 +367,7 @@ function(reproc_add_test TARGET TEST LANGUAGE)
   endif()
 endfunction()
 
-function(reproc_add_example TARGET EXAMPLE LANGUAGE)
+function(reproc_example TARGET EXAMPLE LANGUAGE)
   if(NOT REPROC_EXAMPLES)
     return()
   endif()
@@ -380,7 +380,7 @@ function(reproc_add_example TARGET EXAMPLE LANGUAGE)
 
   add_executable(${TARGET}-${EXAMPLE} examples/${EXAMPLE}.${EXTENSION})
 
-  reproc_add_common(
+  reproc_common(
     ${TARGET}-${EXAMPLE} ${LANGUAGE}
     OUTPUT_DIRECTORY examples
     OUTPUT_NAME ${EXAMPLE}
