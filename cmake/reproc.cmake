@@ -358,8 +358,8 @@ function(reproc_example TARGET EXAMPLE LANGUAGE)
     set(EXTENSION cpp)
   endif()
 
-  add_executable(${TARGET}-${EXAMPLE} examples/${EXAMPLE}.${EXTENSION})
+  add_executable(${TARGET}-example-${EXAMPLE} examples/${EXAMPLE}.${EXTENSION})
 
-  reproc_common(${TARGET}-${EXAMPLE} ${LANGUAGE} ${EXAMPLE} examples)
-  target_link_libraries(${TARGET}-${EXAMPLE} PRIVATE ${TARGET} ${ARGN})
+  reproc_common(${TARGET}-example-${EXAMPLE} ${LANGUAGE} ${EXAMPLE} examples)
+  target_link_libraries(${TARGET}-example-${EXAMPLE} PRIVATE ${TARGET} ${ARGN})
 endfunction()
