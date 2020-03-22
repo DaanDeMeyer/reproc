@@ -40,7 +40,7 @@ reproc_test(reproc stop C)
 reproc_test(reproc working-directory C)
 
 if(UNIX)
-  reproc_test(fork)
+  reproc_test(reproc fork C)
 endif()
 
 reproc_example(reproc drain C)
