@@ -168,7 +168,7 @@ reproc's build can be configured using the following CMake options:
   **Note: reproc's object libraries will only link correctly from CMake 3.14
   onwards.**
 
-  **Note: This option overrides `BUILD_SHARED_LIBS`**
+  **Note: This option overrides `BUILD_SHARED_LIBS`.**
 
 - `REPROC_INSTALL`: Generate installation rules (default: `ON` unless
   `REPROC_OBJECT_LIBRARIES` is enabled)
