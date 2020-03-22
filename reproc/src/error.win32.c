@@ -46,7 +46,7 @@ enum { ERROR_STRING_MAX_SIZE = 512 };
 
 const char *error_string(int error)
 {
-  static wchar_t *wstring = NULL;
+  wchar_t *wstring = NULL;
   int r = 0;
 
   wstring = malloc(sizeof(wchar_t) * ERROR_STRING_MAX_SIZE);
