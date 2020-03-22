@@ -82,9 +82,7 @@ endif()
 
 ### Functions ###
 
-function(reproc_common TARGET LANGUAGE)
-  cmake_parse_arguments(ARG "" "OUTPUT_DIRECTORY;OUTPUT_NAME" "" ${ARGN})
-
+function(reproc_common TARGET LANGUAGE NAME DIRECTORY)
   if(LANGUAGE STREQUAL C)
     set(STANDARD 99)
     target_compile_features(${TARGET} PUBLIC c_std_99)
@@ -104,19 +102,11 @@ function(reproc_common TARGET LANGUAGE)
     ${LANGUAGE}_STANDARD ${STANDARD}
     ${LANGUAGE}_STANDARD_REQUIRED ON
     ${LANGUAGE}_EXTENSIONS OFF
+    OUTPUT_NAME "${NAME}"
+    RUNTIME_OUTPUT_DIRECTORY "${DIRECTORY}"
+    ARCHIVE_OUTPUT_DIRECTORY "${DIRECTORY}"
+    LIBRARY_OUTPUT_DIRECTORY "${DIRECTORY}"
   )
-
-  if(DEFINED ARG_OUTPUT_DIRECTORY)
-    set_target_properties(${TARGET} PROPERTIES
-      RUNTIME_OUTPUT_DIRECTORY ${ARG_OUTPUT_DIRECTORY}
-      ARCHIVE_OUTPUT_DIRECTORY ${ARG_OUTPUT_DIRECTORY}
-      LIBRARY_OUTPUT_DIRECTORY ${ARG_OUTPUT_DIRECTORY}
-    )
-  endif()
-
-  if(DEFINED ARG_OUTPUT_NAME)
-    set_property(TARGET ${TARGET} PROPERTY OUTPUT_NAME ${ARG_OUTPUT_NAME})
-  endif()
 
   if(REPROC_TIDY AND REPROC_TIDY_PROGRAM)
     set_property(
@@ -201,7 +191,7 @@ function(reproc_library TARGET LANGUAGE)
     add_library(${TARGET})
   endif()
 
-  reproc_common(${TARGET} ${LANGUAGE} OUTPUT_DIRECTORY lib)
+  reproc_common(${TARGET} ${LANGUAGE} "" lib)
 
   if(BUILD_SHARED_LIBS AND NOT REPROC_OBJECT_LIBRARIES)
     # Enable -fvisibility=hidden and -fvisibility-inlines-hidden.
@@ -340,12 +330,7 @@ function(reproc_test TARGET TEST LANGUAGE)
 
   add_executable(${TARGET}-test-${TEST} test/${TEST}.${EXTENSION})
 
-  reproc_common(
-    ${TARGET}-test-${TEST} ${LANGUAGE}
-    OUTPUT_DIRECTORY test
-    OUTPUT_NAME ${TEST}
-  )
-
+  reproc_common(${TARGET}-test-${TEST} ${LANGUAGE} ${TEST} test)
   target_link_libraries(${TARGET}-test-${TEST} PRIVATE ${TARGET})
   target_compile_definitions(${TARGET}-test-${TEST} PRIVATE
     RESOURCE_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/resources"
@@ -356,12 +341,7 @@ function(reproc_test TARGET TEST LANGUAGE)
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/resources/${TEST}.c)
     add_executable(${TARGET}-resource-${TEST} resources/${TEST}.c)
 
-    reproc_common(
-      ${TARGET}-resource-${TEST} C
-      OUTPUT_DIRECTORY resources
-      OUTPUT_NAME ${TEST}
-    )
-
+    reproc_common(${TARGET}-resource-${TEST} C ${TEST} resources)
     # Make sure the test resource is available when running the test.
     add_dependencies(${TARGET}-test-${TEST} ${TARGET}-resource-${TEST})
   endif()
@@ -380,11 +360,6 @@ function(reproc_example TARGET EXAMPLE LANGUAGE)
 
   add_executable(${TARGET}-${EXAMPLE} examples/${EXAMPLE}.${EXTENSION})
 
-  reproc_common(
-    ${TARGET}-${EXAMPLE} ${LANGUAGE}
-    OUTPUT_DIRECTORY examples
-    OUTPUT_NAME ${EXAMPLE}
-  )
-
+  reproc_common(${TARGET}-${EXAMPLE} ${LANGUAGE} ${EXAMPLE} examples)
   target_link_libraries(${TARGET}-${EXAMPLE} PRIVATE ${TARGET} ${ARGN})
 endfunction()
