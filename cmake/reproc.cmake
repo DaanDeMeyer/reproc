@@ -318,14 +318,50 @@ function(reproc_add_library TARGET LANGUAGE)
   endif()
 endfunction()
 
-function(reproc_add_example TARGET EXAMPLE LANGUAGE)
-  add_executable(${TARGET}-${EXAMPLE})
-
+function(reproc_add_test TARGET TEST LANGUAGE)
   if(LANGUAGE STREQUAL C)
-    set(SOURCE_EXT c)
+    set(EXTENSION c)
   else()
-    set(SOURCE_EXT cpp)
+    set(EXTENSION cpp)
   endif()
+
+  add_executable(${TARGET}-test-${TEST} test/${TEST}.${EXTENSION})
+
+  reproc_add_common(
+    ${TARGET}-test-${TEST} ${LANGUAGE}
+    OUTPUT_DIRECTORY test
+    OUTPUT_NAME ${TEST}
+  )
+
+  target_link_libraries(${TARGET}-test-${TEST} PRIVATE ${TARGET})
+  target_compile_definitions(${TARGET}-test-${TEST} PRIVATE
+    RESOURCE_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/resources"
+  )
+
+  add_test(NAME ${TEST} COMMAND ${TARGET}-test-${TEST})
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/resources/${TEST}.c)
+    add_executable(${TARGET}-resource-${TEST} resources/${TEST}.c)
+
+    reproc_add_common(
+      ${TARGET}-resource-${TEST} C
+      OUTPUT_DIRECTORY resources
+      OUTPUT_NAME ${TEST}
+    )
+
+    # Make sure the test resource is available when running the test.
+    add_dependencies(${TARGET}-test-${TEST} ${TARGET}-resource-${TEST})
+  endif()
+endfunction()
+
+function(reproc_add_example TARGET EXAMPLE LANGUAGE)
+  if(LANGUAGE STREQUAL C)
+    set(EXTENSION c)
+  else()
+    set(EXTENSION cpp)
+  endif()
+
+  add_executable(${TARGET}-${EXAMPLE} examples/${EXAMPLE}.${EXTENSION})
 
   reproc_add_common(
     ${TARGET}-${EXAMPLE} ${LANGUAGE}
@@ -333,6 +369,5 @@ function(reproc_add_example TARGET EXAMPLE LANGUAGE)
     OUTPUT_NAME ${EXAMPLE}
   )
 
-  target_sources(${TARGET}-${EXAMPLE} PRIVATE examples/${EXAMPLE}.${SOURCE_EXT})
   target_link_libraries(${TARGET}-${EXAMPLE} PRIVATE ${TARGET} ${ARGN})
 endfunction()

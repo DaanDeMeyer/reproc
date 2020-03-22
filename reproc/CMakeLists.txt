@@ -33,42 +33,12 @@ target_sources(reproc PRIVATE
 )
 
 if(REPROC_TEST)
-  function(reproc_add_test TARGET)
-    add_executable(reproc-test-${TARGET} test/${TARGET}.c)
-
-    reproc_add_common(
-      reproc-test-${TARGET} C
-      OUTPUT_DIRECTORY test
-      OUTPUT_NAME ${TARGET}
-    )
-
-    target_link_libraries(reproc-test-${TARGET} PRIVATE reproc)
-    target_compile_definitions(reproc-test-${TARGET} PRIVATE
-      RESOURCE_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/resources"
-    )
-
-    add_test(NAME ${TARGET} COMMAND reproc-test-${TARGET})
-
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/resources/${TARGET}.c)
-      add_executable(reproc-resource-${TARGET} resources/${TARGET}.c)
-
-      reproc_add_common(
-        reproc-resource-${TARGET} C
-        OUTPUT_DIRECTORY resources
-        OUTPUT_NAME ${TARGET}
-      )
-
-      # Make sure the test resource is available when running the test.
-      add_dependencies(reproc-test-${TARGET} reproc-resource-${TARGET})
-    endif()
-  endfunction()
-
-  reproc_add_test(argv)
-  reproc_add_test(environment)
-  reproc_add_test(io)
-  reproc_add_test(overflow)
-  reproc_add_test(stop)
-  reproc_add_test(working-directory)
+  reproc_add_test(reproc argv C)
+  reproc_add_test(reproc environment C)
+  reproc_add_test(reproc io C)
+  reproc_add_test(reproc overflow C)
+  reproc_add_test(reproc stop C)
+  reproc_add_test(reproc working-directory C)
 
   if(UNIX)
     reproc_add_test(fork)
