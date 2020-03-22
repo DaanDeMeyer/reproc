@@ -7,12 +7,10 @@ target_link_libraries(reproc++ PRIVATE
 
 target_sources(
   reproc++
-  PRIVATE
-    src/reproc.cpp
-  INTERFACE
-    # We manually propagate reproc's object files until CMake adds support for
-    # doing it automatically.
-    $<$<BOOL:${REPROC_OBJECT_LIBRARIES}>:$<TARGET_OBJECTS:reproc>>
+  PRIVATE src/reproc.cpp
+  # We manually propagate reproc's object files until CMake adds support for
+  # doing it automatically.
+  INTERFACE $<$<BOOL:${REPROC_OBJECT_LIBRARIES}>:$<TARGET_OBJECTS:reproc>>
 )
 
 reproc_add_example(reproc++ drain CXX)
