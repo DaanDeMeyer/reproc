@@ -317,7 +317,7 @@ function(reproc_library TARGET LANGUAGE)
   endif()
 endfunction()
 
-function(reproc_test TARGET TEST LANGUAGE)
+function(reproc_test TARGET NAME LANGUAGE)
   if(NOT REPROC_TEST)
     return()
   endif()
@@ -328,26 +328,26 @@ function(reproc_test TARGET TEST LANGUAGE)
     set(EXTENSION cpp)
   endif()
 
-  add_executable(${TARGET}-test-${TEST} test/${TEST}.${EXTENSION})
+  add_executable(${TARGET}-test-${NAME} test/${NAME}.${EXTENSION})
 
-  reproc_common(${TARGET}-test-${TEST} ${LANGUAGE} ${TEST} test)
-  target_link_libraries(${TARGET}-test-${TEST} PRIVATE ${TARGET})
-  target_compile_definitions(${TARGET}-test-${TEST} PRIVATE
+  reproc_common(${TARGET}-test-${NAME} ${LANGUAGE} ${NAME} test)
+  target_link_libraries(${TARGET}-test-${NAME} PRIVATE ${TARGET})
+  target_compile_definitions(${TARGET}-test-${NAME} PRIVATE
     RESOURCE_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/resources"
   )
 
-  add_test(NAME ${TEST} COMMAND ${TARGET}-test-${TEST})
+  add_test(NAME ${NAME} COMMAND ${TARGET}-test-${NAME})
 
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/resources/${TEST}.c)
-    add_executable(${TARGET}-resource-${TEST} resources/${TEST}.c)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/resources/${NAME}.c)
+    add_executable(${TARGET}-resource-${NAME} resources/${NAME}.c)
 
-    reproc_common(${TARGET}-resource-${TEST} C ${TEST} resources)
+    reproc_common(${TARGET}-resource-${NAME} C ${NAME} resources)
     # Make sure the test resource is available when running the test.
-    add_dependencies(${TARGET}-test-${TEST} ${TARGET}-resource-${TEST})
+    add_dependencies(${TARGET}-test-${NAME} ${TARGET}-resource-${NAME})
   endif()
 endfunction()
 
-function(reproc_example TARGET EXAMPLE LANGUAGE)
+function(reproc_example TARGET NAME LANGUAGE)
   if(NOT REPROC_EXAMPLES)
     return()
   endif()
@@ -358,8 +358,8 @@ function(reproc_example TARGET EXAMPLE LANGUAGE)
     set(EXTENSION cpp)
   endif()
 
-  add_executable(${TARGET}-example-${EXAMPLE} examples/${EXAMPLE}.${EXTENSION})
+  add_executable(${TARGET}-example-${NAME} examples/${NAME}.${EXTENSION})
 
-  reproc_common(${TARGET}-example-${EXAMPLE} ${LANGUAGE} ${EXAMPLE} examples)
-  target_link_libraries(${TARGET}-example-${EXAMPLE} PRIVATE ${TARGET} ${ARGN})
+  reproc_common(${TARGET}-example-${NAME} ${LANGUAGE} ${NAME} examples)
+  target_link_libraries(${TARGET}-example-${NAME} PRIVATE ${TARGET} ${ARGN})
 endfunction()
