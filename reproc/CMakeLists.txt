@@ -26,8 +26,8 @@ target_sources(reproc PRIVATE
   src/options.c
   src/pipe.${PLATFORM}.c
   src/process.${PLATFORM}.c
-  src/redirect.c
   src/redirect.${PLATFORM}.c
+  src/redirect.c
   src/reproc.c
   src/run.c
 )
