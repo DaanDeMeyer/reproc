@@ -352,7 +352,9 @@ int process_start(pid_t *process,
       }
 
       // Make sure we don't accidentally cloexec the standard streams of the
-      // child process when we're inheriting the parent standard streams.
+      // child process when we're inheriting the parent standard streams. If we
+      // don't call `exec`, the caller is responsible for closing the redirect
+      // and exit handles.
       if (redirect[i] != i) {
         // Make sure the pipe is closed when we call exec.
         r = handle_cloexec(redirect[i], true);
