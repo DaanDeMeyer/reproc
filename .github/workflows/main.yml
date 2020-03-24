@@ -28,7 +28,7 @@ jobs:
 
           - os: ubuntu
             compiler: clang
-            version: "9"
+            version: "10"
 
           - os: windows
             compiler: cl
@@ -63,12 +63,11 @@ jobs:
           curl -sSL https://github.com/Kitware/CMake/releases/download/v3.13.5/cmake-3.13.5-Linux-x86_64.tar.gz -o cmake.tar.gz
           sudo tar xf cmake.tar.gz --strip 1 -C /usr/local
 
-          # LLVM 9 is not yet in Bionic's repositories.
-          sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main"
+          sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main"
           sudo apt-get update
 
-          sudo apt-get install -y ninja-build clang-tidy-9
-          sudo ln -s /usr/bin/clang-tidy-9 /usr/local/bin/clang-tidy
+          sudo apt-get install -y ninja-build clang-tidy-10
+          sudo ln -s /usr/bin/clang-tidy-10 /usr/local/bin/clang-tidy
 
           if [ "${{ matrix.config.compiler }}" = "gcc" ]; then
             sudo apt-get install -y g++-${{ matrix.config.version }}
