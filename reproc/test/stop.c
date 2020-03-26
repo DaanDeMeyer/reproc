@@ -12,7 +12,7 @@ static void stop(REPROC_STOP action, int status)
   const char *argv[] = { RESOURCE_DIRECTORY "/stop", NULL };
 
   r = reproc_start(process, argv, (reproc_options){ 0 });
-  ASSERT(r >= 0);
+  ASSERT_OK(r);
 
   r = reproc_wait(process, 50);
   ASSERT(r == REPROC_ETIMEDOUT);
@@ -20,7 +20,7 @@ static void stop(REPROC_STOP action, int status)
   reproc_stop_actions stop = { .first = { action, 500 } };
 
   r = reproc_stop(process, stop);
-  ASSERT(r == status);
+  ASSERT_EQ_INT(r, status);
 
   reproc_destroy(process);
 }

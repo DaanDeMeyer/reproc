@@ -19,24 +19,24 @@ static void io()
   r = reproc_start(process, argv,
                    (reproc_options){
                        .redirect.err.type = REPROC_REDIRECT_STDOUT });
-  ASSERT(r >= 0);
+  ASSERT_OK(r);
 
   r = reproc_write(process, (uint8_t *) MESSAGE, strlen(MESSAGE));
-  ASSERT(r == (int) strlen(MESSAGE));
+  ASSERT_OK(r);
+  ASSERT_EQ_INT(r, (int) strlen(MESSAGE));
 
   r = reproc_close(process, REPROC_STREAM_IN);
-  ASSERT(r == 0);
+  ASSERT_OK(r);
 
   char *out = NULL;
   r = reproc_drain(process, reproc_sink_string(&out), REPROC_SINK_NULL);
-  ASSERT(r == 0);
+  ASSERT_OK(r);
 
   ASSERT(out != NULL);
-
-  ASSERT(strcmp(out, MESSAGE MESSAGE) == 0);
+  ASSERT_EQ_STR(out, MESSAGE MESSAGE);
 
   r = reproc_wait(process, REPROC_INFINITE);
-  ASSERT(r == 0);
+  ASSERT_OK(r);
 
   reproc_destroy(process);
 
@@ -53,7 +53,7 @@ static void timeout(void)
   const char *argv[] = { RESOURCE_DIRECTORY "/io", NULL };
 
   r = reproc_start(process, argv, (reproc_options){ 0 });
-  ASSERT(r >= 0);
+  ASSERT_OK(r);
 
   reproc_event_source source = { process, REPROC_EVENT_OUT | REPROC_EVENT_ERR,
                                  0 };
@@ -61,10 +61,10 @@ static void timeout(void)
   ASSERT(r == REPROC_ETIMEDOUT);
 
   r = reproc_close(process, REPROC_STREAM_IN);
-  ASSERT(r == 0);
+  ASSERT_OK(r);
 
   r = reproc_poll(&source, 1, 200);
-  ASSERT(r == 0);
+  ASSERT_OK(r);
 
   reproc_destroy(process);
 }

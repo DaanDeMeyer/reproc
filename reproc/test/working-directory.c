@@ -23,18 +23,18 @@ int main(void)
 
   r = reproc_start(process, argv,
                    (reproc_options){ .working_directory = RESOURCE_DIRECTORY });
-  ASSERT(r >= 0);
+  ASSERT_OK(r);
 
   char *output = NULL;
   reproc_sink sink = reproc_sink_string(&output);
   r = reproc_drain(process, sink, sink);
-  ASSERT(r == 0);
+  ASSERT_OK(r);
 
   replace(output, '\\', '/');
-  ASSERT(strcmp(output, RESOURCE_DIRECTORY) == 0);
+  ASSERT_EQ_STR(output, RESOURCE_DIRECTORY);
 
   r = reproc_wait(process, REPROC_INFINITE);
-  ASSERT(r == 0);
+  ASSERT_OK(r);
 
   reproc_destroy(process);
   reproc_free(output);
