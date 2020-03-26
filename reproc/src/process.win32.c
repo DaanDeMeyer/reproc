@@ -131,7 +131,7 @@ static char *argv_join(const char *const *argv)
   assert(argv);
 
   // Determine the size of the concatenated string first.
-  size_t joined_size = 1; // Count the null terminator.
+  size_t joined_size = 1; // Count the NUL terminator.
   for (int i = 0; argv[i] != NULL; i++) {
     joined_size += argument_escaped_size(argv[i]);
 
@@ -166,9 +166,9 @@ static size_t environment_join_size(const char *const *environment)
 {
   assert(environment);
 
-  size_t joined_size = 1; // Count the null terminator.
+  size_t joined_size = 1; // Count the NUL terminator.
   for (int i = 0; environment[i] != NULL; i++) {
-    joined_size += strlen(environment[i]) + 1; // Count the null terminator.
+    joined_size += strlen(environment[i]) + 1; // Count the NUL terminator.
   }
 
   return joined_size;
@@ -186,7 +186,7 @@ static char *environment_join(const char *const *environment)
 
   char *current = joined;
   for (int i = 0; environment[i] != NULL; i++) {
-    size_t to_copy = strlen(environment[i]) + 1; // Include null terminator.
+    size_t to_copy = strlen(environment[i]) + 1; // Include NUL terminator.
     memcpy(current, environment[i], to_copy);
     current += to_copy;
   }

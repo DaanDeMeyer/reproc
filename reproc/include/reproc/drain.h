@@ -44,7 +44,7 @@ reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err);
 
 /*!
 Appends the output of a process (stdout and stderr) to the value of `output`.
-`output` must point to either `NULL` or a null-terminated string.
+`output` must point to either `NULL` or a NUL-terminated string.
 
 Calls `realloc` as necessary to make space in `output` to store the output of
 the child process. Make sure to always call `reproc_free` on the value of
@@ -54,7 +54,7 @@ Because the resulting sink does not store the output size, `strlen` is called
 each time data is read to calculate the current size of the output. This might
 cause performance problems when draining processes that produce a lot of output.
 
-Similarly, this sink will not work on processes that have null terminators in
+Similarly, this sink will not work on processes that have NUL terminators in
 their output because `strlen` is used to calculate the current output size.
 
 Returns `REPROC_ENOMEM` if a call to `realloc` fails. `output` will contain any

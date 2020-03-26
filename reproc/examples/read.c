@@ -61,7 +61,7 @@ int main(int argc, const char *argv[])
 
     // Increase the size of `output` to make sure it can hold the new output.
     // This is definitely not the most performant way to grow a buffer so keep
-    // that in mind. Add 1 to size to leave space for the null terminator which
+    // that in mind. Add 1 to size to leave space for the NUL terminator which
     // isn't included in `output_size`.
     char *result = realloc(output, size + bytes_read + 1);
     if (result == NULL) {

@@ -134,7 +134,7 @@ typedef struct reproc_redirect {
 
 typedef struct reproc_options {
   /*!
-  `environment` is an array of UTF-8 encoded, null terminated strings that
+  `environment` is an array of UTF-8 encoded, NUL-terminated strings that
   specifies the environment for the child process. It has the following layout:
 
   - All elements except the final element must be of the format `NAME=VALUE`.
@@ -280,7 +280,7 @@ to `reproc_wait` or `reproc_stop` and a call to `reproc_destroy`. If an error
 occurs during `reproc_start` all allocated resources are cleaned up before
 `reproc_start` returns and no further action is required.
 
-`argv` is an array of UTF-8 encoded, null terminated strings that specifies the
+`argv` is an array of UTF-8 encoded, NUL-terminated strings that specifies the
 program to execute along with its arguments. It has the following layout:
 
 - The first element indicates the executable to run as a child process. This can

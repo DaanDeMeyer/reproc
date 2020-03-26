@@ -33,7 +33,7 @@ static int signal_mask(int how, const sigset_t *newmask, sigset_t *oldmask)
   return error_unify(r);
 }
 
-// Returns true if the null-terminated string indicated by `path` is a relative
+// Returns true if the NUL-terminated string indicated by `path` is a relative
 // path. A path is relative if any character except the first is a forward slash
 // ('/').
 static bool path_is_relative(const char *path)
@@ -41,7 +41,7 @@ static bool path_is_relative(const char *path)
   return strlen(path) > 0 && path[0] != '/' && strchr(path + 1, '/') != NULL;
 }
 
-// Prepends the null-terminated string indicated by `path` with the current
+// Prepends the NUL-terminated string indicated by `path` with the current
 // working directory. The caller is responsible for freeing the result of this
 // function. If an error occurs, `NULL` is returned and `errno` is set to
 // indicate the error.
@@ -56,7 +56,7 @@ static char *path_prepend_cwd(const char *path)
   // space in `cwd_size` so we can be sure that when `getcwd` succeeds there is
   // sufficient space left in `cwd` to append `path`.
 
-  // +2 reserves space to add a null terminator and potentially a missing '/'
+  // +2 reserves space to add a NUL terminator and potentially a missing '/'
   // after the current working directory.
   char *cwd = calloc(cwd_size + path_size + 2, sizeof(char));
   if (cwd == NULL) {
@@ -90,7 +90,7 @@ static char *path_prepend_cwd(const char *path)
   }
 
   // We've made sure there's sufficient space left in `cwd` to add `path` and a
-  // null terminator.
+  // NUL terminator.
   memcpy(cwd + cwd_size, path, path_size);
   cwd[cwd_size + path_size] = '\0';
 

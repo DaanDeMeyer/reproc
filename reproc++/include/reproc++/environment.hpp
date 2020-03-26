@@ -50,7 +50,7 @@ const char *const *environment::from(const Environment &environment)
     const auto &name = entry.first;
     const auto &value = entry.second;
 
-    // We add 2 to the size to reserve space for the '=' sign and the null
+    // We add 2 to the size to reserve space for the '=' sign and the NUL
     // terminator at the end of the string.
     char *string = new char[name.size() + value.size() + 2];
 
