@@ -434,8 +434,8 @@ Release all resources associated with `process` including the memory allocated
 by `reproc_new`. Calling this function before a succesfull call to `reproc_wait`
 can result in resource leaks.
 
-Does not nothing if `process` is an invalid `reproc_t` instance and always
-returns an invalid `reproc_t` instance (`NULL`). By assigning the result of
+Does nothing if `process` is an invalid `reproc_t` instance and always returns
+an invalid `reproc_t` instance (`NULL`). By assigning the result of
 `reproc_destroy` to the instance being destroyed, it can be safely called
 multiple times on the same instance.
 
