@@ -91,7 +91,7 @@ static size_t argument_escape(char *dest, const char *argument)
   size_t argument_size = strlen(argument);
 
   if (!argument_should_escape(argument)) {
-    memcpy(dest, argument, argument_size);
+    strcpy(dest, argument); // NOLINT
     return argument_size;
   }
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#define __USE_MINGW_ANSI_STDIO 1 // Add %zu on MinGW.
+
 #include <stdio.h>
 #include <stdlib.h>
 
