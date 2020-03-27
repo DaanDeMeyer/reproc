@@ -184,16 +184,16 @@ static pid_t process_fork(const int *except, size_t num_except)
     // errors from `signal_mask` and `read`. This puts the responsibility
     // for cleaning up the process in the hands of the caller.
 
-    r = signal_mask(SIG_SETMASK, &mask.old, &mask.old);
-    ASSERT_UNUSED(r == 0);
+    int q = signal_mask(SIG_SETMASK, &mask.old, &mask.old);
+    ASSERT_UNUSED(q == 0);
 
     // Close the error pipe write end on the parent's side so `read` will return
     // when it is closed on the child side as well.
     pipe_destroy(pipe.write);
 
     int child_errno = 0;
-    r = (int) read(pipe.read, &child_errno, sizeof(child_errno));
-    ASSERT_UNUSED(r >= 0);
+    q = (int) read(pipe.read, &child_errno, sizeof(child_errno));
+    ASSERT_UNUSED(q >= 0);
 
     if (child_errno > 0) {
       // If the child writes to the error pipe and exits, we're certain the
@@ -204,8 +204,6 @@ static pid_t process_fork(const int *except, size_t num_except)
       if (r == child) {
         r = -child_errno;
       }
-    } else {
-      r = 0;
     }
 
     pipe_destroy(pipe.read);
