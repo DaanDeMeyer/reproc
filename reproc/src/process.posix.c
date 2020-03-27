@@ -164,13 +164,15 @@ static pid_t process_fork(const int *except, size_t num_except)
   if (r < 0) {
     // `fork` error.
 
-    r = signal_mask(SIG_SETMASK, &mask.new, &mask.old);
-    ASSERT_UNUSED(r == 0);
+    r = error_unify(r); // Save `errno`.
+
+    int q = signal_mask(SIG_SETMASK, &mask.new, &mask.old);
+    ASSERT_UNUSED(q == 0);
 
     pipe_destroy(pipe.read);
     pipe_destroy(pipe.write);
 
-    return error_unify(r);
+    return r;
   }
 
   if (r > 0) {
