@@ -10,7 +10,6 @@
 #include "process.h"
 #include "redirect.h"
 
-#include <assert.h>
 #include <stdlib.h>
 
 struct reproc_t {
@@ -39,12 +38,12 @@ const int REPROC_DEADLINE = -2;
 static int setup_input(pipe_type *pipe, const uint8_t *data, size_t size)
 {
   if (data == NULL || size == 0) {
-    assert(data == NULL);
-    assert(size == 0);
+    ASSERT(data == NULL);
+    ASSERT(size == 0);
     return 0;
   }
 
-  assert(pipe && *pipe != PIPE_INVALID);
+  ASSERT(pipe && *pipe != PIPE_INVALID);
 
   // `reproc_write` only needs the child process stdin pipe to be initialized.
   size_t written = 0;
@@ -63,7 +62,7 @@ static int setup_input(pipe_type *pipe, const uint8_t *data, size_t size)
       return r;
     }
 
-    assert(written + (size_t) r <= size);
+    ASSERT(written + (size_t) r <= size);
     written += (size_t) r;
   }
 
@@ -102,8 +101,8 @@ static int expiry(int timeout, int64_t deadline)
 static size_t find_earliest_deadline(reproc_event_source *sources,
                                      size_t num_sources)
 {
-  assert(sources);
-  assert(num_sources > 0);
+  ASSERT(sources);
+  ASSERT(num_sources > 0);
 
   size_t earliest = 0;
   int min = REPROC_INFINITE;
@@ -416,7 +415,7 @@ int reproc_wait(reproc_t *process, int timeout)
     return r;
   }
 
-  assert(set.events & PIPE_EVENT_EXIT);
+  ASSERT(set.events & PIPE_EVENT_EXIT);
 
   r = process_wait(process->handle);
   if (r < 0) {

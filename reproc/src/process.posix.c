@@ -6,7 +6,6 @@
 #include "macro.h"
 #include "pipe.h"
 
-#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -47,7 +46,7 @@ static bool path_is_relative(const char *path)
 // indicate the error.
 static char *path_prepend_cwd(const char *path)
 {
-  assert(path);
+  ASSERT(path);
 
   size_t path_size = strlen(path);
   size_t cwd_size = PATH_MAX;

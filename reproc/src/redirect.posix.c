@@ -5,7 +5,6 @@
 #include "error.h"
 #include "pipe.h"
 
-#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -26,7 +25,7 @@ static FILE *stream_to_file(REPROC_STREAM stream)
 
 int redirect_parent(int *child, REPROC_STREAM stream)
 {
-  assert(child);
+  ASSERT(child);
 
   int r = -EINVAL;
 
@@ -51,7 +50,7 @@ int redirect_parent(int *child, REPROC_STREAM stream)
 
 int redirect_discard(int *child, REPROC_STREAM stream)
 {
-  assert(child);
+  ASSERT(child);
 
   int mode = stream == REPROC_STREAM_IN ? O_RDONLY : O_WRONLY;
 
@@ -67,7 +66,7 @@ int redirect_discard(int *child, REPROC_STREAM stream)
 
 int redirect_file(int *child, FILE *file)
 {
-  assert(child);
+  ASSERT(child);
 
   int r = fileno(file);
   if (r < 0) {

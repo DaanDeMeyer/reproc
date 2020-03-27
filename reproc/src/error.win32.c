@@ -6,7 +6,6 @@
 
 #include <reproc/reproc.h>
 
-#include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <windows.h>
@@ -25,7 +24,7 @@ int error_unify(int r)
 
 int error_unify_or_else(int r, int success)
 {
-  assert(GetLastError() <= INT_MAX);
+  ASSERT(GetLastError() <= INT_MAX);
 
   if (r < -1) {
     return r;

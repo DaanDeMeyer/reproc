@@ -4,7 +4,6 @@
 
 #include "error.h"
 
-#include <assert.h>
 #include <winsock2.h>
 
 int init(void)

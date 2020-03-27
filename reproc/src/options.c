@@ -1,7 +1,5 @@
 #include "options.h"
 
-#include <assert.h>
-
 #include "error.h"
 
 static int parse_redirect(reproc_redirect *redirect,
@@ -48,7 +46,7 @@ static int parse_redirect(reproc_redirect *redirect,
 
 int parse_options(reproc_options *options, const char *const *argv)
 {
-  assert(options);
+  ASSERT(options);
 
   int r = -1;
 

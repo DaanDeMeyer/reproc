@@ -5,7 +5,6 @@
 #include "error.h"
 #include "macro.h"
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <windows.h>
@@ -38,7 +37,7 @@ static SECURITY_ATTRIBUTES HANDLE_DO_NOT_INHERIT = {
 
 static bool argument_should_escape(const char *argument)
 {
-  assert(argument);
+  ASSERT(argument);
 
   bool should_escape = false;
 
@@ -53,7 +52,7 @@ static bool argument_should_escape(const char *argument)
 
 static size_t argument_escaped_size(const char *argument)
 {
-  assert(argument);
+  ASSERT(argument);
 
   size_t argument_size = strlen(argument);
 
@@ -85,8 +84,8 @@ static size_t argument_escaped_size(const char *argument)
 
 static size_t argument_escape(char *dest, const char *argument)
 {
-  assert(dest);
-  assert(argument);
+  ASSERT(dest);
+  ASSERT(argument);
 
   size_t argument_size = strlen(argument);
 
@@ -128,7 +127,7 @@ static size_t argument_escape(char *dest, const char *argument)
 
 static char *argv_join(const char *const *argv)
 {
-  assert(argv);
+  ASSERT(argv);
 
   // Determine the size of the concatenated string first.
   size_t joined_size = 1; // Count the NUL terminator.
@@ -164,7 +163,7 @@ static char *argv_join(const char *const *argv)
 
 static size_t environment_join_size(const char *const *environment)
 {
-  assert(environment);
+  ASSERT(environment);
 
   size_t joined_size = 1; // Count the NUL terminator.
   for (int i = 0; environment[i] != NULL; i++) {
@@ -176,7 +175,7 @@ static size_t environment_join_size(const char *const *environment)
 
 static char *environment_join(const char *const *environment)
 {
-  assert(environment);
+  ASSERT(environment);
 
   char *joined = calloc(environment_join_size(environment), sizeof(char));
   if (joined == NULL) {
@@ -198,10 +197,10 @@ static char *environment_join(const char *const *environment)
 
 static wchar_t *string_to_wstring(const char *string, size_t size)
 {
-  assert(string);
+  ASSERT(string);
   // Overflow check although we really don't expect this to ever happen. This
   // makes the following casts to `int` safe.
-  assert(size <= INT_MAX);
+  ASSERT(size <= INT_MAX);
 
   // Determine wstring size (`MultiByteToWideChar` returns the required size if
   // its last two arguments are `NULL` and 0).
@@ -236,7 +235,7 @@ static const DWORD NUM_ATTRIBUTES = 1;
 static LPPROC_THREAD_ATTRIBUTE_LIST setup_attribute_list(HANDLE *handles,
                                                          size_t num_handles)
 {
-  assert(handles);
+  ASSERT(handles);
 
   int r = 0;
 
@@ -286,13 +285,13 @@ int process_start(HANDLE *process,
                   const char *const *argv,
                   struct process_options options)
 {
-  assert(process);
+  ASSERT(process);
 
   if (argv == NULL) {
     return -ERROR_CALL_NOT_IMPLEMENTED;
   }
 
-  assert(argv[0] != NULL);
+  ASSERT(argv[0] != NULL);
 
   char *command_line = NULL;
   wchar_t *command_line_wstring = NULL;
@@ -413,7 +412,7 @@ finish:
 
 int process_wait(HANDLE process)
 {
-  assert(process);
+  ASSERT(process);
 
   int r = 0;
 
@@ -435,13 +434,13 @@ int process_wait(HANDLE process)
     status = (DWORD) REPROC_SIGTERM;
   }
 
-  assert(status <= INT_MAX);
+  ASSERT(status <= INT_MAX);
   return (int) status;
 }
 
 int process_terminate(HANDLE process)
 {
-  assert(process && process != PROCESS_INVALID);
+  ASSERT(process && process != PROCESS_INVALID);
 
   // `GenerateConsoleCtrlEvent` can only be called on a process group. To call
   // `GenerateConsoleCtrlEvent` on a single child process it has to be put in
@@ -453,7 +452,7 @@ int process_terminate(HANDLE process)
 
 int process_kill(HANDLE process)
 {
-  assert(process && process != PROCESS_INVALID);
+  ASSERT(process && process != PROCESS_INVALID);
 
   // We use 137 (`SIGKILL`) as the exit status because it is the same exit
   // status as a process that is stopped with the `SIGKILL` signal on POSIX

@@ -5,7 +5,6 @@
 #include "error.h"
 #include "handle.h"
 
-#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -17,8 +16,8 @@ const int PIPE_INVALID = -1;
 
 int pipe_init(int *read, int *write)
 {
-  assert(read);
-  assert(write);
+  ASSERT(read);
+  ASSERT(write);
 
   int pair[] = { PIPE_INVALID, PIPE_INVALID };
   int r = -1;
@@ -69,8 +68,8 @@ int pipe_nonblocking(int pipe, bool enable)
 
 int pipe_read(int pipe, uint8_t *buffer, size_t size)
 {
-  assert(pipe != PIPE_INVALID);
-  assert(buffer);
+  ASSERT(pipe != PIPE_INVALID);
+  ASSERT(buffer);
 
   int r = (int) read(pipe, buffer, size);
 
@@ -84,8 +83,8 @@ int pipe_read(int pipe, uint8_t *buffer, size_t size)
 
 int pipe_write(int pipe, const uint8_t *buffer, size_t size)
 {
-  assert(pipe != PIPE_INVALID);
-  assert(buffer);
+  ASSERT(pipe != PIPE_INVALID);
+  ASSERT(buffer);
 
   int r = (int) write(pipe, buffer, size);
 
@@ -94,7 +93,7 @@ int pipe_write(int pipe, const uint8_t *buffer, size_t size)
 
 int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
 {
-  assert(num_sets * PIPES_PER_SET <= INT_MAX);
+  ASSERT(num_sets * PIPES_PER_SET <= INT_MAX);
 
   struct pollfd *pollfds = NULL;
   size_t num_pipes = num_sets * PIPES_PER_SET;

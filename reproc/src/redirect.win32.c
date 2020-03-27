@@ -5,7 +5,6 @@
 #include "error.h"
 #include "pipe.h"
 
-#include <assert.h>
 #include <io.h>
 #include <windows.h>
 
@@ -25,7 +24,7 @@ static DWORD stream_to_id(REPROC_STREAM stream)
 
 int redirect_parent(HANDLE *child, REPROC_STREAM stream)
 {
-  assert(child);
+  ASSERT(child);
   int r = 0;
 
   DWORD id = stream_to_id(stream);
@@ -55,7 +54,7 @@ static SECURITY_ATTRIBUTES INHERIT = { .nLength = sizeof(SECURITY_ATTRIBUTES),
 
 int redirect_discard(HANDLE *child, REPROC_STREAM stream)
 {
-  assert(child);
+  ASSERT(child);
 
   DWORD mode = stream == REPROC_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
   int r = 0;

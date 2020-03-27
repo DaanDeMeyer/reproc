@@ -4,7 +4,6 @@
 
 #include "error.h"
 
-#include <assert.h>
 #include <time.h>
 
 int64_t reproc_now(void)

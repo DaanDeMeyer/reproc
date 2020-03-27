@@ -6,7 +6,6 @@
 #include "handle.h"
 #include "macro.h"
 
-#include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <windows.h>
@@ -17,7 +16,7 @@ const SOCKET PIPE_INVALID = INVALID_SOCKET;
 // Inspired by https://gist.github.com/geertj/4325783.
 static int socketpair(int domain, int type, int protocol, SOCKET *out)
 {
-  assert(out);
+  ASSERT(out);
 
   SOCKET server = PIPE_INVALID;
   SOCKET pair[] = { PIPE_INVALID, PIPE_INVALID };
@@ -94,8 +93,8 @@ finish:
 
 int pipe_init(SOCKET *read, SOCKET *write)
 {
-  assert(read);
-  assert(write);
+  ASSERT(read);
+  ASSERT(write);
 
   SOCKET pair[] = { PIPE_INVALID, PIPE_INVALID };
   int r = 0;
@@ -151,9 +150,9 @@ int pipe_nonblocking(SOCKET pipe, bool enable)
 
 int pipe_read(SOCKET pipe, uint8_t *buffer, size_t size)
 {
-  assert(pipe != PIPE_INVALID);
-  assert(buffer);
-  assert(size <= INT_MAX);
+  ASSERT(pipe != PIPE_INVALID);
+  ASSERT(buffer);
+  ASSERT(size <= INT_MAX);
 
   int r = recv(pipe, (char *) buffer, (int) size, 0);
 
@@ -166,9 +165,9 @@ int pipe_read(SOCKET pipe, uint8_t *buffer, size_t size)
 
 int pipe_write(SOCKET pipe, const uint8_t *buffer, size_t size)
 {
-  assert(pipe != PIPE_INVALID);
-  assert(buffer);
-  assert(size <= INT_MAX);
+  ASSERT(pipe != PIPE_INVALID);
+  ASSERT(buffer);
+  ASSERT(size <= INT_MAX);
 
   int r = send(pipe, (const char *) buffer, (int) size, 0);
 
@@ -181,7 +180,7 @@ int pipe_write(SOCKET pipe, const uint8_t *buffer, size_t size)
 
 int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
 {
-  assert(num_sets * PIPES_PER_SET <= INT_MAX);
+  ASSERT(num_sets * PIPES_PER_SET <= INT_MAX);
 
   WSAPOLLFD *pollfds = NULL;
   size_t num_pipes = num_sets * PIPES_PER_SET;

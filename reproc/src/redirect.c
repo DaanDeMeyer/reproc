@@ -1,14 +1,14 @@
 #include "redirect.h"
 
-#include <assert.h>
+#include "error.h"
 
 static int redirect_pipe(pipe_type *parent,
                          handle_type *child,
                          REPROC_STREAM stream,
                          bool nonblocking)
 {
-  assert(parent);
-  assert(child);
+  ASSERT(parent);
+  ASSERT(child);
 
   pipe_type pipe[] = { PIPE_INVALID, PIPE_INVALID };
   int r = -1;
@@ -44,8 +44,8 @@ int redirect_init(pipe_type *parent,
                   bool nonblocking,
                   handle_type out)
 {
-  assert(parent);
-  assert(child);
+  ASSERT(parent);
+  ASSERT(child);
 
   int r = REPROC_EINVAL;
 
@@ -81,7 +81,7 @@ int redirect_init(pipe_type *parent,
       break;
 
     case REPROC_REDIRECT_HANDLE:
-      assert(redirect.handle);
+      ASSERT(redirect.handle);
 
       r = 0;
 
@@ -91,7 +91,7 @@ int redirect_init(pipe_type *parent,
       break;
 
     case REPROC_REDIRECT_FILE:
-      assert(redirect.file);
+      ASSERT(redirect.file);
 
       r = redirect_file(child, redirect.file);
       if (r < 0) {
@@ -103,8 +103,8 @@ int redirect_init(pipe_type *parent,
       break;
 
     case REPROC_REDIRECT_STDOUT:
-      assert(stream == REPROC_STREAM_ERR);
-      assert(out != HANDLE_INVALID);
+      ASSERT(stream == REPROC_STREAM_ERR);
+      ASSERT(out != HANDLE_INVALID);
 
       r = 0;
 
