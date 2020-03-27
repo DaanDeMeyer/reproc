@@ -165,7 +165,7 @@ function(reproc_common TARGET LANGUAGE NAME DIRECTORY)
     )
   endif()
 
-  if(REPROC_SANITIZERS)
+  if(REPROC_SANITIZERS AND NOT MSVC AND NOT MINGW)
     if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.15.0)
       set_property(
         TARGET ${TARGET}
@@ -173,14 +173,12 @@ function(reproc_common TARGET LANGUAGE NAME DIRECTORY)
       )
     endif()
 
-    if(NOT MSVC AND NOT MINGW)
-      target_compile_options(${TARGET} PRIVATE
-        -fsanitize=address,undefined
-        -fno-omit-frame-pointer
-      )
+    target_compile_options(${TARGET} PRIVATE
+      -fsanitize=address,undefined
+      -fno-omit-frame-pointer
+    )
 
-      target_link_libraries(${TARGET} PRIVATE -fsanitize=address,undefined)
-    endif()
+    target_link_libraries(${TARGET} PRIVATE -fsanitize=address,undefined)
   endif()
 endfunction()
 
