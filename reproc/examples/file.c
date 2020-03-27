@@ -10,6 +10,7 @@ int main(int argc, const char *argv[])
 
   FILE *file = fopen("reproc.out", "w");
   if (file == NULL) {
+    fprintf(stderr, "Failed to open reproc.out for writing\n");
     return EXIT_FAILURE;
   }
 
