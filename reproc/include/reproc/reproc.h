@@ -202,6 +202,15 @@ typedef struct reproc_options {
   milliseconds. If the deadline is exceeded, Any ongoing and future calls to
   `reproc_poll` return `REPROC_ETIMEDOUT`.
 
+  Note that only `reproc_poll` takes the deadline into account. More
+  specifically, if the `nonblocking` option is not enabled, `reproc_read` and
+  `reproc_write` can deadlock waiting on the child process to perform I/O. If
+  this is a problem, enable the `nonblocking` option and use `reproc_poll`
+  together with a deadline/timeout to avoid any deadlocks.
+
+  If `REPROC_DEADLINE` is passed as the timeout to `reproc_wait`, it waits until
+  the deadline expires.
+
   When `deadline` is zero, no deadline is set for the process.
   */
   int deadline;
