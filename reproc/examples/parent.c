@@ -1,6 +1,5 @@
 #include <reproc/reproc.h>
 
-#include <stdio.h>
 #include <stdlib.h>
 
 // Forwards the provided command to `reproc_start` and redirects the standard
@@ -10,7 +9,7 @@ int main(int argc, const char *argv[])
   if (argc <= 1) {
     fprintf(stderr,
             "No arguments provided. Example usage: ./inherit cmake --help");
-    return 1;
+    return EXIT_FAILURE;
   }
 
   reproc_t *process = NULL;
@@ -39,5 +38,5 @@ finish:
     fprintf(stderr, "%s\n", reproc_strerror(r));
   }
 
-  return abs(r);
+  return r < 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }

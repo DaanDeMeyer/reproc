@@ -1,10 +1,7 @@
 #include <reproc/drain.h>
 #include <reproc/reproc.h>
 
-#include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 // Shows the output of the given command using `reproc_drain`.
 int main(int argc, const char *argv[])
@@ -58,5 +55,5 @@ finish:
     fprintf(stderr, "%s\n", reproc_strerror(r));
   }
 
-  return abs(r);
+  return r < 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }

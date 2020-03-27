@@ -1,6 +1,5 @@
 #include <reproc/run.h>
 
-#include <stdio.h>
 #include <stdlib.h>
 
 // Start a process from the arguments given on the command line. Inherit the
@@ -16,5 +15,5 @@ int main(int argc, const char *argv[])
     fprintf(stderr, "%s\n", reproc_strerror(r));
   }
 
-  return abs(r);
+  return r < 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }

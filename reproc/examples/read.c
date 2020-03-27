@@ -1,7 +1,5 @@
 #include <reproc/reproc.h>
 
-#include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -106,5 +104,5 @@ finish:
     fprintf(stderr, "%s\n", reproc_strerror(r));
   }
 
-  return abs(r);
+  return r < 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }
