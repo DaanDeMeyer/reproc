@@ -64,7 +64,9 @@ typedef enum {
   /*! Redirect to a `FILE *`. */
   REPROC_REDIRECT_FILE,
   /*! Redirect to child process stdout. Only valid for stderr. */
-  REPROC_REDIRECT_STDOUT
+  REPROC_REDIRECT_STDOUT,
+  /*! Redirect to a specific path. */
+  REPROC_REDIRECT_PATH
 } REPROC_REDIRECT;
 
 /*! Used to tell `reproc_stop` how to stop a child process. */
@@ -110,7 +112,7 @@ typedef struct reproc_redirect {
   needed in the parent process anymore.
 
   If `handle` is set, `type` must be unset or set to `REPROC_REDIRECT_HANDLE`
-  and `file` must be unset.
+  and `file`, `path` must be unset.
   */
   reproc_handle handle;
   /*!
@@ -127,9 +129,19 @@ typedef struct reproc_redirect {
   mode.
 
   If `file` is set, `type` must be unset or set to `REPROC_REDIRECT_FILE` and
-  `handle` must be unset.
+  `handle`, `path` must be unset.
   */
   FILE *file;
+  /*!
+  Redirect a stream to a given path.
+
+  reproc will create or open the file at the given path. Depending on the
+  stream, the file is opened in read or write mode.
+
+  If `path` is set, `type` must be unset or set to `REPROC_REDIRECT_PATH` and
+  `handle`, `file` must be unset.
+  */
+  const char *path;
 } reproc_redirect;
 
 typedef struct reproc_options {
@@ -172,22 +184,30 @@ typedef struct reproc_options {
     Use `REPROC_REDIRECT_PARENT` instead of `REPROC_REDIRECT_PIPE` when `type`
     is unset.
 
-    When this option is set, `discard` may not be set.
+    When this option is set, `discard`, `file` and `path` must be unset.
     */
     bool parent;
     /*!
     Use `REPROC_REDIRECT_DISCARD` instead of `REPROC_REDIRECT_PIPE` when `type`
     is unset.
 
-    When this option is set, `parent` may not be set.
+    When this option is set, `parent`, `file` and `path` must be unset.
     */
     bool discard;
     /*!
     Shorthand for redirecting stdout and stderr to the same file.
 
-    If this option is set, `out` and `err` must be unset.
+    If this option is set, `out`, `err`, `parent`, `discard` and `path` must be
+    unset.
     */
     FILE *file;
+    /*!
+    Shorthand for redirecting stdout and stderr to the same path.
+
+    If this option is set, `out`, `err`, `parent`, `discard` and `file` must be
+    unset.
+    */
+    const char *path;
   } redirect;
   /*!
   Stop actions that are passed to `reproc_stop` in `reproc_destroy` to stop the

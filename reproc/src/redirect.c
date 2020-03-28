@@ -112,6 +112,18 @@ int redirect_init(pipe_type *parent,
       *parent = PIPE_INVALID;
 
       break;
+
+    case REPROC_REDIRECT_PATH:
+      ASSERT(redirect.path);
+
+      r = redirect_path(child, stream, redirect.path);
+      if (r < 0) {
+        break;
+      }
+
+      *parent = PIPE_INVALID;
+
+      break;
   }
 
   return r;
@@ -127,6 +139,7 @@ handle_type redirect_destroy(handle_type child, REPROC_REDIRECT type)
       pipe_destroy((pipe_type) child);
       break;
     case REPROC_REDIRECT_DISCARD:
+    case REPROC_REDIRECT_PATH:
       handle_destroy(child);
       break;
     case REPROC_REDIRECT_PARENT:

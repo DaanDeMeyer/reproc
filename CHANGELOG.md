@@ -60,6 +60,8 @@
 
   Reflect that sink.h contains `reproc_drain` by renaming it to drain.h.
 
+- Add `REPROC_REDIRECT_PATH` and shorthand `path` options.
+
 ### reproc++
 
 - Equivalent changes as those done for reproc.

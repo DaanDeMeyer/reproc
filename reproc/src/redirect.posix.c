@@ -50,11 +50,14 @@ int redirect_parent(int *child, REPROC_STREAM stream)
 
 int redirect_discard(int *child, REPROC_STREAM stream)
 {
+  return redirect_path(child, stream, "/dev/null");
+}
+
+int redirect_file(int *child, FILE *file)
+{
   ASSERT(child);
 
-  int mode = stream == REPROC_STREAM_IN ? O_RDONLY : O_WRONLY;
-
-  int r = open("/dev/null", mode | O_CLOEXEC);
+  int r = fileno(file);
   if (r < 0) {
     return error_unify(r);
   }
@@ -64,11 +67,14 @@ int redirect_discard(int *child, REPROC_STREAM stream)
   return 0;
 }
 
-int redirect_file(int *child, FILE *file)
+int redirect_path(int *child, REPROC_STREAM stream, const char *path)
 {
   ASSERT(child);
+  ASSERT(path);
 
-  int r = fileno(file);
+  int mode = stream == REPROC_STREAM_IN ? O_RDONLY : O_WRONLY;
+
+  int r = open(path, mode | O_CREAT | O_CLOEXEC, 0640);
   if (r < 0) {
     return error_unify(r);
   }

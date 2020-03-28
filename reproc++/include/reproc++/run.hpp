@@ -30,7 +30,8 @@ inline std::pair<int, std::error_code> run(const arguments &arguments,
 {
   struct options modified = options::clone(options);
 
-  if (!options.redirect.discard && options.redirect.file == nullptr) {
+  if (!options.redirect.discard && options.redirect.file == nullptr &&
+      options.redirect.path == nullptr) {
     modified.redirect.parent = true;
   }
 

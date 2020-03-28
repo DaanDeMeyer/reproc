@@ -21,3 +21,5 @@ int redirect_parent(handle_type *child, REPROC_STREAM stream);
 int redirect_discard(handle_type *child, REPROC_STREAM stream);
 
 int redirect_file(handle_type *child, FILE *file);
+
+int redirect_path(handle_type *child, REPROC_STREAM stream, const char *path);

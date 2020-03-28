@@ -4,8 +4,10 @@
 
 #include "error.h"
 #include "pipe.h"
+#include "utf.h"
 
 #include <io.h>
+#include <stdlib.h>
 #include <windows.h>
 
 static DWORD stream_to_id(REPROC_STREAM stream)
@@ -46,7 +48,7 @@ int redirect_parent(HANDLE *child, REPROC_STREAM stream)
   return 0;
 }
 
-enum { FILE_NO_SHARE = 0, FILE_NO_TEMPLATE = 0 };
+enum { FILE_NO_TEMPLATE = 0 };
 
 static SECURITY_ATTRIBUTES INHERIT = { .nLength = sizeof(SECURITY_ATTRIBUTES),
                                        .bInheritHandle = true,
@@ -54,21 +56,7 @@ static SECURITY_ATTRIBUTES INHERIT = { .nLength = sizeof(SECURITY_ATTRIBUTES),
 
 int redirect_discard(HANDLE *child, REPROC_STREAM stream)
 {
-  ASSERT(child);
-
-  DWORD mode = stream == REPROC_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
-  int r = 0;
-
-  HANDLE handle = CreateFile("NUL", mode, FILE_NO_SHARE, &INHERIT,
-                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
-                             (HANDLE) FILE_NO_TEMPLATE);
-  if (handle == INVALID_HANDLE_VALUE) {
-    return error_unify(r);
-  }
-
-  *child = handle;
-
-  return 0;
+  return redirect_path(child, stream, "NUL");
 }
 
 int redirect_file(HANDLE *child, FILE *file)
@@ -86,6 +74,40 @@ int redirect_file(HANDLE *child, FILE *file)
   }
 
   *child = (HANDLE) result;
+
+  return error_unify(r);
+}
+
+int redirect_path(handle_type *child,
+                  REPROC_STREAM stream,
+                  const char *path)
+{
+  ASSERT(child);
+  ASSERT(path);
+
+  DWORD mode = stream == REPROC_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
+  HANDLE handle = HANDLE_INVALID;
+  int r = 0;
+
+  wchar_t *wpath = utf16_from_utf8(path, strlen(path));
+  if (wpath == NULL) {
+    goto finish;
+  }
+
+  handle = CreateFileW(wpath, mode, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                       &INHERIT, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
+                       (HANDLE) FILE_NO_TEMPLATE);
+  if (handle == INVALID_HANDLE_VALUE) {
+    goto finish;
+  }
+
+  *child = handle;
+  handle = HANDLE_INVALID;
+  r = 1;
+
+finish:
+  free(wpath);
+  handle_destroy(handle);
 
   return error_unify(r);
 }

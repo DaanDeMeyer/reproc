@@ -66,6 +66,7 @@ struct redirect {
   enum type type;
   reproc::handle handle;
   FILE *file;
+  const char *path;
 };
 
 struct options {
@@ -81,6 +82,7 @@ struct options {
     bool parent;
     bool discard;
     FILE *file;
+    const char *path;
   } redirect = {};
 
   struct stop_actions stop = {};
