@@ -65,6 +65,12 @@ if(REPROC_TEST)
   enable_testing()
 endif()
 
+# Build type
+
+if(REPROC_DEVELOP AND NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE Debug)
+endif()
+
 # clang-tidy
 
 if(REPROC_TIDY)
