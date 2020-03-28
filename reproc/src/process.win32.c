@@ -4,6 +4,7 @@
 
 #include "error.h"
 #include "macro.h"
+#include "utf.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -195,41 +196,6 @@ static char *environment_join(const char *const *environment)
   return joined;
 }
 
-static wchar_t *string_to_wstring(const char *string, size_t size)
-{
-  ASSERT(string);
-  // Overflow check although we really don't expect this to ever happen. This
-  // makes the following casts to `int` safe.
-  ASSERT(size <= INT_MAX);
-
-  // Determine wstring size (`MultiByteToWideChar` returns the required size if
-  // its last two arguments are `NULL` and 0).
-  int r = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string, (int) size,
-                              NULL, 0);
-  if (r == 0) {
-    return NULL;
-  }
-
-  // `MultiByteToWideChar` does not return negative values so the cast to
-  // `size_t` is safe.
-  wchar_t *wstring = calloc((size_t) r, sizeof(wchar_t));
-  if (wstring == NULL) {
-    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    return NULL;
-  }
-
-  // Now we pass our allocated string and its size as the last two arguments
-  // instead of `NULL` and 0 which makes `MultiByteToWideChar` actually perform
-  // the conversion.
-  r = MultiByteToWideChar(CP_UTF8, 0, string, (int) size, wstring, r);
-  if (r == 0) {
-    free(wstring);
-    return NULL;
-  }
-
-  return wstring;
-}
-
 static const DWORD NUM_ATTRIBUTES = 1;
 
 static LPPROC_THREAD_ATTRIBUTE_LIST setup_attribute_list(HANDLE *handles,
@@ -310,8 +276,8 @@ int process_start(HANDLE *process,
   }
 
   // Convert UTF-8 to UTF-16 as required by `CreateProcessW`.
-  command_line_wstring = string_to_wstring(command_line,
-                                           strlen(command_line) + 1);
+  command_line_wstring = utf16_from_utf8(command_line,
+                                         strlen(command_line) + 1);
   if (command_line_wstring == NULL) {
     goto finish;
   }
@@ -324,7 +290,7 @@ int process_start(HANDLE *process,
     }
 
     size_t joined_size = environment_join_size(options.environment);
-    environment_line_wstring = string_to_wstring(environment_line, joined_size);
+    environment_line_wstring = utf16_from_utf8(environment_line, joined_size);
     if (environment_line_wstring == NULL) {
       goto finish;
     }
@@ -333,8 +299,8 @@ int process_start(HANDLE *process,
   // Idem for `working_directory` if it isn't `NULL`.
   if (options.working_directory != NULL) {
     size_t working_directory_size = strlen(options.working_directory) + 1;
-    working_directory_wstring = string_to_wstring(options.working_directory,
-                                                  working_directory_size);
+    working_directory_wstring = utf16_from_utf8(options.working_directory,
+                                                working_directory_size);
     if (working_directory_wstring == NULL) {
       goto finish;
     }
