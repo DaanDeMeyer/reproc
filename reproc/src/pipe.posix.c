@@ -143,7 +143,7 @@ int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
 finish:
   free(pollfds);
 
-  return r;
+  return error_unify(r);
 }
 
 int pipe_destroy(int pipe)
