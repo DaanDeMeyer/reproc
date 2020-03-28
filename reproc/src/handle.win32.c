@@ -8,12 +8,7 @@
 
 const HANDLE HANDLE_INVALID = INVALID_HANDLE_VALUE; // NOLINT
 
-int handle_cloexec(handle_type handle, bool enable)
-{
-  (void) handle;
-  (void) enable;
-  return -ERROR_CALL_NOT_IMPLEMENTED;
-}
+// `handle_cloexec` is POSIX-only.
 
 HANDLE handle_destroy(HANDLE handle)
 {
