@@ -159,11 +159,11 @@ jobs:
       - name: "reproc: drain"
         run: build/reproc/examples/drain cmake --help
 
-      - name: "reproc: file"
-        run: build/reproc/examples/file cmake --help
-
       - name: "reproc: parent"
         run: build/reproc/examples/parent cmake --help
+
+      - name: "reproc: path"
+        run: build/reproc/examples/path cmake --help
 
       - name: "reproc: read"
         run: build/reproc/examples/read cmake --help
