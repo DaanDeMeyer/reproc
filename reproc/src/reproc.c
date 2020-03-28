@@ -153,12 +153,12 @@ int reproc_start(reproc_t *process,
   } child = { HANDLE_INVALID, HANDLE_INVALID, HANDLE_INVALID, PIPE_INVALID };
   int r = -1;
 
-  r = parse_options(&options, argv);
+  r = init();
   if (r < 0) {
-    goto finish;
+    return r; // Make sure we can always call `deinit` in `finish`.
   }
 
-  r = init();
+  r = parse_options(&options, argv);
   if (r < 0) {
     goto finish;
   }
