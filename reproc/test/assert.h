@@ -24,6 +24,13 @@
 #define ASSERT_EQ_INT(left, right)                                             \
   ASSERT_MSG(left == right, "%i == %i", left, right)
 
+#ifdef _WIN32
+  #define ABORT() exit(EXIT_FAILURE)
+#else
+  // Use `abort` so we get a coredump.
+  #define ABORT() abort()
+#endif
+
 #define ASSERT_MSG(expression, format, ...)                                    \
   do {                                                                         \
     if (!(expression)) {                                                       \
@@ -32,6 +39,6 @@
                                                                                \
       fflush(stderr);                                                          \
                                                                                \
-      exit(EXIT_FAILURE);                                                      \
+      ABORT();                                                                 \
     }                                                                          \
   } while (0)
