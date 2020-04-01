@@ -109,6 +109,11 @@ static size_t find_earliest_deadline(reproc_event_source *sources,
 
   for (size_t i = 0; i < num_sources; i++) {
     reproc_t *process = sources[i].process;
+
+    if (process == NULL) {
+      continue;
+    }
+
     int current = expiry(REPROC_INFINITE, process->deadline);
 
     if (min == REPROC_INFINITE || current < min) {
@@ -262,7 +267,9 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
   ASSERT_EINVAL(num_sources > 0);
 
   size_t earliest = find_earliest_deadline(sources, num_sources);
-  int64_t deadline = sources[earliest].process->deadline;
+  int64_t deadline = sources[earliest].process == NULL
+                         ? REPROC_INFINITE
+                         : sources[earliest].process->deadline;
 
   if (deadline == 0) {
     sources[earliest].events = REPROC_EVENT_DEADLINE;
@@ -281,6 +288,15 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
     pipe_set *set = sets + i;
     reproc_t *process = sources[i].process;
     int interests = sources[i].interests;
+
+    *set = (pipe_set){ .in = PIPE_INVALID,
+                       .out = PIPE_INVALID,
+                       .err = PIPE_INVALID,
+                       .exit = PIPE_INVALID };
+
+    if (process == NULL) {
+      continue;
+    }
 
     set->in = interests & REPROC_EVENT_IN ? process->pipe.in : PIPE_INVALID;
     set->out = interests & REPROC_EVENT_OUT ? process->pipe.out : PIPE_INVALID;

@@ -327,7 +327,8 @@ REPROC_EXPORT int reproc_start(reproc_t *process,
 
 /*!
 Polls each process in `sources` for its corresponding events in `interests` and
-stores events that occurred for each process in `events`.
+stores events that occurred for each process in `events`. If an event source
+process member is `NULL`, the event source is ignored.
 
 Pass `REPROC_INFINITE` to `timeout` to have `reproc_poll` wait forever for an
 event to occur.

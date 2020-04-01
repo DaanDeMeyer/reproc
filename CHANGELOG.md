@@ -1,5 +1,12 @@
 # Changelog
 
+## 12.1.0
+
+- Allow passing empty event sources to `reproc_poll`.
+
+  If the `process` member of a `reproc_event_source` object is `NULL`,
+  `reproc_poll` ignores the event source.
+
 ## 12.0.0
 
 ### reproc
