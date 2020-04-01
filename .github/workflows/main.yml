@@ -165,6 +165,9 @@ jobs:
       - name: "reproc: path"
         run: build/reproc/examples/path cmake --help
 
+      - name: "reproc: poll"
+        run: build/reproc/examples/poll
+
       - name: "reproc: read"
         run: build/reproc/examples/read cmake --help
 

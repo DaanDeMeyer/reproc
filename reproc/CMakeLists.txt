@@ -46,6 +46,7 @@ endif()
 
 reproc_example(reproc drain C)
 reproc_example(reproc path C)
+reproc_example(reproc poll C)
 reproc_example(reproc read C)
 reproc_example(reproc parent C)
 reproc_example(reproc run C)
