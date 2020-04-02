@@ -81,7 +81,7 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
   pair[0] = PIPE_INVALID;
   pair[1] = PIPE_INVALID;
 
-  r = 0;
+  r = 1;
 
 finish:
   pipe_destroy(server);
@@ -134,6 +134,8 @@ int pipe_init(SOCKET *read, SOCKET *write)
   pair[0] = PIPE_INVALID;
   pair[1] = PIPE_INVALID;
 
+  r = 1;
+
 finish:
   pipe_destroy(pair[0]);
   pipe_destroy(pair[1]);
@@ -145,7 +147,7 @@ int pipe_nonblocking(SOCKET pipe, bool enable)
 {
   u_long mode = enable;
   int r = ioctlsocket(pipe, (long) FIONBIO, &mode);
-  return error_unify(r);
+  return error_unify(r == 0 ? 1 : SOCKET_ERROR);
 }
 
 int pipe_read(SOCKET pipe, uint8_t *buffer, size_t size)

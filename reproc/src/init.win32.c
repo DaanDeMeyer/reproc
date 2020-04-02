@@ -10,7 +10,7 @@ int init(void)
 {
   WSADATA data;
   int r = WSAStartup(MAKEWORD(2, 2), &data);
-  return error_unify(r);
+  return error_unify(r > 0 ? -r : 1);
 }
 
 void deinit(void)
