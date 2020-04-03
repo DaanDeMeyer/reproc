@@ -275,3 +275,9 @@ different threads at the same time will result in issues.
   process, reproc will detect the child process is still running even if it has
   exited. If data is written to this handle, reproc will also wrongly detect the
   child process has exited.
+
+- (Windows) If a child process exits before all outstanding data has been
+  written to stdout or stderr, Windows will close the socket pipe prematurely
+  (RST) leading to data loss. Currently, the only known way around this is by
+  artificially making a process wait by flushing `stdout` and sleeping for +-
+  200 milliseconds afterwards before exiting.
