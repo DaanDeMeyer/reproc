@@ -27,7 +27,6 @@ static DWORD stream_to_id(REPROC_STREAM stream)
 int redirect_parent(HANDLE *child, REPROC_STREAM stream)
 {
   ASSERT(child);
-  int r = 0;
 
   DWORD id = stream_to_id(stream);
   if (id == 0) {
@@ -36,7 +35,7 @@ int redirect_parent(HANDLE *child, REPROC_STREAM stream)
 
   HANDLE *handle = GetStdHandle(id);
   if (handle == INVALID_HANDLE_VALUE) {
-    return error_unify(r);
+    return error_unify(0);
   }
 
   if (handle == NULL) {
@@ -61,9 +60,10 @@ int redirect_discard(HANDLE *child, REPROC_STREAM stream)
 
 int redirect_file(HANDLE *child, FILE *file)
 {
-  int r = -1;
+  ASSERT(child);
+  ASSERT(file);
 
-  r = _fileno(file);
+  int r = _fileno(file);
   if (r < 0) {
     return -ERROR_INVALID_HANDLE;
   }
@@ -75,7 +75,7 @@ int redirect_file(HANDLE *child, FILE *file)
 
   *child = (HANDLE) result;
 
-  return error_unify(r);
+  return 0;
 }
 
 int redirect_path(handle_type *child,
