@@ -199,7 +199,7 @@ static pid_t process_fork(const int *except, size_t num_except)
       // If the child writes to the error pipe and exits, we're certain the
       // child process exited on its own and we can report errors as usual.
       r = waitpid(child, NULL, 0);
-      assert(r < 0 || r == child);
+      ASSERT(r < 0 || r == child);
 
       r = r < 0 ? -errno : -child_errno;
     }
@@ -301,10 +301,10 @@ int process_start(pid_t *process,
                   const char *const *argv,
                   struct process_options options)
 {
-  assert(process);
+  ASSERT(process);
 
   if (argv != NULL) {
-    assert(argv[0] != NULL);
+    ASSERT(argv[0] != NULL);
   }
 
   struct {
@@ -390,7 +390,7 @@ int process_start(pid_t *process,
     }
 
     if (argv != NULL) {
-      assert(program);
+      ASSERT(program);
 
       r = execvp(program, (char *const *) argv);
       if (r < 0) {
@@ -446,7 +446,7 @@ static int parse_status(int status)
 
 int process_wait(pid_t process)
 {
-  assert(process != PROCESS_INVALID);
+  ASSERT(process != PROCESS_INVALID);
 
   int status = 0;
   int r = waitpid(process, &status, 0);
@@ -454,14 +454,14 @@ int process_wait(pid_t process)
     return -errno;
   }
 
-  assert(r == process);
+  ASSERT(r == process);
 
   return parse_status(status);
 }
 
 int process_terminate(pid_t process)
 {
-  assert(process != PROCESS_INVALID);
+  ASSERT(process != PROCESS_INVALID);
 
   int r = kill(process, SIGTERM);
   return r < 0 ? -errno : 0;
@@ -469,7 +469,7 @@ int process_terminate(pid_t process)
 
 int process_kill(pid_t process)
 {
-  assert(process != PROCESS_INVALID);
+  ASSERT(process != PROCESS_INVALID);
 
   int r = kill(process, SIGKILL);
   return r < 0 ? -errno : 0;
