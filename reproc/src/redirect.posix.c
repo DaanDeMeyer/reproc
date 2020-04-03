@@ -27,20 +27,18 @@ int redirect_parent(int *child, REPROC_STREAM stream)
 {
   ASSERT(child);
 
-  int r = -EINVAL;
-
   FILE *file = stream_to_file(stream);
   if (file == NULL) {
-    return r;
+    return -EINVAL;
   }
 
-  r = fileno(file);
+  int r = fileno(file);
   if (r < 0) {
     if (errno == EBADF) {
-      r = -EPIPE;
+      errno = EPIPE;
     }
 
-    return error_unify(r);
+    return -errno;
   }
 
   *child = r; // `r` contains the duplicated file descriptor.
@@ -59,7 +57,7 @@ int redirect_file(int *child, FILE *file)
 
   int r = fileno(file);
   if (r < 0) {
-    return error_unify(r);
+    return -errno;
   }
 
   *child = r;
@@ -76,7 +74,7 @@ int redirect_path(int *child, REPROC_STREAM stream, const char *path)
 
   int r = open(path, mode | O_CREAT | O_CLOEXEC, 0640);
   if (r < 0) {
-    return error_unify(r);
+    return -errno;
   }
 
   *child = r;

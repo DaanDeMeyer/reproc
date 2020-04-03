@@ -27,9 +27,10 @@ static int signal_mask(int how, const sigset_t *newmask, sigset_t *oldmask)
   r = -pthread_sigmask(how, newmask, oldmask);
 #else
   r = sigprocmask(how, newmask, oldmask);
+  r = r < 0 ? -errno : 0;
 #endif
 
-  return error_unify(r);
+  return r;
 }
 
 // Returns true if the NUL-terminated string indicated by `path` is a relative
@@ -104,7 +105,7 @@ static int get_max_fd(void)
 
   int r = getrlimit(RLIMIT_NOFILE, &limit);
   if (r < 0) {
-    return error_unify(r);
+    return -errno;
   }
 
   rlim_t soft = limit.rlim_cur;
@@ -141,12 +142,12 @@ static pid_t process_fork(const int *except, size_t num_except)
 
   r = sigfillset(&mask.new);
   if (r < 0) {
-    return error_unify(r);
+    return -errno;
   }
 
   r = signal_mask(SIG_SETMASK, &mask.new, &mask.old);
   if (r < 0) {
-    return error_unify(r);
+    return r;
   }
 
   struct {
@@ -156,14 +157,14 @@ static pid_t process_fork(const int *except, size_t num_except)
 
   r = pipe_init(&pipe.read, &pipe.write);
   if (r < 0) {
-    return error_unify(r);
+    return r;
   }
 
   r = fork();
   if (r < 0) {
     // `fork` error.
 
-    r = error_unify(r); // Save `errno`.
+    r = -errno; // Save `errno`.
 
     int q = signal_mask(SIG_SETMASK, &mask.new, &mask.old);
     ASSERT_UNUSED(q == 0);
@@ -200,14 +201,12 @@ static pid_t process_fork(const int *except, size_t num_except)
       r = waitpid(child, NULL, 0);
       assert(r < 0 || r == child);
 
-      if (r == child) {
-        r = -child_errno;
-      }
+      r = r < 0 ? -errno : -child_errno;
     }
 
     pipe_destroy(pipe.read);
 
-    return error_unify_or_else(r, child);
+    return r < 0 ? r : child;
   }
 
   // Child process
@@ -221,6 +220,7 @@ static pid_t process_fork(const int *except, size_t num_except)
 
   r = sigemptyset(&action.sa_mask);
   if (r < 0) {
+    r = -errno;
     goto finish;
   }
 
@@ -228,6 +228,7 @@ static pid_t process_fork(const int *except, size_t num_except)
   for (int signal = 0; signal < 32; signal++) {
     r = sigaction(signal, &action, NULL);
     if (r < 0 && errno != EINVAL) {
+      r = -errno;
       goto finish;
     }
   }
@@ -239,6 +240,7 @@ static pid_t process_fork(const int *except, size_t num_except)
 
   r = sigemptyset(&mask.new);
   if (r < 0) {
+    r = -errno;
     goto finish;
   }
 
@@ -251,10 +253,12 @@ static pid_t process_fork(const int *except, size_t num_except)
   // flag so we manually close all file descriptors to prevent file descriptors
   // leaking into the child process.
 
-  int max_fd = get_max_fd();
-  if (max_fd < 0) {
+  r = get_max_fd();
+  if (r < 0) {
     goto finish;
   }
+
+  int max_fd = r;
 
   if (max_fd > MAX_FD_LIMIT) {
     // Refuse to try to close too many file descriptors.
@@ -324,7 +328,7 @@ int process_start(pid_t *process,
                   ? path_prepend_cwd(argv[0])
                   : strdup(argv[0]);
     if (program == NULL) {
-      r = -1;
+      r = -errno;
       goto finish;
     }
   }
@@ -347,6 +351,7 @@ int process_start(pid_t *process,
       // `i` corresponds to the standard stream we need to redirect.
       r = dup2(redirect[i], i);
       if (r < 0) {
+        r = -errno;
         goto child;
       }
 
@@ -373,6 +378,7 @@ int process_start(pid_t *process,
     if (options.working_directory != NULL) {
       r = chdir(options.working_directory);
       if (r < 0) {
+        r = -errno;
         goto child;
       }
     }
@@ -388,6 +394,7 @@ int process_start(pid_t *process,
 
       r = execvp(program, (char *const *) argv);
       if (r < 0) {
+        r = -errno;
         goto child;
       }
     }
@@ -417,10 +424,7 @@ int process_start(pid_t *process,
 
   if (child_errno > 0) {
     r = waitpid(child, NULL, 0);
-    if (r == child) {
-      r = -child_errno;
-    }
-
+    r = r < 0 ? -errno : -child_errno;
     goto finish;
   }
 
@@ -432,7 +436,7 @@ finish:
   pipe_destroy(pipe.write);
   free(program);
 
-  return error_unify_or_else(r, 1);
+  return r < 0 ? r : 1;
 }
 
 static int parse_status(int status)
@@ -447,7 +451,7 @@ int process_wait(pid_t process)
   int status = 0;
   int r = waitpid(process, &status, 0);
   if (r < 0) {
-    return error_unify(r);
+    return -errno;
   }
 
   assert(r == process);
@@ -460,7 +464,7 @@ int process_terminate(pid_t process)
   assert(process != PROCESS_INVALID);
 
   int r = kill(process, SIGTERM);
-  return error_unify(r);
+  return r < 0 ? -errno : 0;
 }
 
 int process_kill(pid_t process)
@@ -468,7 +472,7 @@ int process_kill(pid_t process)
   assert(process != PROCESS_INVALID);
 
   int r = kill(process, SIGKILL);
-  return error_unify(r);
+  return r < 0 ? -errno : 0;
 }
 
 pid_t process_destroy(pid_t process)

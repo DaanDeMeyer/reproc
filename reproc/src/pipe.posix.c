@@ -24,6 +24,7 @@ int pipe_init(int *read, int *write)
 
   r = pipe(pair);
   if (r < 0) {
+    r = -errno;
     goto finish;
   }
 
@@ -47,7 +48,7 @@ finish:
   pipe_destroy(pair[0]);
   pipe_destroy(pair[1]);
 
-  return error_unify(r);
+  return r;
 }
 
 int pipe_nonblocking(int pipe, bool enable)
@@ -56,14 +57,14 @@ int pipe_nonblocking(int pipe, bool enable)
 
   r = fcntl(pipe, F_GETFL, 0);
   if (r < 0) {
-    return error_unify(r);
+    return -errno;
   }
 
   r = enable ? r | O_NONBLOCK : r & ~O_NONBLOCK;
 
   r = fcntl(pipe, F_SETFL, r);
 
-  return error_unify(r);
+  return r < 0 ? -errno : 0;
 }
 
 int pipe_read(int pipe, uint8_t *buffer, size_t size)
@@ -75,10 +76,10 @@ int pipe_read(int pipe, uint8_t *buffer, size_t size)
 
   if (r == 0) {
     // `read` returns 0 to indicate the other end of the pipe was closed.
-    r = -EPIPE;
+    return -EPIPE;
   }
 
-  return error_unify_or_else(r, r);
+  return r < 0 ? -errno : r;
 }
 
 int pipe_write(int pipe, const uint8_t *buffer, size_t size)
@@ -88,7 +89,7 @@ int pipe_write(int pipe, const uint8_t *buffer, size_t size)
 
   int r = (int) write(pipe, buffer, size);
 
-  return error_unify_or_else(r, r);
+  return r < 0 ? -errno : r;
 }
 
 int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
@@ -97,10 +98,11 @@ int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
 
   struct pollfd *pollfds = NULL;
   size_t num_pipes = num_sets * PIPES_PER_SET;
-  int r = -ENOMEM;
+  int r = -1;
 
   pollfds = calloc(sizeof(struct pollfd), num_pipes);
   if (pollfds == NULL) {
+    r = -errno;
     goto finish;
   }
 
@@ -116,6 +118,7 @@ int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
 
   r = poll(pollfds, (nfds_t) num_pipes, timeout);
   if (r < 0) {
+    r = -errno;
     goto finish;
   }
 
@@ -143,7 +146,7 @@ int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
 finish:
   free(pollfds);
 
-  return error_unify(r);
+  return r;
 }
 
 int pipe_destroy(int pipe)

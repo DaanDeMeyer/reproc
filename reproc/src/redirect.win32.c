@@ -35,7 +35,7 @@ int redirect_parent(HANDLE *child, REPROC_STREAM stream)
 
   HANDLE *handle = GetStdHandle(id);
   if (handle == INVALID_HANDLE_VALUE) {
-    return error_unify(0);
+    return -(int) GetLastError();
   }
 
   if (handle == NULL) {
@@ -87,10 +87,11 @@ int redirect_path(handle_type *child,
 
   DWORD mode = stream == REPROC_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
   HANDLE handle = HANDLE_INVALID;
-  int r = 0;
+  int r = -1;
 
   wchar_t *wpath = utf16_from_utf8(path, strlen(path));
   if (wpath == NULL) {
+    r = -(int) GetLastError();
     goto finish;
   }
 
@@ -98,16 +99,17 @@ int redirect_path(handle_type *child,
                        &INHERIT, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
                        (HANDLE) FILE_NO_TEMPLATE);
   if (handle == INVALID_HANDLE_VALUE) {
+    r = -(int) GetLastError();
     goto finish;
   }
 
   *child = handle;
   handle = HANDLE_INVALID;
-  r = 1;
+  r = 0;
 
 finish:
   free(wpath);
   handle_destroy(handle);
 
-  return error_unify(r);
+  return r;
 }

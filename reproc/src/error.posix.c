@@ -16,18 +16,6 @@ const int REPROC_ETIMEDOUT = -ETIMEDOUT;
 const int REPROC_ENOMEM = -ENOMEM;
 const int REPROC_EWOULDBLOCK = -EWOULDBLOCK;
 
-int error_unify(int r)
-{
-  return error_unify_or_else(r, 0);
-}
-
-int error_unify_or_else(int r, int success)
-{
-  // if `r < -1`, `r` has been passed through this function before so we just
-  // return it as is.
-  return r < -1 ? r : r == -1 ? -errno : success;
-}
-
 enum { ERROR_STRING_MAX_SIZE = 512 };
 
 const char *error_string(int error)

@@ -16,14 +16,14 @@ int handle_cloexec(int handle, bool enable)
 
   r = fcntl(handle, F_GETFD, 0);
   if (r < 0) {
-    return error_unify(r);
+    return -errno;
   }
 
   r = enable ? r | FD_CLOEXEC : r & ~FD_CLOEXEC;
 
   r = fcntl(handle, F_SETFD, r);
   if (r < 0) {
-    return error_unify(r);
+    return -errno;
   }
 
   return 0;
@@ -35,9 +35,7 @@ int handle_destroy(int handle)
     return HANDLE_INVALID;
   }
 
-  int r = 0;
-
-  r = close(handle);
+  int r = close(handle);
   ASSERT_UNUSED(r == 0);
 
   return HANDLE_INVALID;

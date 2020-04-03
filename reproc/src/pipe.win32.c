@@ -24,6 +24,7 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
 
   server = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, 0);
   if (server == INVALID_SOCKET) {
+    r = -WSAGetLastError();
     goto finish;
   }
 
@@ -34,11 +35,13 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
 
   r = bind(server, (SOCKADDR *) &localhost, sizeof(localhost));
   if (r < 0) {
+    r = -WSAGetLastError();
     goto finish;
   }
 
   r = listen(server, 1);
   if (r < 0) {
+    r = -WSAGetLastError();
     goto finish;
   }
 
@@ -46,11 +49,13 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
   int size = sizeof(name);
   r = getsockname(server, (SOCKADDR *) &name, &size);
   if (r < 0) {
+    r = -WSAGetLastError();
     goto finish;
   }
 
   pair[0] = WSASocketW(domain, type, protocol, NULL, 0, 0);
   if (pair[0] == INVALID_SOCKET) {
+    r = -WSAGetLastError();
     goto finish;
   }
 
@@ -61,6 +66,7 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
 
   r = connect(pair[0], (SOCKADDR *) &name, size);
   if (r < 0 && WSAGetLastError() != WSAEWOULDBLOCK) {
+    r = -WSAGetLastError();
     goto finish;
   }
 
@@ -71,7 +77,7 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
 
   pair[1] = accept(server, NULL, NULL);
   if (pair[1] == INVALID_SOCKET) {
-    r = -1;
+    r = -WSAGetLastError();
     goto finish;
   }
 
@@ -81,14 +87,12 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
   pair[0] = PIPE_INVALID;
   pair[1] = PIPE_INVALID;
 
-  r = 1;
-
 finish:
   pipe_destroy(server);
   pipe_destroy(pair[0]);
   pipe_destroy(pair[1]);
 
-  return error_unify(r);
+  return r;
 }
 
 int pipe_init(SOCKET *read, SOCKET *write)
@@ -97,7 +101,7 @@ int pipe_init(SOCKET *read, SOCKET *write)
   ASSERT(write);
 
   SOCKET pair[] = { PIPE_INVALID, PIPE_INVALID };
-  int r = 0;
+  int r = -1;
 
   // Use sockets instead of pipes so we can use `WSAPoll` which only works with
   // sockets.
@@ -108,11 +112,13 @@ int pipe_init(SOCKET *read, SOCKET *write)
 
   r = SetHandleInformation((HANDLE) pair[0], HANDLE_FLAG_INHERIT, 0);
   if (r == 0) {
+    r = -(int) GetLastError();
     goto finish;
   }
 
   r = SetHandleInformation((HANDLE) pair[1], HANDLE_FLAG_INHERIT, 0);
   if (r == 0) {
+    r = -(int) GetLastError();
     goto finish;
   }
 
@@ -120,11 +126,13 @@ int pipe_init(SOCKET *read, SOCKET *write)
 
   r = shutdown(pair[0], SD_SEND);
   if (r < 0) {
+    r = -WSAGetLastError();
     goto finish;
   }
 
   r = shutdown(pair[1], SD_RECEIVE);
   if (r < 0) {
+    r = -WSAGetLastError();
     goto finish;
   }
 
@@ -134,20 +142,18 @@ int pipe_init(SOCKET *read, SOCKET *write)
   pair[0] = PIPE_INVALID;
   pair[1] = PIPE_INVALID;
 
-  r = 1;
-
 finish:
   pipe_destroy(pair[0]);
   pipe_destroy(pair[1]);
 
-  return error_unify(r);
+  return r;
 }
 
 int pipe_nonblocking(SOCKET pipe, bool enable)
 {
   u_long mode = enable;
   int r = ioctlsocket(pipe, (long) FIONBIO, &mode);
-  return error_unify(r == 0 ? 1 : SOCKET_ERROR);
+  return r < 0 ? -WSAGetLastError() : 0;
 }
 
 int pipe_read(SOCKET pipe, uint8_t *buffer, size_t size)
@@ -159,10 +165,10 @@ int pipe_read(SOCKET pipe, uint8_t *buffer, size_t size)
   int r = recv(pipe, (char *) buffer, (int) size, 0);
 
   if (r == 0 || (r < 0 && WSAGetLastError() == WSAECONNRESET)) {
-    r = -ERROR_BROKEN_PIPE;
+    return -ERROR_BROKEN_PIPE;
   }
 
-  return error_unify_or_else(r, r);
+  return r < 0 ? -WSAGetLastError() : r;
 }
 
 int pipe_write(SOCKET pipe, const uint8_t *buffer, size_t size)
@@ -174,10 +180,10 @@ int pipe_write(SOCKET pipe, const uint8_t *buffer, size_t size)
   int r = send(pipe, (const char *) buffer, (int) size, 0);
 
   if (r < 0 && WSAGetLastError() == WSAECONNRESET) {
-    r = -ERROR_BROKEN_PIPE;
+    return -ERROR_BROKEN_PIPE;
   }
 
-  return error_unify_or_else(r, r);
+  return r < 0 ? -WSAGetLastError() : r;
 }
 
 int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
@@ -186,10 +192,11 @@ int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
 
   WSAPOLLFD *pollfds = NULL;
   size_t num_pipes = num_sets * PIPES_PER_SET;
-  int r = -ERROR_NOT_ENOUGH_MEMORY;
+  int r = -1;
 
   pollfds = calloc(sizeof(WSAPOLLFD), num_pipes);
   if (pollfds == NULL) {
+    r = -ERROR_NOT_ENOUGH_MEMORY;
     goto finish;
   }
 
@@ -203,6 +210,7 @@ int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
 
   r = WSAPoll(pollfds, (ULONG) num_pipes, timeout);
   if (r < 0) {
+    r = -WSAGetLastError();
     goto finish;
   }
 
@@ -230,7 +238,7 @@ int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
 finish:
   free(pollfds);
 
-  return error_unify(r);
+  return r;
 }
 
 SOCKET pipe_destroy(SOCKET pipe)
@@ -239,12 +247,8 @@ SOCKET pipe_destroy(SOCKET pipe)
     return PIPE_INVALID;
   }
 
-  int saved = WSAGetLastError();
-
   int r = closesocket(pipe);
   ASSERT_UNUSED(r == 0);
-
-  WSASetLastError(saved);
 
   return PIPE_INVALID;
 }

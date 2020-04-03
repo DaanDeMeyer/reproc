@@ -17,36 +17,12 @@ const int REPROC_ETIMEDOUT = -WAIT_TIMEOUT;
 const int REPROC_ENOMEM = -ERROR_NOT_ENOUGH_MEMORY;
 const int REPROC_EWOULDBLOCK = -WSAEWOULDBLOCK;
 
-int error_unify(int r)
-{
-  return error_unify_or_else(r, 0);
-}
-
-int error_unify_or_else(int r, int success)
-{
-  ASSERT(GetLastError() <= INT_MAX);
-
-  if (r < -1) {
-    return r;
-  }
-
-  if (r == -1) {
-    return -WSAGetLastError();
-  }
-
-  if (r == 0) {
-    return -(int) GetLastError();
-  }
-
-  return success;
-}
-
 enum { ERROR_STRING_MAX_SIZE = 512 };
 
 const char *error_string(int error)
 {
   wchar_t *wstring = NULL;
-  int r = 0;
+  int r = -1;
 
   wstring = malloc(sizeof(wchar_t) * ERROR_STRING_MAX_SIZE);
   if (wstring == NULL) {
@@ -68,9 +44,7 @@ const char *error_string(int error)
 
   r = WideCharToMultiByte(CP_UTF8, 0, wstring, -1, string, ARRAY_SIZE(string),
                           NULL, NULL);
-
   free(wstring);
-
   if (r == 0) {
     return "Failed to convert error string to UTF-8";
   }

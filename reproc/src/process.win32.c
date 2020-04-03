@@ -203,7 +203,7 @@ static LPPROC_THREAD_ATTRIBUTE_LIST setup_attribute_list(HANDLE *handles,
 {
   ASSERT(handles);
 
-  int r = 0;
+  int r = -1;
 
   // Make sure all the given handles can be inherited.
   for (size_t i = 0; i < num_handles; i++) {
@@ -266,12 +266,13 @@ int process_start(HANDLE *process,
   wchar_t *working_directory_wstring = NULL;
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
   PROCESS_INFORMATION info = { PROCESS_INVALID, HANDLE_INVALID, 0, 0 };
-  int r = 0;
+  int r = -1;
 
   // Join `argv` to a whitespace delimited string as required by
   // `CreateProcessW`.
   command_line = argv_join(argv);
   if (command_line == NULL) {
+    r = -(int) GetLastError();
     goto finish;
   }
 
@@ -279,6 +280,7 @@ int process_start(HANDLE *process,
   command_line_wstring = utf16_from_utf8(command_line,
                                          strlen(command_line) + 1);
   if (command_line_wstring == NULL) {
+    r = -(int) GetLastError();
     goto finish;
   }
 
@@ -286,12 +288,14 @@ int process_start(HANDLE *process,
   if (options.environment != NULL) {
     environment_line = environment_join(options.environment);
     if (environment_line == NULL) {
+      r = -(int) GetLastError();
       goto finish;
     }
 
     size_t joined_size = environment_join_size(options.environment);
     environment_line_wstring = utf16_from_utf8(environment_line, joined_size);
     if (environment_line_wstring == NULL) {
+      r = -(int) GetLastError();
       goto finish;
     }
   }
@@ -302,6 +306,7 @@ int process_start(HANDLE *process,
     working_directory_wstring = utf16_from_utf8(options.working_directory,
                                                 working_directory_size);
     if (working_directory_wstring == NULL) {
+      r = -(int) GetLastError();
       goto finish;
     }
   }
@@ -325,6 +330,7 @@ int process_start(HANDLE *process,
 
   attribute_list = setup_attribute_list(handles, num_handles);
   if (attribute_list == NULL) {
+    r = -(int) GetLastError();
     goto finish;
   }
 
@@ -359,10 +365,12 @@ int process_start(HANDLE *process,
   SetErrorMode(previous_error_mode);
 
   if (r == 0) {
+    r = -(int) GetLastError();
     goto finish;
   }
 
   *process = info.hProcess;
+  r = 0;
 
 finish:
   free(command_line);
@@ -373,24 +381,24 @@ finish:
   DeleteProcThreadAttributeList(attribute_list);
   handle_destroy(info.hThread);
 
-  return error_unify_or_else(r, 1);
+  return r < 0 ? r : 1;
 }
 
 int process_wait(HANDLE process)
 {
   ASSERT(process);
 
-  int r = 0;
+  int r = -1;
 
   r = (int) WaitForSingleObject(process, INFINITE);
   if ((DWORD) r == WAIT_FAILED) {
-    return error_unify(0);
+    return -(int) GetLastError();
   }
 
   DWORD status = 0;
   r = GetExitCodeProcess(process, &status);
   if (r == 0) {
-    return error_unify(r);
+    return -(int) GetLastError();
   }
 
   // `GenerateConsoleCtrlEvent` causes a process to exit with this exit code.
@@ -413,7 +421,7 @@ int process_terminate(HANDLE process)
   // its own process group (which we did when starting the child process).
   BOOL r = GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, GetProcessId(process));
 
-  return error_unify(r);
+  return r == 0 ? -(int) GetLastError() : 0;
 }
 
 int process_kill(HANDLE process)
@@ -425,7 +433,7 @@ int process_kill(HANDLE process)
   // systems.
   BOOL r = TerminateProcess(process, (DWORD) REPROC_SIGKILL);
 
-  return error_unify(r);
+  return r == 0 ? -(int) GetLastError() : 0;
 }
 
 HANDLE process_destroy(HANDLE process)
