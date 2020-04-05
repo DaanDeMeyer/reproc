@@ -87,11 +87,7 @@ static int child(void)
   int ms = rand() % NUM_CHILDREN * 4; // NOLINT
   sleep(ms);
   printf("Process %i slept %i milliseconds.", getpid(), ms);
-  // Winsock needs time to write all data to socket (stdout). If the socket is
-  // closed before all data is written, a TCP RST packet is sent and any unsent
-  // data is lost.
-  fflush(stdout);
-  sleep(1000);
+  fclose(stdout);
   return EXIT_SUCCESS;
 }
 

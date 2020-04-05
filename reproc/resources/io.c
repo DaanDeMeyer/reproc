@@ -11,5 +11,8 @@ int main(void)
   fprintf(stdout, "%s", input);
   fprintf(stderr, "%s", input);
 
+  fclose(stdout);
+  fclose(stderr);
+
   return 0;
 }
