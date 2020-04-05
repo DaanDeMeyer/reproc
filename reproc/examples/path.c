@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 // Redirects the output of the given command to the reproc.out file.
-int main(int argc, const char *argv[])
+int main(int argc, const char **argv)
 {
   (void) argc;
 

@@ -16,7 +16,7 @@ static int fail(std::error_code ec)
 //
 // This program can be used to verify that manually executing a command and
 // executing it using reproc produces the same output.
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
   if (argc <= 1) {
     std::cerr << "No arguments provided. Example usage: ./forward cmake --help";

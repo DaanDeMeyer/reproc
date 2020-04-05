@@ -4,7 +4,7 @@
 
 // Forwards the provided command to `reproc_start` and redirects the standard
 // streams of the child process to the standard streams of the parent process.
-int main(int argc, const char *argv[])
+int main(int argc, const char **argv)
 {
   if (argc <= 1) {
     fprintf(stderr,

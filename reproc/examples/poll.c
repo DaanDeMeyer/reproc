@@ -94,7 +94,7 @@ static int child(void)
 // Starts a number of child processes that each sleep a random amount of
 // milliseconds before printing a message and exiting. The parent process polls
 // each of the child processes and prints their messages to stdout.
-int main(int argc, const char *argv[])
+int main(int argc, const char **argv)
 {
   return argc > 1 && strcmp(argv[1], "child") == 0 ? child() : parent(argv[0]);
 }

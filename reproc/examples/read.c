@@ -6,7 +6,7 @@
 // Prints the output of the given command using `reproc_read`. Usually, using
 // `reproc_run` or `reproc_drain` is a better solution when dealing with a
 // single child process.
-int main(int argc, const char *argv[])
+int main(int argc, const char **argv)
 {
   (void) argc;
 

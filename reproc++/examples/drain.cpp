@@ -11,7 +11,7 @@ static int fail(std::error_code ec)
 }
 
 // Uses `reproc::drain` to show the output of the given command.
-int main(int argc, const char *argv[])
+int main(int argc, const char **argv)
 {
   if (argc <= 1) {
     std::cerr << "No arguments provided. Example usage: "

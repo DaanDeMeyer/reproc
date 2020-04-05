@@ -18,7 +18,7 @@ static int fail(std::error_code ec)
 
 // Like the forward example it forwards its arguments to a child process and
 // prints the child process output on stdout.
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
   if (argc <= 1) {
     std::cerr << "No arguments provided. Example usage: "

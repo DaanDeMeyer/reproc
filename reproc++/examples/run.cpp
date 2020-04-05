@@ -3,7 +3,7 @@
 #include <iostream>
 
 // Equivalent to reproc's run example but implemented using reproc++.
-int main(int argc, const char *argv[])
+int main(int argc, const char **argv)
 {
   (void) argc;
 
