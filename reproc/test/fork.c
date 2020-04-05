@@ -20,7 +20,8 @@ int main(void)
   static const char *message = "reproc stands for REdirected PROCess!";
 
   if (r == 0) {
-    r = (int) write(STDOUT_FILENO, message, strlen(message));
+    printf("%s", message);
+    fclose(stdout); // `_exit` doesn't flush stdout.
     _exit(r < 0 ? EXIT_FAILURE : EXIT_SUCCESS);
   }
 
