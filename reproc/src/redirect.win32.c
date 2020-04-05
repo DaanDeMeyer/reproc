@@ -49,10 +49,6 @@ int redirect_parent(HANDLE *child, REPROC_STREAM stream)
 
 enum { FILE_NO_TEMPLATE = 0 };
 
-static SECURITY_ATTRIBUTES INHERIT = { .nLength = sizeof(SECURITY_ATTRIBUTES),
-                                       .bInheritHandle = true,
-                                       .lpSecurityDescriptor = NULL };
-
 int redirect_discard(HANDLE *child, REPROC_STREAM stream)
 {
   return redirect_path(child, stream, "NUL");
@@ -78,9 +74,13 @@ int redirect_file(HANDLE *child, FILE *file)
   return 0;
 }
 
-int redirect_path(handle_type *child,
-                  REPROC_STREAM stream,
-                  const char *path)
+static SECURITY_ATTRIBUTES HANDLE_DO_NOT_INHERIT = {
+  .nLength = sizeof(SECURITY_ATTRIBUTES),
+  .bInheritHandle = false,
+  .lpSecurityDescriptor = NULL
+};
+
+int redirect_path(handle_type *child, REPROC_STREAM stream, const char *path)
 {
   ASSERT(child);
   ASSERT(path);
@@ -96,8 +96,8 @@ int redirect_path(handle_type *child,
   }
 
   handle = CreateFileW(wpath, mode, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                       &INHERIT, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
-                       (HANDLE) FILE_NO_TEMPLATE);
+                       &HANDLE_DO_NOT_INHERIT, OPEN_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL, (HANDLE) FILE_NO_TEMPLATE);
   if (handle == INVALID_HANDLE_VALUE) {
     r = -(int) GetLastError();
     goto finish;
