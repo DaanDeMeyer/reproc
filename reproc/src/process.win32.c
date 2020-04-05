@@ -277,8 +277,7 @@ int process_start(HANDLE *process,
   }
 
   // Convert UTF-8 to UTF-16 as required by `CreateProcessW`.
-  command_line_wstring = utf16_from_utf8(command_line,
-                                         strlen(command_line) + 1);
+  command_line_wstring = utf16_from_utf8(command_line, -1);
   if (command_line_wstring == NULL) {
     r = -(int) GetLastError();
     goto finish;
@@ -293,7 +292,10 @@ int process_start(HANDLE *process,
     }
 
     size_t joined_size = environment_join_size(options.environment);
-    environment_line_wstring = utf16_from_utf8(environment_line, joined_size);
+    ASSERT(joined_size <= INT_MAX);
+
+    environment_line_wstring = utf16_from_utf8(environment_line,
+                                               (int) joined_size);
     if (environment_line_wstring == NULL) {
       r = -(int) GetLastError();
       goto finish;
@@ -302,9 +304,7 @@ int process_start(HANDLE *process,
 
   // Idem for `working_directory` if it isn't `NULL`.
   if (options.working_directory != NULL) {
-    size_t working_directory_size = strlen(options.working_directory) + 1;
-    working_directory_wstring = utf16_from_utf8(options.working_directory,
-                                                working_directory_size);
+    working_directory_wstring = utf16_from_utf8(options.working_directory, -1);
     if (working_directory_wstring == NULL) {
       r = -(int) GetLastError();
       goto finish;

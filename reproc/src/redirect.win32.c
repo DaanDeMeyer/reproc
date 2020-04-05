@@ -89,7 +89,7 @@ int redirect_path(handle_type *child, REPROC_STREAM stream, const char *path)
   HANDLE handle = HANDLE_INVALID;
   int r = -1;
 
-  wchar_t *wpath = utf16_from_utf8(path, strlen(path) + 1);
+  wchar_t *wpath = utf16_from_utf8(path, -1);
   if (wpath == NULL) {
     r = -(int) GetLastError();
     goto finish;
