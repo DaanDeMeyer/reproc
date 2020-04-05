@@ -47,7 +47,7 @@ int main(int argc, const char **argv)
   // the most readable when reading the entire output of a child process. The
   // while loop keeps running until an error occurs in `reproc_read` (the child
   // process closing its output stream is also reported as an error).
-  while (true) {
+  for (;;) {
     uint8_t buffer[4096];
     r = reproc_read(process, REPROC_STREAM_OUT, buffer, sizeof(buffer));
     if (r < 0) {

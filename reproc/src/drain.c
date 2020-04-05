@@ -32,7 +32,7 @@ int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
 
   uint8_t buffer[4096];
 
-  while (true) {
+  for (;;) {
     reproc_event_source source = { process, REPROC_EVENT_OUT | REPROC_EVENT_ERR,
                                    0 };
 

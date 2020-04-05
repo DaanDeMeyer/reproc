@@ -39,7 +39,7 @@ std::error_code drain(process &process, Out &&out, Err &&err)
   static constexpr size_t BUFFER_SIZE = 4096;
   uint8_t buffer[BUFFER_SIZE] = {};
 
-  while (true) {
+  for (;;) {
     int events = 0;
     std::tie(events, ec) = process.poll(event::out | event::err, infinite);
     if (ec) {

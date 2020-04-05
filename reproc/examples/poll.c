@@ -38,7 +38,7 @@ static int parent(const char *program)
     children[i].interests = REPROC_EVENT_OUT;
   }
 
-  while (true) {
+  for (;;) {
     r = reproc_poll(children, NUM_CHILDREN, REPROC_INFINITE);
     if (r < 0) {
       r = r == REPROC_EPIPE ? 0 : r;
