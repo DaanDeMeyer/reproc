@@ -3,8 +3,6 @@
 #include <reproc/drain.h>
 #include <reproc/reproc.h>
 
-#include <string.h>
-
 int main(void)
 {
   int r = -1;

@@ -3,8 +3,6 @@
 #include <reproc/drain.h>
 #include <reproc/reproc.h>
 
-#include <string.h>
-
 static void replace(char *string, char old, char new)
 {
   for (size_t i = 0; i < strlen(string); i++) {

@@ -3,8 +3,6 @@
 #include <reproc/drain.h>
 #include <reproc/reproc.h>
 
-#include <string.h>
-
 #define MESSAGE "reproc stands for REdirected PROCess"
 
 static void io()

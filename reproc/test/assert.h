@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define ASSERT(expression) ASSERT_MSG(expression, "%s", "")
 #define ASSERT_OK(r) ASSERT_MSG(r >= 0, "%s", reproc_strerror(r))
