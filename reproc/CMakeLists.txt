@@ -37,6 +37,7 @@ reproc_test(reproc argv C)
 reproc_test(reproc environment C)
 reproc_test(reproc io C)
 reproc_test(reproc overflow C)
+reproc_test(reproc path C)
 reproc_test(reproc stop C)
 reproc_test(reproc working-directory C)
 
