@@ -253,7 +253,7 @@ static bool contains_valid_pipe(pipe_set *sets, size_t num_sets)
 {
   for (size_t i = 0; i < num_sets; i++) {
     if (sets[i].in != PIPE_INVALID || sets[i].out != PIPE_INVALID ||
-        sets[i].err != PIPE_INVALID) {
+        sets[i].err != PIPE_INVALID || sets[i].exit != PIPE_INVALID) {
       return true;
     }
   }
