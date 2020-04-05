@@ -276,8 +276,12 @@ different threads at the same time will result in issues.
   exited. If data is written to this handle, reproc will also wrongly detect the
   child process has exited.
 
-- (Windows) If a child process exits before all outstanding data has been
-  written to stdout or stderr, Windows will close the socket pipe prematurely
-  (RST) leading to data loss. Currently, the only known way around this is by
-  artificially making a process wait by flushing `stdout` and sleeping for +-
-  200 milliseconds afterwards before exiting.
+- (Windows) If a child process exits without manually calling `fclose(stdout)`
+  or `fclose(stderr)`, Windows can close the socket pipe prematurely before all
+  outstanding data on the corresponding stream is sent to the parent, resulting
+  in the parent process not receiving all output from the child process.
+  Currently, the only known way around this issue is to explicitly call
+  `fclose(stdout)` and `fclose(stderr)` in the child process before exiting.
+  The issue has been reported and its status can be followed
+  [here](https://developercommunity.visualstudio.com/content/problem/977949/child-process-redirect-stdio-to-sockets-stdio-not.html).
+
