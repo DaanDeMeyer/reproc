@@ -14,13 +14,13 @@ typedef int pipe_type; // fd
 
 extern const pipe_type PIPE_INVALID;
 
-extern const int PIPE_EVENT_IN;
-extern const int PIPE_EVENT_OUT;
+extern const short PIPE_EVENT_IN;
+extern const short PIPE_EVENT_OUT;
 
 typedef struct {
   pipe_type pipe;
-  int interests;
-  int events;
+  short interests;
+  short events;
 } pipe_event_source;
 
 // Creates a new anonymous pipe. `parent` and `child` are set to the parent and

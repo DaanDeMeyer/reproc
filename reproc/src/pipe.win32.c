@@ -13,8 +13,8 @@
 
 const SOCKET PIPE_INVALID = INVALID_SOCKET;
 
-const int PIPE_EVENT_IN = POLLIN;
-const int PIPE_EVENT_OUT = POLLOUT;
+const short PIPE_EVENT_IN = POLLIN;
+const short PIPE_EVENT_OUT = POLLOUT;
 
 // Inspired by https://gist.github.com/geertj/4325783.
 static int socketpair(int domain, int type, int protocol, SOCKET *out)
@@ -204,7 +204,7 @@ int pipe_poll(pipe_event_source *sources, size_t num_sources, int timeout)
 
   for (size_t i = 0; i < num_sources; i++) {
     pollfds[i].fd = sources[i].pipe;
-    pollfds[i].events = (short) sources[i].interests;
+    pollfds[i].events = sources[i].interests;
   }
 
   r = WSAPoll(pollfds, (ULONG) num_sources, timeout);
