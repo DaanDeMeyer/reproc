@@ -14,6 +14,9 @@
 
 const int PIPE_INVALID = -1;
 
+const int PIPE_EVENT_IN = POLLIN;
+const int PIPE_EVENT_OUT = POLLOUT;
+
 int pipe_init(int *read, int *write)
 {
   ASSERT(read);
@@ -92,56 +95,35 @@ int pipe_write(int pipe, const uint8_t *buffer, size_t size)
   return r < 0 ? -errno : r;
 }
 
-int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
+int pipe_poll(pipe_event_source *sources, size_t num_sources, int timeout)
 {
-  ASSERT(num_sets * PIPES_PER_SET <= INT_MAX);
+  ASSERT(num_sources <= INT_MAX);
 
   struct pollfd *pollfds = NULL;
-  size_t num_pipes = num_sets * PIPES_PER_SET;
   int r = -1;
 
-  pollfds = calloc(sizeof(struct pollfd), num_pipes);
+  pollfds = calloc(num_sources, sizeof(struct pollfd));
   if (pollfds == NULL) {
     r = -errno;
     goto finish;
   }
 
-  for (size_t i = 0; i < num_sets; i++) {
-    size_t j = i * PIPES_PER_SET;
-    pollfds[j + 0] = (struct pollfd){ .fd = sets[i].in, .events = POLLOUT };
-    pollfds[j + 1] = (struct pollfd){ .fd = sets[i].out, .events = POLLIN };
-    pollfds[j + 2] = (struct pollfd){ .fd = sets[i].err, .events = POLLIN };
-    // macos 10.15 indicates `POLLIN` instead of `POLLHUP` when the peer fd is
-    // closed.
-    pollfds[j + 3] = (struct pollfd){ .fd = sets[i].exit, .events = POLLIN };
+  for (size_t i = 0; i < num_sources; i++) {
+    pollfds[i].fd = sources[i].pipe;
+    pollfds[i].events = (short) sources[i].interests;
   }
 
-  r = poll(pollfds, (nfds_t) num_pipes, timeout);
+  r = poll(pollfds, (nfds_t) num_sources, timeout);
   if (r < 0) {
     r = -errno;
     goto finish;
   }
 
-  for (size_t i = 0; i < num_sets; i++) {
-    sets[i].events = 0;
+  for (size_t i = 0; i < num_sources; i++) {
+    sources[i].events = pollfds[i].revents;
   }
 
-  for (size_t i = 0; i < num_pipes; i++) {
-    struct pollfd pollfd = pollfds[i];
-
-    if (pollfd.revents > 0) {
-      int event = 1 << (i % PIPES_PER_SET);
-      sets[i / PIPES_PER_SET].events |= event;
-    }
-  }
-
-  if (r == 0) {
-    r = -ETIMEDOUT;
-  } else if (r > 0) {
-    // `poll` returns the amount of ready file descriptors on success so we
-    // explicitly reset `r` to 0.
-    r = 0;
-  }
+  r = r == 0 ? -ETIMEDOUT : r;
 
 finish:
   free(pollfds);

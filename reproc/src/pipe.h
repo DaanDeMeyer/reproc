@@ -12,25 +12,16 @@ typedef uint32_t pipe_type; // `SOCKET`
 typedef int pipe_type; // fd
 #endif
 
-// Keep in sync with `REPROC_EVENT`.
-enum {
-  PIPE_EVENT_IN = 1 << 0,
-  PIPE_EVENT_OUT = 1 << 1,
-  PIPE_EVENT_ERR = 1 << 2,
-  PIPE_EVENT_EXIT = 1 << 3
-};
+extern const pipe_type PIPE_INVALID;
+
+extern const int PIPE_EVENT_IN;
+extern const int PIPE_EVENT_OUT;
 
 typedef struct {
-  pipe_type in;
-  pipe_type out;
-  pipe_type err;
-  pipe_type exit;
+  pipe_type pipe;
+  int interests;
   int events;
-} pipe_set;
-
-enum { PIPES_PER_SET = 4 };
-
-extern const pipe_type PIPE_INVALID;
+} pipe_event_source;
 
 // Creates a new anonymous pipe. `parent` and `child` are set to the parent and
 // child endpoint of the pipe respectively.
@@ -47,10 +38,7 @@ int pipe_read(pipe_type pipe, uint8_t *buffer, size_t size);
 // returns the amount of bytes written.
 int pipe_write(pipe_type pipe, const uint8_t *buffer, size_t size);
 
-// Returns the first stream of `in`, `out` and `err` that has data available to
-// read. 0 => in, 1 => out, 2 => err.
-//
-// Returns `REPROC_EPIPE` if `in`, `out` and `err` are invalid.
-int pipe_wait(pipe_set *sets, size_t num_sets, int timeout);
+// Polls the given event sources for events.
+int pipe_poll(pipe_event_source *sources, size_t num_sources, int timeout);
 
 pipe_type pipe_destroy(pipe_type pipe);

@@ -249,11 +249,12 @@ finish:
   return r;
 }
 
-static bool contains_valid_pipe(pipe_set *sets, size_t num_sets)
+enum { PIPES_PER_SOURCE = 4 };
+
+static bool contains_valid_pipe(pipe_event_source *sources, size_t num_sources)
 {
-  for (size_t i = 0; i < num_sets; i++) {
-    if (sets[i].in != PIPE_INVALID || sets[i].out != PIPE_INVALID ||
-        sets[i].err != PIPE_INVALID || sets[i].exit != PIPE_INVALID) {
+  for (size_t i = 0; i < num_sources; i++) {
+    if (sources[i].pipe != PIPE_INVALID) {
       return true;
     }
   }
@@ -277,40 +278,50 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
   }
 
   int first = expiry(timeout, deadline);
+  size_t num_pipes = num_sources * PIPES_PER_SOURCE;
   int r = REPROC_ENOMEM;
 
-  pipe_set *sets = calloc(sizeof(pipe_set), num_sources);
-  if (sets == NULL) {
+  pipe_event_source *pipes = calloc(num_pipes, sizeof(pipe_event_source));
+  if (pipes == NULL) {
     return r;
   }
 
+  for (size_t i = 0; i < num_pipes; i++) {
+    pipes[i].pipe = PIPE_INVALID;
+  }
+
   for (size_t i = 0; i < num_sources; i++) {
-    pipe_set *set = sets + i;
+    size_t j = i * PIPES_PER_SOURCE;
     reproc_t *process = sources[i].process;
     int interests = sources[i].interests;
-
-    *set = (pipe_set){ .in = PIPE_INVALID,
-                       .out = PIPE_INVALID,
-                       .err = PIPE_INVALID,
-                       .exit = PIPE_INVALID };
 
     if (process == NULL) {
       continue;
     }
 
-    set->in = interests & REPROC_EVENT_IN ? process->pipe.in : PIPE_INVALID;
-    set->out = interests & REPROC_EVENT_OUT ? process->pipe.out : PIPE_INVALID;
-    set->err = interests & REPROC_EVENT_ERR ? process->pipe.err : PIPE_INVALID;
-    set->exit = interests & REPROC_EVENT_EXIT ? process->pipe.exit
-                                              : PIPE_INVALID;
+    bool in = interests & REPROC_EVENT_IN;
+    pipes[j + 0].pipe = in ? process->pipe.in : PIPE_INVALID;
+    pipes[j + 0].interests = PIPE_EVENT_OUT;
+
+    bool out = interests & REPROC_EVENT_OUT;
+    pipes[j + 1].pipe = out ? process->pipe.out : PIPE_INVALID;
+    pipes[j + 1].interests = PIPE_EVENT_IN;
+
+    bool err = interests & REPROC_EVENT_ERR;
+    pipes[j + 2].pipe = err ? process->pipe.err : PIPE_INVALID;
+    pipes[j + 2].interests = PIPE_EVENT_IN;
+
+    bool exit = interests & REPROC_EVENT_EXIT;
+    pipes[j + 3].pipe = exit ? process->pipe.exit : PIPE_INVALID;
+    pipes[j + 3].interests = PIPE_EVENT_IN;
   }
 
-  if (!contains_valid_pipe(sets, num_sources)) {
+  if (!contains_valid_pipe(pipes, num_pipes)) {
     r = REPROC_EPIPE;
     goto finish;
   }
 
-  r = pipe_wait(sets, num_sources, first);
+  r = pipe_poll(pipes, num_pipes, first);
 
   if (r == REPROC_ETIMEDOUT) {
     // Differentiate between timeout and deadline expiry. Deadline expiry is an
@@ -325,13 +336,29 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
   }
 
   for (size_t i = 0; i < num_sources; i++) {
-    sources[i].events = sets[i].events;
+    sources[i].events = 0;
+  }
+
+  for (size_t i = 0; i < num_pipes; i++) {
+    if (pipes[i].pipe == PIPE_INVALID) {
+      continue;
+    }
+
+    if (pipes[i].events > 0) {
+      // Index in a set of pipes determines the process pipe and thus the
+      // process event.
+      // 0 = stdin pipe => REPROC_EVENT_IN
+      // 1 = stdout pipe => REPROC_EVENT_OUT
+      // ...
+      int event = 1 << (i % PIPES_PER_SOURCE);
+      sources[i / PIPES_PER_SOURCE].events |= event;
+    }
   }
 
 finish:
-  free(sets);
+  free(pipes);
 
-  return r;
+  return r < 0 ? r :0;
 }
 
 int reproc_read(reproc_t *process,
@@ -421,17 +448,15 @@ int reproc_wait(reproc_t *process, int timeout)
     timeout = expiry(REPROC_INFINITE, process->deadline);
   }
 
-  pipe_set set = { .in = PIPE_INVALID,
-                   .out = PIPE_INVALID,
-                   .err = PIPE_INVALID,
-                   .exit = process->pipe.exit };
+  ASSERT(process->pipe.exit != PIPE_INVALID);
 
-  r = pipe_wait(&set, 1, timeout);
+  pipe_event_source source = { .pipe = process->pipe.exit,
+                               .interests = PIPE_EVENT_IN };
+
+  r = pipe_poll(&source, 1, timeout);
   if (r < 0) {
     return r;
   }
-
-  ASSERT(set.events & PIPE_EVENT_EXIT);
 
   r = process_wait(process->handle);
   if (r < 0) {

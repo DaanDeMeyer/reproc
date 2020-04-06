@@ -13,6 +13,9 @@
 
 const SOCKET PIPE_INVALID = INVALID_SOCKET;
 
+const int PIPE_EVENT_IN = POLLIN;
+const int PIPE_EVENT_OUT = POLLOUT;
+
 // Inspired by https://gist.github.com/geertj/4325783.
 static int socketpair(int domain, int type, int protocol, SOCKET *out)
 {
@@ -186,54 +189,35 @@ int pipe_write(SOCKET pipe, const uint8_t *buffer, size_t size)
   return r < 0 ? -WSAGetLastError() : r;
 }
 
-int pipe_wait(pipe_set *sets, size_t num_sets, int timeout)
+int pipe_poll(pipe_event_source *sources, size_t num_sources, int timeout)
 {
-  ASSERT(num_sets * PIPES_PER_SET <= INT_MAX);
+  ASSERT(num_sources <= INT_MAX);
 
   WSAPOLLFD *pollfds = NULL;
-  size_t num_pipes = num_sets * PIPES_PER_SET;
   int r = -1;
 
-  pollfds = calloc(sizeof(WSAPOLLFD), num_pipes);
+  pollfds = calloc(num_sources, sizeof(WSAPOLLFD));
   if (pollfds == NULL) {
     r = -ERROR_NOT_ENOUGH_MEMORY;
     goto finish;
   }
 
-  for (size_t i = 0; i < num_sets; i++) {
-    size_t j = i * PIPES_PER_SET;
-    pollfds[j + 0] = (WSAPOLLFD){ .fd = sets[i].in, .events = POLLOUT };
-    pollfds[j + 1] = (WSAPOLLFD){ .fd = sets[i].out, .events = POLLIN };
-    pollfds[j + 2] = (WSAPOLLFD){ .fd = sets[i].err, .events = POLLIN };
-    pollfds[j + 3] = (WSAPOLLFD){ .fd = sets[i].exit };
+  for (size_t i = 0; i < num_sources; i++) {
+    pollfds[i].fd = sources[i].pipe;
+    pollfds[i].events = (short) sources[i].interests;
   }
 
-  r = WSAPoll(pollfds, (ULONG) num_pipes, timeout);
+  r = WSAPoll(pollfds, (ULONG) num_sources, timeout);
   if (r < 0) {
     r = -WSAGetLastError();
     goto finish;
   }
 
-  for (size_t i = 0; i < num_sets; i++) {
-    sets[i].events = 0;
+  for (size_t i = 0; i < num_sources; i++) {
+    sources[i].events = pollfds[i].revents;
   }
 
-  for (size_t i = 0; i < num_pipes; i++) {
-    WSAPOLLFD pollfd = pollfds[i];
-
-    if (pollfd.revents > 0 && pollfd.revents != POLLNVAL) {
-      int event = 1 << (i % PIPES_PER_SET);
-      sets[i / PIPES_PER_SET].events |= event;
-    }
-  }
-
-  if (r == 0) {
-    r = -WAIT_TIMEOUT;
-  } else if (r > 0) {
-    // `WSAPoll` returns the amount of ready sockets on success so we explicitly
-    // reset `r` to 0.
-    r = 0;
-  }
+  r = r == 0 ? -WAIT_TIMEOUT : r;
 
 finish:
   free(pollfds);
