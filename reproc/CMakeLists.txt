@@ -10,7 +10,7 @@ if(REPROC_MULTITHREADED)
 endif()
 
 if(WIN32)
-  set(PLATFORM win32)
+  set(PLATFORM windows)
   target_compile_definitions(reproc PRIVATE WIN32_LEAN_AND_MEAN)
   target_link_libraries(reproc PRIVATE ${REPROC_WINSOCK_LIBRARY})
 else()
