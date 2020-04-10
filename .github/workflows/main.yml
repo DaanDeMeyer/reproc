@@ -7,9 +7,6 @@ jobs:
     name: ${{ matrix.config.os }}-${{ matrix.config.compiler }}-${{ matrix.config.version }}
     runs-on: ${{ matrix.config.os }}-latest
 
-    env:
-      CTEST_OUTPUT_ON_FAILURE: ON
-
     strategy:
       fail-fast: false
       matrix:
@@ -145,3 +142,5 @@ jobs:
 
       - name: Test
         run: cmake --build build --target test
+        env:
+          CTEST_OUTPUT_ON_FAILURE: ON
