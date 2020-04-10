@@ -38,5 +38,5 @@ finish:
     fprintf(stderr, "%s\n", reproc_strerror(r));
   }
 
-  return r < 0 ? EXIT_FAILURE : EXIT_SUCCESS;
+  return abs(r);
 }
