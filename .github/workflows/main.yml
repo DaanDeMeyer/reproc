@@ -86,7 +86,6 @@ jobs:
           sudo ln -s /usr/local/opt/llvm/bin/clang-tidy /usr/local/bin/clang-tidy
 
           if [ "${{ matrix.config.compiler }}" = "gcc" ]; then
-            brew install gcc
             echo "::set-env name=CC::gcc"
             echo "::set-env name=CXX::g++"
           else
