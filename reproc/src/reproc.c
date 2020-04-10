@@ -358,7 +358,7 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
 finish:
   free(pipes);
 
-  return r < 0 ? r :0;
+  return r < 0 ? r : 0;
 }
 
 int reproc_read(reproc_t *process,
