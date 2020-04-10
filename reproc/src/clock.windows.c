@@ -4,7 +4,7 @@
 
 #include <windows.h>
 
-int64_t reproc_now(void)
+int64_t now(void)
 {
   return (int64_t) GetTickCount64();
 }

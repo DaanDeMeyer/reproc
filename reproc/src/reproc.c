@@ -81,15 +81,14 @@ static int expiry(int timeout, int64_t deadline)
     return timeout;
   }
 
-  int64_t now = reproc_now();
+  int64_t n = now();
 
-  if (now >= deadline) {
+  if (n >= deadline) {
     return 0;
   }
 
-  // `deadline` exceeds `reproc_now` by at most a full `int` so the cast is
-  // safe.
-  int remaining = (int) (deadline - now);
+  // `deadline` exceeds `now` by at most a full `int` so the cast is safe.
+  int remaining = (int) (deadline - n);
 
   if (timeout == REPROC_INFINITE) {
     return remaining;
@@ -214,7 +213,7 @@ int reproc_start(reproc_t *process,
     process->stop = options.stop;
 
     if (options.deadline != REPROC_INFINITE) {
-      process->deadline = reproc_now() + options.deadline;
+      process->deadline = now() + options.deadline;
     }
   }
 

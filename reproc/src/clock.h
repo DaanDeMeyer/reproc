@@ -2,4 +2,4 @@
 
 #include <stdint.h>
 
-int64_t reproc_now(void);
+int64_t now(void);
