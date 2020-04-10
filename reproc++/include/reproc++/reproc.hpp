@@ -189,7 +189,7 @@ private:
   REPROCXX_EXPORT friend std::error_code
   poll(event::source *sources, size_t num_sources, milliseconds timeout);
 
-  std::unique_ptr<reproc_t, void (*)(reproc_t *)> process_;
+  std::unique_ptr<reproc_t, void (*)(reproc_t *)> impl_;
 };
 
 }

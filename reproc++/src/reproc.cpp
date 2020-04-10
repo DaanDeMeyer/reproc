@@ -63,7 +63,7 @@ static reproc_options reproc_options_from(const options &options, bool fork)
 
 auto deleter = [](reproc_t *process) { reproc_destroy(process); };
 
-process::process() : process_(reproc_new(), deleter) {}
+process::process() : impl_(reproc_new(), deleter) {}
 process::~process() noexcept = default;
 
 process::process(process &&other) noexcept = default;
@@ -73,14 +73,14 @@ std::error_code process::start(const arguments &arguments,
                                const options &options) noexcept
 {
   reproc_options reproc_options = reproc_options_from(options, false);
-  int r = reproc_start(process_.get(), arguments.data(), reproc_options);
+  int r = reproc_start(impl_.get(), arguments.data(), reproc_options);
   return error_code_from(r);
 }
 
 std::pair<bool, std::error_code> process::fork(const options &options) noexcept
 {
   reproc_options reproc_options = reproc_options_from(options, true);
-  int r = reproc_start(process_.get(), nullptr, reproc_options);
+  int r = reproc_start(impl_.get(), nullptr, reproc_options);
   return { r == 0, error_code_from(r) };
 }
 
@@ -95,7 +95,7 @@ std::pair<int, std::error_code> process::poll(int interests,
 std::pair<size_t, std::error_code>
 process::read(stream stream, uint8_t *buffer, size_t size) noexcept
 {
-  int r = reproc_read(process_.get(), static_cast<REPROC_STREAM>(stream),
+  int r = reproc_read(impl_.get(), static_cast<REPROC_STREAM>(stream),
                       buffer, size);
   return { r, error_code_from(r) };
 }
@@ -103,37 +103,37 @@ process::read(stream stream, uint8_t *buffer, size_t size) noexcept
 std::pair<size_t, std::error_code> process::write(const uint8_t *buffer,
                                                   size_t size) noexcept
 {
-  int r = reproc_write(process_.get(), buffer, size);
+  int r = reproc_write(impl_.get(), buffer, size);
   return { r, error_code_from(r) };
 }
 
 std::error_code process::close(stream stream) noexcept
 {
-  int r = reproc_close(process_.get(), static_cast<REPROC_STREAM>(stream));
+  int r = reproc_close(impl_.get(), static_cast<REPROC_STREAM>(stream));
   return error_code_from(r);
 }
 
 std::pair<int, std::error_code> process::wait(milliseconds timeout) noexcept
 {
-  int r = reproc_wait(process_.get(), timeout.count());
+  int r = reproc_wait(impl_.get(), timeout.count());
   return { r, error_code_from(r) };
 }
 
 std::error_code process::terminate() noexcept
 {
-  int r = reproc_terminate(process_.get());
+  int r = reproc_terminate(impl_.get());
   return error_code_from(r);
 }
 
 std::error_code process::kill() noexcept
 {
-  int r = reproc_kill(process_.get());
+  int r = reproc_kill(impl_.get());
   return error_code_from(r);
 }
 
 std::pair<int, std::error_code> process::stop(stop_actions stop) noexcept
 {
-  int r = reproc_stop(process_.get(), reproc_stop_actions_from(stop));
+  int r = reproc_stop(impl_.get(), reproc_stop_actions_from(stop));
   return { r, error_code_from(r) };
 }
 
@@ -143,7 +143,7 @@ poll(event::source *sources, size_t num_sources, milliseconds timeout)
   auto *reproc_sources = new reproc_event_source[num_sources];
 
   for (size_t i = 0; i < num_sources; i++) {
-    reproc_sources[i] = { sources[i].process.process_.get(),
+    reproc_sources[i] = { sources[i].process.impl_.get(),
                           sources[i].interests, 0 };
   }
 
