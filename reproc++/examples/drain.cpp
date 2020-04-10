@@ -7,7 +7,7 @@
 static int fail(std::error_code ec)
 {
   std::cerr << ec.message();
-  return 1;
+  return ec.value();
 }
 
 // Uses `reproc::drain` to show the output of the given command.
@@ -16,7 +16,7 @@ int main(int argc, const char **argv)
   if (argc <= 1) {
     std::cerr << "No arguments provided. Example usage: "
               << "./drain cmake --help";
-    return 1;
+    return EXIT_FAILURE;
   }
 
   reproc::process process;
@@ -31,7 +31,7 @@ int main(int argc, const char **argv)
   // information.
   if (ec == std::errc::no_such_file_or_directory) {
     std::cerr << "Program not found. Make sure it's available from the PATH.";
-    return 1;
+    return ec.value();
   } else if (ec) {
     return fail(ec);
   }
