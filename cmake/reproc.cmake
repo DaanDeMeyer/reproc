@@ -340,7 +340,7 @@ function(reproc_test TARGET NAME LANGUAGE)
     RESOURCE_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/resources"
   )
 
-  add_test(NAME ${NAME} COMMAND ${TARGET}-test-${NAME})
+  add_test(NAME ${TARGET}-test-${NAME} COMMAND ${TARGET}-test-${NAME})
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/resources/${NAME}.c)
     add_executable(${TARGET}-resource-${NAME} resources/${NAME}.c)
@@ -366,4 +366,11 @@ function(reproc_example TARGET NAME LANGUAGE)
 
   reproc_common(${TARGET}-example-${NAME} ${LANGUAGE} ${NAME} examples)
   target_link_libraries(${TARGET}-example-${NAME} PRIVATE ${TARGET} ${ARGN})
+
+  if(REPROC_TEST)
+    add_test(
+      NAME ${TARGET}-example-${NAME}
+      COMMAND ${TARGET}-example-${NAME} cmake --help
+    )
+  endif()
 endfunction()
