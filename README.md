@@ -161,7 +161,7 @@ reproc's build can be configured using the following CMake options:
 
   This is useful to directly include reproc in another library. When building
   reproc as a static or shared library, it has to be installed alongside the
-  consuming library which makes distributing the consuming library harder. When
+  consuming library which distributing the consuming library harder. When
   using object libraries, reproc's object files are included directly into the
   consuming library and no extra installation is necessary.
 
