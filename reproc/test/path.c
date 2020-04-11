@@ -4,8 +4,10 @@
 
 int main(void)
 {
-  reproc_t *process = reproc_new();
   int r = -1;
+
+  reproc_t *process = reproc_new();
+  ASSERT(process);
 
   const char *argv[] = { RESOURCE_DIRECTORY "/path", NULL };
   r = reproc_start(process, argv,
