@@ -34,11 +34,7 @@ int redirect_parent(int *child, REPROC_STREAM stream)
 
   int r = fileno(file);
   if (r < 0) {
-    if (errno == EBADF) {
-      errno = EPIPE;
-    }
-
-    return -errno;
+    return errno == EBADF ? -EPIPE : -errno;
   }
 
   *child = r; // `r` contains the duplicated file descriptor.
