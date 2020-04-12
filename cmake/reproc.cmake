@@ -68,7 +68,11 @@ endif()
 # Build type
 
 if(REPROC_DEVELOP AND NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_BUILD_TYPE Debug)
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+  set_property(
+    CACHE CMAKE_BUILD_TYPE
+    PROPERTY STRINGS Debug Release MinSizeRel RelWithDebInfo
+  )
 endif()
 
 # clang-tidy
