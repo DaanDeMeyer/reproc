@@ -35,6 +35,18 @@ adds a few extras that simplify working with external programs from C++.
 - Multiple installation methods. Either build reproc as part of your project or
   use a system installed version of reproc.
 
+## Usage
+
+```c
+#include <reproc/run.h>
+
+int main(void)
+{
+  const char *args[] = { "echo", "Hello, world!", NULL };
+  return reproc_run(args, (reproc_options) { 0 });
+}
+```
+
 ## Questions
 
 If you have any questions after reading the readme and documentation you can
