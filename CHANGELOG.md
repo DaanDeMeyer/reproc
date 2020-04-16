@@ -1,11 +1,24 @@
 # Changelog
 
-## 12.1.0
+## 13.0.0
 
 - Allow passing empty event sources to `reproc_poll`.
 
   If the `process` member of a `reproc_event_source` object is `NULL`,
   `reproc_poll` ignores the event source.
+
+- Return zero from `reproc_poll` if the given timeout expires instead of
+  `REPROC_ETIMEDOUT`.
+
+  In reproc, we follow the general pattern that we don't modify output arguments
+  if an error occurs. However, when `reproc_poll` errors, we still want to set
+  all events of the given event sources to zero. To signal that we're modifying
+  the output arguments if the timeout expires, we return zero instead of
+  `REPROC_ETIMEDOUT`. This is also more consistent with `poll` and `WSAPoll`
+  which have the same behaviour.
+
+- If one or more events occur, return the number of processes with events from
+  `reproc_poll`.
 
 ## 12.0.0
 

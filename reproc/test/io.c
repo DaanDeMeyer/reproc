@@ -56,7 +56,7 @@ static void timeout(void)
   reproc_event_source source = { process, REPROC_EVENT_OUT | REPROC_EVENT_ERR,
                                  0 };
   r = reproc_poll(&source, 1, 200);
-  ASSERT(r == REPROC_ETIMEDOUT);
+  ASSERT(r == 0);
 
   r = reproc_close(process, REPROC_STREAM_IN);
   ASSERT_OK(r);

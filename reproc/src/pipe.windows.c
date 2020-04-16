@@ -217,8 +217,6 @@ int pipe_poll(pipe_event_source *sources, size_t num_sources, int timeout)
     sources[i].events = pollfds[i].revents;
   }
 
-  r = r == 0 ? -WAIT_TIMEOUT : r;
-
 finish:
   free(pollfds);
 

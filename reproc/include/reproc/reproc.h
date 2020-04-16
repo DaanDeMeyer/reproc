@@ -333,12 +333,12 @@ process member is `NULL`, the event source is ignored.
 Pass `REPROC_INFINITE` to `timeout` to have `reproc_poll` wait forever for an
 event to occur.
 
-Returns `REPROC_EPIPE` if none of the sources have valid pipes remaining that
-can be polled and `REPROC_ETIMEDOUT` if the given timeout expires.
+If one or more events occur, returns the number of processes with events. If the
+timeout expires, returns zero. Returns `REPROC_EPIPE` if none of the sources
+have valid pipes remaining that can be polled.
 
 Actionable errors:
 - `REPROC_EPIPE`
-- `REPROC_ETIMEDOUT`
 */
 REPROC_EXPORT int
 reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout);

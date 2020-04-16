@@ -321,15 +321,6 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
   }
 
   r = pipe_poll(pipes, num_pipes, first);
-
-  if (r == REPROC_ETIMEDOUT) {
-    // Differentiate between timeout and deadline expiry. Deadline expiry is an
-    // event, timeout is an error.
-    sources[earliest].events = first == deadline ? REPROC_EVENT_DEADLINE : 0;
-    r = first == deadline ? 0 : REPROC_ETIMEDOUT;
-    goto finish;
-  }
-
   if (r < 0) {
     goto finish;
   }
@@ -338,26 +329,41 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
     sources[i].events = 0;
   }
 
-  for (size_t i = 0; i < num_pipes; i++) {
-    if (pipes[i].pipe == PIPE_INVALID) {
-      continue;
+  if (r == 0 && first == deadline) {
+    // Differentiate between timeout and deadline expiry. Deadline expiry is an
+    // event, timeouts are not.
+    sources[earliest].events = REPROC_EVENT_DEADLINE;
+    r = 1;
+  } else if (r > 0) {
+    // Convert pipe events to process events.
+    for (size_t i = 0; i < num_pipes; i++) {
+      if (pipes[i].pipe == PIPE_INVALID) {
+        continue;
+      }
+
+      if (pipes[i].events > 0) {
+        // Index in a set of pipes determines the process pipe and thus the
+        // process event.
+        // 0 = stdin pipe => REPROC_EVENT_IN
+        // 1 = stdout pipe => REPROC_EVENT_OUT
+        // ...
+        int event = 1 << (i % PIPES_PER_SOURCE);
+        sources[i / PIPES_PER_SOURCE].events |= event;
+      }
     }
 
-    if (pipes[i].events > 0) {
-      // Index in a set of pipes determines the process pipe and thus the
-      // process event.
-      // 0 = stdin pipe => REPROC_EVENT_IN
-      // 1 = stdout pipe => REPROC_EVENT_OUT
-      // ...
-      int event = 1 << (i % PIPES_PER_SOURCE);
-      sources[i / PIPES_PER_SOURCE].events |= event;
+    r = 0;
+
+    // Count the number of processes with events.
+    for (size_t i = 0; i < num_sources; i++) {
+      r += sources[i].events > 0;
     }
   }
 
 finish:
   free(pipes);
 
-  return r < 0 ? r : 0;
+  return r;
 }
 
 int reproc_read(reproc_t *process,
@@ -453,8 +459,8 @@ int reproc_wait(reproc_t *process, int timeout)
                                .interests = PIPE_EVENT_IN };
 
   r = pipe_poll(&source, 1, timeout);
-  if (r < 0) {
-    return r;
+  if (r <= 0) {
+    return r == 0 ? REPROC_ETIMEDOUT : r;
   }
 
   r = process_wait(process->handle);
