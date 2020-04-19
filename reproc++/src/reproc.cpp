@@ -95,8 +95,8 @@ std::pair<int, std::error_code> process::poll(int interests,
 std::pair<size_t, std::error_code>
 process::read(stream stream, uint8_t *buffer, size_t size) noexcept
 {
-  int r = reproc_read(impl_.get(), static_cast<REPROC_STREAM>(stream),
-                      buffer, size);
+  int r = reproc_read(impl_.get(), static_cast<REPROC_STREAM>(stream), buffer,
+                      size);
   return { r, error_code_from(r) };
 }
 
@@ -143,8 +143,8 @@ poll(event::source *sources, size_t num_sources, milliseconds timeout)
   auto *reproc_sources = new reproc_event_source[num_sources];
 
   for (size_t i = 0; i < num_sources; i++) {
-    reproc_sources[i] = { sources[i].process.impl_.get(),
-                          sources[i].interests, 0 };
+    reproc_sources[i] = { sources[i].process.impl_.get(), sources[i].interests,
+                          0 };
   }
 
   int r = reproc_poll(reproc_sources, num_sources, timeout.count());

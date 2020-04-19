@@ -1,6 +1,6 @@
 #ifdef _WIN32
   #include <windows.h>
-  #define sleep(x) Sleep((DWORD) (x))
+  #define sleep(x) Sleep((DWORD)(x))
   #define getpid() (int) GetCurrentProcessId()
 #else
   #define _POSIX_C_SOURCE 200809L
