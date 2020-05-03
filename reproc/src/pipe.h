@@ -41,4 +41,6 @@ int pipe_write(pipe_type pipe, const uint8_t *buffer, size_t size);
 // Polls the given event sources for events.
 int pipe_poll(pipe_event_source *sources, size_t num_sources, int timeout);
 
+int pipe_shutdown(pipe_type pipe);
+
 pipe_type pipe_destroy(pipe_type pipe);

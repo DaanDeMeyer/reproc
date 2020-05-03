@@ -87,7 +87,6 @@ static int child(void)
   int ms = rand() % NUM_CHILDREN * 4; // NOLINT
   sleep(ms);
   printf("Process %i slept %i milliseconds.", getpid(), ms);
-  fclose(stdout);
   return EXIT_SUCCESS;
 }
 

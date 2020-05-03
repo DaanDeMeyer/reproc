@@ -9,7 +9,5 @@ int main(int argc, const char **argv, const char **envp)
     printf("%s", envp[i]);
   }
 
-  fclose(stdout);
-
   return 0;
 }

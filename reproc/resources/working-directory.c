@@ -17,7 +17,5 @@ int main()
 
   printf("%s", working_directory);
 
-  fclose(stdout);
-
   return 0;
 }

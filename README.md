@@ -288,12 +288,15 @@ different threads at the same time will result in issues.
   exited. If data is written to this handle, reproc will also wrongly detect the
   child process has exited.
 
-- (Windows) If a child process exits without manually calling `fclose(stdout)`
-  or `fclose(stderr)`, Windows can close the socket pipe prematurely before all
-  outstanding data on the corresponding stream is sent to the parent, resulting
-  in the parent process not receiving all output from the child process.
-  Currently, the only known way around this issue is to explicitly call
-  `fclose(stdout)` and `fclose(stderr)` in the child process before exiting.
-  The issue has been reported and its status can be followed
+- (Windows) It's not possible to detect if a child process closes its stdout or
+  stderr stream before exiting. The parent process will only be notified that a
+  child process output stream is closed once that child process exits.
   [here](https://developercommunity.visualstudio.com/content/problem/977949/child-process-redirect-stdio-to-sockets-stdio-not.html).
 
+- (Windows) reproc assumes that Windows creates sockets that are usable as file
+  system objects. More specifically, the default sockets returned by `WSASocket`
+  should have the `XP1_IFS_HANDLES ` flag set. This might not be the case if
+  there are external LSP providers installed on a Windows machine. If this is
+  the case, we recommend removing the software that's providing the extra
+  service providers since they're deprecated and should not be used anymore (see
+  https://docs.microsoft.com/en-us/windows/win32/winsock/categorizing-layered-service-providers-and-applications).

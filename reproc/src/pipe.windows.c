@@ -62,6 +62,25 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
     goto finish;
   }
 
+  struct {
+    WSAPROTOCOL_INFOW data;
+    int size;
+  } info = { { 0 }, sizeof(WSAPROTOCOL_INFOW) };
+
+  r = getsockopt(pair[0], SOL_SOCKET, SO_PROTOCOL_INFOW, (char *) &info.data,
+                &info.size);
+  if (r < 0) {
+    goto finish;
+  }
+
+  // We require the returned sockets to be usable as Windows file handles. This
+  // might not be the case if extra LSP providers are installed.
+
+  if (!(info.data.dwServiceFlags1 & XP1_IFS_HANDLES)) {
+    r = -ERROR_NOT_SUPPORTED;
+    goto finish;
+  }
+
   r = pipe_nonblocking(pair[0], true);
   if (r < 0) {
     goto finish;
@@ -167,7 +186,7 @@ int pipe_read(SOCKET pipe, uint8_t *buffer, size_t size)
 
   int r = recv(pipe, (char *) buffer, (int) size, 0);
 
-  if (r == 0 || (r < 0 && WSAGetLastError() == WSAECONNRESET)) {
+  if (r == 0) {
     return -ERROR_BROKEN_PIPE;
   }
 
@@ -181,10 +200,6 @@ int pipe_write(SOCKET pipe, const uint8_t *buffer, size_t size)
   ASSERT(size <= INT_MAX);
 
   int r = send(pipe, (const char *) buffer, (int) size, 0);
-
-  if (r < 0 && WSAGetLastError() == WSAECONNRESET) {
-    return -ERROR_BROKEN_PIPE;
-  }
 
   return r < 0 ? -WSAGetLastError() : r;
 }
@@ -221,6 +236,16 @@ finish:
   free(pollfds);
 
   return r;
+}
+
+int pipe_shutdown(SOCKET pipe)
+{
+  if (pipe == PIPE_INVALID) {
+    return 0;
+  }
+
+  int r = shutdown(pipe, SD_SEND);
+  return r < 0 ? -WSAGetLastError() : 0;
 }
 
 SOCKET pipe_destroy(SOCKET pipe)

@@ -6,7 +6,5 @@ int main(int argc, const char **argv)
     printf("%s", argv[i]);
   }
 
-  fclose(stdout);
-
   return 0;
 }

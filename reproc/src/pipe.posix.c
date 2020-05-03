@@ -129,6 +129,12 @@ finish:
   return r;
 }
 
+int pipe_shutdown(int pipe)
+{
+  (void) pipe;
+  return 0;
+}
+
 int pipe_destroy(int pipe)
 {
   return handle_destroy(pipe);

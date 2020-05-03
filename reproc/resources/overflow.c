@@ -10,8 +10,5 @@ int main()
     fprintf(stream, "%s", buffer);
   }
 
-  fclose(stdout);
-  fclose(stderr);
-
   return 0;
 }

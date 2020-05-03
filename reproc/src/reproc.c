@@ -23,6 +23,11 @@ struct reproc_t {
   int status;
   reproc_stop_actions stop;
   int64_t deadline;
+
+  struct {
+    pipe_type out;
+    pipe_type err;
+  } child;
 };
 
 enum { STATUS_NOT_STARTED = -1, STATUS_IN_PROGRESS = -2, STATUS_IN_CHILD = -3 };
@@ -136,6 +141,7 @@ reproc_t *reproc_new(void)
                                    .out = PIPE_INVALID,
                                    .err = PIPE_INVALID,
                                    .exit = PIPE_INVALID },
+                         .child = { .out = PIPE_INVALID, .err = PIPE_INVALID },
                          .status = STATUS_NOT_STARTED,
                          .deadline = REPROC_INFINITE };
 
@@ -222,8 +228,22 @@ finish:
   // the stdin/stdout/stderr streams of the child process. Either way, they can
   // be safely closed.
   redirect_destroy(child.in, options.redirect.in.type);
-  redirect_destroy(child.out, options.redirect.out.type);
-  redirect_destroy(child.err, options.redirect.err.type);
+
+  // See `reproc_poll` for why we do this.
+
+#ifdef _WIN32
+  if (r < 0 || options.redirect.out.type != REPROC_REDIRECT_PIPE) {
+    child.out = redirect_destroy(child.out, options.redirect.out.type);
+  }
+
+  if (r < 0 || options.redirect.err.type != REPROC_REDIRECT_PIPE) {
+    child.err = redirect_destroy(child.err, options.redirect.err.type);
+  }
+#else
+  child.out = redirect_destroy(child.out, options.redirect.out.type);
+  child.err = redirect_destroy(child.err, options.redirect.err.type);
+#endif
+
   pipe_destroy(child.exit);
 
   if (r < 0) {
@@ -242,6 +262,8 @@ finish:
     process->pipe.exit = PIPE_INVALID;
     process->status = STATUS_IN_CHILD;
   } else {
+    process->child.out = (pipe_type) child.out;
+    process->child.err = (pipe_type) child.err;
     process->status = STATUS_IN_PROGRESS;
   }
 
@@ -310,7 +332,11 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
     pipes[j + 2].pipe = err ? process->pipe.err : PIPE_INVALID;
     pipes[j + 2].interests = PIPE_EVENT_IN;
 
-    bool exit = interests & REPROC_EVENT_EXIT;
+    bool exit = (interests & REPROC_EVENT_EXIT) ||
+                (interests & REPROC_EVENT_OUT &&
+                 process->child.out != PIPE_INVALID) ||
+                (interests & REPROC_EVENT_ERR &&
+                 process->child.err != PIPE_INVALID);
     pipes[j + 3].pipe = exit ? process->pipe.exit : PIPE_INVALID;
     pipes[j + 3].interests = PIPE_EVENT_IN;
   }
@@ -358,6 +384,51 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
     for (size_t i = 0; i < num_sources; i++) {
       r += sources[i].events > 0;
     }
+
+    // On Windows, when redirecting to sockets, we keep the child handles alive
+    // in the parent process (see `reproc_start`). We do this because Windows
+    // doesn't correctly flush redirected socket handles when a child process
+    // exits. This can lead to data loss where the parent process doesn't
+    // receive all output of the child process. To get around this, we keep an
+    // extra handle open in the parent process which we close correctly when we
+    // detect the child process has exited. Detecting whether a child process
+    // has exited happens via another inherited socket, but here there's no
+    // danger of data loss because no data is received over this socket.
+
+    bool again = false;
+
+    for (size_t i = 0; i < num_sources; i++) {
+      if (sources[i].events & REPROC_EVENT_EXIT) {
+        reproc_t *process = sources[i].process;
+
+        if (process->child.out != PIPE_INVALID ||
+            process->child.err != PIPE_INVALID) {
+          r = pipe_shutdown(process->child.out);
+          if (r < 0) {
+            goto finish;
+          }
+
+          r = pipe_shutdown(process->child.err);
+          if (r < 0) {
+            goto finish;
+          }
+
+          process->child.out = pipe_destroy(process->child.out);
+          process->child.err = pipe_destroy(process->child.err);
+          again = true;
+        }
+      }
+    }
+
+    // If we've closed handles, we poll again so we can include any new close
+    // events that occurred because we closed handles.
+
+    if (again) {
+      r = reproc_poll(sources, num_sources, timeout);
+      if (r < 0) {
+        goto finish;
+      }
+    }
   }
 
 finish:
@@ -378,11 +449,29 @@ int reproc_read(reproc_t *process,
 
   pipe_type *pipe = stream == REPROC_STREAM_OUT ? &process->pipe.out
                                                 : &process->pipe.err;
+  pipe_type child = stream == REPROC_STREAM_OUT ? process->child.out
+                                                : process->child.err;
+  int r = -1;
+
   if (*pipe == PIPE_INVALID) {
     return REPROC_EPIPE;
   }
 
-  int r = pipe_read(*pipe, buffer, size);
+  // If we've kept extra handles open in the parent, make sure we use
+  // `reproc_poll` which closes the extra handles we keep open when the child
+  // process exits. If we don't, `pipe_read` will block forever because the
+  // extra handles we keep open in the parent would never be closed.
+  if (child != PIPE_INVALID) {
+    int event = stream == REPROC_STREAM_OUT ? REPROC_EVENT_OUT
+                                            : REPROC_EVENT_ERR;
+    reproc_event_source source = { process, event, 0 };
+    r = reproc_poll(&source, 1, REPROC_INFINITE);
+    if (r < 0) {
+      return r;
+    }
+  }
+
+  r = pipe_read(*pipe, buffer, size);
 
   if (r == REPROC_EPIPE) {
     *pipe = pipe_destroy(*pipe);
@@ -553,6 +642,9 @@ reproc_t *reproc_destroy(reproc_t *process)
   pipe_destroy(process->pipe.out);
   pipe_destroy(process->pipe.err);
   pipe_destroy(process->pipe.exit);
+
+  pipe_destroy(process->child.out);
+  pipe_destroy(process->child.err);
 
   if (process->status != STATUS_NOT_STARTED) {
     deinit();
