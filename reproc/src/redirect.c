@@ -131,6 +131,10 @@ int redirect_init(pipe_type *parent,
 
 handle_type redirect_destroy(handle_type child, REPROC_REDIRECT type)
 {
+  if (child == HANDLE_INVALID) {
+    return HANDLE_INVALID;
+  }
+  
   switch (type) {
     case REPROC_REDIRECT_PIPE:
       // We know `handle` is a pipe if `REDIRECT_PIPE` is used so the cast is
