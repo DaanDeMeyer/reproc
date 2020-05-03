@@ -250,8 +250,8 @@ different threads at the same time will result in issues.
   can be seen as a resource leak so it is important to make sure all processes
   exit correctly in a timely fashion.
 
-- It is strongly recommend to try terminating a child process by waiting for it
-  to exit or by calling `reproc_terminate` before resorting to `reproc_kill`.
+- It is strongly recommended to try terminating a child process by waiting for
+  it to exit or by calling `reproc_terminate` before resorting to `reproc_kill`.
 
   When using `reproc_kill` the child process does not receive a chance to
   perform cleanup which could result in resources being leaked. Chief among
