@@ -291,7 +291,6 @@ different threads at the same time will result in issues.
 - (Windows) It's not possible to detect if a child process closes its stdout or
   stderr stream before exiting. The parent process will only be notified that a
   child process output stream is closed once that child process exits.
-  [here](https://developercommunity.visualstudio.com/content/problem/977949/child-process-redirect-stdio-to-sockets-stdio-not.html).
 
 - (Windows) reproc assumes that Windows creates sockets that are usable as file
   system objects. More specifically, the default sockets returned by `WSASocket`
