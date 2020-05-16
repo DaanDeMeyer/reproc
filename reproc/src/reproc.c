@@ -294,6 +294,10 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
                          : sources[earliest].process->deadline;
 
   if (deadline == 0) {
+    for (size_t i = 0; i < num_sources; i++) {
+      sources[i].events = 0;
+    }
+
     sources[earliest].events = REPROC_EVENT_DEADLINE;
     return 0;
   }
