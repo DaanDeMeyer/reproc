@@ -299,7 +299,7 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
     }
 
     sources[earliest].events = REPROC_EVENT_DEADLINE;
-    return 0;
+    return 1;
   }
 
   int first = expiry(timeout, deadline);
