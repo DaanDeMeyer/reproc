@@ -14,15 +14,18 @@
 
 struct reproc_t {
   process_type handle;
+
   struct {
     pipe_type in;
     pipe_type out;
     pipe_type err;
     pipe_type exit;
   } pipe;
+
   int status;
   reproc_stop_actions stop;
   int64_t deadline;
+  bool nonblocking;
 
   struct {
     pipe_type out;
@@ -221,6 +224,8 @@ int reproc_start(reproc_t *process,
     if (options.deadline != REPROC_INFINITE) {
       process->deadline = now() + options.deadline;
     }
+
+    process->nonblocking = options.nonblocking;
   }
 
 finish:
@@ -469,9 +474,9 @@ int reproc_read(reproc_t *process,
     int event = stream == REPROC_STREAM_OUT ? REPROC_EVENT_OUT
                                             : REPROC_EVENT_ERR;
     reproc_event_source source = { process, event, 0 };
-    r = reproc_poll(&source, 1, REPROC_INFINITE);
-    if (r < 0) {
-      return r;
+    r = reproc_poll(&source, 1, process->nonblocking ? 0 : REPROC_INFINITE);
+    if (r <= 0) {
+      return r == 0 ? -REPROC_EWOULDBLOCK : r;
     }
   }
 
