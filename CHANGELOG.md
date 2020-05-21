@@ -1,5 +1,13 @@
 # Changelog
 
+## 13.0.1
+
+- Bugfix: Reset the `events` parameter of every event source if a deadline
+  expires when calling `reproc_poll`.
+- Bugfix: Return 1 from `reproc_poll` if a deadline expires.
+- Bugfix: Don't block in `reproc_read` on Windows if the `nonblocking` option
+  was specified.
+
 ## 13.0.0
 
 - Allow passing empty event sources to `reproc_poll`.
