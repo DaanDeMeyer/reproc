@@ -10,10 +10,10 @@ int main(void)
   reproc_t *process = reproc_new();
   ASSERT(process);
 
-  const char *argv[] = { RESOURCE_DIRECTORY "/environment", NULL };
+  const char *argv[] = { RESOURCE_DIRECTORY "/env", NULL };
   const char *envp[] = { "IP=127.0.0.1", "PORT=8080", NULL };
 
-  r = reproc_start(process, argv, (reproc_options){ .environment = envp });
+  r = reproc_start(process, argv, (reproc_options){ .env = envp });
   ASSERT_OK(r);
 
   char *output = NULL;

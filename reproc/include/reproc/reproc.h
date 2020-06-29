@@ -146,18 +146,18 @@ typedef struct reproc_redirect {
 
 typedef struct reproc_options {
   /*!
-  `environment` is an array of UTF-8 encoded, NUL-terminated strings that
-  specifies the environment for the child process. It has the following layout:
+  `env` is an array of UTF-8 encoded, NUL-terminated strings that specifies the
+  environment for the child process. It has the following layout:
 
   - All elements except the final element must be of the format `NAME=VALUE`.
   - The final element must be `NULL`.
 
   Example: ["IP=127.0.0.1", "PORT=8080", `NULL`]
 
-  If `environment` is `NULL`, the child process inherits the environment of the
-  current process.
+  If `env` is `NULL`, the child process inherits the environment of the current
+  process.
   */
-  const char *const *environment;
+  const char *const *env;
   /*!
   `working_directory` specifies the working directory for the child process. If
   `working_directory` is `NULL`, the child process runs in the working directory

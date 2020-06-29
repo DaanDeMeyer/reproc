@@ -162,32 +162,32 @@ static char *argv_join(const char *const *argv)
   return joined;
 }
 
-static size_t environment_join_size(const char *const *environment)
+static size_t env_join_size(const char *const *env)
 {
-  ASSERT(environment);
+  ASSERT(env);
 
   size_t joined_size = 1; // Count the NUL terminator.
-  for (int i = 0; environment[i] != NULL; i++) {
-    joined_size += strlen(environment[i]) + 1; // Count the NUL terminator.
+  for (int i = 0; env[i] != NULL; i++) {
+    joined_size += strlen(env[i]) + 1; // Count the NUL terminator.
   }
 
   return joined_size;
 }
 
-static char *environment_join(const char *const *environment)
+static char *env_join(const char *const *env)
 {
-  ASSERT(environment);
+  ASSERT(env);
 
-  char *joined = calloc(environment_join_size(environment), sizeof(char));
+  char *joined = calloc(env_join_size(env), sizeof(char));
   if (joined == NULL) {
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return NULL;
   }
 
   char *current = joined;
-  for (int i = 0; environment[i] != NULL; i++) {
-    size_t to_copy = strlen(environment[i]) + 1; // Include NUL terminator.
-    memcpy(current, environment[i], to_copy);
+  for (int i = 0; env[i] != NULL; i++) {
+    size_t to_copy = strlen(env[i]) + 1; // Include NUL terminator.
+    memcpy(current, env[i], to_copy);
     current += to_copy;
   }
 
@@ -261,8 +261,8 @@ int process_start(HANDLE *process,
 
   char *command_line = NULL;
   wchar_t *command_line_wstring = NULL;
-  char *environment_line = NULL;
-  wchar_t *environment_line_wstring = NULL;
+  char *env = NULL;
+  wchar_t *env_wstring = NULL;
   wchar_t *working_directory_wstring = NULL;
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
   PROCESS_INFORMATION info = { PROCESS_INVALID, HANDLE_INVALID, 0, 0 };
@@ -283,20 +283,19 @@ int process_start(HANDLE *process,
     goto finish;
   }
 
-  // Idem for `environment` if it isn't `NULL`.
-  if (options.environment != NULL) {
-    environment_line = environment_join(options.environment);
-    if (environment_line == NULL) {
+  // Idem for `env` if it isn't `NULL`.
+  if (options.env != NULL) {
+    env = env_join(options.env);
+    if (env == NULL) {
       r = -(int) GetLastError();
       goto finish;
     }
 
-    size_t joined_size = environment_join_size(options.environment);
+    size_t joined_size = env_join_size(options.env);
     ASSERT(joined_size <= INT_MAX);
 
-    environment_line_wstring = utf16_from_utf8(environment_line,
-                                               (int) joined_size);
-    if (environment_line_wstring == NULL) {
+    env_wstring = utf16_from_utf8(env, (int) joined_size);
+    if (env_wstring == NULL) {
       r = -(int) GetLastError();
       goto finish;
     }
@@ -359,7 +358,7 @@ int process_start(HANDLE *process,
 
   r = CreateProcessW(NULL, command_line_wstring, &HANDLE_DO_NOT_INHERIT,
                      &HANDLE_DO_NOT_INHERIT, true, CREATION_FLAGS,
-                     environment_line_wstring, working_directory_wstring,
+                     env_wstring, working_directory_wstring,
                      startup_info_address, &info);
 
   SetErrorMode(previous_error_mode);
@@ -375,8 +374,8 @@ int process_start(HANDLE *process,
 finish:
   free(command_line);
   free(command_line_wstring);
-  free(environment_line);
-  free(environment_line_wstring);
+  free(env);
+  free(env_wstring);
   free(working_directory_wstring);
   DeleteProcThreadAttributeList(attribute_list);
   handle_destroy(info.hThread);

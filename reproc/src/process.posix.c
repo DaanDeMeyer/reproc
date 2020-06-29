@@ -383,10 +383,10 @@ int process_start(pid_t *process,
       }
     }
 
-    if (options.environment != NULL) {
+    if (options.env != NULL) {
       // `environ` is carried over calls to `exec`.
       extern char **environ;
-      environ = (char **) options.environment;
+      environ = (char **) options.env;
     }
 
     if (argv != NULL) {

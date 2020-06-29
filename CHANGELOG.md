@@ -1,5 +1,9 @@
 # Changelog
 
+## 14.0.0
+
+- Renamed `environment` to `env`.
+
 ## 13.0.1
 
 - Bugfix: Reset the `events` parameter of every event source if a deadline

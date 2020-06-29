@@ -15,7 +15,7 @@ extern const process_type PROCESS_INVALID;
 struct process_options {
   // If `NULL`, the child process inherits the environment of the current
   // process.
-  const char *const *environment;
+  const char *const *env;
   // If not `NULL`, the working directory of the child process is set to
   // `working_directory`.
   const char *working_directory;

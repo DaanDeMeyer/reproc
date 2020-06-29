@@ -47,7 +47,7 @@ static reproc_redirect reproc_redirect_from(redirect redirect)
 
 static reproc_options reproc_options_from(const options &options, bool fork)
 {
-  return { options.environment.data(),
+  return { options.env.data(),
            options.working_directory,
            { reproc_redirect_from(options.redirect.in),
              reproc_redirect_from(options.redirect.out),

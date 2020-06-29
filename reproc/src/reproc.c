@@ -205,7 +205,7 @@ int reproc_start(reproc_t *process,
   }
 
   struct process_options process_options = {
-    .environment = options.environment,
+    .env = options.env,
     .working_directory = options.working_directory,
     .handle = { .in = child.in,
                 .out = child.out,

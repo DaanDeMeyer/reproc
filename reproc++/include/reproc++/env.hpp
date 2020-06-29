@@ -5,48 +5,48 @@
 
 namespace reproc {
 
-class environment : public detail::array {
+class env : public detail::array {
 public:
-  environment(const char *const *envp = nullptr) // NOLINT
+  env(const char *const *envp = nullptr) // NOLINT
       : detail::array(envp, false)
   {}
 
   /*!
-  `Environment` must be iterable as a sequence of string pairs. Examples of
+  `Env` must be iterable as a sequence of string pairs. Examples of
   types that satisfy this requirement are `std::vector<std::pair<std::string,
   std::string>>` and `std::map<std::string, std::string>`.
 
-  The pairs in `environment` represent the environment variables of the child
-  process and are converted to the right format before being passed as the
-  environment to `reproc_start`.
+  The pairs in `env` represent the environment variables of the child process
+  and are converted to the right format before being passed as the environment
+  to `reproc_start`.
 
   Note that passing an empty container to this method will start the child
   process with no environment. To have the child process inherit the environment
   of the parent process, call the default constructor instead.
   */
-  template <typename Environment,
-            typename = detail::enable_if_not_char_array<Environment>>
-  environment(const Environment &environment) // NOLINT
-      : detail::array(from(environment), true)
+  template <typename Env,
+            typename = detail::enable_if_not_char_array<Env>>
+  env(const Env &env) // NOLINT
+      : detail::array(from(env), true)
   {}
 
 private:
-  template <typename Environment>
-  static const char *const *from(const Environment &environment);
+  template <typename Env>
+  static const char *const *from(const Env &env);
 };
 
-template <typename Environment>
-const char *const *environment::from(const Environment &environment)
+template <typename Env>
+const char *const *env::from(const Env &env)
 {
   using name_size_type =
-      typename Environment::value_type::first_type::size_type;
+      typename Env::value_type::first_type::size_type;
   using value_size_type =
-      typename Environment::value_type::second_type::size_type;
+      typename Env::value_type::second_type::size_type;
 
-  const char **envp = new const char *[environment.size() + 1];
+  const char **envp = new const char *[env.size() + 1];
   std::size_t current = 0;
 
-  for (const auto &entry : environment) {
+  for (const auto &entry : env) {
     const auto &name = entry.first;
     const auto &value = entry.second;
 

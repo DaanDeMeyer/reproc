@@ -1,7 +1,7 @@
 #pragma once
 
 #include <reproc++/arguments.hpp>
-#include <reproc++/environment.hpp>
+#include <reproc++/env.hpp>
 #include <reproc++/export.hpp>
 #include <reproc++/input.hpp>
 
@@ -72,7 +72,7 @@ struct redirect {
 struct options {
   /*! Implicitly converts from any STL container of string pairs to the
   environment format expected by `reproc_start`. */
-  class environment environment;
+  class env env;
   const char *working_directory = nullptr;
 
   struct {
@@ -97,8 +97,8 @@ struct options {
   static options clone(const options &other)
   {
     struct options clone;
-    // Make sure we make a shallow copy of `environment`.
-    clone.environment = other.environment.data();
+    // Make sure we make a shallow copy of `env`.
+    clone.env = other.env.data();
     clone.working_directory = other.working_directory;
     clone.redirect = other.redirect;
     clone.stop = other.stop;
