@@ -18,7 +18,7 @@
     if (!(expression)) {                                                       \
       return (r);                                                              \
     }                                                                          \
-  } while (false)
+  } while (0)
 
 #define ASSERT_EINVAL(expression) ASSERT_RETURN(expression, REPROC_EINVAL)
 
