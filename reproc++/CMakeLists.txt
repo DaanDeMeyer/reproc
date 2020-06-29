@@ -18,5 +18,5 @@ reproc_example(reproc++ forward CXX)
 reproc_example(reproc++ run CXX)
 
 if(REPROC_MULTITHREADED)
-  reproc_example(reproc++ background CXX Threads::Threads)
+  reproc_example(reproc++ background CXX DEPENDS Threads::Threads)
 endif()

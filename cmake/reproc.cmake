@@ -356,6 +356,7 @@ function(reproc_test TARGET NAME LANGUAGE)
 endfunction()
 
 function(reproc_example TARGET NAME LANGUAGE)
+  cmake_parse_arguments(OPT "" "" "ARGS;DEPENDS" ${ARGN})
   if(NOT REPROC_EXAMPLES)
     return()
   endif()
@@ -369,12 +370,16 @@ function(reproc_example TARGET NAME LANGUAGE)
   add_executable(${TARGET}-example-${NAME} examples/${NAME}.${EXTENSION})
 
   reproc_common(${TARGET}-example-${NAME} ${LANGUAGE} ${NAME} examples)
-  target_link_libraries(${TARGET}-example-${NAME} PRIVATE ${TARGET} ${ARGN})
+  target_link_libraries(${TARGET}-example-${NAME} PRIVATE ${TARGET} ${OPT_DEPENDS})
 
   if(REPROC_TEST)
+    if(NOT DEFINED OPT_ARGS)
+      set(OPT_ARGS cmake --help)
+    endif()
+
     add_test(
       NAME ${TARGET}-example-${NAME}
-      COMMAND ${TARGET}-example-${NAME} cmake --help
+      COMMAND ${TARGET}-example-${NAME} ${OPT_ARGS}
     )
   endif()
 endfunction()
