@@ -47,6 +47,7 @@ if(UNIX)
 endif()
 
 reproc_example(reproc drain C)
+reproc_example(reproc env C ARGS PROJECT=REPROC)
 reproc_example(reproc path C)
 reproc_example(reproc poll C)
 reproc_example(reproc read C)

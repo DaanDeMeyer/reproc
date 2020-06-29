@@ -340,16 +340,19 @@ function(reproc_test TARGET NAME LANGUAGE)
 
   reproc_common(${TARGET}-test-${NAME} ${LANGUAGE} ${NAME} test)
   target_link_libraries(${TARGET}-test-${NAME} PRIVATE ${TARGET})
-  target_compile_definitions(${TARGET}-test-${NAME} PRIVATE
-    RESOURCE_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/resources"
-  )
 
   add_test(NAME ${TARGET}-test-${NAME} COMMAND ${TARGET}-test-${NAME})
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/resources/${NAME}.c)
-    add_executable(${TARGET}-resource-${NAME} resources/${NAME}.c)
+    target_compile_definitions(${TARGET}-test-${NAME} PRIVATE
+      RESOURCE_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/resources"
+    )
 
-    reproc_common(${TARGET}-resource-${NAME} C ${NAME} resources)
+    if (NOT TARGET ${TARGET}-resource-${NAME})
+      add_executable(${TARGET}-resource-${NAME} resources/${NAME}.c)
+      reproc_common(${TARGET}-resource-${NAME} C ${NAME} resources)
+    endif()
+
     # Make sure the test resource is available when running the test.
     add_dependencies(${TARGET}-test-${NAME} ${TARGET}-resource-${NAME})
   endif()
@@ -371,6 +374,20 @@ function(reproc_example TARGET NAME LANGUAGE)
 
   reproc_common(${TARGET}-example-${NAME} ${LANGUAGE} ${NAME} examples)
   target_link_libraries(${TARGET}-example-${NAME} PRIVATE ${TARGET} ${OPT_DEPENDS})
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/resources/${NAME}.c)
+    target_compile_definitions(${TARGET}-example-${NAME} PRIVATE
+      RESOURCE_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/resources"
+    )
+
+    if (NOT TARGET ${TARGET}-resource-${NAME})
+      add_executable(${TARGET}-resource-${NAME} resources/${NAME}.c)
+      reproc_common(${TARGET}-resource-${NAME} C ${NAME} resources)
+    endif()
+
+    # Make sure the example resource is available when running the example.
+    add_dependencies(${TARGET}-example-${NAME} ${TARGET}-resource-${NAME})
+  endif()
 
   if(REPROC_TEST)
     if(NOT DEFINED OPT_ARGS)
