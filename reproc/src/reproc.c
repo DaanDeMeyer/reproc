@@ -209,7 +209,7 @@ int reproc_start(reproc_t *process,
   }
 
   struct process_options process_options = {
-    .env = options.env,
+    .env = { .behavior = options.env.behavior, .extra = options.env.extra },
     .working_directory = options.working_directory,
     .handle = { .in = child.in,
                 .out = child.out,

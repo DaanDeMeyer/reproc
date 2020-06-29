@@ -7,6 +7,11 @@ namespace reproc {
 
 class env : public detail::array {
 public:
+  enum type {
+    extend,
+    empty,
+  };
+  
   env(const char *const *envp = nullptr) // NOLINT
       : detail::array(envp, false)
   {}

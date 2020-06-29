@@ -47,18 +47,19 @@ static reproc_redirect reproc_redirect_from(redirect redirect)
 
 static reproc_options reproc_options_from(const options &options, bool fork)
 {
-  return { options.env.data(),
-           options.working_directory,
-           { reproc_redirect_from(options.redirect.in),
-             reproc_redirect_from(options.redirect.out),
-             reproc_redirect_from(options.redirect.err),
-             options.redirect.parent, options.redirect.discard,
-             options.redirect.file, options.redirect.path },
-           reproc_stop_actions_from(options.stop),
-           options.deadline.count(),
-           { options.input.data(), options.input.size() },
-           options.nonblocking,
-           fork };
+  return {
+    options.working_directory,
+    { static_cast<REPROC_ENV>(options.env.behavior), options.env.extra.data() },
+    { reproc_redirect_from(options.redirect.in),
+      reproc_redirect_from(options.redirect.out),
+      reproc_redirect_from(options.redirect.err), options.redirect.parent,
+      options.redirect.discard, options.redirect.file, options.redirect.path },
+    reproc_stop_actions_from(options.stop),
+    options.deadline.count(),
+    { options.input.data(), options.input.size() },
+    options.nonblocking,
+    fork
+  };
 }
 
 auto deleter = [](reproc_t *process) noexcept { reproc_destroy(process); };

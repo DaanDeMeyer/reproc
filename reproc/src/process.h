@@ -2,6 +2,8 @@
 
 #include "handle.h"
 
+#include <reproc/reproc.h>
+
 #include <stdbool.h>
 
 #if defined(_WIN32)
@@ -15,7 +17,10 @@ extern const process_type PROCESS_INVALID;
 struct process_options {
   // If `NULL`, the child process inherits the environment of the current
   // process.
-  const char *const *env;
+  struct {
+    REPROC_ENV behavior;
+    const char *const *extra;
+  } env;
   // If not `NULL`, the working directory of the child process is set to
   // `working_directory`.
   const char *working_directory;

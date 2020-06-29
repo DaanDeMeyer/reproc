@@ -30,6 +30,7 @@ target_sources(reproc PRIVATE
   src/redirect.c
   src/reproc.c
   src/run.c
+  src/strv.c
   src/utf.${PLATFORM}.c
 )
 

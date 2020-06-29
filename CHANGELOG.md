@@ -3,6 +3,9 @@
 ## 14.0.0
 
 - Renamed `environment` to `env`.
+- Added configurable behavior to `env` option. Extra environment variables are
+  now added via `env.extra`. Extra environment variables now extend the parent
+  environment by default instead of replacing it.
 
 ## 13.0.1
 

@@ -144,26 +144,43 @@ typedef struct reproc_redirect {
   const char *path;
 } reproc_redirect;
 
+typedef enum {
+  REPROC_ENV_EXTEND,
+  REPROC_ENV_EMPTY,
+} REPROC_ENV;
+
 typedef struct reproc_options {
-  /*!
-  `env` is an array of UTF-8 encoded, NUL-terminated strings that specifies the
-  environment for the child process. It has the following layout:
-
-  - All elements except the final element must be of the format `NAME=VALUE`.
-  - The final element must be `NULL`.
-
-  Example: ["IP=127.0.0.1", "PORT=8080", `NULL`]
-
-  If `env` is `NULL`, the child process inherits the environment of the current
-  process.
-  */
-  const char *const *env;
   /*!
   `working_directory` specifies the working directory for the child process. If
   `working_directory` is `NULL`, the child process runs in the working directory
   of the parent process.
   */
   const char *working_directory;
+
+  struct {
+    /*!
+    `behavior` specifies whether the child process should start with a copy of
+    the parent process environment variables or an empty environment. By
+    default, the child process starts with a copy of the parent's environment
+    variables (`REPROC_ENV_EXTEND`). If `behavior` is set to `REPROC_ENV_EMPTY`,
+    the child process starts with an empty environment.
+    */
+    REPROC_ENV behavior;
+    /*!
+    `extra` is an array of UTF-8 encoded, NUL-terminated strings that specifies
+    extra environment variables for the child process. It has the following
+    layout:
+
+    - All elements except the final element must be of the format `NAME=VALUE`.
+    - The final element must be `NULL`.
+
+    Example: ["IP=127.0.0.1", "PORT=8080", `NULL`]
+
+    If `env` is `NULL`, no extra environment variables are added to the
+    environment of the child process.
+    */
+    const char *const *extra;
+  } env;
   /*!
   `redirect` specifies where to redirect the streams from the child process.
 

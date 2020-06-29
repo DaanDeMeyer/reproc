@@ -5,6 +5,7 @@
 #include "error.h"
 #include "macro.h"
 #include "pipe.h"
+#include "strv.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -312,6 +313,7 @@ int process_start(pid_t *process,
     int write;
   } pipe = { PIPE_INVALID, PIPE_INVALID };
   char *program = NULL;
+  char **env = NULL;
   int r = -1;
 
   // We create an error pipe to receive errors from the child process.
@@ -331,6 +333,15 @@ int process_start(pid_t *process,
       r = -errno;
       goto finish;
     }
+  }
+
+  extern char **environ;
+  char *const *parent = options.env.behavior == REPROC_ENV_EMPTY
+                            ? NULL
+                            : environ;
+  env = strv_concat(parent, options.env.extra);
+  if (env == NULL) {
+    goto finish;
   }
 
   int except[] = { options.handle.in, options.handle.out, options.handle.err,
@@ -383,11 +394,8 @@ int process_start(pid_t *process,
       }
     }
 
-    if (options.env != NULL) {
-      // `environ` is carried over calls to `exec`.
-      extern char **environ;
-      environ = (char **) options.env;
-    }
+    // `environ` is carried over calls to `exec`.
+    environ = env;
 
     if (argv != NULL) {
       ASSERT(program);
@@ -399,6 +407,8 @@ int process_start(pid_t *process,
       }
     }
 
+    env = NULL;
+
   child:
     if (r < 0) {
       (void) !write(pipe.write, &errno, sizeof(errno));
@@ -408,6 +418,7 @@ int process_start(pid_t *process,
     pipe_destroy(pipe.read);
     pipe_destroy(pipe.write);
     free(program);
+    strv_free(env);
 
     return 0;
   }
@@ -435,6 +446,7 @@ finish:
   pipe_destroy(pipe.read);
   pipe_destroy(pipe.write);
   free(program);
+  strv_free(env);
 
   return r < 0 ? r : 1;
 }

@@ -12,9 +12,6 @@
 
 const HANDLE PROCESS_INVALID = INVALID_HANDLE_VALUE; // NOLINT
 
-extern const int REPROC_SIGKILL;
-extern const int REPROC_SIGTERM;
-
 static const DWORD CREATION_FLAGS =
     // Create each child process in a new process group so we don't send
     // `CTRL-BREAK` signals to more than one child process in
@@ -247,6 +244,84 @@ static LPPROC_THREAD_ATTRIBUTE_LIST setup_attribute_list(HANDLE *handles,
   return attribute_list;
 }
 
+#define NULSTR_FOREACH(i, l)                                    \
+        for ((i) = (l); (i) && *(i) != L'\0'; (i) = wcschr((i), L'\0') + 1)
+
+static wchar_t *env_concat(const wchar_t *a, const wchar_t *b)
+{
+  const wchar_t *i = NULL;
+  size_t size = 1;
+  wchar_t *c = NULL;
+
+  NULSTR_FOREACH(i, a) {
+    size += wcslen(i) + 1;
+  }
+
+  NULSTR_FOREACH(i, b) {
+    size += wcslen(i) + 1;
+  }
+
+  wchar_t *r = calloc(size, sizeof(wchar_t));
+  if (!r) {
+    return NULL;
+  }
+
+  c = r;
+
+  NULSTR_FOREACH(i, a) {
+    wcscpy(c, i);
+    c += wcslen(i) + 1;
+  }
+
+  NULSTR_FOREACH(i, b) {
+    wcscpy(c, i);
+    c += wcslen(i) + 1;
+  }
+
+  *c = L'\0';
+
+  return r;
+}
+
+static wchar_t *env_setup(REPROC_ENV behavior, const char *const *extra)
+{
+  wchar_t *env_parent_wstring = NULL;
+  char *env_extra = NULL;
+  wchar_t *env_extra_wstring = NULL;
+  wchar_t *env_wstring = NULL;
+
+  if (behavior == REPROC_ENV_EXTEND) {
+    env_parent_wstring = GetEnvironmentStringsW();
+  }
+
+  if (extra != NULL) {
+    env_extra = env_join(extra);
+    if (env_extra == NULL) {
+      goto finish;
+    }
+
+    size_t joined_size = env_join_size(extra);
+    ASSERT(joined_size <= INT_MAX);
+
+    env_extra_wstring = utf16_from_utf8(env_extra, (int) joined_size);
+    if (env_extra_wstring == NULL) {
+      goto finish;
+    }
+  }
+
+  env_wstring = env_concat(env_parent_wstring, env_extra_wstring);
+  if (env_wstring == NULL) {
+    goto finish;
+  }
+
+finish:
+  FreeEnvironmentStringsW(env_parent_wstring);
+  free(env_extra);
+  free(env_extra_wstring);
+
+  return env_wstring;
+}
+
 int process_start(HANDLE *process,
                   const char *const *argv,
                   struct process_options options)
@@ -261,7 +336,6 @@ int process_start(HANDLE *process,
 
   char *command_line = NULL;
   wchar_t *command_line_wstring = NULL;
-  char *env = NULL;
   wchar_t *env_wstring = NULL;
   wchar_t *working_directory_wstring = NULL;
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
@@ -283,24 +357,6 @@ int process_start(HANDLE *process,
     goto finish;
   }
 
-  // Idem for `env` if it isn't `NULL`.
-  if (options.env != NULL) {
-    env = env_join(options.env);
-    if (env == NULL) {
-      r = -(int) GetLastError();
-      goto finish;
-    }
-
-    size_t joined_size = env_join_size(options.env);
-    ASSERT(joined_size <= INT_MAX);
-
-    env_wstring = utf16_from_utf8(env, (int) joined_size);
-    if (env_wstring == NULL) {
-      r = -(int) GetLastError();
-      goto finish;
-    }
-  }
-
   // Idem for `working_directory` if it isn't `NULL`.
   if (options.working_directory != NULL) {
     working_directory_wstring = utf16_from_utf8(options.working_directory, -1);
@@ -308,6 +364,12 @@ int process_start(HANDLE *process,
       r = -(int) GetLastError();
       goto finish;
     }
+  }
+
+  env_wstring = env_setup(options.env.behavior, options.env.extra);
+  if (env_wstring == NULL) {
+    r = -(int) GetLastError();
+    goto finish;
   }
 
   // Windows Vista added the `STARTUPINFOEXW` structure in which we can put a
@@ -373,7 +435,6 @@ int process_start(HANDLE *process,
 finish:
   free(command_line);
   free(command_line_wstring);
-  free(env);
   free(env_wstring);
   free(working_directory_wstring);
   DeleteProcThreadAttributeList(attribute_list);
