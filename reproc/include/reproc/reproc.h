@@ -48,7 +48,7 @@ typedef enum {
   /*! stdout */
   REPROC_STREAM_OUT,
   /*! stderr */
-  REPROC_STREAM_ERR
+  REPROC_STREAM_ERR,
 } REPROC_STREAM;
 
 /*! Used to tell reproc where to redirect the streams of the child process. */
@@ -66,7 +66,7 @@ typedef enum {
   /*! Redirect to child process stdout. Only valid for stderr. */
   REPROC_REDIRECT_STDOUT,
   /*! Redirect to a specific path. */
-  REPROC_REDIRECT_PATH
+  REPROC_REDIRECT_PATH,
 } REPROC_REDIRECT;
 
 /*! Used to tell `reproc_stop` how to stop a child process. */

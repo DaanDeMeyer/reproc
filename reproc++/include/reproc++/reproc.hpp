@@ -41,7 +41,12 @@ using milliseconds = std::chrono::duration<int, std::milli>;
 REPROCXX_EXPORT extern const milliseconds infinite;
 REPROCXX_EXPORT extern const milliseconds deadline;
 
-enum class stop { noop, wait, terminate, kill };
+enum class stop {
+  noop,
+  wait,
+  terminate,
+  kill,
+};
 
 struct stop_action {
   stop action;
@@ -61,7 +66,11 @@ using handle = int;
 #endif
 
 struct redirect {
-  enum type { pipe = 1, parent, discard };
+  enum type {
+    pipe = 1,
+    parent,
+    discard,
+  };
 
   enum type type;
   reproc::handle handle;
@@ -110,7 +119,11 @@ struct options {
   }
 };
 
-enum class stream { in, out, err };
+enum class stream {
+  in,
+  out,
+  err,
+};
 
 class process;
 
@@ -121,7 +134,7 @@ enum {
   out = 1 << 1,
   err = 1 << 2,
   exit = 1 << 3,
-  deadline = 1 << 4
+  deadline = 1 << 4,
 };
 
 struct source {

@@ -33,7 +33,11 @@ struct reproc_t {
   } child;
 };
 
-enum { STATUS_NOT_STARTED = -1, STATUS_IN_PROGRESS = -2, STATUS_IN_CHILD = -3 };
+enum {
+  STATUS_NOT_STARTED = -1,
+  STATUS_IN_PROGRESS = -2,
+  STATUS_IN_CHILD = -3,
+};
 
 #define SIGOFFSET 128
 

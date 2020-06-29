@@ -68,7 +68,7 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
   } info = { { 0 }, sizeof(WSAPROTOCOL_INFOW) };
 
   r = getsockopt(pair[0], SOL_SOCKET, SO_PROTOCOL_INFOW, (char *) &info.data,
-                &info.size);
+                 &info.size);
   if (r < 0) {
     goto finish;
   }

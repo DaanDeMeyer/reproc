@@ -357,9 +357,8 @@ int process_start(HANDLE *process,
   DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
 
   r = CreateProcessW(NULL, command_line_wstring, &HANDLE_DO_NOT_INHERIT,
-                     &HANDLE_DO_NOT_INHERIT, true, CREATION_FLAGS,
-                     env_wstring, working_directory_wstring,
-                     startup_info_address, &info);
+                     &HANDLE_DO_NOT_INHERIT, true, CREATION_FLAGS, env_wstring,
+                     working_directory_wstring, startup_info_address, &info);
 
   SetErrorMode(previous_error_mode);
 
