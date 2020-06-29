@@ -34,6 +34,8 @@ int main(void)
     ASSERT_EQ_MEM(current, argv[i], size);
 
     current += size;
+    current += *current == '\r';
+    current += *current == '\n';
   }
 
   ASSERT_EQ_SIZE(strlen(current), (size_t) 0);

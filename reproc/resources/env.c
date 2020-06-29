@@ -6,7 +6,7 @@ int main(int argc, const char **argv, const char **envp)
   (void) argv;
 
   for (size_t i = 0; envp[i] != NULL; i++) {
-    printf("%s", envp[i]);
+    printf("%s\n", envp[i]);
   }
 
   return 0;
