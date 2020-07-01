@@ -11,7 +11,7 @@ public:
     extend,
     empty,
   };
-  
+
   env(const char *const *envp = nullptr) // NOLINT
       : detail::array(envp, false)
   {}
@@ -21,13 +21,9 @@ public:
   types that satisfy this requirement are `std::vector<std::pair<std::string,
   std::string>>` and `std::map<std::string, std::string>`.
 
-  The pairs in `env` represent the environment variables of the child process
-  and are converted to the right format before being passed as the environment
-  to `reproc_start`.
-
-  Note that passing an empty container to this method will start the child
-  process with no environment. To have the child process inherit the environment
-  of the parent process, call the default constructor instead.
+  The pairs in `env` represent the extra environment variables of the child
+  process and are converted to the right format before being passed as the
+  environment to `reproc_start` via the `env.extra` field of `reproc_options`.
   */
   template <typename Env,
             typename = detail::enable_if_not_char_array<Env>>
