@@ -5,49 +5,49 @@ on: push
 jobs:
   ci:
     name: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.version }}
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu
-            compiler: gcc
-            version: "6"
-
-          - os: ubuntu
+          - os: ubuntu-20.04
             compiler: gcc
             version: "9"
 
-          - os: ubuntu
+          - os: ubuntu-20.04
+            compiler: gcc
+            version: "10"
+
+          - os: ubuntu-20.04
             compiler: clang
             version: "6.0"
 
-          - os: ubuntu
+          - os: ubuntu-20.04
             compiler: clang
             version: "10"
 
-          - os: windows
+          - os: windows-latest
             compiler: cl
             version: "default"
 
-          - os: windows
+          - os: windows-latest
             compiler: clang-cl
             version: "latest"
 
-          - os: windows
+          - os: windows-latest
             compiler: clang
             version: "latest"
 
-          - os: windows
+          - os: windows-latest
             compiler: gcc
             version: "latest"
 
-          - os: macos
+          - os: macos-latest
             compiler: xcode
             version: "default"
 
-          - os: macos
+          - os: macos-latest
             compiler: gcc
             version: "latest"
 
@@ -55,26 +55,23 @@ jobs:
       - uses: actions/checkout@v1
 
       - name: Install (Ubuntu)
-        if: matrix.os == 'ubuntu'
+        if: runner.os == 'Linux'
         run: |
-          sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main"
-          sudo apt-get update
-
-          sudo apt-get install -y ninja-build clang-tidy-10
+          sudo apt-get install -y --no-install-recommends ninja-build clang-tidy-10
           sudo ln -s /usr/bin/clang-tidy-10 /usr/local/bin/clang-tidy
 
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
-            sudo apt-get install -y g++-${{ matrix.version }}
+            sudo apt-get install -y --no-install-recommends g++-${{ matrix.version }}
             echo "::set-env name=CC::gcc-${{ matrix.version }}"
             echo "::set-env name=CXX::g++-${{ matrix.version }}"
           else
-            sudo apt-get install -y clang-${{ matrix.version }}
+            sudo apt-get install -y --no-install-recommends clang-${{ matrix.version }}
             echo "::set-env name=CC::clang-${{ matrix.version }}"
             echo "::set-env name=CXX::clang++-${{ matrix.version }}"
           fi
 
       - name: Install (macOS)
-        if: matrix.os == 'macos'
+        if: runner.os == 'macOS'
         run: |
           brew install ninja llvm
           sudo ln -s /usr/local/opt/llvm/bin/clang-tidy /usr/local/bin/clang-tidy
@@ -88,7 +85,7 @@ jobs:
           fi
 
       - name: Install (Windows)
-        if: matrix.os == 'windows'
+        if: runner.os == 'Windows'
         run: |
           Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
           scoop install ninja llvm --global
