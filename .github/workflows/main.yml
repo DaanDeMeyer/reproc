@@ -4,13 +4,13 @@ on: push
 
 jobs:
   ci:
-    name: ${{ matrix.config.os }}-${{ matrix.config.compiler }}-${{ matrix.config.version }}
-    runs-on: ${{ matrix.config.os }}-latest
+    name: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.version }}
+    runs-on: ${{ matrix.os }}-latest
 
     strategy:
       fail-fast: false
       matrix:
-        config:
+        include:
           - os: ubuntu
             compiler: gcc
             version: "6"
@@ -55,7 +55,7 @@ jobs:
       - uses: actions/checkout@v1
 
       - name: Install (Ubuntu)
-        if: matrix.config.os == 'ubuntu'
+        if: matrix.os == 'ubuntu'
         run: |
           sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main"
           sudo apt-get update
@@ -63,23 +63,23 @@ jobs:
           sudo apt-get install -y ninja-build clang-tidy-10
           sudo ln -s /usr/bin/clang-tidy-10 /usr/local/bin/clang-tidy
 
-          if [ "${{ matrix.config.compiler }}" = "gcc" ]; then
-            sudo apt-get install -y g++-${{ matrix.config.version }}
-            echo "::set-env name=CC::gcc-${{ matrix.config.version }}"
-            echo "::set-env name=CXX::g++-${{ matrix.config.version }}"
+          if [ "${{ matrix.compiler }}" = "gcc" ]; then
+            sudo apt-get install -y g++-${{ matrix.version }}
+            echo "::set-env name=CC::gcc-${{ matrix.version }}"
+            echo "::set-env name=CXX::g++-${{ matrix.version }}"
           else
-            sudo apt-get install -y clang-${{ matrix.config.version }}
-            echo "::set-env name=CC::clang-${{ matrix.config.version }}"
-            echo "::set-env name=CXX::clang++-${{ matrix.config.version }}"
+            sudo apt-get install -y clang-${{ matrix.version }}
+            echo "::set-env name=CC::clang-${{ matrix.version }}"
+            echo "::set-env name=CXX::clang++-${{ matrix.version }}"
           fi
 
       - name: Install (macOS)
-        if: matrix.config.os == 'macos'
+        if: matrix.os == 'macos'
         run: |
           brew install ninja llvm
           sudo ln -s /usr/local/opt/llvm/bin/clang-tidy /usr/local/bin/clang-tidy
 
-          if [ "${{ matrix.config.compiler }}" = "gcc" ]; then
+          if [ "${{ matrix.compiler }}" = "gcc" ]; then
             echo "::set-env name=CC::gcc"
             echo "::set-env name=CXX::g++"
           else
@@ -88,20 +88,20 @@ jobs:
           fi
 
       - name: Install (Windows)
-        if: matrix.config.os == 'windows'
+        if: matrix.os == 'windows'
         run: |
           Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
           scoop install ninja llvm --global
 
-          if ("${{ matrix.config.compiler }}" -eq "gcc") {
+          if ("${{ matrix.compiler }}" -eq "gcc") {
             echo "::set-env name=CC::gcc"
             echo "::set-env name=CXX::g++"
-          } elseif ("${{ matrix.config.compiler }}" -eq "clang") {
+          } elseif ("${{ matrix.compiler }}" -eq "clang") {
             echo "::set-env name=CC::clang"
             echo "::set-env name=CXX::clang++"
           } else {
-            echo "::set-env name=CC::${{ matrix.config.compiler }}"
-            echo "::set-env name=CXX::${{ matrix.config.compiler }}"
+            echo "::set-env name=CC::${{ matrix.compiler }}"
+            echo "::set-env name=CXX::${{ matrix.compiler }}"
           }
 
           # We add the output directories to the PATH to make sure the tests and
@@ -112,7 +112,7 @@ jobs:
           # Make all PATH additions made by scoop and ourselves global.
           echo "::set-env name=PATH::$env:PATH"
 
-          if ("${{ matrix.config.compiler }}".endswith("cl")) {
+          if ("${{ matrix.compiler }}".endswith("cl")) {
             & .github\workflows\vsenv.ps1 -arch x64 -hostArch x64
           }
 
