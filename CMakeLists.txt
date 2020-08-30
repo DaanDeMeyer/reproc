@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12...3.18)
 
 project(
   reproc
-  VERSION 14.0.0
+  VERSION 14.1.0
   DESCRIPTION "Cross-platform C99/C++11 process library"
   HOMEPAGE_URL "https://github.com/DaanDeMeyer/reproc"
   LANGUAGES C
