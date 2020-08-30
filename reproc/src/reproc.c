@@ -96,7 +96,7 @@ static int expiry(int timeout, int64_t deadline)
   int64_t n = now();
 
   if (n >= deadline) {
-    return 0;
+    return REPROC_DEADLINE;
   }
 
   // `deadline` exceeds `now` by at most a full `int` so the cast is safe.
@@ -126,6 +126,10 @@ static size_t find_earliest_deadline(reproc_event_source *sources,
     }
 
     int current = expiry(REPROC_INFINITE, process->deadline);
+
+    if (current == REPROC_DEADLINE) {
+      return i;
+    }
 
     if (min == REPROC_INFINITE || current < min) {
       earliest = i;
@@ -302,7 +306,11 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
                          ? REPROC_INFINITE
                          : sources[earliest].process->deadline;
 
-  if (deadline == 0) {
+  int first = expiry(timeout, deadline);
+  size_t num_pipes = num_sources * PIPES_PER_SOURCE;
+  int r = REPROC_ENOMEM;
+
+  if (first == REPROC_DEADLINE) {
     for (size_t i = 0; i < num_sources; i++) {
       sources[i].events = 0;
     }
@@ -310,10 +318,6 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
     sources[earliest].events = REPROC_EVENT_DEADLINE;
     return 1;
   }
-
-  int first = expiry(timeout, deadline);
-  size_t num_pipes = num_sources * PIPES_PER_SOURCE;
-  int r = REPROC_ENOMEM;
 
   pipe_event_source *pipes = calloc(num_pipes, sizeof(pipe_event_source));
   if (pipes == NULL) {
@@ -368,7 +372,7 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
     sources[i].events = 0;
   }
 
-  if (r == 0 && first == deadline) {
+  if (r == 0 && first != timeout) {
     // Differentiate between timeout and deadline expiry. Deadline expiry is an
     // event, timeouts are not.
     sources[earliest].events = REPROC_EVENT_DEADLINE;
@@ -550,9 +554,12 @@ int reproc_wait(reproc_t *process, int timeout)
   }
 
   if (timeout == REPROC_DEADLINE) {
-    // If the deadline has expired, `expiry` returns 0 which means we'll only
-    // check if the process is still running.
     timeout = expiry(REPROC_INFINITE, process->deadline);
+    // If the deadline has expired, `expiry` returns `REPROC_DEADLINE` which
+    // means we'll only check if the process is still running.
+    if (timeout == REPROC_DEADLINE) {
+      timeout = 0;
+    }
   }
 
   ASSERT(process->pipe.exit != PIPE_INVALID);
