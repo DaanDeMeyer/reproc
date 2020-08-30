@@ -22,7 +22,7 @@ run(const arguments &arguments, const options &options, Out &&out, Err &&err)
     return { -1, ec };
   }
 
-  return process.wait(reproc::deadline);
+  return process.stop(options.stop);
 }
 
 inline std::pair<int, std::error_code> run(const arguments &arguments,

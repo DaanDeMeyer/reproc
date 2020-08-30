@@ -35,7 +35,7 @@ int reproc_run_ex(const char *const *argv,
     goto finish;
   }
 
-  r = reproc_wait(process, REPROC_DEADLINE);
+  r = reproc_stop(process, options.stop);
   if (r < 0) {
     goto finish;
   }
