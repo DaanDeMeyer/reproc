@@ -1,5 +1,11 @@
 # Changelog
 
+## 14.1.0
+
+- `reproc_run`/`reproc::run` now return the exit code of
+  `reproc_stop`/`process::stop` even if the deadline is exceeded.
+- A bug where deadlines wouldn't work was fixed.
+
 ## 14.0.0
 
 - Renamed `environment` to `env`.
