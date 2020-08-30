@@ -92,6 +92,16 @@ typedef struct reproc_stop_actions {
   reproc_stop_action third;
 } reproc_stop_actions;
 
+// clang-format off
+
+#define REPROC_STOP_ACTIONS_NULL (reproc_stop_actions) {                       \
+  { REPROC_STOP_NOOP, 0 },                                                     \
+  { REPROC_STOP_NOOP, 0 },                                                     \
+  { REPROC_STOP_NOOP, 0 },                                                     \
+}
+
+// clang-format on
+
 #if defined(_WIN32)
 typedef void *reproc_handle; // `HANDLE`
 #else
@@ -228,10 +238,8 @@ typedef struct reproc_options {
   } redirect;
   /*!
   Stop actions that are passed to `reproc_stop` in `reproc_destroy` to stop the
-  child process.
-
-  When `stop` is 3x `REPROC_STOP_NOOP`, `reproc_destroy` will default to
-  waiting indefinitely for the child process to exit.
+  child process. See `reproc_stop` for more information on how `stop` is
+  interpreted.
   */
   reproc_stop_actions stop;
   /*!
@@ -458,11 +466,16 @@ REPROC_ERROR error = reproc_stop(process,
 Call `reproc_wait`, `reproc_terminate` and `reproc_kill` directly if you need
 extra logic such as logging between calls.
 
-`stop_actions` can contain up to three stop actions that instruct this function
-how the child process should be stopped. The first element of each stop action
-specifies which action should be called on the child process. The second element
-of each stop actions specifies how long to wait after executing the operation
-indicated by the first element.
+`stop` can contain up to three stop actions that instruct this function how the
+child process should be stopped. The first element of each stop action specifies
+which action should be called on the child process. The second element of each
+stop actions specifies how long to wait after executing the operation indicated
+by the first element.
+
+When `stop` is 3x `REPROC_STOP_NOOP`, `reproc_destroy` will wait until the
+deadline expires (or forever if there is no deadline). If the process is still
+running after the deadline expires, `reproc_stop` then calls `reproc_terminate`
+and waits forever for the process to exit.
 
 Note that when a stop action specifies `REPROC_STOP_WAIT`, the function will
 just wait for the specified timeout instead of performing an action to stop the

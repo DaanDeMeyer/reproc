@@ -607,6 +607,8 @@ int reproc_stop(reproc_t *process, reproc_stop_actions stop)
   ASSERT_EINVAL(process->status != STATUS_IN_CHILD);
   ASSERT_EINVAL(process->status != STATUS_NOT_STARTED);
 
+  stop = parse_stop_actions(stop);
+
   reproc_stop_action actions[] = { stop.first, stop.second, stop.third };
   int r = -1;
 

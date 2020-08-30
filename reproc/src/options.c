@@ -67,6 +67,22 @@ static int parse_redirect(reproc_redirect *redirect,
   return 0;
 }
 
+reproc_stop_actions parse_stop_actions(reproc_stop_actions stop)
+{
+  bool is_noop = stop.first.action == REPROC_STOP_NOOP &&
+                 stop.second.action == REPROC_STOP_NOOP &&
+                 stop.third.action == REPROC_STOP_NOOP;
+
+  if (is_noop) {
+    stop.first.action = REPROC_STOP_WAIT;
+    stop.first.timeout = REPROC_DEADLINE;
+    stop.second.action = REPROC_STOP_TERMINATE;
+    stop.second.timeout = REPROC_INFINITE;
+  }
+
+  return stop;
+}
+
 int parse_options(reproc_options *options, const char *const *argv)
 {
   ASSERT(options);
@@ -110,16 +126,7 @@ int parse_options(reproc_options *options, const char *const *argv)
     options->deadline = REPROC_INFINITE;
   }
 
-  bool is_noop = options->stop.first.action == REPROC_STOP_NOOP &&
-                 options->stop.second.action == REPROC_STOP_NOOP &&
-                 options->stop.third.action == REPROC_STOP_NOOP;
-
-  if (is_noop) {
-    options->stop.first.action = REPROC_STOP_WAIT;
-    options->stop.first.timeout = REPROC_DEADLINE;
-    options->stop.second.action = REPROC_STOP_TERMINATE;
-    options->stop.second.timeout = REPROC_INFINITE;
-  }
+  options->stop = parse_stop_actions(options->stop);
 
   return 0;
 }
