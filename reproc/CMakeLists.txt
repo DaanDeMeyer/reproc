@@ -35,6 +35,7 @@ target_sources(reproc PRIVATE
 )
 
 reproc_test(reproc argv C)
+reproc_test(reproc deadline C)
 reproc_test(reproc env C)
 reproc_test(reproc io C)
 reproc_test(reproc overflow C)
