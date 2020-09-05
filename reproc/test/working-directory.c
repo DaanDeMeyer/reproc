@@ -1,7 +1,6 @@
 #include "assert.h"
 
-#include <reproc/drain.h>
-#include <reproc/reproc.h>
+#include <reproc/run.h>
 
 static void replace(char *string, char old, char new)
 {
@@ -12,28 +11,19 @@ static void replace(char *string, char old, char new)
 
 int main(void)
 {
-  int r = -1;
-
-  reproc_t *process = reproc_new();
-  ASSERT(process);
-
   const char *argv[] = { RESOURCE_DIRECTORY "/working-directory", NULL };
-
-  r = reproc_start(process, argv,
-                   (reproc_options){ .working_directory = RESOURCE_DIRECTORY });
-  ASSERT_OK(r);
-
   char *output = NULL;
   reproc_sink sink = reproc_sink_string(&output);
-  r = reproc_drain(process, sink, sink);
+  int r = -1;
+
+  r = reproc_run_ex(argv,
+                    (reproc_options){ .working_directory = RESOURCE_DIRECTORY },
+                    sink, sink);
   ASSERT_OK(r);
+  ASSERT(output != NULL);
 
   replace(output, '\\', '/');
   ASSERT_EQ_STR(output, RESOURCE_DIRECTORY);
 
-  r = reproc_wait(process, REPROC_INFINITE);
-  ASSERT_OK(r);
-
-  reproc_destroy(process);
   reproc_free(output);
 }

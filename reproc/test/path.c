@@ -1,23 +1,14 @@
-#include <reproc/reproc.h>
+#include <reproc/run.h>
 
 #include "assert.h"
 
 int main(void)
 {
+  const char *argv[] = { RESOURCE_DIRECTORY "/path", NULL };
   int r = -1;
 
-  reproc_t *process = reproc_new();
-  ASSERT(process);
-
-  const char *argv[] = { RESOURCE_DIRECTORY "/path", NULL };
-  r = reproc_start(process, argv,
-                   (reproc_options){ .redirect.path = "path.txt" });
+  r = reproc_run(argv, (reproc_options){ .redirect.path = "path.txt" });
   ASSERT_OK(r);
-
-  r = reproc_wait(process, REPROC_INFINITE);
-  ASSERT_OK(r);
-
-  reproc_destroy(process);
 
   FILE *file = fopen("path.txt", "rb");
   ASSERT(file != NULL);
