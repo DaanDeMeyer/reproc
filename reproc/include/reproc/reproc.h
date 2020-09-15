@@ -443,6 +443,11 @@ calls to `reproc_wait` and `reproc_destroy` are required to make sure the child
 process is completely cleaned up.
 */
 REPROC_EXPORT int reproc_kill(reproc_t *process);
+  
+/*!
+Return process ID of child. This method simply returns the handle.
+*/
+REPROC_EXPORT int reproc_pid(reproc_t *process);
 
 /*!
 Simplifies calling combinations of `reproc_wait`, `reproc_terminate` and
