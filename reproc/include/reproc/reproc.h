@@ -443,9 +443,15 @@ calls to `reproc_wait` and `reproc_destroy` are required to make sure the child
 process is completely cleaned up.
 */
 REPROC_EXPORT int reproc_kill(reproc_t *process);
-  
+
 /*!
-Return process ID of child. This method simply returns the handle.
+Return process ID of child. Return REPROC_EINVAL on error.
+
+Note that if reproc_wait has been called successfully on this process already,
+the operating system will have cleaned up the resources allocated to the process
+and the operating system is free to reuse the same pid for another process.
+Generally, only pass the result of this function to system calls that need a pid
+if reproc_wait hasn't been called successfully on the process yet.
 */
 REPROC_EXPORT int reproc_pid(reproc_t *process);
 

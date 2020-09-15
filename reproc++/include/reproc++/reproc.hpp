@@ -203,8 +203,7 @@ public:
   REPROCXX_EXPORT std::pair<int, std::error_code>
   stop(stop_actions stop) noexcept;
 
-  /*! `reproc_pid` */
-  REPROCXX_EXPORT std::pair<int, std::error_code>
+  REPROCXX_EXPORT std::pair<int, std::error_code> 
   pid() noexcept;
 
 private:
