@@ -203,11 +203,9 @@ public:
   REPROCXX_EXPORT std::pair<int, std::error_code>
   stop(stop_actions stop) noexcept;
 
-  // clang-format off
   /*! `reproc_pid` */
   REPROCXX_EXPORT std::pair<int, std::error_code>
   pid() noexcept;
-  // clang-format on
 
 private:
   REPROCXX_EXPORT friend std::error_code
