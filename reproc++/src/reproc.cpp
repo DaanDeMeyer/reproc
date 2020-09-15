@@ -137,7 +137,13 @@ std::pair<int, std::error_code> process::stop(stop_actions stop) noexcept
   int r = reproc_stop(impl_.get(), reproc_stop_actions_from(stop));
   return { r, error_code_from(r) };
 }
-
+  
+std::pair<int, std::error_code> process::pid() noexcept
+{
+  int r = reproc_pid(impl_.get());
+  return { r, error_code_from(r) };
+}
+  
 std::error_code
 poll(event::source *sources, size_t num_sources, milliseconds timeout)
 {
