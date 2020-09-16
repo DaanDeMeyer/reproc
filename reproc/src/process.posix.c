@@ -336,9 +336,8 @@ int process_start(pid_t *process,
   }
 
   extern char **environ;
-  char *const *parent = options.env.behavior == REPROC_ENV_EMPTY
-                            ? NULL
-                            : environ;
+  char *const *parent = options.env.behavior == REPROC_ENV_EMPTY ? NULL
+                                                                 : environ;
   env = strv_concat(parent, options.env.extra);
   if (env == NULL) {
     goto finish;
@@ -454,6 +453,12 @@ finish:
 static int parse_status(int status)
 {
   return WIFEXITED(status) ? WEXITSTATUS(status) : WTERMSIG(status) + 128;
+}
+
+int process_pid(process_type process)
+{
+  ASSERT(process);
+  return process;
 }
 
 int process_wait(pid_t process)
