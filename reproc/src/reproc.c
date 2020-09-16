@@ -10,6 +10,9 @@
 #include "process.h"
 #include "redirect.h"
 
+#ifdef _WIN32
+  #include <Windows.h>
+#endif
 #include <stdlib.h>
 
 struct reproc_t {
@@ -663,7 +666,6 @@ int reproc_pid(reproc_t *process)
   // However process IDs are never negative and its
   // extremely unlikely a processID on windows would be
   // larger than 200k.
-  #include <Windows.h>
   return GetProcessId(process->handle);
 #else
   // On posix return the handle directly as this is
