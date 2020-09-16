@@ -663,11 +663,11 @@ int reproc_pid(reproc_t *process)
   // However process IDs are never negative and its
   // extremely unlikely a processID on windows would be
   // larger than 200k.
-  return GetProcessId(process->handle);
+  return (int) GetProcessId(process->handle);
 #else
   // On posix return the handle directly as this is
   // the process ID.
-  return (int) process->handle;
+  return process->handle;
 #endif
 }
 
