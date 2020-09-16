@@ -657,7 +657,18 @@ int reproc_pid(reproc_t *process)
   ASSERT_EINVAL(process->status != STATUS_IN_CHILD);
   ASSERT_EINVAL(process->status != STATUS_NOT_STARTED);
 
-  return process->handle;
+#ifdef _WIN32
+  // On windows the handle is a pointer to a HANDLE object.
+  // GetProcessId returns a DWORD which on win32 is a uint.
+  // However process IDs are never negative and its
+  // extremely unlikely a processID on windows would be
+  // larger than 200k.
+  return (int) GetProcessId(process->handle);
+#else
+  // On posix return the handle directly as this is
+  // the process ID.
+  return (int) process->handle;
+#endif
 }
 
 reproc_t *reproc_destroy(reproc_t *process)

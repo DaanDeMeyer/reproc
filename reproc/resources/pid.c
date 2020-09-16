@@ -1,5 +1,4 @@
 #include <stdio.h>
-
 #ifdef _WIN32
   #include <Windows.h>
   #define getpid (int) GetCurrentProcessId
