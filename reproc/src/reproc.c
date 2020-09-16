@@ -9,7 +9,6 @@
 #include "pipe.h"
 #include "process.h"
 #include "redirect.h"
-
 #include <stdlib.h>
 
 struct reproc_t {
@@ -649,6 +648,15 @@ int reproc_stop(reproc_t *process, reproc_stop_actions stop)
   }
 
   return r;
+}
+
+int reproc_pid(reproc_t *process)
+{
+  ASSERT_EINVAL(process);
+  ASSERT_EINVAL(process->status != STATUS_IN_CHILD);
+  ASSERT_EINVAL(process->status != STATUS_NOT_STARTED);
+
+  return process_pid(process->handle);
 }
 
 reproc_t *reproc_destroy(reproc_t *process)

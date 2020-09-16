@@ -203,6 +203,9 @@ public:
   REPROCXX_EXPORT std::pair<int, std::error_code>
   stop(stop_actions stop) noexcept;
 
+  REPROCXX_EXPORT std::pair<int, std::error_code> 
+  pid() noexcept;
+
 private:
   REPROCXX_EXPORT friend std::error_code
   poll(event::source *sources, size_t num_sources, milliseconds timeout);

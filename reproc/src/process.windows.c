@@ -443,6 +443,12 @@ finish:
   return r < 0 ? r : 1;
 }
 
+int process_pid(process_type process)
+{
+  ASSERT(process);
+  return (int) GetProcessId(process);
+}
+
 int process_wait(HANDLE process)
 {
   ASSERT(process);

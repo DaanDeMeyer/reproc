@@ -456,6 +456,11 @@ static int parse_status(int status)
   return WIFEXITED(status) ? WEXITSTATUS(status) : WTERMSIG(status) + 128;
 }
 
+int process_pid(process_type process)
+{
+  return process;
+}
+
 int process_wait(pid_t process)
 {
   ASSERT(process != PROCESS_INVALID);
