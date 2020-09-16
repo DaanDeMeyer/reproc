@@ -450,7 +450,7 @@ finish:
 int process_pid(process_type process)
 {
   ASSERT(process);
-  return GetProcessId(process);
+  return (int) GetProcessId(process);
 }
 
 int process_wait(HANDLE process)
