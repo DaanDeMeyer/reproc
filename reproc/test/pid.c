@@ -16,8 +16,7 @@ int main(void)
   reproc_t *process = reproc_new();
   ASSERT(process);
 
-  int child_pid = reproc_pid(process);
-  ASSERT(REPROC_EINVAL == child_pid);
+  ASSERT(reproc_pid(process) == REPROC_EINVAL);
 
   r = reproc_start(process, argv, (reproc_options){ 0 });
   ASSERT_OK(r);
@@ -26,14 +25,12 @@ int main(void)
   ASSERT_OK(r);
   ASSERT(output != NULL);
 
-  child_pid = reproc_pid(process);
-  ASSERT(strtol(output, NULL, 10) == child_pid);
+  ASSERT(reproc_pid(process) == strtol(output, NULL, 10));
 
   r = reproc_wait(process, REPROC_INFINITE);
   ASSERT_OK(r);
 
-  child_pid = reproc_pid(process);
-  ASSERT(strtol(output, NULL, 10) == child_pid);
+  ASSERT(reproc_pid(process) == strtol(output, NULL, 10));
 
   reproc_destroy(process);
   reproc_free(output);
