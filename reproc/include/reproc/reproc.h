@@ -452,8 +452,8 @@ the returned pid will be that of the just ended child process. The operating
 system will have cleaned up the resources allocated to the process
 and the operating system is free to reuse the same pid for another process.
 
-Generally, only pass the result of this function to system calls that need a pid
-if `reproc_wait` hasn't been called successfully on the process yet.
+Generally, only pass the result of this function to system calls that need a
+valid pid if `reproc_wait` hasn't been called successfully on the process yet.
 */
 REPROC_EXPORT int reproc_pid(reproc_t *process);
 
