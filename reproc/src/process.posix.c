@@ -457,7 +457,6 @@ static int parse_status(int status)
 
 int process_pid(process_type process)
 {
-  ASSERT(process);
   return process;
 }
 
