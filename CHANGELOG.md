@@ -1,5 +1,11 @@
 # Changelog
 
+## 14.2.0
+
+- Added `reproc_pid`/`process::pid` to get the pid of the process
+- Fixed compilation error when including reproc/drain.h in C++ code
+- Added missing extern "C" block to reproc/run.h
+
 ## 14.1.0
 
 - `reproc_run`/`reproc::run` now return the exit code of
