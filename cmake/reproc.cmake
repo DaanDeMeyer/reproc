@@ -341,6 +341,12 @@ function(reproc_test TARGET NAME LANGUAGE)
   reproc_common(${TARGET}-test-${NAME} ${LANGUAGE} ${NAME} test)
   target_link_libraries(${TARGET}-test-${NAME} PRIVATE ${TARGET})
 
+  if(MINGW)
+    target_compile_definitions(${TARGET}-test-${NAME} PRIVATE
+      __USE_MINGW_ANSI_STDIO=1 # Add %zu on Mingw
+    )
+  endif()
+
   add_test(NAME ${TARGET}-test-${NAME} COMMAND ${TARGET}-test-${NAME})
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/resources/${NAME}.c)
