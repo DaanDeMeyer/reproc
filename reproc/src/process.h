@@ -50,7 +50,6 @@ int process_start(process_type *process,
 // Returns the process ID associated with the given handle. On posix systems the
 // handle is the process ID and so its returned directly. On WIN32 the process
 // ID is returned from GetProcessId on the pointer.
-
 int process_pid(process_type process);
 
 // Returns the process's exit status if it has finished running.
