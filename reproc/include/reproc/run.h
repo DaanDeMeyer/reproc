@@ -3,6 +3,10 @@
 #include <reproc/drain.h>
 #include <reproc/reproc.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*! Sets `options.redirect.parent = true` unless `discard` is set and calls
 `reproc_run_ex` with `REPROC_SINK_NULL` for the `out` and `err` sinks. */
 REPROC_EXPORT int reproc_run(const char *const *argv, reproc_options options);
@@ -17,3 +21,7 @@ REPROC_EXPORT int reproc_run_ex(const char *const *argv,
                                 reproc_options options,
                                 reproc_sink out,
                                 reproc_sink err);
+
+#ifdef __cplusplus
+}
+#endif
