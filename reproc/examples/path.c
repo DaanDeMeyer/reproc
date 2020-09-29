@@ -1,6 +1,6 @@
-#include <reproc/run.h>
-
 #include <stdlib.h>
+
+#include <reproc/run.h>
 
 // Redirects the output of the given command to the reproc.out file.
 int main(int argc, const char **argv)

@@ -2,14 +2,14 @@
 
 #include "pipe.h"
 
-#include "error.h"
-#include "handle.h"
-#include "macro.h"
-
 #include <limits.h>
 #include <stdlib.h>
 #include <windows.h>
 #include <winsock2.h>
+
+#include "error.h"
+#include "handle.h"
+#include "macro.h"
 
 const SOCKET PIPE_INVALID = INVALID_SOCKET;
 

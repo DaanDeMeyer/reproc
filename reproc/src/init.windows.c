@@ -2,9 +2,9 @@
 
 #include "init.h"
 
-#include "error.h"
-
 #include <winsock2.h>
+
+#include "error.h"
 
 int init(void)
 {

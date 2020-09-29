@@ -1,7 +1,7 @@
-#include <reproc/reproc.h>
-
 #include <stdlib.h>
 #include <string.h>
+
+#include <reproc/reproc.h>
 
 // Prints the output of the given command using `reproc_read`. Usually, using
 // `reproc_run` or `reproc_drain` is a better solution when dealing with a

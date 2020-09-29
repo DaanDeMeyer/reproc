@@ -12,10 +12,10 @@
               NULL);
 #endif
 
-#include <reproc/reproc.h>
-
 #include <stdlib.h>
 #include <string.h>
+
+#include <reproc/reproc.h>
 
 enum { NUM_CHILDREN = 20 };
 

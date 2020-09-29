@@ -2,11 +2,6 @@
 
 #include "process.h"
 
-#include "error.h"
-#include "macro.h"
-#include "pipe.h"
-#include "strv.h"
-
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -16,6 +11,11 @@
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include "error.h"
+#include "macro.h"
+#include "pipe.h"
+#include "strv.h"
 
 const pid_t PROCESS_INVALID = -1;
 

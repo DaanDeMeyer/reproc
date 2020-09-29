@@ -1,10 +1,10 @@
 #pragma once
 
-#include <reproc++/reproc.hpp>
-
 #include <mutex>
 #include <ostream>
 #include <string>
+
+#include <reproc++/reproc.hpp>
 
 namespace reproc {
 

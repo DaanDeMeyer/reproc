@@ -1,8 +1,8 @@
-#include <reproc++/drain.hpp>
-#include <reproc++/reproc.hpp>
-
 #include <array>
 #include <iostream>
+
+#include <reproc++/drain.hpp>
+#include <reproc++/reproc.hpp>
 
 static int fail(std::error_code ec)
 {

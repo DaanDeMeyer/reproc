@@ -2,13 +2,13 @@
 
 #include "redirect.h"
 
-#include "error.h"
-#include "pipe.h"
-#include "utf.h"
-
 #include <io.h>
 #include <stdlib.h>
 #include <windows.h>
+
+#include "error.h"
+#include "pipe.h"
+#include "utf.h"
 
 static DWORD stream_to_id(REPROC_STREAM stream)
 {

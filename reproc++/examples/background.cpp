@@ -1,10 +1,10 @@
-#include <reproc++/drain.hpp>
-#include <reproc++/reproc.hpp>
-
 #include <future>
 #include <iostream>
 #include <mutex>
 #include <string>
+
+#include <reproc++/drain.hpp>
+#include <reproc++/reproc.hpp>
 
 static int fail(std::error_code ec)
 {

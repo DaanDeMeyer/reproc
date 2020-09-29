@@ -2,14 +2,14 @@
 
 #include "error.h"
 
-#include "macro.h"
-
-#include <reproc/reproc.h>
-
 #include <limits.h>
 #include <stdlib.h>
 #include <windows.h>
 #include <winsock2.h>
+
+#include <reproc/reproc.h>
+
+#include "macro.h"
 
 const int REPROC_EINVAL = -ERROR_INVALID_PARAMETER;
 const int REPROC_EPIPE = -ERROR_BROKEN_PIPE;

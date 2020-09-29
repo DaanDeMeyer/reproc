@@ -1,11 +1,11 @@
-#include "assert.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include <reproc/drain.h>
 #include <reproc/reproc.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include "assert.h"
 
 int main(void)
 {

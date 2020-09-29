@@ -1,6 +1,6 @@
-#include <reproc/run.h>
-
 #include <stdlib.h>
+
+#include <reproc/run.h>
 
 // Runs a binary as a child process that prints all its environment variables to
 // stdout and exits. Additional environment variables (in the format A=B) passed

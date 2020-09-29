@@ -1,6 +1,6 @@
-#include <reproc++/run.hpp>
-
 #include <iostream>
+
+#include <reproc++/run.hpp>
 
 // Equivalent to reproc's run example but implemented using reproc++.
 int main(int argc, const char **argv)

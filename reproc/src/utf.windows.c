@@ -1,10 +1,10 @@
 #include "utf.h"
 
-#include "error.h"
-
 #include <limits.h>
 #include <stdlib.h>
 #include <windows.h>
+
+#include "error.h"
 
 wchar_t *utf16_from_utf8(const char *string, int size)
 {

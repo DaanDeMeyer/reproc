@@ -1,10 +1,10 @@
 #include "strv.h"
 
-#include "error.h"
-
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "error.h"
 
 static char *str_dup(const char *s)
 {

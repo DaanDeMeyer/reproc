@@ -1,5 +1,7 @@
 #include <reproc/reproc.h>
 
+#include <stdlib.h>
+
 #include "clock.h"
 #include "error.h"
 #include "handle.h"
@@ -9,8 +11,6 @@
 #include "pipe.h"
 #include "process.h"
 #include "redirect.h"
-
-#include <stdlib.h>
 
 struct reproc_t {
   process_type handle;

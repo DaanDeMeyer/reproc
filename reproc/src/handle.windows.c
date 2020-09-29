@@ -2,9 +2,9 @@
 
 #include "handle.h"
 
-#include "error.h"
-
 #include <windows.h>
+
+#include "error.h"
 
 const HANDLE HANDLE_INVALID = INVALID_HANDLE_VALUE; // NOLINT
 

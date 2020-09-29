@@ -2,12 +2,12 @@
 
 #include "redirect.h"
 
-#include "error.h"
-#include "pipe.h"
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+
+#include "error.h"
+#include "pipe.h"
 
 static FILE *stream_to_file(REPROC_STREAM stream)
 {

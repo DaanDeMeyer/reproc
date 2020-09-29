@@ -1,6 +1,6 @@
-#include <reproc/run.h>
-
 #include <stdlib.h>
+
+#include <reproc/run.h>
 
 // Start a process from the arguments given on the command line. Inherit the
 // parent's standard streams and allow the process to run for maximum 5 seconds

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <reproc/export.h>
-
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#include <reproc/export.h>
 
 #ifdef __cplusplus
 extern "C" {

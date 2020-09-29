@@ -1,10 +1,10 @@
 #include <reproc/drain.h>
 
-#include "error.h"
-#include "macro.h"
-
 #include <stdlib.h>
 #include <string.h>
+
+#include "error.h"
+#include "macro.h"
 
 int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
 {

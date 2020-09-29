@@ -1,6 +1,6 @@
-#include "assert.h"
-
 #include <reproc/reproc.h>
+
+#include "assert.h"
 
 static void stop(REPROC_STOP action, int status)
 {

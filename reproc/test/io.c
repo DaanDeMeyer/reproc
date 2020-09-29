@@ -1,7 +1,7 @@
-#include "assert.h"
-
 #include <reproc/drain.h>
 #include <reproc/reproc.h>
+
+#include "assert.h"
 
 #define MESSAGE "reproc stands for REdirected PROCess"
 

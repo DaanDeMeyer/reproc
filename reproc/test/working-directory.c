@@ -1,6 +1,6 @@
-#include "assert.h"
-
 #include <reproc/run.h>
+
+#include "assert.h"
 
 static void replace(char *string, char old, char new)
 {

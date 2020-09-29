@@ -1,16 +1,16 @@
 #pragma once
 
-#include <reproc++/arguments.hpp>
-#include <reproc++/env.hpp>
-#include <reproc++/export.hpp>
-#include <reproc++/input.hpp>
-
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <memory>
 #include <system_error>
 #include <utility>
+
+#include <reproc++/arguments.hpp>
+#include <reproc++/env.hpp>
+#include <reproc++/export.hpp>
+#include <reproc++/input.hpp>
 
 // Forward declare `reproc_t` so we don't have to include reproc.h in the
 // header.
@@ -203,7 +203,7 @@ public:
   REPROCXX_EXPORT std::pair<int, std::error_code>
   stop(stop_actions stop) noexcept;
 
-  REPROCXX_EXPORT std::pair<int, std::error_code> 
+  REPROCXX_EXPORT std::pair<int, std::error_code>
   pid() noexcept;
 
 private:

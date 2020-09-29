@@ -2,13 +2,13 @@
 
 #include "process.h"
 
-#include "error.h"
-#include "macro.h"
-#include "utf.h"
-
 #include <stdbool.h>
 #include <stdlib.h>
 #include <windows.h>
+
+#include "error.h"
+#include "macro.h"
+#include "utf.h"
 
 const HANDLE PROCESS_INVALID = INVALID_HANDLE_VALUE; // NOLINT
 

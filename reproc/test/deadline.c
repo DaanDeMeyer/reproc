@@ -1,6 +1,6 @@
-#include "assert.h"
-
 #include <reproc/run.h>
+
+#include "assert.h"
 
 int main(void) {
   const char *argv[] = { RESOURCE_DIRECTORY "/deadline", NULL };

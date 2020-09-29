@@ -2,9 +2,9 @@
 
 #include "handle.h"
 
-#include <reproc/reproc.h>
-
 #include <stdbool.h>
+
+#include <reproc/reproc.h>
 
 #if defined(_WIN32)
 typedef void *process_type; // `HANDLE`

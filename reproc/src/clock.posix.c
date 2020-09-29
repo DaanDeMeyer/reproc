@@ -2,9 +2,9 @@
 
 #include "clock.h"
 
-#include "error.h"
-
 #include <time.h>
+
+#include "error.h"
 
 int64_t now(void)
 {

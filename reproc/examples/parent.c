@@ -1,6 +1,6 @@
-#include <reproc/reproc.h>
-
 #include <stdlib.h>
+
+#include <reproc/reproc.h>
 
 // Forwards the provided command to `reproc_start` and redirects the standard
 // streams of the child process to the standard streams of the parent process.

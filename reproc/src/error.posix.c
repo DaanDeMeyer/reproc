@@ -2,13 +2,13 @@
 
 #include "error.h"
 
-#include "macro.h"
-
-#include <reproc/reproc.h>
-
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <reproc/reproc.h>
+
+#include "macro.h"
 
 const int REPROC_EINVAL = -EINVAL;
 const int REPROC_EPIPE = -EPIPE;
