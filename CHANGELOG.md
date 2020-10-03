@@ -1,5 +1,9 @@
 # Changelog
 
+## 14.2.1
+
+- Bugfix: Make sure `reproc_run` handles forked child processes correctly.
+
 ## 14.2.0
 
 - Added `reproc_pid`/`process::pid` to get the pid of the process
