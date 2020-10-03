@@ -26,7 +26,8 @@ int reproc_run_ex(const char *const *argv,
   }
 
   r = reproc_start(process, argv, options);
-  if (r < 0) {
+  // If we're in a forked child process, return immediately as well.
+  if (r <= 0) {
     goto finish;
   }
 
