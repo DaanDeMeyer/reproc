@@ -2,40 +2,29 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <reproc/drain.h>
-#include <reproc/reproc.h>
+#include <reproc/run.h>
 
 #include "assert.h"
 
+static const char *MESSAGE = "reproc stands for REdirected PROCess!";
+
 int main(void)
 {
+  char *output = NULL;
+  reproc_sink sink = reproc_sink_string(&output);
   int r = -1;
 
-  reproc_t *process = reproc_new();
-  ASSERT(process);
-
-  r = reproc_start(process, NULL, (reproc_options){ .fork = true });
-  ASSERT_OK(r);
-
-  static const char *message = "reproc stands for REdirected PROCess!";
+  r = reproc_run_ex(NULL, (reproc_options){ .fork = true }, sink, sink);
 
   if (r == 0) {
-    printf("%s", message);
+    printf("%s", MESSAGE);
     fclose(stdout); // `_exit` doesn't flush stdout.
     _exit(r < 0 ? EXIT_FAILURE : EXIT_SUCCESS);
   }
 
-  char *output = NULL;
-  reproc_sink sink = reproc_sink_string(&output);
-  r = reproc_drain(process, sink, sink);
   ASSERT_OK(r);
   ASSERT(output != NULL);
+  ASSERT_EQ_STR(output, MESSAGE);
 
-  ASSERT_EQ_STR(output, message);
-
-  r = reproc_wait(process, REPROC_INFINITE);
-  ASSERT_OK(r);
-
-  reproc_destroy(process);
   reproc_free(output);
 }
