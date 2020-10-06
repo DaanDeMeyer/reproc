@@ -61,9 +61,15 @@ std::error_code drain(process &process, Out &&out, Err &&err)
     }
 
     bytes_read = ec == error::broken_pipe ? 0 : bytes_read;
-    auto &sink = stream == stream::out ? out : err;
 
-    ec = sink(stream, buffer, bytes_read);
+    // This used to be `auto &sink = stream == stream::out ? out : err;` but
+    // that doesn't actually work if `out` and `err` are not the same type.
+    if (stream == stream::out) {
+      ec = out(stream, buffer, bytes_read);
+    } else {
+      ec = err(stream, buffer, bytes_read);
+    }
+
     if (ec) {
       break;
     }
