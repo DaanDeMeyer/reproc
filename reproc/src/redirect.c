@@ -51,6 +51,10 @@ int redirect_init(pipe_type *parent,
 
   switch (redirect.type) {
 
+    case REPROC_REDIRECT_DEFAULT:
+      ASSERT(false);
+      break;
+
     case REPROC_REDIRECT_PIPE:
       r = redirect_pipe(parent, child, stream, nonblocking);
       break;
@@ -136,6 +140,9 @@ handle_type redirect_destroy(handle_type child, REPROC_REDIRECT type)
   }
 
   switch (type) {
+    case REPROC_REDIRECT_DEFAULT:
+      ASSERT(false);
+      break;
     case REPROC_REDIRECT_PIPE:
       // We know `handle` is a pipe if `REDIRECT_PIPE` is used so the cast is
       // safe. This little hack prevents us from having to introduce a generic

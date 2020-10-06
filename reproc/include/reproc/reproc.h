@@ -53,8 +53,11 @@ typedef enum {
 
 /*! Used to tell reproc where to redirect the streams of the child process. */
 typedef enum {
+  /*! Use the default redirect behavior, see the documentation for `redirect` in
+  `reproc_options`. */
+  REPROC_REDIRECT_DEFAULT,
   /*! Redirect to a pipe. */
-  REPROC_REDIRECT_PIPE = 1,
+  REPROC_REDIRECT_PIPE,
   /*! Redirect to the corresponding stream from the parent process. */
   REPROC_REDIRECT_PARENT,
   /*! Redirect to /dev/null (or NUL on Windows). */

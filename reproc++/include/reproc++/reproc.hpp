@@ -67,7 +67,8 @@ using handle = int;
 
 struct redirect {
   enum type {
-    pipe = 1,
+    default_, // Unfortunately, both `default` and `auto` are keywords.
+    pipe,
     parent,
     discard,
     // stdout would conflict with a macro on Windows.

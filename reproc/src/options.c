@@ -31,27 +31,30 @@ static int parse_redirect(reproc_redirect *redirect,
   }
 
   if (redirect->type == REPROC_REDIRECT_HANDLE || redirect->handle) {
-    ASSERT_EINVAL(!redirect->type || redirect->type == REPROC_REDIRECT_HANDLE);
+    ASSERT_EINVAL(redirect->type == REPROC_REDIRECT_DEFAULT ||
+                  redirect->type == REPROC_REDIRECT_HANDLE);
     ASSERT_EINVAL(redirect->handle);
     ASSERT_EINVAL(!redirect->file && !redirect->path);
     redirect->type = REPROC_REDIRECT_HANDLE;
   }
 
   if (redirect->type == REPROC_REDIRECT_FILE || redirect->file) {
-    ASSERT_EINVAL(!redirect->type || redirect->type == REPROC_REDIRECT_FILE);
+    ASSERT_EINVAL(redirect->type == REPROC_REDIRECT_DEFAULT ||
+                  redirect->type == REPROC_REDIRECT_FILE);
     ASSERT_EINVAL(redirect->file);
     ASSERT_EINVAL(!redirect->handle && !redirect->path);
     redirect->type = REPROC_REDIRECT_FILE;
   }
 
   if (redirect->type == REPROC_REDIRECT_PATH || redirect->path) {
-    ASSERT_EINVAL(!redirect->type || redirect->type == REPROC_REDIRECT_PATH);
+    ASSERT_EINVAL(redirect->type == REPROC_REDIRECT_DEFAULT ||
+                  redirect->type == REPROC_REDIRECT_PATH);
     ASSERT_EINVAL(redirect->path);
     ASSERT_EINVAL(!redirect->handle && !redirect->file);
     redirect->type = REPROC_REDIRECT_PATH;
   }
 
-  if (!redirect->type) {
+  if (redirect->type == REPROC_REDIRECT_DEFAULT) {
     if (parent) {
       ASSERT_EINVAL(!discard);
       redirect->type = REPROC_REDIRECT_PARENT;
