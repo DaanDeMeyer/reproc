@@ -39,10 +39,8 @@ private:
 template <typename Env>
 const char *const *env::from(const Env &env)
 {
-  using name_size_type =
-      typename Env::value_type::first_type::size_type;
-  using value_size_type =
-      typename Env::value_type::second_type::size_type;
+  using name_size_type = typename Env::value_type::first_type::size_type;
+  using value_size_type = typename Env::value_type::second_type::size_type;
 
   const char **envp = new const char *[env.size() + 1];
   std::size_t current = 0;

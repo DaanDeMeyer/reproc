@@ -179,6 +179,8 @@ public:
   REPROCXX_EXPORT std::error_code start(const arguments &arguments,
                                         const options &options = {}) noexcept;
 
+  REPROCXX_EXPORT std::pair<int, std::error_code> pid() noexcept;
+
   /*! Sets the `fork` option in `reproc_options` and calls `start`. Returns
   `true` in the child process and `false` in the parent process. */
   REPROCXX_EXPORT std::pair<bool, std::error_code>
@@ -210,9 +212,6 @@ public:
   /*! `reproc_stop` but returns a pair of (status, error). */
   REPROCXX_EXPORT std::pair<int, std::error_code>
   stop(stop_actions stop) noexcept;
-
-  REPROCXX_EXPORT std::pair<int, std::error_code>
-  pid() noexcept;
 
 private:
   REPROCXX_EXPORT friend std::error_code
