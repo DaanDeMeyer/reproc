@@ -34,7 +34,10 @@ int main(int argc, const char **argv)
   // given string. Passing the same sink to both output streams makes sure the
   // output from both streams is combined into a single string.
   reproc_sink sink = reproc_sink_string(&output);
-  r = reproc_drain(process, sink, sink);
+  // By default, reproc only redirects stdout to a pipe and not stderr so we
+  // pass `REPROC_SINK_NULL` as the sink for stderr here. We could also pass
+  // `sink` but it wouldn't receive any data from stderr.
+  r = reproc_drain(process, sink, REPROC_SINK_NULL);
   if (r < 0) {
     goto finish;
   }

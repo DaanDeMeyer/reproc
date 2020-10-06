@@ -44,7 +44,10 @@ int main(int argc, const char **argv)
   // get stored in the same string.
   std::string output;
   reproc::sink::string sink(output);
-  ec = reproc::drain(process, sink, sink);
+  // By default, reproc only redirects stdout to a pipe and not stderr so we
+  // pass `reproc::sink::null` as the sink for stderr here. We could also pass
+  // `sink` but it wouldn't receive any data from stderr.
+  ec = reproc::drain(process, sink, reproc::sink::null);
   if (ec) {
     return fail(ec);
   }
