@@ -73,6 +73,11 @@ struct redirect {
     discard,
     // stdout would conflict with a macro on Windows.
     stdout_,
+    // Unfortunately, class members and nested enum members can't have the same
+    // name.
+    handle_,
+    file_,
+    path_,
   };
 
   enum type type;
