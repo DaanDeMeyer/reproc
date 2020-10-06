@@ -70,6 +70,8 @@ struct redirect {
     pipe = 1,
     parent,
     discard,
+    // stdout would conflict with a macro on Windows.
+    stdout_,
   };
 
   enum type type;

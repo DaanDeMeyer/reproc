@@ -59,12 +59,12 @@ typedef enum {
   REPROC_REDIRECT_PARENT,
   /*! Redirect to /dev/null (or NUL on Windows). */
   REPROC_REDIRECT_DISCARD,
+  /*! Redirect to child process stdout. Only valid for stderr. */
+  REPROC_REDIRECT_STDOUT,
   /*! Redirect to a handle (fd on Linux, HANDLE/SOCKET on Windows). */
   REPROC_REDIRECT_HANDLE,
   /*! Redirect to a `FILE *`. */
   REPROC_REDIRECT_FILE,
-  /*! Redirect to child process stdout. Only valid for stderr. */
-  REPROC_REDIRECT_STDOUT,
   /*! Redirect to a specific path. */
   REPROC_REDIRECT_PATH,
 } REPROC_REDIRECT;
