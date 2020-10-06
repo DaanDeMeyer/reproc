@@ -84,7 +84,7 @@ jobs:
       - name: Install (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install ninja llvm
+          brew install ninja
           sudo ln -s /usr/local/opt/llvm/bin/clang-tidy /usr/local/bin/clang-tidy
 
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
