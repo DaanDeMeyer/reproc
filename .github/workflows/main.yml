@@ -10,7 +10,7 @@ on:
 
 jobs:
   ci:
-    name: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.version }}
+    name: ${{ matrix.os }}-${{ matrix.compiler }}
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -19,43 +19,27 @@ jobs:
         include:
           - os: ubuntu-20.04
             compiler: gcc
-            version: "9"
-
-          - os: ubuntu-20.04
-            compiler: gcc
-            version: "10"
 
           - os: ubuntu-20.04
             compiler: clang
-            version: "6.0"
-
-          - os: ubuntu-20.04
-            compiler: clang
-            version: "10"
 
           - os: windows-latest
             compiler: cl
-            version: "default"
 
           - os: windows-latest
             compiler: clang-cl
-            version: "latest"
 
           - os: windows-latest
             compiler: clang
-            version: "latest"
 
           - os: windows-latest
             compiler: gcc
-            version: "latest"
-
-          - os: macos-latest
-            compiler: xcode
-            version: "default"
 
           - os: macos-latest
             compiler: gcc
-            version: "latest"
+            
+          - os: macos-latest
+            compiler: clang
 
     steps:
       - uses: actions/checkout@v1
@@ -67,13 +51,11 @@ jobs:
           sudo ln -s /usr/bin/clang-tidy-10 /usr/local/bin/clang-tidy
 
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
-            sudo apt-get install -y --no-install-recommends g++-${{ matrix.version }}
-            echo CC=gcc-${{ matrix.version }} >> $GITHUB_ENV
-            echo CXX=g++-${{ matrix.version }} >> $GITHUB_ENV
+            echo CC=gcc >> $GITHUB_ENV
+            echo CXX=g++ >> $GITHUB_ENV
           else
-            sudo apt-get install -y --no-install-recommends clang-${{ matrix.version }}
-            echo CC=clang-${{ matrix.version }} >> $GITHUB_ENV
-            echo CXX=clang++-${{ matrix.version }} >> $GITHUB_ENV
+            echo CC=clang >> $GITHUB_ENV
+            echo CXX=clang++ >> $GITHUB_ENV
           fi
 
       - name: Install (macOS)
