@@ -335,7 +335,7 @@ int process_start(pid_t *process,
     }
   }
 
-  extern char **environ;
+  extern char **environ; // NOLINT
   char *const *parent = options.env.behavior == REPROC_ENV_EMPTY ? NULL
                                                                  : environ;
   env = strv_concat(parent, options.env.extra);
