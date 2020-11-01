@@ -24,12 +24,6 @@ static const DWORD CREATION_FLAGS =
     // specify which handles should be inherited.
     EXTENDED_STARTUPINFO_PRESENT;
 
-static SECURITY_ATTRIBUTES HANDLE_DO_NOT_INHERIT = {
-  .nLength = sizeof(SECURITY_ATTRIBUTES),
-  .bInheritHandle = false,
-  .lpSecurityDescriptor = NULL
-};
-
 // Argument escaping implementation is based on the following blog post:
 // https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
 
@@ -418,8 +412,12 @@ int process_start(HANDLE *process,
   // dialogs temporarily which is inherited by the child process.
   DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
 
-  r = CreateProcessW(NULL, command_line_wstring, &HANDLE_DO_NOT_INHERIT,
-                     &HANDLE_DO_NOT_INHERIT, true, CREATION_FLAGS, env_wstring,
+  SECURITY_ATTRIBUTES do_not_inherit = { .nLength = sizeof(SECURITY_ATTRIBUTES),
+                                         .bInheritHandle = false,
+                                         .lpSecurityDescriptor = NULL };
+
+  r = CreateProcessW(NULL, command_line_wstring, &do_not_inherit,
+                     &do_not_inherit, true, CREATION_FLAGS, env_wstring,
                      working_directory_wstring, startup_info_address, &info);
 
   SetErrorMode(previous_error_mode);
