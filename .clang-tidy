@@ -21,6 +21,7 @@ Checks:
 -fuchsia-default-arguments-declarations,
 -fuchsia-overloaded-operator,
 -fuchsia-statically-constructed-objects,
+-llvmlibc-restrict-system-libc-headers,
 -google-readability-namespace-comments,
 -google-runtime-references,
 -hicpp-avoid-c-arrays,
