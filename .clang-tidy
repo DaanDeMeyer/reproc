@@ -34,6 +34,7 @@ Checks:
 -hicpp-special-member-functions,
 -llvm-header-guard,
 -llvm-namespace-comment,
+-misc-no-recursion,
 -modernize-avoid-c-arrays,
 -modernize-use-trailing-return-type,
 -readability-else-after-return,
