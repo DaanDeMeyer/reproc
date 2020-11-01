@@ -6,10 +6,9 @@
 
 #include "assert.h"
 
-static const char *MESSAGE = "reproc stands for REdirected PROCess!";
-
 int main(void)
 {
+  const char *MESSAGE = "reproc stands for REdirected PROCess!";
   char *output = NULL;
   reproc_sink sink = reproc_sink_string(&output);
   int r = -1;
