@@ -62,7 +62,9 @@ static reproc_options reproc_options_from(const options &options, bool fork)
   };
 }
 
-auto deleter = [](reproc_t *process) noexcept { reproc_destroy(process); };
+const auto deleter = [](reproc_t *process) noexcept {
+  reproc_destroy(process);
+};
 
 process::process() : impl_(reproc_new(), deleter) {}
 process::~process() noexcept = default;
