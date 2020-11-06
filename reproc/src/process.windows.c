@@ -471,7 +471,6 @@ int process_wait(HANDLE process)
     status = (DWORD) REPROC_SIGTERM;
   }
 
-  ASSERT(status <= INT_MAX);
   return (int) status;
 }
 
