@@ -1,5 +1,7 @@
 if(WIN32)
   set(REPROC_WINSOCK_LIBRARY ws2_32)
+elseif(NOT APPLE)
+  set(REPROC_RT_LIBRARY rt) # clock_gettime
 endif()
 
 reproc_library(reproc C)
@@ -15,6 +17,9 @@ if(WIN32)
   target_link_libraries(reproc PRIVATE ${REPROC_WINSOCK_LIBRARY})
 else()
   set(PLATFORM posix)
+  if(NOT APPLE)
+    target_link_libraries(reproc PRIVATE ${REPROC_RT_LIBRARY})
+  endif()
 endif()
 
 target_sources(reproc PRIVATE
