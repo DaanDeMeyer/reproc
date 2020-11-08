@@ -62,11 +62,7 @@ static reproc_options reproc_options_from(const options &options, bool fork)
   };
 }
 
-static void deleter(reproc_t *process) noexcept {
-  reproc_destroy(process);
-}
-
-process::process() : impl_(reproc_new(), deleter) {}
+process::process() : impl_(reproc_new(), reproc_destroy) {}
 process::~process() noexcept = default;
 
 process::process(process &&other) noexcept = default;
