@@ -2,7 +2,13 @@
 
 ## 14.2.1
 
-- Bugfix: Make sure `reproc_run` handles forked child processes correctly.
+- Bugfix: `reproc_run` now handles forked child processes correctly.
+- Bugfix: Sinks of different types can now be passed to `reproc::drain`.
+- Bugfix: Processes on Windows returning negative exit codes don't cause asserts
+  anymore.
+- Bugfix: Dependency on librt on POSIX (except osx) systems is now explicit in
+  CMake.
+- Bugfix: Added missing stdout redirect option to reproc++. 
 
 ## 14.2.0
 
