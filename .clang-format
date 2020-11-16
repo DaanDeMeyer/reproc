@@ -19,3 +19,4 @@ IndentPPDirectives: BeforeHash
 PenaltyBreakAssignment: 100
 PenaltyBreakBeforeFirstCallParameter: 100
 SpaceAfterCStyleCast: true
+SpaceBeforeParens: ControlStatementsExceptForEachMacros

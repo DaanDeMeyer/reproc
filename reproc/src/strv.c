@@ -27,11 +27,11 @@ char **strv_concat(char *const *a, const char *const *b)
   size_t size = 1;
   size_t c = 0;
 
-  STRV_FOREACH (i, a) {
+  STRV_FOREACH(i, a) {
     size++;
   }
 
-  STRV_FOREACH (j, b) {
+  STRV_FOREACH(j, b) {
     size++;
   }
 
@@ -40,7 +40,7 @@ char **strv_concat(char *const *a, const char *const *b)
     goto finish;
   }
 
-  STRV_FOREACH (i, a) {
+  STRV_FOREACH(i, a) {
     r[c] = str_dup(*i);
     if (!r[c]) {
       goto finish;
@@ -49,7 +49,7 @@ char **strv_concat(char *const *a, const char *const *b)
     c++;
   }
 
-  STRV_FOREACH (j, b) {
+  STRV_FOREACH(j, b) {
     r[c] = str_dup(*j);
     if (!r[c]) {
       goto finish;
@@ -62,7 +62,7 @@ char **strv_concat(char *const *a, const char *const *b)
 
 finish:
   if (c < size) {
-    STRV_FOREACH (i, r) {
+    STRV_FOREACH(i, r) {
       free(*i);
     }
 
@@ -78,7 +78,7 @@ char **strv_free(char **l)
 {
   char **s = NULL;
 
-  STRV_FOREACH (s, l) {
+  STRV_FOREACH(s, l) {
     free(*s);
   }
 
