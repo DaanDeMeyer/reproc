@@ -415,26 +415,30 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
     bool again = false;
 
     for (size_t i = 0; i < num_sources; i++) {
-      if (sources[i].events & REPROC_EVENT_EXIT) {
-        reproc_t *process = sources[i].process;
-
-        if (process->child.out != PIPE_INVALID ||
-            process->child.err != PIPE_INVALID) {
-          r = pipe_shutdown(process->child.out);
-          if (r < 0) {
-            goto finish;
-          }
-
-          r = pipe_shutdown(process->child.err);
-          if (r < 0) {
-            goto finish;
-          }
-
-          process->child.out = pipe_destroy(process->child.out);
-          process->child.err = pipe_destroy(process->child.err);
-          again = true;
-        }
+      if (!(sources[i].events & REPROC_EVENT_EXIT)) {
+        continue;
       }
+
+      reproc_t *process = sources[i].process;
+
+      if (process->child.out == PIPE_INVALID &&
+          process->child.err == PIPE_INVALID) {
+        continue;
+      }
+
+      r = pipe_shutdown(process->child.out);
+      if (r < 0) {
+        goto finish;
+      }
+
+      r = pipe_shutdown(process->child.err);
+      if (r < 0) {
+        goto finish;
+      }
+
+      process->child.out = pipe_destroy(process->child.out);
+      process->child.err = pipe_destroy(process->child.err);
+      again = true;
     }
 
     // If we've closed handles, we poll again so we can include any new close
