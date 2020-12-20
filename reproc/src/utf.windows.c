@@ -10,8 +10,6 @@ wchar_t *utf16_from_utf8(const char *string, int size)
 {
   ASSERT(string);
 
-  size = size == -1 ? (int) strlen(string) + 1 : size;
-
   // Determine wstring size (`MultiByteToWideChar` returns the required size if
   // its last two arguments are `NULL` and 0).
   int r = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, string, size, NULL,
