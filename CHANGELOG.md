@@ -1,5 +1,9 @@
 # Changelog
 
+## 14.2.2
+
+- Bugfix: Disallow using `fork` option when using `reproc_run`.
+
 ## 14.2.1
 
 - Bugfix: `reproc_run` now handles forked child processes correctly.
@@ -8,7 +12,7 @@
   anymore.
 - Bugfix: Dependency on librt on POSIX (except osx) systems is now explicit in
   CMake.
-- Bugfix: Added missing stdout redirect option to reproc++. 
+- Bugfix: Added missing stdout redirect option to reproc++.
 
 ## 14.2.0
 
