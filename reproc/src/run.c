@@ -2,6 +2,8 @@
 
 #include <reproc/drain.h>
 
+#include "error.h"
+
 int reproc_run(const char *const *argv, reproc_options options)
 {
   if (!options.redirect.discard && !options.redirect.file &&
@@ -20,14 +22,18 @@ int reproc_run_ex(const char *const *argv,
   reproc_t *process = NULL;
   int r = REPROC_ENOMEM;
 
+  // There's no way for `reproc_run_ex` to inform the caller whether we're in
+  // the forked process or the parent process so let's not allow forking when
+  // using `reproc_run_ex`.
+  ASSERT_EINVAL(!options.fork);
+
   process = reproc_new();
   if (process == NULL) {
     goto finish;
   }
 
   r = reproc_start(process, argv, options);
-  // If we're in a forked child process, return immediately as well.
-  if (r <= 0) {
+  if (r < 0) {
     goto finish;
   }
 
