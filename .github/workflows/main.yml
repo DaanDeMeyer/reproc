@@ -37,7 +37,7 @@ jobs:
 
           - os: macos-latest
             compiler: gcc
-            
+
           - os: macos-latest
             compiler: clang
 
@@ -47,8 +47,7 @@ jobs:
       - name: Install (Ubuntu)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install -y --no-install-recommends ninja-build clang-tidy-10
-          sudo ln -s /usr/bin/clang-tidy-10 /usr/local/bin/clang-tidy
+          sudo apt-get install -y --no-install-recommends ninja-build clang-tidy
 
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
             echo CC=gcc >> $GITHUB_ENV
