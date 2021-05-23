@@ -1,0 +1,2 @@
+option('multithread', type : 'boolean', value : true, description: 'Use pthread_sigmask and link against the system\'s thread library')
+option('examples', type : 'boolean', value : true, description: 'Request build of the examples')
