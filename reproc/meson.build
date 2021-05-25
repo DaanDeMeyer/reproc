@@ -27,6 +27,12 @@ reproc_lib = library('reproc',
     install: true
 )
 
+reproc_dep = declare_dependency(
+    dependencies : reproc_deps,
+    include_directories : reproc_include,
+    link_with : reproc_lib,
+)
+
 if get_option('examples')
     subdir('examples')
 endif
