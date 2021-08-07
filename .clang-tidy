@@ -2,6 +2,7 @@
 Checks:
 '
 *,
+-altera-struct-pack-align,
 -android-cloexec-fopen,
 -android-cloexec-pipe,
 -bugprone-exception-escape,
@@ -9,6 +10,7 @@ Checks:
 -cert-*,
 -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
 -clang-diagnostic-unused-command-line-argument,
+-concurrency-mt-unsafe,
 -cppcoreguidelines-avoid-c-arrays,
 -cppcoreguidelines-avoid-magic-numbers,
 -cppcoreguidelines-macro-usage,
@@ -28,7 +30,9 @@ Checks:
 -misc-no-recursion,
 -modernize-avoid-c-arrays,
 -modernize-use-trailing-return-type,
+-performance-no-int-to-ptr,
 -readability-else-after-return,
+-readability-function-cognitive-complexity,
 -readability-magic-numbers,
 '
 HeaderFilterRegex: '.*reproc\+\+.*$'
