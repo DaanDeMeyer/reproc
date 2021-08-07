@@ -488,7 +488,7 @@ int reproc_read(reproc_t *process,
     reproc_event_source source = { process, event, 0 };
     r = reproc_poll(&source, 1, process->nonblocking ? 0 : REPROC_INFINITE);
     if (r <= 0) {
-      return r == 0 ? -REPROC_EWOULDBLOCK : r;
+      return r == 0 ? REPROC_EWOULDBLOCK : r;
     }
   }
 
