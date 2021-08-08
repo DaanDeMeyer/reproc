@@ -1,5 +1,9 @@
 # Changelog
 
+## 14.2.3
+
+- Bugfix: Fix sign of EWOULDBLOCK error returned from `reproc_read`.
+
 ## 14.2.2
 
 - Bugfix: Disallow using `fork` option when using `reproc_run`.
