@@ -17,10 +17,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             compiler: gcc
 
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             compiler: clang
 
           - os: windows-latest
