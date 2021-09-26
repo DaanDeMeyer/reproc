@@ -232,6 +232,7 @@ static LPPROC_THREAD_ATTRIBUTE_LIST setup_attribute_list(HANDLE *handles,
                                 num_handles * sizeof(HANDLE), NULL, NULL);
   if (r == 0) {
     DeleteProcThreadAttributeList(attribute_list);
+    free(attribute_list);
     return NULL;
   }
 
@@ -436,6 +437,7 @@ finish:
   free(env_wstring);
   free(working_directory_wstring);
   DeleteProcThreadAttributeList(attribute_list);
+  free(attribute_list);
   handle_destroy(info.hThread);
 
   return r < 0 ? r : 1;
