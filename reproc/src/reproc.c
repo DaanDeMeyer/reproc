@@ -49,8 +49,7 @@ const int REPROC_DEADLINE = -2;
 
 static int setup_input(pipe_type *pipe, const uint8_t *data, size_t size)
 {
-  if (data == NULL || size == 0) {
-    ASSERT(data == NULL);
+  if (data == NULL) {
     ASSERT(size == 0);
     return 0;
   }
