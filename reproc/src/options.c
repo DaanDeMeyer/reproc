@@ -113,10 +113,12 @@ int parse_options(reproc_options *options, const char *const *argv)
     return r;
   }
 
-  if (options->input.data != NULL || options->input.size > 0) {
-    ASSERT_EINVAL(options->input.data != NULL);
-    ASSERT_EINVAL(options->input.size > 0);
+  if (options->input.data != NULL) {
     ASSERT_EINVAL(options->redirect.in.type == REPROC_REDIRECT_PIPE);
+  }
+
+  if (options->input.size > 0) {
+    ASSERT_EINVAL(options->input.data != NULL);
   }
 
   if (options->fork) {
