@@ -2,6 +2,6 @@
 
 int main(void)
 {
-  sleep(25000);
+  millisleep(25000);
   return 0;
 }
