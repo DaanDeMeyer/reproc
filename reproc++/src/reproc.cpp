@@ -176,7 +176,7 @@ std::error_code fill(process& process, input& input)
     std::tie(events, error) = process.poll(event::in, infinite);
     if (error) { return error; }
 
-    if (events & event::deadline != 0) {
+    if ((events & event::deadline) != 0) {
       return std::make_error_code(std::errc::timed_out);
     }
 
