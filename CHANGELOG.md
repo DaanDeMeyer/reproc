@@ -1,5 +1,11 @@
 # Changelog
 
+## 14.2.4
+
+- Bugfix: Fix a memory leak in `reproc_start()` on Windows (thanks @AokiYuune).
+- Bugfix: Fix a memory leak in reproc++ `array` class move constructor.
+- Allow passing zero-sized array's to reproc's `input` option (thanks @lightray22).
+
 ## 14.2.3
 
 - Bugfix: Fix sign of EWOULDBLOCK error returned from `reproc_read`.

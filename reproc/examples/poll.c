@@ -1,15 +1,23 @@
 #ifdef _WIN32
   #include <windows.h>
-  #define sleep(x) Sleep((DWORD)(x))
-  #define getpid() (int) GetCurrentProcessId()
+static void millisleep(long ms)
+{
+  Sleep((DWORD) ms);
+}
+static int getpid()
+{
+  return (int) GetCurrentProcessId();
+}
 #else
   #define _POSIX_C_SOURCE 200809L
   #include <time.h>
   #include <unistd.h>
-  #define sleep(x)                                                             \
-    nanosleep(&(struct timespec){ .tv_sec = (x) / 1000,                        \
-                                  .tv_nsec = ((x) % 1000) * 1000000 },         \
-              NULL);
+static inline void millisleep(long ms)
+{
+  nanosleep(&(struct timespec){ .tv_sec = (ms) / 1000,
+                                .tv_nsec = ((ms) % 1000L) * 1000000 },
+            NULL);
+}
 #endif
 
 #include <stdlib.h>
@@ -85,7 +93,7 @@ static int child(void)
 {
   srand(((unsigned int) getpid()));
   int ms = rand() % NUM_CHILDREN * 4; // NOLINT
-  sleep(ms);
+  millisleep(ms);
   printf("Process %i slept %i milliseconds.", getpid(), ms);
   return EXIT_SUCCESS;
 }

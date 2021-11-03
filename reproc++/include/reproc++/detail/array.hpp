@@ -17,7 +17,7 @@ public:
   array(array &&other) noexcept : data_(other.data_), owned_(other.owned_)
   {
     other.data_ = nullptr;
-    owned_ = false;
+    other.owned_ = false;
   }
 
   array &operator=(array &&other) noexcept

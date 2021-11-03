@@ -21,6 +21,7 @@ public:
   {}
 
   input(const input &other) = default;
+  input &operator=(const input &) = default;
 
   const uint8_t *data() const noexcept
   {
