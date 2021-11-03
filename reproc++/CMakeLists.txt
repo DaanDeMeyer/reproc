@@ -13,7 +13,7 @@ target_sources(
   INTERFACE $<$<BOOL:${REPROC_OBJECT_LIBRARIES}>:$<TARGET_OBJECTS:reproc>>
 )
 
-reproc_example(reproc++ drain CXX)
+reproc_example(reproc++ drain_fill CXX)
 reproc_example(reproc++ forward CXX)
 reproc_example(reproc++ run CXX)
 
