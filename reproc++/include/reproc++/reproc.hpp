@@ -220,4 +220,14 @@ private:
   std::unique_ptr<reproc_t, reproc_t *(*) (reproc_t *)> impl_;
 };
 
+/** 
+ * Sends stdin to the given process then closes it 
+ * 
+ * This is to be used for sending stdin *after* the process is started,
+ * which may be required if the data is too big to fit in the options
+ * pipe that is filled before the process starts
+ */
+REPROCXX_EXPORT std::error_code 
+fill(process& process, input& input);
+
 }

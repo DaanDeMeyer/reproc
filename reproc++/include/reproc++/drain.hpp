@@ -8,15 +8,6 @@
 
 namespace reproc {
 
-/** 
- * Sends stdin to the given process then closes it 
- * 
- * This is to be used for sending stdin *after* the process is started,
- * which may be required if the data is too big to fit in the options
- * pipe that is filled before the process starts
- */
-std::error_code fill(process& process, input& input);
-
 /*!
 `reproc_drain` but takes lambdas as sinks. Return an error code from a sink to
 break out of `drain` early. `out` and `err` expect the following signature:
