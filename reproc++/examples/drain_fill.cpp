@@ -41,7 +41,7 @@ int main(int argc, const char **argv)
   // This works with any size of data unlike filling the input ahead
   // of time in the process options, which is constrained by pipe sizing
   std::string input;
-  auto inputData = reinterpret_cast<const uint8_t*>(input.c_str());
+  const auto* inputData = reinterpret_cast<const uint8_t*>(input.c_str());
   reproc::input procIn(inputData, input.size());
   ec = reproc::fill(process, procIn);
   if (ec) {
