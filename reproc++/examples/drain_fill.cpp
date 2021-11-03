@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include <reproc++/drain.hpp>
+#include <reproc++/input.hpp>
 #include <reproc++/reproc.hpp>
 
 static int fail(std::error_code ec)
@@ -35,7 +36,17 @@ int main(int argc, const char **argv)
   } else if (ec) {
     return fail(ec);
   }
-
+  
+  // `reproc::fill` sends data to stdin after the process has started
+  // This works with any size of data unlike filling the input ahead
+  // of time in the process options, which is constrained by pipe sizing
+  std::string input;
+  reproc::input procIn((const uint8_t*)input.c_str(), input.size());
+  ec = reproc::fill(process, procIn);
+  if (ec) {
+    return fail(ec);
+  }
+  
   // `reproc::drain` reads from the stdout and stderr streams of `process` until
   // both are closed or an error occurs. Providing it with a string sink for a
   // specific stream makes it store all output of that stream in the string
