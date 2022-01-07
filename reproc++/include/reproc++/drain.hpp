@@ -3,6 +3,7 @@
 #include <mutex>
 #include <ostream>
 #include <string>
+#include <tuple>
 
 #include <reproc++/reproc.hpp>
 

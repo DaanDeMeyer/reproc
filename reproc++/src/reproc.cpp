@@ -1,5 +1,6 @@
-#include <reproc++/reproc.hpp>
+#include <tuple>
 
+#include <reproc++/reproc.hpp>
 #include <reproc/reproc.h>
 
 namespace reproc {
