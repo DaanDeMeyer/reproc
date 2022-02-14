@@ -10,24 +10,30 @@ int main(void)
   reproc_sink sink = reproc_sink_string(&output);
   int r = -1;
 
-  r = reproc_run_ex(argv, (reproc_options){ 0 }, sink, sink);
+  {
+    reproc_options options = { 0 };
+    r = reproc_run_ex(argv, options, sink, sink);
+  }
   ASSERT_OK(r);
   ASSERT(output != NULL);
 
-  const char *current = output;
+  {
+    const char *current = output;
+    size_t i;
 
-  for (size_t i = 0; i < 3; i++) {
-    size_t size = strlen(argv[i]);
+    for (i = 0; i < 3; i++) {
+      size_t size = strlen(argv[i]);
 
-    ASSERT_GE_SIZE(strlen(current), size);
-    ASSERT_EQ_MEM(current, argv[i], size);
+      ASSERT_GE_SIZE(strlen(current), size);
+      ASSERT_EQ_MEM(current, argv[i], size);
 
-    current += size;
-    current += *current == '\r';
-    current += *current == '\n';
+      current += size;
+      current += *current == '\r';
+      current += *current == '\n';
+    }
+
+    ASSERT_EQ_SIZE(strlen(current), (size_t) 0);
   }
-
-  ASSERT_EQ_SIZE(strlen(current), (size_t) 0);
 
   reproc_free(output);
 }

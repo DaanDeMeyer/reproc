@@ -5,6 +5,11 @@
 int main(void)
 {
   const char *argv[] = { RESOURCE_DIRECTORY "/deadline", NULL };
-  int r = reproc_run(argv, (reproc_options){ .deadline = 100 });
+  int r;
+  {
+    reproc_options options = { 0 };
+    options.deadline = 100;
+    r = reproc_run(argv, options);
+  }
   ASSERT(r == REPROC_SIGTERM);
 }

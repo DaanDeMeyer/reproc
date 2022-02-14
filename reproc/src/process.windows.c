@@ -29,11 +29,12 @@ static const DWORD CREATION_FLAGS =
 
 static bool argument_should_escape(const char *argument)
 {
+  bool should_escape = false;
+  size_t i;
+
   ASSERT(argument);
 
-  bool should_escape = false;
-
-  for (size_t i = 0; i < strlen(argument); i++) {
+  for (i = 0; i < strlen(argument); i++) {
     should_escape = should_escape || argument[i] == ' ' ||
                     argument[i] == '\t' || argument[i] == '\n' ||
                     argument[i] == '\v' || argument[i] == '\"';
@@ -44,17 +45,19 @@ static bool argument_should_escape(const char *argument)
 
 static size_t argument_escaped_size(const char *argument)
 {
+  size_t argument_size;
+  size_t size = 2; // double quotes
+  size_t i;
+
   ASSERT(argument);
 
-  size_t argument_size = strlen(argument);
+  argument_size = strlen(argument);
 
   if (!argument_should_escape(argument)) {
     return argument_size;
   }
 
-  size_t size = 2; // double quotes
-
-  for (size_t i = 0; i < argument_size; i++) {
+  for (i = 0; i < argument_size; i++) {
     size_t num_backslashes = 0;
 
     while (i < argument_size && argument[i] == '\\') {
@@ -76,21 +79,23 @@ static size_t argument_escaped_size(const char *argument)
 
 static size_t argument_escape(char *dest, const char *argument)
 {
+  size_t argument_size;
+  const char *begin = dest;
+  size_t i;
+
   ASSERT(dest);
   ASSERT(argument);
 
-  size_t argument_size = strlen(argument);
+  argument_size = strlen(argument);
 
   if (!argument_should_escape(argument)) {
     strcpy(dest, argument); // NOLINT
     return argument_size;
   }
 
-  const char *begin = dest;
-
   *dest++ = '"';
 
-  for (size_t i = 0; i < argument_size; i++) {
+  for (i = 0; i < argument_size; i++) {
     size_t num_backslashes = 0;
 
     while (i < argument_size && argument[i] == '\\') {
@@ -119,11 +124,14 @@ static size_t argument_escape(char *dest, const char *argument)
 
 static char *argv_join(const char *const *argv)
 {
-  ASSERT(argv);
-
   // Determine the size of the concatenated string first.
   size_t joined_size = 1; // Count the NUL terminator.
-  for (int i = 0; argv[i] != NULL; i++) {
+  int i;
+  char *joined;
+
+  ASSERT(argv);
+
+  for (i = 0; argv[i] != NULL; i++) {
     joined_size += argument_escaped_size(argv[i]);
 
     if (argv[i + 1] != NULL) {
@@ -131,34 +139,38 @@ static char *argv_join(const char *const *argv)
     }
   }
 
-  char *joined = calloc(joined_size, sizeof(char));
+  joined = calloc(joined_size, sizeof(char));
   if (joined == NULL) {
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return NULL;
   }
 
-  char *current = joined;
-  for (int i = 0; argv[i] != NULL; i++) {
-    current += argument_escape(current, argv[i]);
+  {
+    char *current = joined;
+    for (i = 0; argv[i] != NULL; i++) {
+      current += argument_escape(current, argv[i]);
 
-    // We add a space after each argument in the joined arguments string except
-    // for the final argument.
-    if (argv[i + 1] != NULL) {
-      *current++ = ' ';
+      // We add a space after each argument in the joined arguments string except
+      // for the final argument.
+      if (argv[i + 1] != NULL) {
+        *current++ = ' ';
+      }
     }
-  }
 
-  *current = '\0';
+    *current = '\0';
+  }
 
   return joined;
 }
 
 static size_t env_join_size(const char *const *env)
 {
+  size_t joined_size = 1; // Count the NUL terminator.
+  int i;
+
   ASSERT(env);
 
-  size_t joined_size = 1; // Count the NUL terminator.
-  for (int i = 0; env[i] != NULL; i++) {
+  for (i = 0; env[i] != NULL; i++) {
     joined_size += strlen(env[i]) + 1; // Count the NUL terminator.
   }
 
@@ -167,22 +179,27 @@ static size_t env_join_size(const char *const *env)
 
 static char *env_join(const char *const *env)
 {
+  char *joined;
+
   ASSERT(env);
 
-  char *joined = calloc(env_join_size(env), sizeof(char));
+  joined = calloc(env_join_size(env), sizeof(char));
   if (joined == NULL) {
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return NULL;
   }
 
-  char *current = joined;
-  for (int i = 0; env[i] != NULL; i++) {
-    size_t to_copy = strlen(env[i]) + 1; // Include NUL terminator.
-    memcpy(current, env[i], to_copy);
-    current += to_copy;
-  }
+  {
+    char *current = joined;
+    int i;
+    for (i = 0; env[i] != NULL; i++) {
+      size_t to_copy = strlen(env[i]) + 1; // Include NUL terminator.
+      memcpy(current, env[i], to_copy);
+      current += to_copy;
+    }
 
-  *current = '\0';
+    *current = '\0';
+  }
 
   return joined;
 }
@@ -192,12 +209,15 @@ static const DWORD NUM_ATTRIBUTES = 1;
 static LPPROC_THREAD_ATTRIBUTE_LIST setup_attribute_list(HANDLE *handles,
                                                          size_t num_handles)
 {
+  int r = -1;
+  size_t i;
+  SIZE_T attribute_list_size;
+  LPPROC_THREAD_ATTRIBUTE_LIST attribute_list;
+
   ASSERT(handles);
 
-  int r = -1;
-
   // Make sure all the given handles can be inherited.
-  for (size_t i = 0; i < num_handles; i++) {
+  for (i = 0; i < num_handles; i++) {
     r = SetHandleInformation(handles[i], HANDLE_FLAG_INHERIT,
                              HANDLE_FLAG_INHERIT);
     if (r == 0) {
@@ -206,14 +226,14 @@ static LPPROC_THREAD_ATTRIBUTE_LIST setup_attribute_list(HANDLE *handles,
   }
 
   // Get the required size for `attribute_list`.
-  SIZE_T attribute_list_size = 0;
+  attribute_list_size = 0;
   r = InitializeProcThreadAttributeList(NULL, NUM_ATTRIBUTES, 0,
                                         &attribute_list_size);
   if (r == 0 && GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
     return NULL;
   }
 
-  LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = malloc(attribute_list_size);
+  attribute_list = malloc(attribute_list_size);
   if (attribute_list == NULL) {
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return NULL;
@@ -247,6 +267,7 @@ static wchar_t *env_concat(const wchar_t *a, const wchar_t *b)
   const wchar_t *i = NULL;
   size_t size = 1;
   wchar_t *c = NULL;
+  wchar_t *r = NULL;
 
   NULSTR_FOREACH(i, a) {
     size += wcslen(i) + 1;
@@ -256,7 +277,7 @@ static wchar_t *env_concat(const wchar_t *a, const wchar_t *b)
     size += wcslen(i) + 1;
   }
 
-  wchar_t *r = calloc(size, sizeof(wchar_t));
+  r = calloc(size, sizeof(wchar_t));
   if (!r) {
     return NULL;
   }
@@ -290,12 +311,12 @@ static wchar_t *env_setup(REPROC_ENV behavior, const char *const *extra)
   }
 
   if (extra != NULL) {
+    size_t joined_size = env_join_size(extra);
     env_extra = env_join(extra);
     if (env_extra == NULL) {
       goto finish;
     }
 
-    size_t joined_size = env_join_size(extra);
     ASSERT(joined_size <= INT_MAX);
 
     env_extra_wstring = utf16_from_utf8(env_extra, (int) joined_size);
@@ -321,14 +342,6 @@ int process_start(HANDLE *process,
                   const char *const *argv,
                   struct process_options options)
 {
-  ASSERT(process);
-
-  if (argv == NULL) {
-    return -ERROR_CALL_NOT_IMPLEMENTED;
-  }
-
-  ASSERT(argv[0] != NULL);
-
   char *command_line = NULL;
   wchar_t *command_line_wstring = NULL;
   wchar_t *env_wstring = NULL;
@@ -336,6 +349,14 @@ int process_start(HANDLE *process,
   LPPROC_THREAD_ATTRIBUTE_LIST attribute_list = NULL;
   PROCESS_INFORMATION info = { PROCESS_INVALID, HANDLE_INVALID, 0, 0 };
   int r = -1;
+
+  ASSERT(process);
+
+  if (argv == NULL) {
+    return -ERROR_CALL_NOT_IMPLEMENTED;
+  }
+
+  ASSERT(argv[0] != NULL);
 
   // Join `argv` to a whitespace delimited string as required by
   // `CreateProcessW`.
@@ -367,61 +388,64 @@ int process_start(HANDLE *process,
     goto finish;
   }
 
-  // Windows Vista added the `STARTUPINFOEXW` structure in which we can put a
-  // list of handles that should be inherited. Only these handles are inherited
-  // by the child process. Other code in an application that calls
-  // `CreateProcess` without passing a `STARTUPINFOEXW` struct containing the
-  // handles it should inherit can still unintentionally inherit handles meant
-  // for a reproc child process. See https://stackoverflow.com/a/2345126 for
-  // more information.
-  HANDLE handles[] = { options.handle.exit, options.handle.in,
-                       options.handle.out, options.handle.err };
-  size_t num_handles = ARRAY_SIZE(handles);
+  {
+    // Windows Vista added the `STARTUPINFOEXW` structure in which we can put a
+    // list of handles that should be inherited. Only these handles are inherited
+    // by the child process. Other code in an application that calls
+    // `CreateProcess` without passing a `STARTUPINFOEXW` struct containing the
+    // handles it should inherit can still unintentionally inherit handles meant
+    // for a reproc child process. See https://stackoverflow.com/a/2345126 for
+    // more information.
+    HANDLE handles[] = { options.handle.exit, options.handle.in,
+                        options.handle.out, options.handle.err };
+    size_t num_handles = ARRAY_SIZE(handles);
 
-  if (options.handle.out == options.handle.err) {
-    // CreateProcess doesn't like the same handle being specified twice in the
-    // `PROC_THREAD_ATTRIBUTE_HANDLE_LIST` attribute.
-    num_handles--;
+    if (options.handle.out == options.handle.err) {
+      // CreateProcess doesn't like the same handle being specified twice in the
+      // `PROC_THREAD_ATTRIBUTE_HANDLE_LIST` attribute.
+      num_handles--;
+    }
+
+    attribute_list = setup_attribute_list(handles, num_handles);
+    if (attribute_list == NULL) {
+      r = -(int) GetLastError();
+      goto finish;
+    }
   }
 
-  attribute_list = setup_attribute_list(handles, num_handles);
-  if (attribute_list == NULL) {
-    r = -(int) GetLastError();
-    goto finish;
+  {
+    STARTUPINFOEXW extended_startup_info = { 0 };
+    LPSTARTUPINFOW startup_info_address = &extended_startup_info.StartupInfo;
+    SECURITY_ATTRIBUTES do_not_inherit = { 0};
+
+    // Child processes inherit the error mode of their parents. To avoid child
+    // processes creating error dialogs we set our error mode to not create error
+    // dialogs temporarily which is inherited by the child process.
+    DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+
+    extended_startup_info.StartupInfo.cb = sizeof(extended_startup_info);
+    extended_startup_info.StartupInfo.hStdInput = options.handle.in;
+    extended_startup_info.StartupInfo.hStdOutput = options.handle.out;
+    extended_startup_info.StartupInfo.hStdError = options.handle.err;
+    extended_startup_info.StartupInfo.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW; // `STARTF_USESTDHANDLES`
+    // `STARTF_USESHOWWINDOW`. Make sure the console window of
+    // the child process isn't visible. See
+    // https://github.com/DaanDeMeyer/reproc/issues/6 and
+    // https://github.com/DaanDeMeyer/reproc/pull/7 for more
+    // information.
+    extended_startup_info.StartupInfo.wShowWindow = SW_HIDE;
+    extended_startup_info.lpAttributeList = attribute_list;
+
+    do_not_inherit.nLength = sizeof(SECURITY_ATTRIBUTES);
+    do_not_inherit.bInheritHandle = false;
+    do_not_inherit.lpSecurityDescriptor = NULL;
+
+    r = CreateProcessW(NULL, command_line_wstring, &do_not_inherit,
+                      &do_not_inherit, true, CREATION_FLAGS, env_wstring,
+                      working_directory_wstring, startup_info_address, &info);
+
+    SetErrorMode(previous_error_mode);
   }
-
-  STARTUPINFOEXW extended_startup_info = {
-    .StartupInfo = { .cb = sizeof(extended_startup_info),
-                     .dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW,
-                     // `STARTF_USESTDHANDLES`
-                     .hStdInput = options.handle.in,
-                     .hStdOutput = options.handle.out,
-                     .hStdError = options.handle.err,
-                     // `STARTF_USESHOWWINDOW`. Make sure the console window of
-                     // the child process isn't visible. See
-                     // https://github.com/DaanDeMeyer/reproc/issues/6 and
-                     // https://github.com/DaanDeMeyer/reproc/pull/7 for more
-                     // information.
-                     .wShowWindow = SW_HIDE },
-    .lpAttributeList = attribute_list
-  };
-
-  LPSTARTUPINFOW startup_info_address = &extended_startup_info.StartupInfo;
-
-  // Child processes inherit the error mode of their parents. To avoid child
-  // processes creating error dialogs we set our error mode to not create error
-  // dialogs temporarily which is inherited by the child process.
-  DWORD previous_error_mode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
-
-  SECURITY_ATTRIBUTES do_not_inherit = { .nLength = sizeof(SECURITY_ATTRIBUTES),
-                                         .bInheritHandle = false,
-                                         .lpSecurityDescriptor = NULL };
-
-  r = CreateProcessW(NULL, command_line_wstring, &do_not_inherit,
-                     &do_not_inherit, true, CREATION_FLAGS, env_wstring,
-                     working_directory_wstring, startup_info_address, &info);
-
-  SetErrorMode(previous_error_mode);
 
   if (r == 0) {
     r = -(int) GetLastError();
@@ -451,16 +475,16 @@ int process_pid(process_type process)
 
 int process_wait(HANDLE process)
 {
-  ASSERT(process);
-
   int r = -1;
+  DWORD status = 0;
+
+  ASSERT(process);
 
   r = (int) WaitForSingleObject(process, INFINITE);
   if ((DWORD) r == WAIT_FAILED) {
     return -(int) GetLastError();
   }
 
-  DWORD status = 0;
   r = GetExitCodeProcess(process, &status);
   if (r == 0) {
     return -(int) GetLastError();
@@ -478,24 +502,28 @@ int process_wait(HANDLE process)
 
 int process_terminate(HANDLE process)
 {
+  BOOL r;
+
   ASSERT(process && process != PROCESS_INVALID);
 
   // `GenerateConsoleCtrlEvent` can only be called on a process group. To call
   // `GenerateConsoleCtrlEvent` on a single child process it has to be put in
   // its own process group (which we did when starting the child process).
-  BOOL r = GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, GetProcessId(process));
+  r = GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, GetProcessId(process));
 
   return r == 0 ? -(int) GetLastError() : 0;
 }
 
 int process_kill(HANDLE process)
 {
+  BOOL r;
+
   ASSERT(process && process != PROCESS_INVALID);
 
   // We use 137 (`SIGKILL`) as the exit status because it is the same exit
   // status as a process that is stopped with the `SIGKILL` signal on POSIX
   // systems.
-  BOOL r = TerminateProcess(process, (DWORD) REPROC_SIGKILL);
+  r = TerminateProcess(process, (DWORD) REPROC_SIGKILL);
 
   return r == 0 ? -(int) GetLastError() : 0;
 }

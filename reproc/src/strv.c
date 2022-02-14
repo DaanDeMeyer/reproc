@@ -8,9 +8,10 @@
 
 static char *str_dup(const char *s)
 {
+  char *r;
   ASSERT_RETURN(s, NULL);
 
-  char *r = malloc(strlen(s) + 1);
+  r = malloc(strlen(s) + 1);
   if (!r) {
     return NULL;
   }
@@ -26,6 +27,7 @@ char **strv_concat(char *const *a, const char *const *b)
   const char *const *j = NULL;
   size_t size = 1;
   size_t c = 0;
+  char **r;
 
   STRV_FOREACH(i, a) {
     size++;
@@ -35,7 +37,7 @@ char **strv_concat(char *const *a, const char *const *b)
     size++;
   }
 
-  char **r = calloc(size, sizeof(char *));
+  r = calloc(size, sizeof(char *));
   if (!r) {
     goto finish;
   }

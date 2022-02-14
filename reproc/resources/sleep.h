@@ -2,7 +2,7 @@
 
 #ifdef _WIN32
   #include <windows.h>
-static inline void millisleep(long ms)
+static void millisleep(long ms)
 {
   Sleep((DWORD) ms);
 }

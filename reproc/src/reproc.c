@@ -56,25 +56,27 @@ static int setup_input(pipe_type *pipe, const uint8_t *data, size_t size)
 
   ASSERT(pipe && *pipe != PIPE_INVALID);
 
-  // `reproc_write` only needs the child process stdin pipe to be initialized.
-  size_t written = 0;
-  int r = -1;
+  {
+    // `reproc_write` only needs the child process stdin pipe to be initialized.
+    size_t written = 0;
+    int r = -1;
 
-  // Make sure we don't block indefinitely when `input` is bigger than the
-  // size of the pipe.
-  r = pipe_nonblocking(*pipe, true);
-  if (r < 0) {
-    return r;
-  }
-
-  while (written < size) {
-    r = pipe_write(*pipe, data + written, size - written);
+    // Make sure we don't block indefinitely when `input` is bigger than the
+    // size of the pipe.
+    r = pipe_nonblocking(*pipe, true);
     if (r < 0) {
       return r;
     }
 
-    ASSERT(written + (size_t) r <= size);
-    written += (size_t) r;
+    while (written < size) {
+      r = pipe_write(*pipe, data + written, size - written);
+      if (r < 0) {
+        return r;
+      }
+
+      ASSERT(written + (size_t) r <= size);
+      written += (size_t) r;
+    }
   }
 
   *pipe = pipe_destroy(*pipe);
@@ -84,6 +86,7 @@ static int setup_input(pipe_type *pipe, const uint8_t *data, size_t size)
 
 static int expiry(int timeout, int64_t deadline)
 {
+  int64_t n;
   if (timeout == REPROC_INFINITE && deadline == REPROC_INFINITE) {
     return REPROC_INFINITE;
   }
@@ -92,47 +95,51 @@ static int expiry(int timeout, int64_t deadline)
     return timeout;
   }
 
-  int64_t n = now();
+  n = now();
 
   if (n >= deadline) {
     return REPROC_DEADLINE;
   }
 
-  // `deadline` exceeds `now` by at most a full `int` so the cast is safe.
-  int remaining = (int) (deadline - n);
+  {
+    // `deadline` exceeds `now` by at most a full `int` so the cast is safe.
+    int remaining = (int) (deadline - n);
 
-  if (timeout == REPROC_INFINITE) {
-    return remaining;
+    if (timeout == REPROC_INFINITE) {
+      return remaining;
+    }
+
+    return MIN(timeout, remaining);
   }
-
-  return MIN(timeout, remaining);
 }
 
 static size_t find_earliest_deadline(reproc_event_source *sources,
                                      size_t num_sources)
 {
+  size_t earliest = 0;
+  int min = REPROC_INFINITE;
+  size_t i;
+
   ASSERT(sources);
   ASSERT(num_sources > 0);
 
-  size_t earliest = 0;
-  int min = REPROC_INFINITE;
-
-  for (size_t i = 0; i < num_sources; i++) {
+  for (i = 0; i < num_sources; i++) {
     reproc_t *process = sources[i].process;
 
     if (process == NULL) {
       continue;
     }
+    {
+      int current = expiry(REPROC_INFINITE, process->deadline);
 
-    int current = expiry(REPROC_INFINITE, process->deadline);
+      if (current == REPROC_DEADLINE) {
+        return i;
+      }
 
-    if (current == REPROC_DEADLINE) {
-      return i;
-    }
-
-    if (min == REPROC_INFINITE || current < min) {
-      earliest = i;
-      min = current;
+      if (min == REPROC_INFINITE || current < min) {
+        earliest = i;
+        min = current;
+      }
     }
   }
 
@@ -146,14 +153,16 @@ reproc_t *reproc_new(void)
     return NULL;
   }
 
-  *process = (reproc_t){ .handle = PROCESS_INVALID,
-                         .pipe = { .in = PIPE_INVALID,
-                                   .out = PIPE_INVALID,
-                                   .err = PIPE_INVALID,
-                                   .exit = PIPE_INVALID },
-                         .child = { .out = PIPE_INVALID, .err = PIPE_INVALID },
-                         .status = STATUS_NOT_STARTED,
-                         .deadline = REPROC_INFINITE };
+  memset(process, 0, sizeof(process[0]));
+  process->handle = PROCESS_INVALID;
+  process->pipe.in = PIPE_INVALID;
+  process->pipe.out = PIPE_INVALID;
+  process->pipe.err = PIPE_INVALID;
+  process->pipe.exit = PIPE_INVALID;
+  process->child.out = PIPE_INVALID;
+  process->child.err = PIPE_INVALID;
+  process->status = STATUS_NOT_STARTED;
+  process->deadline = REPROC_INFINITE;
 
   return process;
 }
@@ -162,9 +171,6 @@ int reproc_start(reproc_t *process,
                  const char *const *argv,
                  reproc_options options)
 {
-  ASSERT_EINVAL(process);
-  ASSERT_EINVAL(process->status == STATUS_NOT_STARTED);
-
   struct {
     handle_type in;
     handle_type out;
@@ -172,6 +178,9 @@ int reproc_start(reproc_t *process,
     pipe_type exit;
   } child = { HANDLE_INVALID, HANDLE_INVALID, HANDLE_INVALID, PIPE_INVALID };
   int r = -1;
+
+  ASSERT_EINVAL(process);
+  ASSERT_EINVAL(process->status == STATUS_NOT_STARTED);
 
   r = init();
   if (r < 0) {
@@ -211,16 +220,18 @@ int reproc_start(reproc_t *process,
     goto finish;
   }
 
-  struct process_options process_options = {
-    .env = { .behavior = options.env.behavior, .extra = options.env.extra },
-    .working_directory = options.working_directory,
-    .handle = { .in = child.in,
-                .out = child.out,
-                .err = child.err,
-                .exit = (handle_type) child.exit }
-  };
+  {
+    struct process_options process_options = { 0 };
+    process_options.env.behavior = options.env.behavior;
+    process_options.env.extra = options.env.extra;
+    process_options.working_directory = options.working_directory,
+    process_options.handle.in = child.in;
+    process_options.handle.out = child.out,
+    process_options.handle.err = child.err,
+    process_options.handle.exit = (handle_type) child.exit;
 
-  r = process_start(&process->handle, argv, process_options);
+    r = process_start(&process->handle, argv, process_options);
+  }
   if (r < 0) {
     goto finish;
   }
@@ -286,7 +297,8 @@ enum { PIPES_PER_SOURCE = 4 };
 
 static bool contains_valid_pipe(pipe_event_source *sources, size_t num_sources)
 {
-  for (size_t i = 0; i < num_sources; i++) {
+  size_t i;
+  for (i = 0; i < num_sources; i++) {
     if (sources[i].pipe != PIPE_INVALID) {
       return true;
     }
@@ -297,20 +309,27 @@ static bool contains_valid_pipe(pipe_event_source *sources, size_t num_sources)
 
 int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
 {
+  size_t earliest;
+  int64_t deadline;
+  size_t i;
+  int first;
+  size_t num_pipes;
+  int r = REPROC_ENOMEM;
+  pipe_event_source *pipes;
+
   ASSERT_EINVAL(sources);
   ASSERT_EINVAL(num_sources > 0);
 
-  size_t earliest = find_earliest_deadline(sources, num_sources);
-  int64_t deadline = sources[earliest].process == NULL
+  earliest = find_earliest_deadline(sources, num_sources);
+  deadline = sources[earliest].process == NULL
                          ? REPROC_INFINITE
                          : sources[earliest].process->deadline;
 
-  int first = expiry(timeout, deadline);
-  size_t num_pipes = num_sources * PIPES_PER_SOURCE;
-  int r = REPROC_ENOMEM;
+  first = expiry(timeout, deadline);
+  num_pipes = num_sources * PIPES_PER_SOURCE;
 
   if (first == REPROC_DEADLINE) {
-    for (size_t i = 0; i < num_sources; i++) {
+    for (i = 0; i < num_sources; i++) {
       sources[i].events = 0;
     }
 
@@ -318,16 +337,16 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
     return 1;
   }
 
-  pipe_event_source *pipes = calloc(num_pipes, sizeof(pipe_event_source));
+  pipes = calloc(num_pipes, sizeof(pipe_event_source));
   if (pipes == NULL) {
     return r;
   }
 
-  for (size_t i = 0; i < num_pipes; i++) {
+  for (i = 0; i < num_pipes; i++) {
     pipes[i].pipe = PIPE_INVALID;
   }
 
-  for (size_t i = 0; i < num_sources; i++) {
+  for (i = 0; i < num_sources; i++) {
     size_t j = i * PIPES_PER_SOURCE;
     reproc_t *process = sources[i].process;
     int interests = sources[i].interests;
@@ -336,25 +355,33 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
       continue;
     }
 
-    bool in = interests & REPROC_EVENT_IN;
-    pipes[j + 0].pipe = in ? process->pipe.in : PIPE_INVALID;
-    pipes[j + 0].interests = PIPE_EVENT_OUT;
+    {
+      bool in = interests & REPROC_EVENT_IN;
+      pipes[j + 0].pipe = in ? process->pipe.in : PIPE_INVALID;
+      pipes[j + 0].interests = PIPE_EVENT_OUT;
+    }
 
-    bool out = interests & REPROC_EVENT_OUT;
-    pipes[j + 1].pipe = out ? process->pipe.out : PIPE_INVALID;
-    pipes[j + 1].interests = PIPE_EVENT_IN;
+    {
+      bool out = interests & REPROC_EVENT_OUT;
+      pipes[j + 1].pipe = out ? process->pipe.out : PIPE_INVALID;
+      pipes[j + 1].interests = PIPE_EVENT_IN;
+    }
 
-    bool err = interests & REPROC_EVENT_ERR;
-    pipes[j + 2].pipe = err ? process->pipe.err : PIPE_INVALID;
-    pipes[j + 2].interests = PIPE_EVENT_IN;
+    {
+      bool err = interests & REPROC_EVENT_ERR;
+      pipes[j + 2].pipe = err ? process->pipe.err : PIPE_INVALID;
+      pipes[j + 2].interests = PIPE_EVENT_IN;
+    }
 
-    bool exit = (interests & REPROC_EVENT_EXIT) ||
-                (interests & REPROC_EVENT_OUT &&
-                 process->child.out != PIPE_INVALID) ||
-                (interests & REPROC_EVENT_ERR &&
-                 process->child.err != PIPE_INVALID);
-    pipes[j + 3].pipe = exit ? process->pipe.exit : PIPE_INVALID;
-    pipes[j + 3].interests = PIPE_EVENT_IN;
+    {
+      bool exit = (interests & REPROC_EVENT_EXIT) ||
+                  (interests & REPROC_EVENT_OUT &&
+                  process->child.out != PIPE_INVALID) ||
+                  (interests & REPROC_EVENT_ERR &&
+                  process->child.err != PIPE_INVALID);
+      pipes[j + 3].pipe = exit ? process->pipe.exit : PIPE_INVALID;
+      pipes[j + 3].interests = PIPE_EVENT_IN;
+    }
   }
 
   if (!contains_valid_pipe(pipes, num_pipes)) {
@@ -367,7 +394,7 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
     goto finish;
   }
 
-  for (size_t i = 0; i < num_sources; i++) {
+  for (i = 0; i < num_sources; i++) {
     sources[i].events = 0;
   }
 
@@ -377,8 +404,9 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
     sources[earliest].events = REPROC_EVENT_DEADLINE;
     r = 1;
   } else if (r > 0) {
+    bool again = false;
     // Convert pipe events to process events.
-    for (size_t i = 0; i < num_pipes; i++) {
+    for (i = 0; i < num_pipes; i++) {
       if (pipes[i].pipe == PIPE_INVALID) {
         continue;
       }
@@ -397,7 +425,7 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
     r = 0;
 
     // Count the number of processes with events.
-    for (size_t i = 0; i < num_sources; i++) {
+    for (i = 0; i < num_sources; i++) {
       r += sources[i].events > 0;
     }
 
@@ -411,14 +439,13 @@ int reproc_poll(reproc_event_source *sources, size_t num_sources, int timeout)
     // has exited happens via another inherited socket, but here there's no
     // danger of data loss because no data is received over this socket.
 
-    bool again = false;
-
-    for (size_t i = 0; i < num_sources; i++) {
+    for (i = 0; i < num_sources; i++) {
+      reproc_t *process;
       if (!(sources[i].events & REPROC_EVENT_EXIT)) {
         continue;
       }
 
-      reproc_t *process = sources[i].process;
+      process = sources[i].process;
 
       if (process->child.out == PIPE_INVALID &&
           process->child.err == PIPE_INVALID) {
@@ -467,37 +494,39 @@ int reproc_read(reproc_t *process,
   ASSERT_EINVAL(stream == REPROC_STREAM_OUT || stream == REPROC_STREAM_ERR);
   ASSERT_EINVAL(buffer);
 
-  pipe_type *pipe = stream == REPROC_STREAM_OUT ? &process->pipe.out
-                                                : &process->pipe.err;
-  pipe_type child = stream == REPROC_STREAM_OUT ? process->child.out
-                                                : process->child.err;
-  int r = -1;
+  {
+    pipe_type *pipe = stream == REPROC_STREAM_OUT ? &process->pipe.out
+                                                  : &process->pipe.err;
+    pipe_type child = stream == REPROC_STREAM_OUT ? process->child.out
+                                                  : process->child.err;
+    int r = -1;
 
-  if (*pipe == PIPE_INVALID) {
-    return REPROC_EPIPE;
-  }
-
-  // If we've kept extra handles open in the parent, make sure we use
-  // `reproc_poll` which closes the extra handles we keep open when the child
-  // process exits. If we don't, `pipe_read` will block forever because the
-  // extra handles we keep open in the parent would never be closed.
-  if (child != PIPE_INVALID) {
-    int event = stream == REPROC_STREAM_OUT ? REPROC_EVENT_OUT
-                                            : REPROC_EVENT_ERR;
-    reproc_event_source source = { process, event, 0 };
-    r = reproc_poll(&source, 1, process->nonblocking ? 0 : REPROC_INFINITE);
-    if (r <= 0) {
-      return r == 0 ? REPROC_EWOULDBLOCK : r;
+    if (*pipe == PIPE_INVALID) {
+      return REPROC_EPIPE;
     }
+
+    // If we've kept extra handles open in the parent, make sure we use
+    // `reproc_poll` which closes the extra handles we keep open when the child
+    // process exits. If we don't, `pipe_read` will block forever because the
+    // extra handles we keep open in the parent would never be closed.
+    if (child != PIPE_INVALID) {
+      int event = stream == REPROC_STREAM_OUT ? REPROC_EVENT_OUT
+                                              : REPROC_EVENT_ERR;
+      reproc_event_source source = { process, event, 0 };
+      r = reproc_poll(&source, 1, process->nonblocking ? 0 : REPROC_INFINITE);
+      if (r <= 0) {
+        return r == 0 ? REPROC_EWOULDBLOCK : r;
+      }
+    }
+
+    r = pipe_read(*pipe, buffer, size);
+
+    if (r == REPROC_EPIPE) {
+      *pipe = pipe_destroy(*pipe);
+    }
+
+    return r;
   }
-
-  r = pipe_read(*pipe, buffer, size);
-
-  if (r == REPROC_EPIPE) {
-    *pipe = pipe_destroy(*pipe);
-  }
-
-  return r;
 }
 
 int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
@@ -515,13 +544,15 @@ int reproc_write(reproc_t *process, const uint8_t *buffer, size_t size)
     return REPROC_EPIPE;
   }
 
-  int r = pipe_write(process->pipe.in, buffer, size);
+  {
+    int r = pipe_write(process->pipe.in, buffer, size);
 
-  if (r == REPROC_EPIPE) {
-    process->pipe.in = pipe_destroy(process->pipe.in);
+    if (r == REPROC_EPIPE) {
+      process->pipe.in = pipe_destroy(process->pipe.in);
+    }
+
+    return r;
   }
-
-  return r;
 }
 
 int reproc_close(reproc_t *process, REPROC_STREAM stream)
@@ -546,11 +577,11 @@ int reproc_close(reproc_t *process, REPROC_STREAM stream)
 
 int reproc_wait(reproc_t *process, int timeout)
 {
+  int r = -1;
+
   ASSERT_EINVAL(process);
   ASSERT_EINVAL(process->status != STATUS_IN_CHILD);
   ASSERT_EINVAL(process->status != STATUS_NOT_STARTED);
-
-  int r = -1;
 
   if (process->status >= 0) {
     return process->status;
@@ -567,10 +598,13 @@ int reproc_wait(reproc_t *process, int timeout)
 
   ASSERT(process->pipe.exit != PIPE_INVALID);
 
-  pipe_event_source source = { .pipe = process->pipe.exit,
-                               .interests = PIPE_EVENT_IN };
+  {
+    pipe_event_source source = { 0 };
+    source.pipe = process->pipe.exit;
+    source.interests = PIPE_EVENT_IN;
 
-  r = pipe_poll(&source, 1, timeout);
+    r = pipe_poll(&source, 1, timeout);
+  }
   if (r <= 0) {
     return r == 0 ? REPROC_ETIMEDOUT : r;
   }
@@ -618,40 +652,45 @@ int reproc_stop(reproc_t *process, reproc_stop_actions stop)
   ASSERT_EINVAL(process->status != STATUS_NOT_STARTED);
 
   stop = parse_stop_actions(stop);
+  {
+    int r = -1;
+    size_t i;
+    reproc_stop_action actions[3];
+    actions[0] = stop.first;
+    actions[1] = stop.second;
+    actions[2] = stop.third;
 
-  reproc_stop_action actions[] = { stop.first, stop.second, stop.third };
-  int r = -1;
+    for (i = 0; i < ARRAY_SIZE(actions); i++) {
+      r = REPROC_EINVAL; // NOLINT
 
-  for (size_t i = 0; i < ARRAY_SIZE(actions); i++) {
-    r = REPROC_EINVAL; // NOLINT
+      switch (actions[i].action) {
+        case REPROC_STOP_NOOP:
+          r = 0;
+          continue;
+        case REPROC_STOP_WAIT:
+          r = 0;
+          break;
+        case REPROC_STOP_TERMINATE:
+          r = reproc_terminate(process);
+          break;
+        case REPROC_STOP_KILL:
+          r = reproc_kill(process);
+          break;
+      }
 
-    switch (actions[i].action) {
-      case REPROC_STOP_NOOP:
-        r = 0;
-        continue;
-      case REPROC_STOP_WAIT:
-        r = 0;
+      // Stop if `reproc_terminate` or `reproc_kill` fail.
+      if (r < 0) {
         break;
-      case REPROC_STOP_TERMINATE:
-        r = reproc_terminate(process);
+      }
+
+      r = reproc_wait(process, actions[i].timeout);
+      if (r != REPROC_ETIMEDOUT) {
         break;
-      case REPROC_STOP_KILL:
-        r = reproc_kill(process);
-        break;
+      }
     }
 
-    // Stop if `reproc_terminate` or `reproc_kill` fail.
-    if (r < 0) {
-      break;
-    }
-
-    r = reproc_wait(process, actions[i].timeout);
-    if (r != REPROC_ETIMEDOUT) {
-      break;
-    }
+    return r;
   }
-
-  return r;
 }
 
 int reproc_pid(reproc_t *process)

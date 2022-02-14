@@ -40,19 +40,21 @@ const char *error_string(int error)
     return "Failed to retrieve error string";
   }
 
-  static THREAD_LOCAL char string[ERROR_STRING_MAX_SIZE];
+  {
+    static THREAD_LOCAL char string[ERROR_STRING_MAX_SIZE];
 
-  r = WideCharToMultiByte(CP_UTF8, 0, wstring, -1, string, ARRAY_SIZE(string),
-                          NULL, NULL);
-  free(wstring);
-  if (r == 0) {
-    return "Failed to convert error string to UTF-8";
+    r = WideCharToMultiByte(CP_UTF8, 0, wstring, -1, string, ARRAY_SIZE(string),
+                            NULL, NULL);
+    free(wstring);
+    if (r == 0) {
+      return "Failed to convert error string to UTF-8";
+    }
+
+    // Remove trailing whitespace and period.
+    if (r >= 4) {
+      string[r - 4] = '\0';
+    }
+
+    return string;
   }
-
-  // Remove trailing whitespace and period.
-  if (r >= 4) {
-    string[r - 4] = '\0';
-  }
-
-  return string;
 }

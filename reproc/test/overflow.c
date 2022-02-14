@@ -9,7 +9,10 @@ int main(void)
   reproc_sink sink = reproc_sink_string(&output);
   int r = -1;
 
-  r = reproc_run_ex(argv, (reproc_options){ 0 }, sink, sink);
+  {
+    reproc_options options = { 0 };
+    r = reproc_run_ex(argv, options, sink, sink);
+  }
   ASSERT_OK(r);
   ASSERT(output != NULL);
 

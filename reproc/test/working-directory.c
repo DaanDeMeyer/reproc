@@ -4,7 +4,8 @@
 
 static void replace(char *string, char old, char new)
 {
-  for (size_t i = 0; i < strlen(string); i++) {
+  size_t i;
+  for (i = 0; i < strlen(string); i++) {
     string[i] = (char) (string[i] == old ? new : string[i]);
   }
 }
@@ -16,9 +17,13 @@ int main(void)
   reproc_sink sink = reproc_sink_string(&output);
   int r = -1;
 
-  r = reproc_run_ex(argv,
-                    (reproc_options){ .working_directory = RESOURCE_DIRECTORY },
-                    sink, sink);
+  {
+    reproc_options options = { 0 };
+    options.working_directory = RESOURCE_DIRECTORY;
+    r = reproc_run_ex(argv,
+                      options,
+                      sink, sink);
+  }
   ASSERT_OK(r);
   ASSERT(output != NULL);
 
