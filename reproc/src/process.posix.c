@@ -17,6 +17,8 @@
 #include "pipe.h"
 #include "strv.h"
 
+#define CWD_BUF_SIZE_INCREMENT 4096
+
 const pid_t PROCESS_INVALID = -1;
 
 static int signal_mask(int how, const sigset_t *newmask, sigset_t *oldmask)
@@ -51,7 +53,7 @@ static char *path_prepend_cwd(const char *path)
   ASSERT(path);
 
   size_t path_size = strlen(path);
-  size_t cwd_size = PATH_MAX;
+  size_t cwd_size = CWD_BUF_SIZE_INCREMENT;
 
   // We always allocate sufficient space for `path` but do not include this
   // space in `cwd_size` so we can be sure that when `getcwd` succeeds there is
@@ -70,7 +72,7 @@ static char *path_prepend_cwd(const char *path)
       return NULL;
     }
 
-    cwd_size += PATH_MAX;
+    cwd_size += CWD_BUF_SIZE_INCREMENT;
 
     char *result = realloc(cwd, cwd_size + path_size + 1);
     if (result == NULL) {
