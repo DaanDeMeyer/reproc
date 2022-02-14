@@ -8,12 +8,13 @@
 
 int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
 {
+  const uint8_t initial = 0;
+  int r = -1;
+  uint8_t buffer[4096];
+
   ASSERT_EINVAL(process);
   ASSERT_EINVAL(out.function);
   ASSERT_EINVAL(err.function);
-
-  const uint8_t initial = 0;
-  int r = -1;
 
   // A single call to `read` might contain multiple messages. By always calling
   // both sinks once with no data before reading, we give them the chance to
@@ -30,11 +31,12 @@ int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
     return r;
   }
 
-  uint8_t buffer[4096];
-
   for (;;) {
     reproc_event_source source = { process, REPROC_EVENT_OUT | REPROC_EVENT_ERR,
                                    0 };
+    REPROC_STREAM stream = REPROC_STREAM_IN;
+    size_t bytes_read = 0;
+    reproc_sink sink;
 
     r = reproc_poll(&source, 1, REPROC_INFINITE);
     if (r < 0) {
@@ -47,7 +49,7 @@ int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
       break;
     }
 
-    REPROC_STREAM stream = source.events & REPROC_EVENT_OUT ? REPROC_STREAM_OUT
+    stream = source.events & REPROC_EVENT_OUT ? REPROC_STREAM_OUT
                                                             : REPROC_STREAM_ERR;
 
     r = reproc_read(process, stream, buffer, ARRAY_SIZE(buffer));
@@ -55,8 +57,8 @@ int reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err)
       break;
     }
 
-    size_t bytes_read = r == REPROC_EPIPE ? 0 : (size_t) r;
-    reproc_sink sink = stream == REPROC_STREAM_OUT ? out : err;
+    bytes_read = r == REPROC_EPIPE ? 0 : (size_t) r;
+    sink = stream == REPROC_STREAM_OUT ? out : err;
 
     r = sink.function(stream, buffer, bytes_read, sink.context);
     if (r != 0) {
@@ -72,12 +74,13 @@ static int sink_string(REPROC_STREAM stream,
                        size_t size,
                        void *context)
 {
-  (void) stream;
-
   char **string = (char **) context;
   size_t string_size = *string == NULL ? 0 : strlen(*string);
 
   char *r = (char *) realloc(*string, string_size + size + 1);
+
+  (void) stream;
+
   if (r == NULL) {
     return REPROC_ENOMEM;
   }
@@ -91,7 +94,8 @@ static int sink_string(REPROC_STREAM stream,
 
 reproc_sink reproc_sink_string(char **output)
 {
-  return (reproc_sink){ sink_string, output };
+  reproc_sink sink = { sink_string, output };
+  return sink;
 }
 
 static int sink_discard(REPROC_STREAM stream,
@@ -109,7 +113,8 @@ static int sink_discard(REPROC_STREAM stream,
 
 reproc_sink reproc_sink_discard(void)
 {
-  return (reproc_sink){ sink_discard, NULL };
+  reproc_sink sink = { sink_discard, NULL };
+  return sink;
 }
 
 const reproc_sink REPROC_SINK_NULL = { sink_discard, NULL };

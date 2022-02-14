@@ -8,15 +8,17 @@
 static void io()
 {
   int r = -1;
+  char *out = NULL;
 
   reproc_t *process = reproc_new();
   ASSERT(process);
 
-  const char *argv[] = { RESOURCE_DIRECTORY "/io", NULL };
-
-  r = reproc_start(process, argv,
-                   (reproc_options){
-                       .redirect.err.type = REPROC_REDIRECT_STDOUT });
+  {
+    const char *argv[] = { RESOURCE_DIRECTORY "/io", NULL };
+    reproc_options options = { 0 };
+    options.redirect.err.type = REPROC_REDIRECT_STDOUT;
+    r = reproc_start(process, argv, options);
+  }
   ASSERT_OK(r);
 
   r = reproc_write(process, (uint8_t *) MESSAGE, strlen(MESSAGE));
@@ -26,7 +28,6 @@ static void io()
   r = reproc_close(process, REPROC_STREAM_IN);
   ASSERT_OK(r);
 
-  char *out = NULL;
   r = reproc_drain(process, reproc_sink_string(&out), REPROC_SINK_NULL);
   ASSERT_OK(r);
 
@@ -44,17 +45,20 @@ static void io()
 static void timeout(void)
 {
   int r = -1;
+  reproc_event_source source = { NULL, REPROC_EVENT_OUT | REPROC_EVENT_ERR,
+                                 0 };
 
   reproc_t *process = reproc_new();
   ASSERT(process);
 
-  const char *argv[] = { RESOURCE_DIRECTORY "/io", NULL };
-
-  r = reproc_start(process, argv, (reproc_options){ 0 });
+  {
+    const char *argv[] = { RESOURCE_DIRECTORY "/io", NULL };
+    reproc_options options = { 0 };
+    r = reproc_start(process, argv, options);
+  }
   ASSERT_OK(r);
 
-  reproc_event_source source = { process, REPROC_EVENT_OUT | REPROC_EVENT_ERR,
-                                 0 };
+  source.process = process;
   r = reproc_poll(&source, 1, 200);
   ASSERT(r == 0);
 

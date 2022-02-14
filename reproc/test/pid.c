@@ -12,13 +12,14 @@ int main(void)
   char *output = NULL;
   reproc_sink sink = reproc_sink_string(&output);
   int r = -1;
+  reproc_options options = { 0 };
 
   reproc_t *process = reproc_new();
   ASSERT(process);
 
   ASSERT(reproc_pid(process) == REPROC_EINVAL);
 
-  r = reproc_start(process, argv, (reproc_options){ 0 });
+  r = reproc_start(process, argv, options);
   ASSERT_OK(r);
 
   r = reproc_drain(process, sink, sink);

@@ -23,6 +23,7 @@ const char *error_string(int error)
 {
   wchar_t *wstring = NULL;
   int r = -1;
+  static THREAD_LOCAL char string[ERROR_STRING_MAX_SIZE];
 
   wstring = malloc(sizeof(wchar_t) * ERROR_STRING_MAX_SIZE);
   if (wstring == NULL) {
@@ -39,8 +40,6 @@ const char *error_string(int error)
     free(wstring);
     return "Failed to retrieve error string";
   }
-
-  static THREAD_LOCAL char string[ERROR_STRING_MAX_SIZE];
 
   r = WideCharToMultiByte(CP_UTF8, 0, wstring, -1, string, ARRAY_SIZE(string),
                           NULL, NULL);

@@ -12,11 +12,13 @@ const HANDLE HANDLE_INVALID = INVALID_HANDLE_VALUE; // NOLINT
 
 HANDLE handle_destroy(HANDLE handle)
 {
+  int r = 0;
+
   if (handle == NULL || handle == HANDLE_INVALID) {
     return HANDLE_INVALID;
   }
 
-  int r = CloseHandle(handle);
+  r = CloseHandle(handle);
   ASSERT_UNUSED(r != 0);
 
   return HANDLE_INVALID;

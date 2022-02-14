@@ -39,6 +39,12 @@ target_sources(reproc PRIVATE
   src/utf.${PLATFORM}.c
 )
 
+if(MSVC)
+  target_include_directories(reproc PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/msvc-fix>
+    $<INSTALL_INTERFACE:include/include/msvc-fix>
+  )
+endif()
 reproc_test(reproc argv C)
 reproc_test(reproc deadline C)
 reproc_test(reproc env C)

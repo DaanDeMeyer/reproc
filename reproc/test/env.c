@@ -9,17 +9,22 @@ int main(void)
   char *output = NULL;
   reproc_sink sink = reproc_sink_string(&output);
   int r = -1;
+  const char *current = NULL;
+  size_t i = 0;
 
-  r = reproc_run_ex(argv,
-                    (reproc_options){ .env.behavior = REPROC_ENV_EMPTY,
-                                      .env.extra = envp },
-                    sink, sink);
+  {
+    reproc_options options = { 0 };
+    options.env.behavior = REPROC_ENV_EMPTY;
+    options.env.extra = envp;
+    r = reproc_run_ex(argv, options,
+                      sink, sink);
+  }
   ASSERT_OK(r);
   ASSERT(output != NULL);
 
-  const char *current = output;
+  current = output;
 
-  for (size_t i = 0; i < 2; i++) {
+  for (i = 0; i < 2; i++) {
     size_t size = strlen(envp[i]);
 
     ASSERT_GE_SIZE(strlen(current), size);

@@ -6,11 +6,18 @@ int main(void)
 {
   const char *argv[] = { RESOURCE_DIRECTORY "/path", NULL };
   int r = -1;
+  FILE *file = NULL;
+  size_t size = 0;
+  char *string = NULL;
 
-  r = reproc_run(argv, (reproc_options){ .redirect.path = "path.txt" });
+  {
+    reproc_options options = { 0 };
+    options.redirect.path = "path.txt";
+    r = reproc_run(argv, options);
+  }
   ASSERT_OK(r);
 
-  FILE *file = fopen("path.txt", "rb");
+  file = fopen("path.txt", "rb");
   ASSERT(file != NULL);
 
   r = fseek(file, 0, SEEK_END);
@@ -19,8 +26,8 @@ int main(void)
   r = (int) ftell(file);
   ASSERT_OK(r);
 
-  size_t size = (size_t) r;
-  char *string = malloc(size + 1);
+  size = (size_t) r;
+  string = malloc(size + 1);
   ASSERT(string != NULL);
 
   rewind(file);

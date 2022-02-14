@@ -26,14 +26,18 @@ static DWORD stream_to_id(REPROC_STREAM stream)
 
 int redirect_parent(HANDLE *child, REPROC_STREAM stream)
 {
+  DWORD id = 0;
+  HANDLE handle = INVALID_HANDLE_VALUE;
+
   ASSERT(child);
 
-  DWORD id = stream_to_id(stream);
+  id = stream_to_id(stream);
+
   if (id == 0) {
     return -ERROR_INVALID_PARAMETER;
   }
 
-  HANDLE *handle = GetStdHandle(id);
+  handle = GetStdHandle(id);
   if (handle == INVALID_HANDLE_VALUE) {
     return -(int) GetLastError();
   }
@@ -56,15 +60,18 @@ int redirect_discard(HANDLE *child, REPROC_STREAM stream)
 
 int redirect_file(HANDLE *child, FILE *file)
 {
+  int r = 0;
+  intptr_t result = 0;
+
   ASSERT(child);
   ASSERT(file);
 
-  int r = _fileno(file);
+  r = _fileno(file);
   if (r < 0) {
     return -ERROR_INVALID_HANDLE;
   }
 
-  intptr_t result = _get_osfhandle(r);
+  result = _get_osfhandle(r);
   if (result == -1) {
     return -ERROR_INVALID_HANDLE;
   }
@@ -76,22 +83,27 @@ int redirect_file(HANDLE *child, FILE *file)
 
 int redirect_path(handle_type *child, REPROC_STREAM stream, const char *path)
 {
+  DWORD mode = 0;
+  HANDLE handle = HANDLE_INVALID;
+  int r = -1;
+  wchar_t *wpath = NULL;
+  SECURITY_ATTRIBUTES do_not_inherit = { 0 };
+
   ASSERT(child);
   ASSERT(path);
 
-  DWORD mode = stream == REPROC_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
-  HANDLE handle = HANDLE_INVALID;
-  int r = -1;
+  mode = stream == REPROC_STREAM_IN ? GENERIC_READ : GENERIC_WRITE;
+  handle = HANDLE_INVALID;
 
-  wchar_t *wpath = utf16_from_utf8(path, -1);
+  wpath = utf16_from_utf8(path, -1);
   if (wpath == NULL) {
     r = -(int) GetLastError();
     goto finish;
   }
 
-  SECURITY_ATTRIBUTES do_not_inherit = { .nLength = sizeof(SECURITY_ATTRIBUTES),
-                                         .bInheritHandle = false,
-                                         .lpSecurityDescriptor = NULL };
+  do_not_inherit.nLength = sizeof(SECURITY_ATTRIBUTES);
+  do_not_inherit.bInheritHandle = false;
+  do_not_inherit.lpSecurityDescriptor = NULL;
 
   handle = CreateFileW(wpath, mode, FILE_SHARE_READ | FILE_SHARE_WRITE,
                        &do_not_inherit, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,

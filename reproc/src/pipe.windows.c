@@ -19,11 +19,18 @@ const short PIPE_EVENT_OUT = POLLOUT;
 // Inspired by https://gist.github.com/geertj/4325783.
 static int socketpair(int domain, int type, int protocol, SOCKET *out)
 {
-  ASSERT(out);
-
   SOCKET server = PIPE_INVALID;
   SOCKET pair[] = { PIPE_INVALID, PIPE_INVALID };
   int r = -1;
+  SOCKADDR_STORAGE name = { 0 };
+  int size = sizeof(name);
+  SOCKADDR_IN localhost = { 0 };
+  struct {
+    WSAPROTOCOL_INFOW data;
+    int size;
+  } info = { { 0 }, sizeof(WSAPROTOCOL_INFOW) };
+
+  ASSERT(out);
 
   server = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, 0);
   if (server == INVALID_SOCKET) {
@@ -31,7 +38,6 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
     goto finish;
   }
 
-  SOCKADDR_IN localhost = { 0 };
   localhost.sin_family = AF_INET;
   localhost.sin_addr.S_un.S_addr = htonl(INADDR_LOOPBACK);
   localhost.sin_port = 0;
@@ -48,8 +54,6 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
     goto finish;
   }
 
-  SOCKADDR_STORAGE name = { 0 };
-  int size = sizeof(name);
   r = getsockname(server, (SOCKADDR *) &name, &size);
   if (r < 0) {
     r = -WSAGetLastError();
@@ -61,11 +65,6 @@ static int socketpair(int domain, int type, int protocol, SOCKET *out)
     r = -WSAGetLastError();
     goto finish;
   }
-
-  struct {
-    WSAPROTOCOL_INFOW data;
-    int size;
-  } info = { { 0 }, sizeof(WSAPROTOCOL_INFOW) };
 
   r = getsockopt(pair[0], SOL_SOCKET, SO_PROTOCOL_INFOW, (char *) &info.data,
                  &info.size);
@@ -119,11 +118,11 @@ finish:
 
 int pipe_init(SOCKET *read, SOCKET *write)
 {
-  ASSERT(read);
-  ASSERT(write);
-
   SOCKET pair[] = { PIPE_INVALID, PIPE_INVALID };
   int r = -1;
+
+  ASSERT(read);
+  ASSERT(write);
 
   // Use sockets instead of pipes so we can use `WSAPoll` which only works with
   // sockets.
@@ -180,11 +179,13 @@ int pipe_nonblocking(SOCKET pipe, bool enable)
 
 int pipe_read(SOCKET pipe, uint8_t *buffer, size_t size)
 {
+  int r = 0;
+
   ASSERT(pipe != PIPE_INVALID);
   ASSERT(buffer);
   ASSERT(size <= INT_MAX);
 
-  int r = recv(pipe, (char *) buffer, (int) size, 0);
+  r = recv(pipe, (char *) buffer, (int) size, 0);
 
   if (r == 0) {
     return -ERROR_BROKEN_PIPE;
@@ -195,21 +196,24 @@ int pipe_read(SOCKET pipe, uint8_t *buffer, size_t size)
 
 int pipe_write(SOCKET pipe, const uint8_t *buffer, size_t size)
 {
+  int r = 0;
+
   ASSERT(pipe != PIPE_INVALID);
   ASSERT(buffer);
   ASSERT(size <= INT_MAX);
 
-  int r = send(pipe, (const char *) buffer, (int) size, 0);
+  r = send(pipe, (const char *) buffer, (int) size, 0);
 
   return r < 0 ? -WSAGetLastError() : r;
 }
 
 int pipe_poll(pipe_event_source *sources, size_t num_sources, int timeout)
 {
-  ASSERT(num_sources <= INT_MAX);
-
   WSAPOLLFD *pollfds = NULL;
   int r = -1;
+  size_t i = 0;
+
+  ASSERT(num_sources <= INT_MAX);
 
   pollfds = calloc(num_sources, sizeof(WSAPOLLFD));
   if (pollfds == NULL) {
@@ -217,7 +221,7 @@ int pipe_poll(pipe_event_source *sources, size_t num_sources, int timeout)
     goto finish;
   }
 
-  for (size_t i = 0; i < num_sources; i++) {
+  for (i = 0; i < num_sources; i++) {
     pollfds[i].fd = sources[i].pipe;
     pollfds[i].events = sources[i].interests;
   }
@@ -228,7 +232,7 @@ int pipe_poll(pipe_event_source *sources, size_t num_sources, int timeout)
     goto finish;
   }
 
-  for (size_t i = 0; i < num_sources; i++) {
+  for (i = 0; i < num_sources; i++) {
     sources[i].events = pollfds[i].revents;
   }
 
@@ -240,21 +244,25 @@ finish:
 
 int pipe_shutdown(SOCKET pipe)
 {
+  int r = 0;
+
   if (pipe == PIPE_INVALID) {
     return 0;
   }
 
-  int r = shutdown(pipe, SD_SEND);
+  r = shutdown(pipe, SD_SEND);
   return r < 0 ? -WSAGetLastError() : 0;
 }
 
 SOCKET pipe_destroy(SOCKET pipe)
 {
+  int r = 0;
+
   if (pipe == PIPE_INVALID) {
     return PIPE_INVALID;
   }
 
-  int r = closesocket(pipe);
+  r = closesocket(pipe);
   ASSERT_UNUSED(r == 0);
 
   return PIPE_INVALID;

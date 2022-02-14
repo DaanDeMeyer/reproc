@@ -7,11 +7,11 @@ static int redirect_pipe(pipe_type *parent,
                          REPROC_STREAM stream,
                          bool nonblocking)
 {
-  ASSERT(parent);
-  ASSERT(child);
-
   pipe_type pipe[] = { PIPE_INVALID, PIPE_INVALID };
   int r = -1;
+
+  ASSERT(parent);
+  ASSERT(child);
 
   r = pipe_init(&pipe[0], &pipe[1]);
   if (r < 0) {
@@ -44,10 +44,10 @@ int redirect_init(pipe_type *parent,
                   bool nonblocking,
                   handle_type out)
 {
+  int r = REPROC_EINVAL;
+
   ASSERT(parent);
   ASSERT(child);
-
-  int r = REPROC_EINVAL;
 
   switch (redirect.type) {
 
