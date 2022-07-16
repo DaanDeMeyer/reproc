@@ -34,6 +34,7 @@ Checks:
 -performance-no-int-to-ptr,
 -readability-else-after-return,
 -readability-function-cognitive-complexity,
+-readability-identifier-length,
 -readability-magic-numbers,
 '
 HeaderFilterRegex: '.*reproc\+\+.*$'

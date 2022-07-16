@@ -74,7 +74,7 @@ jobs:
       - name: Install (Windows)
         if: runner.os == 'Windows'
         run: |
-          Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+          iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
           scoop install ninja llvm --global
 
           if ("${{ matrix.compiler }}" -eq "gcc") {
