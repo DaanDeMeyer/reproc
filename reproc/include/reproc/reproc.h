@@ -159,6 +159,7 @@ typedef struct reproc_redirect {
 
 typedef enum {
   REPROC_ENV_EXTEND,
+  REPROC_ENV_EXTEND_MERGE,
   REPROC_ENV_EMPTY,
 } REPROC_ENV;
 

@@ -249,7 +249,6 @@ static LPPROC_THREAD_ATTRIBUTE_LIST setup_attribute_list(HANDLE *handles,
 static wchar_t *env_concat(const wchar_t *a, const wchar_t *b)
 {
   const wchar_t *i = NULL;
-  const wchar_t *j = NULL;
   size_t size = 1;
   wchar_t *c = NULL;
 
@@ -283,6 +282,81 @@ static wchar_t *env_concat(const wchar_t *a, const wchar_t *b)
   return r;
 }
 
+static wchar_t *env_merge(const wchar_t *a, const wchar_t *b) {
+    const wchar_t *i = NULL;
+    const wchar_t *j = NULL;
+    size_t size = 1;
+    wchar_t *c = NULL;
+    
+    NULSTR_FOREACH(i, a) {
+        size += wcslen(i) + 1;
+    }
+  
+    NULSTR_FOREACH(i, b) {
+      size += wcslen(i) + 1;
+    }
+    
+    wchar_t *r = calloc(size, sizeof(wchar_t));
+    if (!r) {
+        return NULL;
+    }
+	
+    c = r;
+	
+	NULSTR_FOREACH(i, a) {
+		const wchar_t *m = NULL;
+		
+		NULSTR_FOREACH(j, b) {
+			if (
+				wcscspn(i, L"=") == wcscspn(j, L"=") &&
+				!wcsnicmp(i, j, wcscspn(i, L"="))
+			) {
+				m = j + wcscspn(j, L"=") + 1;
+			    wcscpy(c, i);
+			    wcscat(c, L";");
+			    wcscat(c, m);
+				
+		        c += wcslen(i) + 1 + wcslen(m) + 1;
+				
+				break;
+			}
+		}
+		
+		if (m == NULL) {
+		    wcscpy(c, i);
+	        c += wcslen(i) + 1;
+		}
+    }
+  
+	NULSTR_FOREACH(i, b) {
+		bool isMerged = false;
+		
+		NULSTR_FOREACH(j, r) {
+			if (
+				wcscspn(i, L"=") == wcscspn(j, L"=") &&
+				!wcsnicmp(i, j, wcscspn(i, L"="))
+			) {
+				isMerged = true;
+				
+				break;
+			}
+		}
+	    
+		if (isMerged == false) {
+		    wcscpy(c, i);
+		    c += wcslen(i) + 1;
+		}
+	}
+	
+    *c = L'\0';
+	
+	NULSTR_FOREACH(i, r) {
+		printf(" - %ls\n", i);
+	}
+    
+    return env_concat(a, b);
+}
+
 static wchar_t *env_setup(REPROC_ENV behavior, const char *const *extra)
 {
   wchar_t *env_parent_wstring = NULL;
@@ -290,7 +364,7 @@ static wchar_t *env_setup(REPROC_ENV behavior, const char *const *extra)
   wchar_t *env_extra_wstring = NULL;
   wchar_t *env_wstring = NULL;
 
-  if (behavior == REPROC_ENV_EXTEND) {
+  if (behavior == REPROC_ENV_EXTEND || behavior == REPROC_ENV_EXTEND_MERGE) {
     env_parent_wstring = GetEnvironmentStringsW();
   }
 
@@ -309,7 +383,11 @@ static wchar_t *env_setup(REPROC_ENV behavior, const char *const *extra)
     }
   }
 
-  env_wstring = env_concat(env_parent_wstring, env_extra_wstring);
+  if (behavior == REPROC_ENV_EXTEND_MERGE) {
+	  env_wstring = env_merge(env_parent_wstring, env_extra_wstring);
+  } else {
+	  env_wstring = env_concat(env_parent_wstring, env_extra_wstring);
+  }
 
 finish:
   FreeEnvironmentStringsW(env_parent_wstring);
