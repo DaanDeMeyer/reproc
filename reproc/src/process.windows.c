@@ -385,6 +385,9 @@ static wchar_t *env_setup(REPROC_ENV behavior, const char *const *extra)
   } else {
 	  env_wstring = env_concat(env_parent_wstring, env_extra_wstring);
   }
+  if (env_wstring == NULL) {
+    goto finish;
+  }
 
 finish:
   FreeEnvironmentStringsW(env_parent_wstring);
