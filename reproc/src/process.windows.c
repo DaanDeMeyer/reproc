@@ -267,12 +267,12 @@ static wchar_t *env_concat(const wchar_t *a, const wchar_t *b)
 
   c = r;
 
-  NULSTR_FOREACH(i, b) {
+  NULSTR_FOREACH(i, a) {
     wcscpy(c, i);
     c += wcslen(i) + 1;
   }
 
-  NULSTR_FOREACH(i, a) {
+  NULSTR_FOREACH(i, b) {
     wcscpy(c, i);
     c += wcslen(i) + 1;
   }
