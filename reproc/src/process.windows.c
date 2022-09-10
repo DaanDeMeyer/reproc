@@ -291,71 +291,68 @@ static wchar_t *env_merge(const wchar_t *a, const wchar_t *b) {
     NULSTR_FOREACH(i, a) {
         size += wcslen(i) + 1;
     }
-  
+    
     NULSTR_FOREACH(i, b) {
-      size += wcslen(i) + 1;
+        size += wcslen(i) + 1;
     }
     
     wchar_t *r = calloc(size, sizeof(wchar_t));
     if (!r) {
         return NULL;
     }
-	
-    c = r;
-	
-	NULSTR_FOREACH(i, a) {
-		const wchar_t *m = NULL;
-		
-		NULSTR_FOREACH(j, b) {
-			if (
-				wcscspn(i, L"=") == wcscspn(j, L"=") &&
-				!wcsnicmp(i, j, wcscspn(i, L"="))
-			) {
-				m = j + wcscspn(j, L"=") + 1;
-			    wcscpy(c, i);
-			    wcscat(c, L";");
-			    wcscat(c, m);
-				
-		        c += wcslen(i) + 1 + wcslen(m) + 1;
-				
-				break;
-			}
-		}
-		
-		if (m == NULL) {
-		    wcscpy(c, i);
-	        c += wcslen(i) + 1;
-		}
-    }
-  
-	NULSTR_FOREACH(i, b) {
-		bool isMerged = false;
-		
-		NULSTR_FOREACH(j, r) {
-			if (
-				wcscspn(i, L"=") == wcscspn(j, L"=") &&
-				!wcsnicmp(i, j, wcscspn(i, L"="))
-			) {
-				isMerged = true;
-				
-				break;
-			}
-		}
-	    
-		if (isMerged == false) {
-		    wcscpy(c, i);
-		    c += wcslen(i) + 1;
-		}
-	}
-	
-    *c = L'\0';
-	
-	NULSTR_FOREACH(i, r) {
-		printf(" - %ls\n", i);
-	}
     
-    return env_concat(a, b);
+    c = r;
+    
+    NULSTR_FOREACH(i, a) {
+        const wchar_t *m = NULL;
+        
+        NULSTR_FOREACH(j, b) {
+            if (
+                wcscspn(i, L"=") == wcscspn(j, L"=") &&
+                !wcsnicmp(i, j, wcscspn(i, L"="))
+            ) {
+                m = j + wcscspn(j, L"=") + 1;
+                wcscpy(c, i);
+                wcscat(c, L";");
+                wcscat(c, m);
+                
+                c += wcslen(i) + 1 + wcslen(m) + 1;
+                
+                break;
+            }
+        }
+        
+        if (m == NULL) {
+            wcscpy(c, i);
+            c += wcslen(i) + 1;
+        }
+    }
+    
+    NULSTR_FOREACH(i, b) {
+        bool merged = false;
+        
+        NULSTR_FOREACH(j, r) {
+            if (
+                wcscspn(i, L"=") == wcscspn(j, L"=") &&
+                !wcsnicmp(i, j, wcscspn(i, L"="))
+            ) {
+                merged = true;
+                
+                break;
+            }
+        }
+        
+        if (merged == false) {
+            wcscpy(c, i);
+            c += wcslen(i) + 1;
+        }
+    }
+    
+    *c = L'\0';
+    
+    return r;
 }
+
 
 static wchar_t *env_setup(REPROC_ENV behavior, const char *const *extra)
 {

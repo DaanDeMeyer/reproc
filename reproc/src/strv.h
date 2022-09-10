@@ -4,4 +4,6 @@
 
 char **strv_concat(char *const *a, const char *const *b);
 
+char **strv_mergevar(char *const *a, const char *const *b);
+
 char **strv_free(char **l);
