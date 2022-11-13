@@ -237,7 +237,7 @@ function(reproc_library TARGET LANGUAGE)
   # Only use the headers from the repository when building. When installing we
   # want to use the install location of the headers (e.g. /usr/include) as the
   # include directory instead.
-  target_include_directories(${TARGET} PUBLIC
+  target_include_directories(${TARGET} SYSTEM PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   )
 
