@@ -225,6 +225,16 @@ occurred. You can test against these error codes using values from the
 
 See the examples for more information on how to handle errors when using reproc.
 
+Note:
+
+Both reproc and reproc++ APIs take `options` argument that may define one or more
+`stop` actions such as `terminate` or `kill`.
+For that reason if the child process is being terminated or killed using a signal
+on POSIX, the error code will **not** reflect an error.
+
+It's up to the downstream project to *interpret* status codes reflecting unexpected
+behaviors alongside error codes (see this [example](https://github.com/DaanDeMeyer/reproc/issues/68#issuecomment-959074504)).
+
 ## Multithreading
 
 Don't call the same operation on the same child process from more than one

@@ -1,6 +1,6 @@
 if(WIN32)
   set(REPROC_WINSOCK_LIBRARY ws2_32)
-elseif(NOT APPLE)
+elseif(CMAKE_SYSTEM_NAME MATCHES Linux)
   set(REPROC_RT_LIBRARY rt) # clock_gettime
 endif()
 
