@@ -21,12 +21,12 @@ cc_library(
     }),
   includes = ["include"],
   visibility = ["//visibility:public"],
-  linkopts = select({
-    "@bazel_tools//src/conditions:windows": [
-      "-lws2_32",
-    ],
-    "//conditions:default": ["-lrt", "-lpthread"],
-  }),
+#  linkopts = select({
+#    "@bazel_tools//src/conditions:windows": [
+#      "-lws2_32",
+#    ],
+#    "//conditions:default": ["-lrt", "-lpthread"],
+#  }),
   copts = ["-std=c99"],
   linkstatic = 1,
 )
