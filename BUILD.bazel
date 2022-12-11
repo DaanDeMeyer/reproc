@@ -1,0 +1,19 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+  name = "reproc",
+  hdrs = glob(
+      ["*.h",
+      "*.hpp"]
+  ),
+  deps = ["//ipc:ipc"],
+  includes = ["ipc", "*.h"],
+  visibility = ["//visibility:public"],
+  linkopts = select({
+    "@bazel_tools//src/conditions:darwin_x86_64": [],
+    "@bazel_tools//src/conditions:darwin_arm64": [],
+    "@bazel_tools//src/conditions:windows": [],
+    "//conditions:default": [ "-lrt" ],
+  }),
+  copts = ["-std=c++17"],
+)
