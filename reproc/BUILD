@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 
 common_files = [
@@ -21,12 +21,13 @@ cc_library(
     }),
   includes = ["include"],
   visibility = ["//visibility:public"],
-#  linkopts = select({
-#    "@bazel_tools//src/conditions:windows": [
-#      "-lws2_32",
-#    ],
-#    "//conditions:default": ["-lrt", "-lpthread"],
-#  }),
+  linkopts = select({
+    "@bazel_tools//src/conditions:windows": [
+      "-lws2_32",
+    ],
+    "//conditions:default": ["-lrt", "-lpthread"],
+  }),
   copts = ["-std=c99"],
   linkstatic = 1,
+  alwayslink = 1,
 )
