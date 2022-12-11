@@ -27,5 +27,6 @@ cc_library(
     ],
     "//conditions:default": ["-lrt", "-lpthread"],
   }),
+  copts = ["-std=c99"],
   linkstatic = 1,
 )

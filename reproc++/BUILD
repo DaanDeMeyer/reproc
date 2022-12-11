@@ -9,5 +9,8 @@ cc_library(
   deps = [
     "//reproc:reproc",
   ],
+  copts = [
+    "-std=c++17",
+  ],
   linkstatic = 1,
 )
