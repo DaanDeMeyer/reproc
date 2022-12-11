@@ -25,6 +25,8 @@ cc_library(
     "@bazel_tools//src/conditions:windows": [
       "-lws2_32",
     ],
+    "@bazel_tools//src/conditions:darwin": [
+    ],
     "//conditions:default": ["-lrt", "-lpthread"],
   }),
   copts = ["-std=c99"],
