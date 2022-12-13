@@ -12,6 +12,4 @@ cc_library(
   copts = [
     "-std=c++17",
   ],
-  linkstatic = 1,
-  alwayslink = 1,
 )
