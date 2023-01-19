@@ -23,7 +23,7 @@ cc_library(
   visibility = ["//visibility:public"],
   linkopts = select({
     "@bazel_tools//src/conditions:windows": [
-      "-lws2_32",
+      '-DEFAULTLIB:ws2_32.lib',
     ],
     "@bazel_tools//src/conditions:darwin": [
     ],
