@@ -88,7 +88,7 @@ struct redirect {
 
 struct options {
   struct {
-    env::type behavior;
+    enum env::type behavior;
     /*! Implicitly converts from any STL container of string pairs to the
     environment format expected by `reproc_start`. */
     class env extra;
@@ -97,9 +97,9 @@ struct options {
   const char *working_directory = nullptr;
 
   struct {
-    redirect in;
-    redirect out;
-    redirect err;
+    struct redirect in;
+    struct redirect out;
+    struct redirect err;
     bool parent;
     bool discard;
     FILE *file;
