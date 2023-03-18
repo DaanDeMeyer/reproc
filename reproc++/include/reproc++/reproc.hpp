@@ -138,29 +138,11 @@ enum class stream {
   err,
 };
 
-class process;
-
 namespace event {
 
-enum {
-  in = 1 << 0,
-  out = 1 << 1,
-  err = 1 << 2,
-  exit = 1 << 3,
-  deadline = 1 << 4,
-};
-
-struct source {
-  class process &process;
-  int interests;
-  int events;
-};
+class source;
 
 }
-
-REPROCXX_EXPORT std::error_code poll(event::source *sources,
-                                     size_t num_sources,
-                                     milliseconds timeout = infinite);
 
 /*! Improves on reproc's API by adding RAII and changing the API of some
 functions to be more idiomatic C++. */
@@ -219,5 +201,27 @@ private:
 
   std::unique_ptr<reproc_t, reproc_t *(*) (reproc_t *)> impl_;
 };
+
+namespace event {
+
+enum {
+  in = 1 << 0,
+  out = 1 << 1,
+  err = 1 << 2,
+  exit = 1 << 3,
+  deadline = 1 << 4,
+};
+
+struct source {
+  class process process;
+  int interests;
+  int events;
+};
+
+}
+
+REPROCXX_EXPORT std::error_code poll(event::source *sources,
+                                     size_t num_sources,
+                                     milliseconds timeout = infinite);
 
 }
