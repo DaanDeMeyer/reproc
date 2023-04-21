@@ -88,10 +88,10 @@ struct redirect {
 
 struct options {
   struct {
-    enum env::type behavior;
+    reproc::env::type behavior;
     /*! Implicitly converts from any STL container of string pairs to the
     environment format expected by `reproc_start`. */
-    class env extra;
+    reproc::env extra;
   } env = {};
 
   const char *working_directory = nullptr;
