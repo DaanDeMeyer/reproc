@@ -3,7 +3,6 @@
 
 #include <reproc++/drain.hpp>
 #include <reproc++/fill.hpp>
-#include <reproc++/input.hpp>
 #include <reproc++/reproc.hpp>
 
 static int fail(std::error_code ec)
@@ -43,7 +42,7 @@ int main(int argc, const char **argv)
   // of time in the process options, which is constrained by pipe sizing
   std::string input(1024*1024,'0'); // 1M
   reproc::filler::string filler(input);
-  
+
   ec = reproc::fill(process, filler);
   process.close(reproc::stream::in);
   if (ec) {

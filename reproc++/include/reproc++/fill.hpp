@@ -1,6 +1,8 @@
 #pragma once
 
 #include <istream>
+#include <string>
+#include <vector>
 
 #include <reproc++/reproc.hpp>
 
@@ -65,11 +67,11 @@ namespace filler {
 
 /*! Writes all input from `string`. */
 class string {
-  std::string &string_;
+  const std::string &string_;
   size_t offset_ { 0 };
 
 public:
-  explicit string(std::string &string) noexcept : string_(string) {}
+  explicit string(const std::string &string) noexcept : string_(string) {}
 
   std::error_code operator()(uint8_t *const buffer, const size_t bufSize, size_t& writeSize, bool& more)
   {
@@ -98,7 +100,8 @@ public:
 
   std::error_code operator()(uint8_t *const buffer, const size_t bufSize, size_t& writeSize, bool& more)
   {
-    istream_.read(reinterpret_cast<char *const>(buffer), static_cast<std::streamsize>(bufSize));
+    istream_.read(reinterpret_cast<char *const>(buffer), 
+        static_cast<std::streamsize>(bufSize));
     writeSize = static_cast<std::size_t>(istream_.gcount());
 
     if (istream_.bad() || (istream_.fail() && !istream_.eof()))
