@@ -87,8 +87,9 @@ std::pair<bool, std::error_code> process::fork(const options &options) noexcept
 std::pair<int, std::error_code> process::poll(int interests,
                                               milliseconds timeout)
 {
-  event::source source{ *this, interests, 0 };
+  event::source source{ std::move(*this), interests, 0 };
   std::error_code ec = ::reproc::poll(&source, 1, timeout);
+  *this = std::move(source.process);
   return { source.events, ec };
 }
 
