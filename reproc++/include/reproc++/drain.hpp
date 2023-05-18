@@ -3,7 +3,7 @@
 #include <mutex>
 #include <ostream>
 #include <string>
-#include <tuple>
+#include <vector>
 
 #include <reproc++/reproc.hpp>
 
@@ -18,7 +18,7 @@ std::error_code sink(stream stream, const uint8_t *buffer, size_t size);
 ```
 */
 template <typename Out, typename Err>
-std::error_code drain(process &process, Out &&out, Err &&err)
+std::error_code drain(process &process, Out &&out, Err &&err, const size_t bufSize = 4096)
 {
   static constexpr uint8_t initial = 0;
   std::error_code ec;
@@ -37,8 +37,8 @@ std::error_code drain(process &process, Out &&out, Err &&err)
     return ec;
   }
 
-  static constexpr size_t BUFFER_SIZE = 4096;
-  uint8_t buffer[BUFFER_SIZE] = {};
+  std::vector<uint8_t> buffer;
+  buffer.resize(bufSize);
 
   for (;;) {
     int events = 0;
@@ -56,7 +56,7 @@ std::error_code drain(process &process, Out &&out, Err &&err)
     stream stream = events & event::out ? stream::out : stream::err;
 
     size_t bytes_read = 0;
-    std::tie(bytes_read, ec) = process.read(stream, buffer, BUFFER_SIZE);
+    std::tie(bytes_read, ec) = process.read(stream, buffer.data(), bufSize);
     if (ec && ec != error::broken_pipe) {
       break;
     }
@@ -66,9 +66,9 @@ std::error_code drain(process &process, Out &&out, Err &&err)
     // This used to be `auto &sink = stream == stream::out ? out : err;` but
     // that doesn't actually work if `out` and `err` are not the same type.
     if (stream == stream::out) {
-      ec = out(stream, buffer, bytes_read);
+      ec = out(stream, buffer.data(), bytes_read);
     } else {
-      ec = err(stream, buffer, bytes_read);
+      ec = err(stream, buffer.data(), bytes_read);
     }
 
     if (ec) {

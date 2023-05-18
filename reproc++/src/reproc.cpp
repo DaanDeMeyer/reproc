@@ -1,5 +1,3 @@
-#include <tuple>
-
 #include <reproc++/reproc.hpp>
 #include <reproc/reproc.h>
 
@@ -165,38 +163,6 @@ poll(event::source *sources, size_t num_sources, milliseconds timeout)
   delete[] reproc_sources;
 
   return error_code_from(r);
-}
-
-std::error_code fill(process& process, input& input)
-{
-  std::error_code error;
-  size_t total_written = 0;
-
-  while (total_written < input.size())
-  {
-    int events = 0;
-    std::tie(events, error) = process.poll(event::in, infinite);
-    if (error) { return error; }
-
-    if ((events & event::deadline) != 0) {
-      return std::make_error_code(std::errc::timed_out);
-    }
-
-    size_t written = 0;
-    std::tie(written, error) = process.write(
-      input.data() + total_written,
-      input.size() - total_written);
-
-    if (error) { return error; }
-
-    if (written == 0 && !error) {
-      return std::make_error_code(std::errc::io_error);
-    }
-
-    total_written += written;
-  }
-
-  return process.close(stream::in);
 }
 
 }

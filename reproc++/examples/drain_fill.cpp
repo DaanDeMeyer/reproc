@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include <reproc++/drain.hpp>
+#include <reproc++/fill.hpp>
 #include <reproc++/input.hpp>
 #include <reproc++/reproc.hpp>
 
@@ -16,7 +17,7 @@ int main(int argc, const char **argv)
 {
   if (argc <= 1) {
     std::cerr << "No arguments provided. Example usage: "
-              << "./drain cmake --help";
+              << "./drain cmake --help\n";
     return EXIT_FAILURE;
   }
 
@@ -40,10 +41,11 @@ int main(int argc, const char **argv)
   // `reproc::fill` sends data to stdin after the process has started
   // This works with any size of data unlike filling the input ahead
   // of time in the process options, which is constrained by pipe sizing
-  std::string input;
-  const auto* inputData = reinterpret_cast<const uint8_t*>(input.c_str());
-  reproc::input procIn(inputData, input.size());
-  ec = reproc::fill(process, procIn);
+  std::string input(1024*1024,'0'); // 1M
+  reproc::filler::string filler(input);
+  
+  ec = reproc::fill(process, filler);
+  process.close(reproc::stream::in);
   if (ec) {
     return fail(ec);
   }
