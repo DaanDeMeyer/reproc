@@ -10,11 +10,11 @@ namespace reproc {
 
 /*!
 `reproc_fill` but takes lambdas as fillers. Return an error code from a filler to
-break out of `filler` early. Set `writeSize` to the number of bytes written to buffer. 
+break out of `filler` early. Set `written` to the number of bytes written to buffer. 
 Set `more` to false when more streaming. `in` expects the following signature:
 
 ```c++
-std::error_code filler(uint8_t *const buffer, const size_t bufSize, size_t& writeSize, bool& more);
+std::error_code filler(uint8_t *const buffer, const size_t bufSize, size_t& written, bool& more);
 ```
 This is to be used for sending stdin *after* the process is started,
 which may be required if the data is too big to fit in the options
@@ -73,20 +73,20 @@ class string {
 public:
   explicit string(const std::string &string) noexcept : string_(string) {}
 
-  std::error_code operator()(uint8_t *const buffer, const size_t bufSize, size_t& writeSize, bool& more)
+  std::error_code operator()(uint8_t *const buffer, const size_t bufSize, size_t& written, bool& more)
   {
     if (offset_ >= string_.size())
     {
-        writeSize = 0;
+        written = 0;
         more = false;
         return {};
     }
 
     const char* sdata { string_.data()+offset_ };
-    writeSize = std::min(string_.size()-offset_, bufSize);
+    written = std::min(string_.size()-offset_, bufSize);
     
-    std::copy(sdata, sdata+writeSize, buffer); 
-    offset_ += writeSize;
+    std::copy(sdata, sdata+written, buffer); 
+    offset_ += written;
     return {};
   }
 };
@@ -98,11 +98,11 @@ class istream {
 public:
   explicit istream(std::istream &istream) noexcept : istream_(istream) {}
 
-  std::error_code operator()(uint8_t *const buffer, const size_t bufSize, size_t& writeSize, bool& more)
+  std::error_code operator()(uint8_t *const buffer, const size_t bufSize, size_t& written, bool& more)
   {
     istream_.read(reinterpret_cast<char *const>(buffer), 
         static_cast<std::streamsize>(bufSize));
-    writeSize = static_cast<std::size_t>(istream_.gcount());
+    written = static_cast<std::size_t>(istream_.gcount());
 
     if (istream_.bad() || (istream_.fail() && !istream_.eof()))
         return std::make_error_code(std::errc::operation_canceled);
