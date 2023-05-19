@@ -18,7 +18,8 @@ std::error_code sink(stream stream, const uint8_t *buffer, size_t size);
 ```
 */
 template <typename Out, typename Err>
-std::error_code drain(process &process, Out &&out, Err &&err, const size_t bufSize = 4096)
+std::error_code
+drain(process &process, Out &&out, Err &&err, const size_t bufSize = 4096)
 {
   static constexpr uint8_t initial = 0;
   std::error_code ec;
@@ -138,7 +139,8 @@ class string {
 public:
   string(std::string &string, std::mutex &mutex) noexcept
       : sink_(string), mutex_(mutex)
-  {}
+  {
+  }
 
   std::error_code operator()(stream stream, const uint8_t *buffer, size_t size)
   {
