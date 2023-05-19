@@ -24,7 +24,7 @@ int main(int argc, const char **argv)
     goto finish;
   }
 
-  const size_t inSize = 104; // 1M
+  const size_t inSize = 1048576; // 1M
   input = malloc(inSize * sizeof(char));
   // make a 0123456789:;<=>?@ABCDEFG... string for testing
   {
