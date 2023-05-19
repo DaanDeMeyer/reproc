@@ -43,6 +43,7 @@ int main(int argc, const char **argv)
   std::string input;
   input.resize(1048576); // 1M
   for (size_t i = 0; i < input.size(); i++) {
+    // make a 0123456789:;<=>?@ABCDEFG... string for testing
     input[i] = ((char) (i % (size_t) ('z' - '0' + 1)) + '0');
   }
 
