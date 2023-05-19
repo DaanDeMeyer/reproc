@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include <reproc/drain.h>
 #include <reproc/fill.h>
@@ -24,20 +25,13 @@ int main(int argc, const char **argv)
     goto finish;
   }
 
-  const size_t inSize = 1048576; // 1M
+  const size_t inSize = 2097152; // 2M
   input = malloc(inSize * sizeof(char));
-  // make a 0123456789:;<=>?@ABCDEFG... string for testing
-  {
-    size_t i = 0;
-    char c = '0';
-    while (i < inSize) {
-      if (c > 'z') {
-        c = '0';
-      }
-      input[i] = c;
-      ++c, ++i;
-    }
+  // make a random string for testing
+  for (size_t i = 0; i < inSize - 1; ++i) {
+    input[i] = (char) ((rand() % ('z' - '0' + 1) + '0') & 0xFF);
   }
+  input[inSize - 1] = '\0';
 
   // `reproc_fill` writes to a child process using input from the given
   // filler.  A filler consists of a function pointer and a context pointer
@@ -77,6 +71,11 @@ int main(int argc, const char **argv)
   r = reproc_wait(process, REPROC_INFINITE);
   if (r < 0) {
     goto finish;
+  }
+
+  if (strcmp(input, output) != 0) {
+    r = REPROC_EINVAL;
+    printf("INPUT/OUTPUT MISMATCH!");
   }
 
 finish:

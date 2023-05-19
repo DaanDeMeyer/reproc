@@ -13,7 +13,7 @@ target_sources(
   INTERFACE $<$<BOOL:${REPROC_OBJECT_LIBRARIES}>:$<TARGET_OBJECTS:reproc>>
 )
 
-reproc_example(reproc++ drain_fill CXX)
+reproc_example(reproc++ drain-fill CXX ARGS ${CMAKE_CURRENT_SOURCE_DIR}/examples/filltest)
 reproc_example(reproc++ forward CXX)
 reproc_example(reproc++ run CXX)
 

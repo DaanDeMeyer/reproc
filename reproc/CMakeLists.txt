@@ -54,7 +54,7 @@ if(UNIX)
   reproc_test(reproc fork C)
 endif()
 
-reproc_example(reproc drain-fill C)
+reproc_example(reproc drain-fill C ARGS ${CMAKE_CURRENT_SOURCE_DIR}/examples/filltest)
 reproc_example(reproc env C ARGS PROJECT=REPROC)
 reproc_example(reproc path C)
 reproc_example(reproc poll C)
