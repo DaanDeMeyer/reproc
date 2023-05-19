@@ -40,7 +40,12 @@ int main(int argc, const char **argv)
   // `reproc::fill` sends data to stdin after the process has started
   // This works with any size of data unlike filling the input ahead
   // of time in the process options, which is constrained by pipe sizing
-  std::string input(1024 * 1024, '0'); // 1M
+  std::string input;
+  input.resize(1048576); // 1M
+  for (size_t i = 0; i < input.size(); i++) {
+    input[i] = ((char) (i % (size_t) ('z' - '0' + 1)) + '0');
+  }
+
   reproc::filler::string filler(input);
 
   ec = reproc::fill(process, filler);

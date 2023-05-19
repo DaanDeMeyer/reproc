@@ -33,7 +33,10 @@ std::error_code fill(process &process, In &&in, const size_t bufSize = 4096)
 
   while (more) {
     size_t writeSize = 0;
-    in(buffer.data(), bufSize, writeSize, more);
+    ec = in(buffer.data(), bufSize, writeSize, more);
+    if (ec) {
+      return ec;
+    }
 
     size_t total_written = 0;
     while (total_written < writeSize) {
@@ -53,9 +56,7 @@ std::error_code fill(process &process, In &&in, const size_t bufSize = 4096)
 
       if (ec) {
         return ec;
-      }
-
-      if (written == 0 && !ec) {
+      } else if (written == 0) {
         return std::make_error_code(std::errc::io_error);
       }
 

@@ -42,6 +42,10 @@ Actionable errors:
 REPROC_EXPORT int
 reproc_drain(reproc_t *process, reproc_sink out, reproc_sink err);
 
+/*! reproc_drain but with a custom buffer size */
+REPROC_EXPORT int
+reproc_drain_bufsize(reproc_t *process, reproc_sink out, reproc_sink err, const size_t bufSize);
+
 /*!
 Appends the output of a process (stdout and stderr) to the value of `output`.
 `output` must point to either `NULL` or a NUL-terminated string.

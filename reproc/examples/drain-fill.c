@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include <reproc/drain.h>
+#include <reproc/fill.h>
 #include <reproc/reproc.h>
 
 // Shows the output of the given command using `reproc_drain`.
@@ -9,6 +10,7 @@ int main(int argc, const char **argv)
   (void) argc;
 
   reproc_t *process = NULL;
+  char *input = NULL;
   char *output = NULL;
   int r = REPROC_ENOMEM;
 
@@ -18,6 +20,25 @@ int main(int argc, const char **argv)
   }
 
   r = reproc_start(process, argv + 1, (reproc_options){ 0 });
+  if (r < 0) {
+    goto finish;
+  }
+
+  const size_t inSize = 1048576; // 1M
+  input = malloc(inSize * sizeof(char));
+  for (size_t i = 0; i < inSize; i++) {
+    input[i] = ((char) (i % (size_t) ('z' - '0' + 1)) + '0');
+  }
+
+  // `reproc_fill` writes to a child process using input from the given
+  // filler.  A filler consists of a function pointer and a context pointer
+  // which is always passed to the function.  reproc provides a built-in
+  // filler `reproc_filler_buffer` which writes to stdin from the given
+  // input buffer pointer/size pair.  This allows writing to stdin progressively
+  // rather than using reproc_options which can overflow the input pipe.
+  reproc_filler_buffer_ctx fillerCtx = { (uint8_t *) input, inSize, 0 };
+  reproc_filler filler = reproc_filler_buffer(&fillerCtx);
+  r = reproc_fill(process, filler);
   if (r < 0) {
     goto finish;
   }
@@ -50,6 +71,7 @@ int main(int argc, const char **argv)
   }
 
 finish:
+  free(input);
   // Memory allocated by `reproc_sink_string` must be freed with `reproc_free`.
   reproc_free(output);
   reproc_destroy(process);
