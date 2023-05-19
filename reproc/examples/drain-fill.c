@@ -24,11 +24,19 @@ int main(int argc, const char **argv)
     goto finish;
   }
 
-  const size_t inSize = 1048576; // 1M
+  const size_t inSize = 104; // 1M
   input = malloc(inSize * sizeof(char));
-  for (size_t i = 0; i < inSize; i++) {
-    // make a 0123456789:;<=>?@ABCDEFG... string for testing
-    input[i] = ((char) (i % (size_t) ('z' - '0' + 1)) + '0');
+  // make a 0123456789:;<=>?@ABCDEFG... string for testing
+  {
+    size_t i = 0;
+    char c = '0';
+    while (i < inSize) {
+      if (c > 'z') {
+        c = '0';
+      }
+      input[i] = c;
+      ++c, ++i;
+    }
   }
 
   // `reproc_fill` writes to a child process using input from the given
