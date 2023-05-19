@@ -62,7 +62,7 @@ finish:
   return r;
 }
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
+#define reproc_min(a, b) ((a) < (b) ? (a) : (b))
 
 static int filler_buffer(uint8_t *const buffer,
                          const size_t bufSize,
@@ -80,7 +80,7 @@ static int filler_buffer(uint8_t *const buffer,
     return 0;
   }
 
-  *written = min(data->size - data->offset, bufSize);
+  *written = reproc_min(data->size - data->offset, bufSize);
   memcpy(buffer, data->buffer + data->offset, *written);
   data->offset += *written;
   return 0;
