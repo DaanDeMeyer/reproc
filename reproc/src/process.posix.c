@@ -2,6 +2,7 @@
 
 #include "process.h"
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -9,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/resource.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -100,7 +102,12 @@ static char *path_prepend_cwd(const char *path)
   return cwd;
 }
 
-static const int MAX_FD_LIMIT = 1024 * 1024;
+#if defined(__FreeBSD__) || (defined(__APPLE__) && defined(__MACH__)) ||       \
+    defined(__DragonFly__)
+  #define FD_DIR "/dev/fd"
+#else
+  #define FD_DIR "/proc/self/fd"
+#endif
 
 static int get_max_fd(void)
 {
@@ -130,6 +137,49 @@ static bool fd_in_set(int fd, const int *fd_set, size_t size)
 
   return false;
 }
+
+static void maybe_close_fd(int fd,
+                           const int *except,
+                           size_t num_except,
+                           int pipe_read,
+                           int pipe_write)
+{
+  // Make sure we don't close the error pipe file descriptors twice.
+  if (fd == pipe_read || fd == pipe_write) {
+    return;
+  }
+
+  if (fd_in_set(fd, except, num_except)) {
+    return;
+  }
+
+  // Check if `fd` is a valid file descriptor before trying to close it.
+  int r = fcntl(fd, F_GETFD);
+  if (r >= 0) {
+    handle_destroy(fd);
+  }
+}
+
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+/* When /dev/fd isn't mounted it is often a static directory populated
+ * with 0 1 2 or entries for 0 .. 63 on FreeBSD, NetBSD, OpenBSD and
+ * DragonFlyBSD. NetBSD and OpenBSD have a /proc fs available (though not
+ * necessarily mounted) and do not have fdescfs for /dev/fd.  MacOS X has a
+ * devfs that properly supports /dev/fd.
+ */
+static int is_fdescfs_mounted_on_dev_fd(void)
+{
+  struct stat dev_stat;
+  struct stat dev_fd_stat;
+  if (stat("/dev", &dev_stat) != 0)
+    return 0;
+  if (stat("/dev/fd", &dev_fd_stat) != 0)
+    return 0;
+  if (dev_stat.st_dev == dev_fd_stat.st_dev)
+    return 0; /* / == /dev == /dev/fd means it is static. #fail */
+  return 1;
+}
+#endif
 
 static pid_t process_fork(const int *except, size_t num_except)
 {
@@ -252,38 +302,33 @@ static pid_t process_fork(const int *except, size_t num_except)
     goto finish;
   }
 
-  // Not all file descriptors might have been created with the `FD_CLOEXEC`
-  // flag so we manually close all file descriptors to prevent file descriptors
-  // leaking into the child process.
+  DIR *proc_fd_dir = NULL;
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+  if (is_fdescfs_mounted_on_dev_fd())
+#endif
+    proc_fd_dir = opendir(FD_DIR);
 
-  r = get_max_fd();
-  if (r < 0) {
-    goto finish;
-  }
-
-  int max_fd = r;
-
-  if (max_fd > MAX_FD_LIMIT) {
-    // Refuse to try to close too many file descriptors.
-    r = -EMFILE;
-    goto finish;
-  }
-
-  for (int i = 0; i < max_fd; i++) {
-    // Make sure we don't close the error pipe file descriptors twice.
-    if (i == pipe.read || i == pipe.write) {
-      continue;
+  if (!proc_fd_dir) {
+    // Fallback to brute force.
+    int r = get_max_fd();
+    if (r < 0) {
+      goto finish;
     }
-
-    if (fd_in_set(i, except, num_except)) {
-      continue;
+    int max_fd = r;
+    for (int fd = 0; fd < max_fd; fd++) {
+      maybe_close_fd(fd, except, num_except, pipe.read, pipe.write);
     }
-
-    // Check if `i` is a valid file descriptor before trying to close it.
-    r = fcntl(i, F_GETFD);
-    if (r >= 0) {
-      handle_destroy(i);
+  } else {
+    struct dirent *dir_entry = NULL;
+    int fd_used_by_opendir = dirfd(proc_fd_dir);
+    while ((dir_entry = readdir(proc_fd_dir))) {
+      int fd = atoi(dir_entry->d_name);
+      if (fd < 0 || fd_used_by_opendir == fd) {
+        continue;
+      }
+      maybe_close_fd(fd, except, num_except, pipe.read, pipe.write);
     }
+    closedir(proc_fd_dir);
   }
 
   r = 0;
