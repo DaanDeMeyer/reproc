@@ -140,7 +140,7 @@ enum class stream {
 
 namespace event {
 
-class source;
+struct source;
 
 }
 
