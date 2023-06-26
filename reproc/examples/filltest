@@ -1,0 +1,5 @@
+#!/bin/sh
+NAME=$(mktemp)
+cat > $NAME
+cat $NAME
+rm $NAME
