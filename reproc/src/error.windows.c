@@ -28,6 +28,9 @@ const char *error_string(int error)
   wchar_t *wstring = NULL;
   int r = -1;
 
+  if(error == INT_MIN)
+    return "Failed to retrieve error string";
+
   wstring = malloc(sizeof(wchar_t) * ERROR_STRING_MAX_SIZE);
   if (wstring == NULL) {
     return "Failed to allocate memory for error string";

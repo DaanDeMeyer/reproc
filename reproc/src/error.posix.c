@@ -3,6 +3,7 @@
 #include "error.h"
 
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -21,6 +22,9 @@ enum { ERROR_STRING_MAX_SIZE = 512 };
 const char *error_string(int error)
 {
   static THREAD_LOCAL char string[ERROR_STRING_MAX_SIZE];
+
+  if(error == INT_MIN)
+    return "Failed to retrieve error string";
 
   int r = strerror_r(abs(error), string, ARRAY_SIZE(string));
   if (r != 0) {
