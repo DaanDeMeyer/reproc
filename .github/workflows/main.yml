@@ -60,8 +60,8 @@ jobs:
       - name: Install (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install ninja
-          sudo ln -s /usr/local/opt/llvm/bin/clang-tidy /usr/local/bin/clang-tidy
+          brew install ninja llvm@14
+          sudo ln -s "$(brew --prefix llvm@14)/bin/clang-tidy" /usr/local/bin/clang-tidy
 
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
             echo CC=gcc >> $GITHUB_ENV
