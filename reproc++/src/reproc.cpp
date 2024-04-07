@@ -57,8 +57,8 @@ static reproc_options reproc_options_from(const options &options, bool fork)
     reproc_stop_actions_from(options.stop),
     options.deadline.count(),
     { options.input.data(), options.input.size() },
-    options.nonblocking,
-    fork
+    fork,
+    options.nonblocking
   };
 }
 
