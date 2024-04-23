@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include <reproc++/drain.hpp>
+#include <reproc++/fill.hpp>
 #include <reproc++/reproc.hpp>
 
 static int fail(std::error_code ec)
@@ -15,7 +16,7 @@ int main(int argc, const char **argv)
 {
   if (argc <= 1) {
     std::cerr << "No arguments provided. Example usage: "
-              << "./drain cmake --help";
+              << "./drain cmake --help\n";
     return EXIT_FAILURE;
   }
 
@@ -33,6 +34,24 @@ int main(int argc, const char **argv)
     std::cerr << "Program not found. Make sure it's available from the PATH.";
     return ec.value();
   } else if (ec) {
+    return fail(ec);
+  }
+
+  // `reproc::fill` sends data to stdin after the process has started
+  // This works with any size of data unlike filling the input ahead
+  // of time in the process options, which is constrained by pipe sizing
+  std::string input;
+  input.resize(1048576); // 1M
+  // make a random string for testing
+  for (char &c : input) {
+    c = (char) ((rand() % ('z' - '0' + 1) + '0') & 0xFF);
+  }
+
+  reproc::filler::string filler(input);
+
+  ec = reproc::fill(process, filler);
+  process.close(reproc::stream::in);
+  if (ec) {
     return fail(ec);
   }
 
@@ -70,6 +89,11 @@ int main(int argc, const char **argv)
   std::tie(status, ec) = process.wait(reproc::infinite);
   if (ec) {
     return fail(ec);
+  }
+
+  if (input != output) {
+    std::cerr << "INPUT/OUTPUT MISMATCH!" << std::endl;
+    return -1;
   }
 
   return status;
